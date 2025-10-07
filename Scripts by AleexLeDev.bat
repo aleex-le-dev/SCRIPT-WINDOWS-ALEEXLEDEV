@@ -1,6 +1,6 @@
 @echo off
 chcp 65001 >nul
-title Boîte à Outils Windows Complète - By ALEEXLEDEV
+title Boîte à Outils Windows Complète - By ALEEXLEDEV (v1.0)
 color 0B
 
 REM === AUTO-ELEVATION EN ADMINISTRATEUR ===
@@ -16,7 +16,7 @@ if %errorlevel% neq 0 (
 cls
 color 0B
 echo ======================================================
-echo     BOITE A OUTILS WINDOWS COMPLETE
+echo     BOITE A OUTILS WINDOWS COMPLETE - By ALEEXLEDEV
 echo ======================================================
 echo.
 echo      === OUTILS PRINCIPAUX ===
@@ -35,8 +35,7 @@ if "%main_choice%"=="1" goto dns_manager
 if "%main_choice%"=="2" goto winget_manager
 if "%main_choice%"=="3" goto context_menu
 if "%main_choice%"=="4" goto disk_manager
-if "%main_choice%"=="5" goto touch_screen_manager
-if "%main_choice%"=="6" goto system_tools
+if "%main_choice%"=="5" goto system_tools
 if "%main_choice%"=="0" goto exit_script
 echo Choix invalide, veuillez recommencer.
 pause
@@ -52,10 +51,10 @@ echo ================================================
 echo     GESTIONNAIRE DNS CLOUDFLARE
 echo ================================================
 echo.
-echo   [1] Installer DNS Cloudflare (IPv4 + IPv6)
-echo   [2] Installer DNS Cloudflare (IPv4 seulement)
-echo   [3] Restaurer les DNS par defaut
-echo   [4] Afficher la configuration actuelle
+echo   [1] Installation des DNS Cloudflare (IPv4 + IPv6)
+echo   [2] Installation des DNS Cloudflare (IPv4 seulement)
+echo   [3] Restauration des DNS par defaut
+echo   [4] Affichage de la configuration actuelle
 echo   [0] Retour au menu principal
 echo.
 echo ================================================
@@ -151,7 +150,7 @@ ipconfig /flushdns
 
 echo.
 echo ================================================
-echo     INSTALLATION TERMINEE AVEC SUCCES !
+echo     INSTALLATION TERMINEE AVEC SUCCES ! 
 echo ================================================
 echo.
 echo DNS Cloudflare configures:
@@ -250,13 +249,13 @@ if defined interface (
 goto :eof
 
 REM ===================================================================
-REM                    GESTIONNAIRE WINGET
+REM                   WINGET - Mises à jour des application windows
 REM ===================================================================
 :winget_manager
 cls
 color 0A
 echo ================================================
-echo     GESTIONNAIRE WINGET - MISES A JOUR
+echo     Mises à jour des application windows
 echo ================================================
 echo.
 
@@ -393,14 +392,14 @@ pause
 goto context_menu
 
 REM ===================================================================
-REM                    GESTIONNAIRE DE DISQUES - FORMATAGE
+REM                    GESTIONNAIRE DE DISQUES - FORMATAGE AVEC DISKPART
 REM ===================================================================
 :disk_manager
 cls
 color 0A
 echo.
 echo ╔════════════════════════════════════════════════════════════╗
-echo ║          GESTIONNAIRE DE DISQUES - FORMATAGE              ║
+echo ║         DISKPART        ║
 echo ╚════════════════════════════════════════════════════════════╝
 echo.
 echo Analyse des disques disponibles...
@@ -640,6 +639,10 @@ echo      === VERIFICATIONS D'INTEGRITE SYSTEME ===
 echo   [1] Analyse et reparation des fichiers (SFC /scannow)
 echo   [2] Verification de l'etat Windows (DISM /CheckHealth)
 echo   [3] Restaurer l'etat Windows (DISM /RestoreHealth)
+echo   [9] Analyse d'erreurs avancee (CHKDSK)
+echo.
+echo      === DISQUE DUR ===
+echo   [18] Verifier chiffrement BitLocker / Dechiffrer
 echo.
 echo      === OUTILS RESEAU ===
 echo   [4] Options DNS (Flush/Set/Reset)
@@ -649,7 +652,7 @@ echo   [7] Reparation reseau - Assistant automatique
 echo.
 echo      === NETTOYAGE ^& OPTIMISATION ===
 echo   [8] Nettoyage de disque (cleanmgr)
-echo   [9] Analyse d'erreurs avancee (CHKDSK)
+echo   
 echo  [10] Optimisation systeme (suppression fichiers temp)
 echo  [11] Nettoyage/optimisation avancee du Registre
 echo.
@@ -660,8 +663,8 @@ echo  [14] Generer un rapport systeme complet
 echo  [15] Utilitaire de reinitialisation Windows Update
 echo  [16] Afficher la table de routage [Avance]
 echo.
-echo      === SUPPORT ===
-echo  [17] Informations de contact et support (Discord)
+echo      === MATERIEL ===
+echo  [17] Gestion de l'ecran tactile
 echo.
 echo   [0] Retour au menu principal
 echo.
@@ -684,7 +687,8 @@ if "%sys_choice%"=="13" goto sys_windows_update
 if "%sys_choice%"=="14" goto sys_report
 if "%sys_choice%"=="15" goto sys_reset_windows_update
 if "%sys_choice%"=="16" goto sys_route_table
-if "%sys_choice%"=="17" goto sys_support
+if "%sys_choice%"=="17" goto touch_screen_manager
+if "%sys_choice%"=="18" goto sys_bitlocker_check
 if "%sys_choice%"=="0" goto menu_principal
 echo Choix invalide.
 pause
@@ -1233,20 +1237,8 @@ echo Saisie invalide. Veuillez entrer 1, 2 ou 3.
 pause
 goto sys_route_table
 
-:sys_support
-cls
-echo.
-echo ==================================================
-echo                CONTACT ET SUPPORT
-echo ==================================================
-echo Des questions ou besoin d'aide ?
-echo Vous pouvez me contacter a tout moment.
-echo.
-echo Discord - Utilisateur: Lil_Batti
-echo Serveur de support: https://discord.gg/bCQqKHGxja
-echo.
-echo Appuyez sur ENTREE pour revenir au menu.
-pause >nul
+::sys_support
+rem [SUPPRIME] Ancienne section de support remplacee par la categorie Materiel
 goto system_tools
 
 :sys_windows_update
@@ -1296,6 +1288,48 @@ if not errorlevel 1 (
     net start "%~1" >nul 2>&1
 )
 goto :eof
+
+:sys_bitlocker_check
+cls
+echo ===============================================
+echo     Verification chiffrement BitLocker / Dechiffrage
+echo ===============================================
+echo.
+set /p drive_letter=Lettre du lecteur a verifier (ex: C): 
+if "%drive_letter%"=="" set drive_letter=C
+
+rem Normaliser en ajoutant deux-points si absent
+set "dl=%drive_letter%"
+if not "%dl:~-1%"==":" set "dl=%dl%:"
+
+cls
+echo Verification du statut BitLocker pour %dl% ...
+manage-bde -status %dl%
+
+for /f "tokens=2 delims{:} " %%A in ('manage-bde -status %dl% ^| findstr /I "Conversion Status   Percentage Encrypted   Protection Status   Verrouille   Locked   Protection"') do set bl_state=%%A
+
+rem Detection simple via findstr si le volume est non chiffre
+manage-bde -status %dl% | findstr /I "Percentage Encrypted: 0%" >nul 2>&1
+if %errorlevel%==0 (
+    echo.
+    echo Ce lecteur ne semble pas chiffre. Aucune action necessaire.
+    pause
+    goto system_tools
+)
+
+echo.
+set /p confirm_dec=Le lecteur est chiffre. Voulez-vous lancer le dechiffrement maintenant ? (O/N): 
+if /i "%confirm_dec%"=="O" (
+    echo Lancement du dechiffrement de %dl% ...
+    manage-bde -off %dl%
+    echo Commande envoyee. Le processus peut prendre du temps.
+    pause
+    goto system_tools
+) else (
+    echo Operation annulee.
+    pause
+    goto system_tools
+)
 
 REM ===================================================================
 REM                    SORTIE DU SCRIPT
