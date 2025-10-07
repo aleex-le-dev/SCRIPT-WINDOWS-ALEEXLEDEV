@@ -1,4 +1,7 @@
 @echo off
+setlocal EnableExtensions EnableDelayedExpansion
+if defined MSYSTEM ("%ComSpec%" /c "%~f0" & exit /b)
+if not defined CMDCMDLINE ("%ComSpec%" /c "%~f0" & exit /b)
 chcp 65001 >nul
 title Boite a Scripts Windows - By ALEEXLEDEV (v1.0)
 color 0B
@@ -469,7 +472,7 @@ echo.
 echo Vous allez formater le DISQUE %disk_num%
 echo Format selectionne : %fs_type%
 echo.
-echo ⚠️  TOUTES LES DONNEES SERONT DEFINITIVEMENT EFFACEES ! ⚠️
+echo ATTENTION: TOUTES LES DONNEES SERONT DEFINITIVEMENT EFFACEES !
 echo.
 echo Tapez 'OUI' en majuscules pour confirmer (ou autre pour annuler) :
 set /p confirmation=Confirmation: 
@@ -507,7 +510,7 @@ set result=%errorLevel%
 del "%script_temp%" >nul 2>&1
 
 echo.
-echo ════════════════════════════════════════════════════════════
+echo =============================================================
 if %result% equ 0 (
     echo.
     echo ✅ Formatage termine avec succes !
@@ -524,7 +527,7 @@ if %result% equ 0 (
     echo Verifiez que le disque existe et n'est pas protege.
     echo.
 )
-echo ════════════════════════════════════════════════════════════
+echo =============================================================
 echo.
 
 set /p disk_choice=Voulez-vous formater un autre disque ? (O/N): 
@@ -690,7 +693,6 @@ if "%sys_choice%"=="15" goto sys_report
 if "%sys_choice%"=="16" goto sys_reset_windows_update
 if "%sys_choice%"=="17" goto sys_wifi_passwords
 if "%sys_choice%"=="18" goto touch_screen_manager
-if "%sys_choice%"=="19" goto sys_wifi_passwords
 if "%sys_choice%"=="0" goto menu_principal
 echo Choix invalide.
 pause
@@ -1177,7 +1179,9 @@ pause
 goto system_tools
 
 ::sys_support
-rem 
+cls
+echo Fonction en cours de developpement...
+pause
 goto system_tools
 
 :sys_windows_update
