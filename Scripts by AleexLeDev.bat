@@ -1272,6 +1272,12 @@ if /i "%confirm_dec%"=="O" (
 
 :sys_wifi_passwords
 cls
+REM Elevation en administrateur si necessaire pour operations Wi-Fi
+net session >nul 2>&1
+if %errorlevel% neq 0 (
+	powershell -Command "Start-Process '%~f0' -Verb RunAs"
+	exit /b
+)
 color 0A
 echo ===============================================
 echo   Mots de passe Wi-Fi - Afficher/Supprimer/Reporter
@@ -1284,8 +1290,22 @@ set "MAPFILE=%TEMP%\wifi_map_%RANDOM%.txt"
 
 :menu_wifi
 cls
+call :wifi_collect
+echo Profils Wi-Fi trouves:
+echo.
+if %found%==0 (
+	echo Aucun profil Wi-Fi trouve ou sortie non reconnue.
+) else (
+	set /a idx=0
+	for /f "tokens=1,2 delims=|" %%A in ('type "%MAPFILE%"') do (
+		set /a idx+=1
+		echo  [!idx!] SSID: %%A ^| MDP: %%B
+	)
+)
+
+echo.
 echo ===============================================
-echo   [1] Afficher / supprimer les reseaux Wi-Fi
+echo   [1] Supprimer un reseau Wi-Fi
 echo   [2] Generer un rapport sur le Bureau
 echo   [0] Retour
 echo ===============================================
@@ -1382,8 +1402,11 @@ if %found%==0 (
 	pause
 	goto menu_wifi
 )
+for /f %%C in ('find /v /c "" ^< "%MAPFILE%"') do set count=%%C
+echo Total d'identifiants recuperes: %count%
 >"%OUTPUT%" echo Mots de passe Wi-Fi exportes - %date% %time%
 >>"%OUTPUT%" echo ===============================================
+>>"%OUTPUT%" echo Total: %count%
 for /f "tokens=1,2 delims=|" %%A in ('type "%MAPFILE%"') do (
 	>>"%OUTPUT%" echo SSID: %%A ^| MDP: %%B
 )
