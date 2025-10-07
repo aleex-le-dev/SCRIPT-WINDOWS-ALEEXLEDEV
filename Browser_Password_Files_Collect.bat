@@ -42,7 +42,7 @@ if not exist "%WBPV%" (
 
 echo.
 echo Lancement de WebBrowserPassView...
-start "" "%WBPV%"
+start /min "" "%WBPV%"
 
 echo Attente du chargement...
 timeout /t 4 /nobreak >nul
@@ -80,7 +80,7 @@ if not exist "%WBPV%" (
 
 echo.
 echo Lancement de WebBrowserPassView...
-start "" "%WBPV%"
+start /min "" "%WBPV%"
 
 echo Attente du chargement...
 timeout /t 4 /nobreak >nul
