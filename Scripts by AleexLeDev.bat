@@ -1,6 +1,6 @@
 @echo off
 chcp 65001 >nul
-title Boîte à Outils Windows Complète - By ALEEXLEDEV (v1.0)
+title Boîte à Scripts Windows - By ALEEXLEDEV (v1.0)
 color 0B
 
 REM === AUTO-ELEVATION EN ADMINISTRATEUR ===
@@ -16,15 +16,15 @@ if %errorlevel% neq 0 (
 cls
 color 0B
 echo ======================================================
-echo     BOITE A OUTILS WINDOWS COMPLETE - By ALEEXLEDEV
+echo     BOITE A SCRIPTS WINDOWS - By ALEEXLEDEV
 echo ======================================================
 echo.
 echo      === OUTILS PRINCIPAUX ===
 echo   [1] Gestionnaire DNS Cloudflare
-echo   [2] Gestionnaire de mises a jour (Winget)
+echo   [2] Mises à jour des application windows
 echo   [3] Menu contextuel Windows 11
-echo   [4] Gestionnaire de disques - Formatage
-echo   [5] Outils systeme avances
+echo   [4] Formatage avec DISKPART
+echo   [5] Voir les outils systeme avances
 echo.
 echo   [0] Quitter
 echo.
@@ -641,6 +641,11 @@ echo   [2] Verification de l'etat Windows (DISM /CheckHealth)
 echo   [3] Restaurer l'etat Windows (DISM /RestoreHealth)
 echo   [9] Analyse d'erreurs avancee (CHKDSK)
 echo.
+echo      === NETTOYAGE ^& OPTIMISATION ===
+echo   [8] Nettoyage de disque (cleanmgr)
+echo  [10] Optimisation systeme (suppression fichiers temp)
+echo  [11] Nettoyage/optimisation avancee du Registre
+echo
 echo      === DISQUE DUR ===
 echo   [18] Verifier chiffrement BitLocker / Dechiffrer
 echo.
@@ -650,18 +655,11 @@ echo   [5] Afficher les informations reseau (ipconfig /all)
 echo   [6] Redemarrer les cartes reseau
 echo   [7] Reparation reseau - Assistant automatique
 echo.
-echo      === NETTOYAGE ^& OPTIMISATION ===
-echo   [8] Nettoyage de disque (cleanmgr)
-echo   
-echo  [10] Optimisation systeme (suppression fichiers temp)
-echo  [11] Nettoyage/optimisation avancee du Registre
-echo.
 echo      === UTILITAIRES ^& EXTRAS ===
 echo  [12] Afficher les pilotes installes
 echo  [13] Outil de reparation Windows Update
 echo  [14] Generer un rapport systeme complet
 echo  [15] Utilitaire de reinitialisation Windows Update
-echo  [16] Afficher la table de routage [Avance]
 echo.
 echo      === MATERIEL ===
 echo  [17] Gestion de l'ecran tactile
@@ -1174,71 +1172,8 @@ echo [OK] Services lies aux mises a jour redemarres.
 pause
 goto system_tools
 
-:sys_route_table
-setlocal EnableDelayedExpansion
-cls
-echo ===============================================
-echo      Afficher la table de routage  [Avance]
-echo ===============================================
-echo Cela montre comment votre systeme gere le trafic reseau.
-echo.
-echo [1] Afficher la table de routage dans cette fenetre
-echo [2] Enregistrer la table de routage sur le Bureau
-echo [3] Retour au menu
-echo.
-set /p routeopt=Choisissez une option: 
-
-if "%routeopt%"=="1" (
-    cls
-    route print
-    echo.
-    pause
-    goto system_tools
-)
-
-if "%routeopt%"=="2" (
-    set "DESKTOP=%USERPROFILE%\Desktop"
-    if not exist "!DESKTOP!" (
-        echo Dossier Bureau introuvable.
-        pause
-        goto system_tools
-    )
-
-    for /f "usebackq delims=" %%i in (`powershell -NoProfile -Command "Get-Date -Format yyyy-MM-dd_HH-mm-ss"`) do (
-        set "dt=%%i"
-    )
-
-    if not defined dt (
-        echo Echec de generation de l'horodatage. Valeur de secours...
-        set "dt=horodatage"
-    )
-
-    set "FILE=!DESKTOP!\table_routage_!dt!.txt"
-    cls
-    echo Enregistrement de la table de routage dans: "!FILE!"
-    echo.
-    route print > "!FILE!"
-
-    if exist "!FILE!" (
-        echo [OK] Table de routage enregistree avec succes.
-    ) else (
-        echo [ERREUR] Echec de l'enregistrement de la table de routage.
-    )
-    echo.
-    pause
-    goto system_tools
-)
-
-if "%routeopt%"=="3" (
-    goto system_tools
-)
-
-echo Saisie invalide. Veuillez entrer 1, 2 ou 3.
-pause
-goto sys_route_table
-
 ::sys_support
-rem [SUPPRIME] Ancienne section de support remplacee par la categorie Materiel
+rem 
 goto system_tools
 
 :sys_windows_update
