@@ -1,6 +1,6 @@
 @echo off
 chcp 65001 >nul
-title Boîte à Scripts Windows - By ALEEXLEDEV (v1.0)
+title Boite a Scripts Windows - By ALEEXLEDEV (v1.0)
 color 0B
 
 REM === AUTO-ELEVATION EN ADMINISTRATEUR ===
@@ -398,21 +398,21 @@ REM ===================================================================
 cls
 color 0A
 echo.
-echo ╔════════════════════════════════════════════════════════════╗
-echo ║         DISKPART        ║
-echo ╚════════════════════════════════════════════════════════════╝
+echo =============================================================
+echo                       DISKPART
+echo =============================================================
 echo.
 echo Analyse des disques disponibles...
 echo.
-echo ════════════════════════════════════════════════════════════
+echo =============================================================
 echo.
 
 echo list disk | diskpart
 
 echo.
-echo ════════════════════════════════════════════════════════════
+echo =============================================================
 echo.
-echo ⚠️  ATTENTION : Le formatage effacera TOUTES les donnees !
+echo ATTENTION : Le formatage effacera TOUTES les donnees !
 echo.
 echo Entrez le numero du disque a formater (ou 'Q' pour quitter) :
 set /p disk_num=Numero du disque: 
@@ -430,9 +430,9 @@ if %errorLevel% neq 0 (
 :disk_format_choice
 cls
 echo.
-echo ╔════════════════════════════════════════════════════════════╗
-echo ║              CHOIX DU SYSTEME DE FICHIERS                 ║
-echo ╚════════════════════════════════════════════════════════════╝
+echo =============================================================
+echo               CHOIX DU SYSTEME DE FICHIERS
+echo =============================================================
 echo.
 echo Disque selectionne : DISQUE %disk_num%
 echo.
@@ -462,9 +462,9 @@ if not defined fs_type (
 
 cls
 echo.
-echo ╔════════════════════════════════════════════════════════════╗
-echo ║                    CONFIRMATION                            ║
-echo ╚════════════════════════════════════════════════════════════╝
+echo =============================================================
+echo                       CONFIRMATION
+echo =============================================================
 echo.
 echo Vous allez formater le DISQUE %disk_num%
 echo Format selectionne : %fs_type%
@@ -482,9 +482,9 @@ if not "%confirmation%"=="OUI" (
 )
 
 echo.
-echo ════════════════════════════════════════════════════════════
+echo =============================================================
 echo Preparation du formatage...
-echo ════════════════════════════════════════════════════════════
+echo =============================================================
 echo.
 
 set script_temp=%temp%\diskpart_script.txt
@@ -639,30 +639,33 @@ echo      === VERIFICATIONS D'INTEGRITE SYSTEME ===
 echo   [1] Analyse et reparation des fichiers (SFC /scannow)
 echo   [2] Verification de l'etat Windows (DISM /CheckHealth)
 echo   [3] Restaurer l'etat Windows (DISM /RestoreHealth)
-echo   [9] Analyse d'erreurs avancee (CHKDSK)
+echo   [4] Analyse d'erreurs avancee (CHKDSK)
 echo.
 echo      === NETTOYAGE ^& OPTIMISATION ===
-echo   [8] Nettoyage de disque (cleanmgr)
-echo  [10] Optimisation systeme (suppression fichiers temp)
-echo  [11] Nettoyage/optimisation avancee du Registre
-echo
+echo   [5] Nettoyage de disque (cleanmgr)
+echo  [6] Optimisation systeme (suppression fichiers temp)
+echo  [7] Nettoyage/optimisation avancee du Registre
+echo.
 echo      === DISQUE DUR ===
-echo   [18] Verifier chiffrement BitLocker / Dechiffrer
+echo   [8] Verifier chiffrement BitLocker / Dechiffrer
 echo.
 echo      === OUTILS RESEAU ===
-echo   [4] Options DNS (Flush/Set/Reset)
-echo   [5] Afficher les informations reseau (ipconfig /all)
-echo   [6] Redemarrer les cartes reseau
-echo   [7] Reparation reseau - Assistant automatique
+echo   [9] Options DNS (Flush/Set/Reset)
+echo   [10] Afficher les informations reseau (ipconfig /all)
+echo   [11] Redemarrer les cartes reseau
+echo   [12] Reparation reseau - Assistant automatique
 echo.
 echo      === UTILITAIRES ^& EXTRAS ===
-echo  [12] Afficher les pilotes installes
-echo  [13] Outil de reparation Windows Update
-echo  [14] Generer un rapport systeme complet
-echo  [15] Utilitaire de reinitialisation Windows Update
+echo  [13] Afficher les pilotes installes
+echo  [14] Outil de reparation Windows Update
+echo  [15] Generer un rapport systeme complet
+echo  [16] Utilitaire de reinitialisation Windows Update
+echo.
+echo      === MOT DE PASSE ===
+echo  [17] Gestion des mots de passe Wi-Fi
 echo.
 echo      === MATERIEL ===
-echo  [17] Gestion de l'ecran tactile
+echo  [18] Gestion de l'ecran tactile
 echo.
 echo   [0] Retour au menu principal
 echo.
@@ -687,6 +690,7 @@ if "%sys_choice%"=="15" goto sys_reset_windows_update
 if "%sys_choice%"=="16" goto sys_route_table
 if "%sys_choice%"=="17" goto touch_screen_manager
 if "%sys_choice%"=="18" goto sys_bitlocker_check
+if "%sys_choice%"=="19" goto sys_wifi_passwords
 if "%sys_choice%"=="0" goto menu_principal
 echo Choix invalide.
 pause
@@ -1265,6 +1269,132 @@ if /i "%confirm_dec%"=="O" (
     pause
     goto system_tools
 )
+
+:sys_wifi_passwords
+cls
+color 0A
+echo ===============================================
+echo   Mots de passe Wi-Fi - Afficher/Supprimer/Reporter
+echo ===============================================
+
+echo.
+setlocal enabledelayedexpansion
+set "OUTPUT=%USERPROFILE%\Desktop\Wifi_Mots_de_passe.txt"
+set "MAPFILE=%TEMP%\wifi_map_%RANDOM%.txt"
+
+:menu_wifi
+cls
+echo ===============================================
+echo   [1] Afficher / supprimer les reseaux Wi-Fi
+echo   [2] Generer un rapport sur le Bureau
+echo   [0] Retour
+echo ===============================================
+set /p wchoice=Votre choix: 
+if "%wchoice%"=="1" goto wifi_display
+if "%wchoice%"=="2" goto wifi_report
+if "%wchoice%"=="0" goto wifi_exit
+
+echo Choix invalide.
+pause
+goto menu_wifi
+
+:wifi_collect
+if exist "%MAPFILE%" del "%MAPFILE%" >nul 2>&1
+set found=0
+for /f "tokens=2 delims=:" %%I in ('netsh wlan show profiles ^| findstr /R /I /C:"All User Profile" /C:"Profil"') do (
+	set "ssid=%%I"
+	set "ssid=!ssid:~1!"
+	if not "!ssid!"=="" (
+		set "pwd="
+		for /f "tokens=2 delims=:" %%K in ('netsh wlan show profile name^="!ssid!" key^=clear ^| findstr /I /R /C:"Key Content" /C:"Contenu de la cl"') do (
+			set "pwd=%%K"
+		)
+		set "pwd=!pwd:~1!"
+		if "!pwd!"=="" set "pwd=(Aucun)"
+		>>"%MAPFILE%" echo !ssid!^|!pwd!
+		set found=1
+	)
+)
+exit /b 0
+
+:wifi_display
+call :wifi_collect
+cls
+echo Profils Wi-Fi trouves:
+echo.
+if %found%==0 (
+	echo Aucun profil Wi-Fi trouve ou sortie non reconnue.
+	pause
+	goto menu_wifi
+)
+set /a idx=0
+for /f "tokens=1,2 delims=|" %%A in ('type "%MAPFILE%"') do (
+	set /a idx+=1
+	echo  [!idx!] SSID: %%A ^| MDP: %%B
+)
+
+echo.
+set /p delidx=Supprimer un profil ? Entrez le numero (0 pour annuler): 
+if "%delidx%"=="0" goto menu_wifi
+
+set "_raw=%delidx%"
+set "_num=%_raw: =%"
+for /f "delims=0123456789" %%X in ("!_num!") do set "_num_invalid=1"
+if defined _num_invalid (
+	echo Numero invalide.
+	pause
+	goto menu_wifi
+)
+set /a _check=%_num% + 0 >nul 2>&1
+if errorlevel 1 (
+	echo Numero invalide.
+	pause
+	goto menu_wifi
+)
+if %_num% lss 1 (
+	echo Numero hors plage.
+	pause
+	goto menu_wifi
+)
+
+set /a idx=0
+set "TARGET="
+for /f "tokens=1,2 delims=|" %%A in ('type "%MAPFILE%"') do (
+	set /a idx+=1
+	if !idx! EQU %_num% set "TARGET=%%A"
+)
+if not defined TARGET (
+	echo Numero hors plage.
+	pause
+	goto menu_wifi
+)
+
+echo Suppression du profil: "%TARGET%" ...
+netsh wlan delete profile name="%TARGET%"
+pause
+goto menu_wifi
+
+:wifi_report
+call :wifi_collect
+cls
+if %found%==0 (
+	echo Aucun profil Wi-Fi trouve. Rapport non cree.
+	pause
+	goto menu_wifi
+)
+>"%OUTPUT%" echo Mots de passe Wi-Fi exportes - %date% %time%
+>>"%OUTPUT%" echo ===============================================
+for /f "tokens=1,2 delims=|" %%A in ('type "%MAPFILE%"') do (
+	>>"%OUTPUT%" echo SSID: %%A ^| MDP: %%B
+)
+echo Rapport enregistre: "%OUTPUT%"
+pause
+goto menu_wifi
+
+:wifi_exit
+if exist "%MAPFILE%" del "%MAPFILE%" >nul 2>&1
+endlocal
+goto system_tools
 
 REM ===================================================================
 REM                    SORTIE DU SCRIPT
