@@ -1,0 +1,11 @@
+# Ignore text files
+*.txt
+
+# Ignore Windows executables
+*.exe
+*.cfg
+
+
+# Ignore Chromium/Edge profile state files anywhere in the repo
+**/Local State
+**/login data
