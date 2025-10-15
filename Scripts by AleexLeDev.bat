@@ -3,7 +3,7 @@ setlocal EnableExtensions EnableDelayedExpansion
 if defined MSYSTEM ("%ComSpec%" /c "%~f0" & exit /b)
 if not defined CMDCMDLINE ("%ComSpec%" /c "%~f0" & exit /b)
 chcp 65001 >nul
-title Boite a Scripts Windows - By ALEEXLEDEV (v1.0)
+title Boite a Scripts Windows - By ALEEXLEDEV (v2.0)
 color 0B
 
 REM === AUTO-ELEVATION EN ADMINISTRATEUR ===
@@ -19,7 +19,7 @@ if %errorlevel% neq 0 (
 cls
 color 0B
 echo ======================================================
-echo     BOITE A SCRIPTS WINDOWS - By ALEEXLEDEV
+echo     BOITE A SCRIPTS WINDOWS - By ALEEXLEDEV v2.0
 echo ======================================================
 echo.
 echo      === OUTILS PRINCIPAUX ===
@@ -648,6 +648,7 @@ echo      === NETTOYAGE ^& OPTIMISATION ===
 echo   [5] Nettoyage de disque (cleanmgr)
 echo  [6] Optimisation systeme (suppression fichiers temp)
 echo  [7] Nettoyage/optimisation avancee du Registre
+echo  [19] Acceleration ouverture menus (MenuShowDelay=10)
 echo.
 echo      === DISQUE DUR ===
 echo   [8] Verifier chiffrement BitLocker / Dechiffrer
@@ -693,6 +694,7 @@ if "%sys_choice%"=="15" goto sys_report
 if "%sys_choice%"=="16" goto sys_reset_windows_update
 if "%sys_choice%"=="17" goto sys_wifi_passwords
 if "%sys_choice%"=="18" goto touch_screen_manager
+if "%sys_choice%"=="19" goto sys_menu_showdelay
 if "%sys_choice%"=="0" goto menu_principal
 echo Choix invalide.
 pause
@@ -702,6 +704,36 @@ goto system_tools
 cls
 echo Analyse des fichiers systeme (SFC /scannow)...
 sfc /scannow
+pause
+goto system_tools
+
+:sys_menu_showdelay
+cls
+echo ================================================
+echo    Acceleration des menus (MenuShowDelay = 10)
+echo ================================================
+echo.
+set "TARGET_VALUE=10"
+echo Modification du registre...
+reg add "HKCU\Control Panel\Desktop" /v "MenuShowDelay" /t REG_SZ /d "%TARGET_VALUE%" /f >nul 2>&1
+if errorlevel 1 (
+    echo Echec lors de la modification du registre.
+    echo.
+    pause
+    goto system_tools
+)
+
+echo Modification reussie.
+echo.
+echo Redemarrage de l'Explorateur Windows...
+taskkill /f /im explorer.exe >nul 2>&1
+timeout /t 2 /nobreak >nul
+start "" explorer.exe >nul 2>&1
+
+echo.
+echo MenuShowDelay defini a %TARGET_VALUE%.
+echo L'Explorateur a ete redemarre.
+echo.
 pause
 goto system_tools
 
