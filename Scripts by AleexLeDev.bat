@@ -24,7 +24,7 @@ echo ======================================================
 echo.
 echo      === OUTILS PRINCIPAUX ===
 echo   [1] Gestionnaire DNS Cloudflare
-echo   [2] Mises à jour des application windows
+echo   [2] Mises à jour des application
 echo   [3] Menu contextuel Windows 11
 echo   [4] Formatage avec DISKPART
 echo   [5] Voir les outils systeme avances
@@ -254,11 +254,14 @@ goto :eof
 REM ===================================================================
 REM                   WINGET - Mises à jour des application windows
 REM ===================================================================
+@echo off
+title Gestionnaire Winget + Pilotes
+color 0A
+
 :winget_manager
 cls
-color 0A
 echo ================================================
-echo     Mises à jour des application windows
+echo     Mises a jour des apps Windows
 echo ================================================
 echo.
 
@@ -270,14 +273,17 @@ if errorlevel 1 (
     goto menu_principal
 )
 
+echo.
 echo   [1] Mettre a jour une application (liste et choix)
 echo   [2] Mettre a jour toutes les applications
+echo   [3] Voir les application facultatives (Windows Update)
 echo   [0] Retour au menu principal
 echo.
 set /p winget_choice=Choisissez une option: 
 
 if "%winget_choice%"=="1" goto update_single
 if "%winget_choice%"=="2" goto update_all
+if "%winget_choice%"=="3" goto check_drivers
 if "%winget_choice%"=="0" goto menu_principal
 echo Option invalide.
 pause
@@ -321,9 +327,26 @@ echo Toutes les mises a jour ont ete appliquees.
 pause
 goto winget_manager
 
-REM ===================================================================
+:check_drivers
+cls
+echo ================================================
+echo     VERIFICATION DES PILOTES DISPONIBLES
+echo ================================================
+echo.
+echo Ouverture de Windows Update - Mises a jour facultatives...
+echo.
+start ms-settings:windowsupdate-optionalupdates
+
+echo.
+echo Windows Update a ete ouvert.
+echo Les pilotes disponibles s'affichent dans "Mises a jour facultatives".
+echo.
+pause
+goto winget_manager
+
+REM =================================================================
 REM                    MENU CONTEXTUEL WINDOWS 11
-REM ===================================================================
+REM =================================================================
 :context_menu
 cls
 color 0E
@@ -343,6 +366,30 @@ if "%ctx_choice%"=="0" goto menu_principal
 echo Choix invalide.
 pause
 goto context_menu
+
+:activate_classic
+echo Activation du menu classique...
+reg add "HKCU\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\InprocServer32" /f /ve
+echo Redemarrage de l'explorateur...
+taskkill /f /im explorer.exe
+start explorer.exe
+echo Menu classique active.
+pause
+goto context_menu
+
+:restore_modern
+echo Restauration du menu moderne...
+reg delete "HKCU\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}" /f
+echo Redemarrage de l'explorateur...
+taskkill /f /im explorer.exe
+start explorer.exe
+echo Menu moderne restaure.
+pause
+goto context_menu
+
+:menu_principal
+REM Retour au menu principal de votre script
+exit /b
 
 :activate_classic
 cls
