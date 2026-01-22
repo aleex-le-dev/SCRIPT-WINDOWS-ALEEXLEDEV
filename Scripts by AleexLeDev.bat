@@ -9,8 +9,8 @@ color 0B
 REM === AUTO-ELEVATION EN ADMINISTRATEUR ===
 net session >nul 2>&1
 if %errorlevel% neq 0 (
-    echo Ce script requiert des privileges administrateur.
-    echo Demande d'elevation en cours...
+    echo Cette boite à script doit être lancé en mode administrateur.
+    echo Demande des droits en cours...
     powershell -Command "Start-Process '%~f0' -Verb RunAs"
     exit /b
 )
@@ -24,7 +24,7 @@ echo ======================================================
 echo.
 echo      === OUTILS PRINCIPAUX ===
 echo   [1] Gestionnaire DNS Cloudflare
-echo   [2] Mises à jour des application
+echo   [2] Mises à jour des applications
 echo   [3] Menu contextuel Windows 11
 echo   [4] Formatage avec DISKPART
 echo   [5] Voir les outils systeme avances
