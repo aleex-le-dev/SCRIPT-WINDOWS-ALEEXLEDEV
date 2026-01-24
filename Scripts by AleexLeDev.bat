@@ -450,29 +450,7 @@ echo Choix invalide.
 pause
 goto context_menu
 
-:activate_classic
-echo Activation du menu classique...
-reg add "HKCU\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\InprocServer32" /f /ve
-echo Redemarrage de l'explorateur...
-taskkill /f /im explorer.exe
-start explorer.exe
-echo Menu classique active.
-pause
-goto context_menu
 
-:restore_modern
-echo Restauration du menu moderne...
-reg delete "HKCU\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}" /f
-echo Redemarrage de l'explorateur...
-taskkill /f /im explorer.exe
-start explorer.exe
-echo Menu moderne restaure.
-pause
-goto context_menu
-
-:menu_principal
-REM Retour au menu principal de votre script
-exit /b
 
 :activate_classic
 cls
