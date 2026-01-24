@@ -1,19 +1,19 @@
 @echo off
 setlocal EnableExtensions EnableDelayedExpansion
-if defined MSYSTEM ("%ComSpec%" /c "%~f0" & exit /b)
-if not defined CMDCMDLINE ("%ComSpec%" /c "%~f0" & exit /b)
-chcp 65001 >nul
-title Boite a Scripts Windows - By ALEEXLEDEV (v2.0)
-color 0B
 
 REM === AUTO-ELEVATION EN ADMINISTRATEUR ===
 net session >nul 2>&1
 if %errorlevel% neq 0 (
-    echo Cette boite à script doit être lancé en mode administrateur.
+    echo.
+    echo Cette boite a script doit etre lancee en mode administrateur.
     echo Demande des droits en cours...
-    powershell -Command "Start-Process '%~f0' -Verb RunAs"
+    powershell.exe -Command "Start-Process -FilePath '%~f0' -Verb RunAs"
     exit /b
 )
+
+cd /d "%~dp0"
+title Boite a Scripts Windows - By ALEEXLEDEV (v2.0)
+color 0B
 
 :menu_principal
 cls
@@ -23,7 +23,7 @@ echo     BOITE A SCRIPTS WINDOWS - By ALEEXLEDEV v2.0
 echo ======================================================
 echo.
 echo      === OUTILS PRINCIPAUX ===
-echo   [1] Gestionnaire DNS Cloudflare
+echo   [1] Gestionnaire DNS (Google / Cloudflare)
 echo   [2] Mises à jour des applications
 echo   [3] Menu contextuel Windows 11
 echo   [4] Formatage avec DISKPART
@@ -45,30 +45,125 @@ pause
 goto menu_principal
 
 REM ===================================================================
-REM                    GESTIONNAIRE DNS CLOUDFLARE
+REM                    GESTIONNAIRE DNS (GOOGLE / CLOUDFLARE)
 REM ===================================================================
 :dns_manager
 cls
 color 0B
 echo ================================================
-echo     GESTIONNAIRE DNS CLOUDFLARE
+echo     GESTIONNAIRE DNS (GOOGLE / CLOUDFLARE)
 echo ================================================
 echo.
-echo   [1] Installation des DNS Cloudflare (IPv4 + IPv6)
-echo   [2] Installation des DNS Cloudflare (IPv4 seulement)
-echo   [3] Restauration des DNS par defaut
-echo   [4] Affichage de la configuration actuelle
+echo   [1] Installation des DNS Google (IPv4 + IPv6)
+echo   [2] Installation des DNS Google (IPv4 seulement)
+echo   [3] Installation des DNS Cloudflare (IPv4 + IPv6)
+echo   [4] Installation des DNS Cloudflare (IPv4 seulement)
+echo   [5] Restauration des DNS par defaut
+echo   [6] Affichage de la configuration actuelle
 echo   [0] Retour au menu principal
 echo.
 echo ================================================
 set /p dns_choice=Choisissez une option: 
 
-if "%dns_choice%"=="1" goto install_cloudflare_full
-if "%dns_choice%"=="2" goto install_cloudflare_ipv4
-if "%dns_choice%"=="3" goto restore_dns
-if "%dns_choice%"=="4" goto show_dns_config
+if "%dns_choice%"=="1" goto install_google_full
+if "%dns_choice%"=="2" goto install_google_ipv4
+if "%dns_choice%"=="3" goto install_cloudflare_full
+if "%dns_choice%"=="4" goto install_cloudflare_ipv4
+if "%dns_choice%"=="5" goto restore_dns
+if "%dns_choice%"=="6" goto show_dns_config
 if "%dns_choice%"=="0" goto menu_principal
 echo Option invalide.
+pause
+goto dns_manager
+
+:install_google_full
+cls
+echo ================================================
+echo     INSTALLATION DNS GOOGLE (IPv4 + IPv6)
+echo ================================================
+echo.
+
+call :get_interface
+if "%interface%"=="" (
+    echo ERREUR: Aucune interface reseau active trouvee
+    pause
+    goto dns_manager
+)
+
+echo Interface reseau detectee: %interface%
+echo.
+
+echo Sauvegarde de la configuration DNS actuelle...
+if not exist "dns_backups" mkdir dns_backups
+netsh interface ip show dns "%interface%" > "dns_backups\dns_backup_%date:~-4,4%%date:~-10,2%%date:~-7,2%_%time:~0,2%%time:~3,2%.txt"
+netsh interface ipv6 show dns "%interface%" >> "dns_backups\dns_backup_%date:~-4,4%%date:~-10,2%%date:~-7,2%_%time:~0,2%%time:~3,2%.txt"
+echo Sauvegarde creee dans dns_backups
+echo.
+
+echo Configuration des DNS Google IPv4...
+netsh interface ip set dns "%interface%" static 8.8.8.8
+netsh interface ip add dns "%interface%" 8.8.4.4 index=2
+
+echo Configuration des DNS Google IPv6...
+netsh interface ipv6 set dns "%interface%" static 2001:4860:4860::8888
+netsh interface ipv6 add dns "%interface%" 2001:4860:4860::8844 index=2
+
+echo Vidage du cache DNS...
+ipconfig /flushdns
+
+echo.
+echo ================================================
+echo     INSTALLATION TERMINEE AVEC SUCCES !
+echo ================================================
+echo.
+echo DNS Google configures:
+echo   IPv4 - Primaire: 8.8.8.8
+echo   IPv4 - Secondaire: 8.8.4.4
+echo   IPv6 - Primaire: 2001:4860:4860::8888
+echo   IPv6 - Secondaire: 2001:4860:4860::8844
+echo.
+pause
+goto dns_manager
+
+:install_google_ipv4
+cls
+echo ================================================
+echo     INSTALLATION DNS GOOGLE (IPv4 seulement)
+echo ================================================
+echo.
+
+call :get_interface
+if "%interface%"=="" (
+    echo ERREUR: Aucune interface reseau active trouvee
+    pause
+    goto dns_manager
+)
+
+echo Interface reseau detectee: %interface%
+echo.
+
+echo Sauvegarde de la configuration DNS actuelle...
+if not exist "dns_backups" mkdir dns_backups
+netsh interface ip show dns "%interface%" > "dns_backups\dns_backup_%date:~-4,4%%date:~-10,2%%date:~-7,2%_%time:~0,2%%time:~3,2%.txt"
+echo Sauvegarde creee dans dns_backups
+echo.
+
+echo Configuration des DNS Google IPv4...
+netsh interface ip set dns "%interface%" static 8.8.8.8
+netsh interface ip add dns "%interface%" 8.8.4.4 index=2
+
+echo Vidage du cache DNS...
+ipconfig /flushdns
+
+echo.
+echo ================================================
+echo     INSTALLATION TERMINEE AVEC SUCCES !
+echo ================================================
+echo.
+echo DNS Google configures:
+echo   IPv4 - Primaire: 8.8.8.8
+echo   IPv4 - Secondaire: 8.8.4.4
+echo.
 pause
 goto dns_manager
 
@@ -469,7 +564,7 @@ set /p disk_num=Numero du disque:
 
 if /i "%disk_num%"=="Q" goto menu_principal
 
-echo %disk_num%| findstr /r "^[0-9][0-9]*$" >nul
+echo %disk_num%| findstr.exe /r "^[0-9][0-9]*$" >nul
 if %errorLevel% neq 0 (
     echo.
     echo ❌ Erreur : Veuillez entrer un numero valide !
@@ -624,7 +719,7 @@ net start HidServ >nul 2>&1
 
 echo.
 echo Desactivation/Reactivation du peripherique tactile via PowerShell...
-powershell -Command "& { $touchDevices = Get-PnpDevice | Where-Object { ($_.FriendlyName -like '*HID*' -and ($_.FriendlyName -like '*tactile*' -or $_.FriendlyName -like '*touch*')) -or ($_.Class -eq 'HIDClass' -and $_.FriendlyName -like '*ecran*') }; if ($touchDevices) { foreach ($device in $touchDevices) { Write-Host 'Desactivation:' $device.FriendlyName; Disable-PnpDevice -InstanceId $device.InstanceId -Confirm:$false }; Start-Sleep -Seconds 2; foreach ($device in $touchDevices) { Write-Host 'Reactivation:' $device.FriendlyName; Enable-PnpDevice -InstanceId $device.InstanceId -Confirm:$false } } else { Write-Host 'Aucun peripherique tactile trouve' } }"
+powershell.exe -Command "& { $touchDevices = Get-PnpDevice | Where-Object { ($_.FriendlyName -like '*HID*' -and ($_.FriendlyName -like '*tactile*' -or $_.FriendlyName -like '*touch*')) -or ($_.Class -eq 'HIDClass' -and $_.FriendlyName -like '*ecran*') }; if ($touchDevices) { foreach ($device in $touchDevices) { Write-Host 'Desactivation:' $device.FriendlyName; Disable-PnpDevice -InstanceId $device.InstanceId -Confirm:$false }; Start-Sleep -Seconds 2; foreach ($device in $touchDevices) { Write-Host 'Reactivation:' $device.FriendlyName; Enable-PnpDevice -InstanceId $device.InstanceId -Confirm:$false } } else { Write-Host 'Aucun peripherique tactile trouve' } }"
 
 echo.
 echo Redemarrage du processus dwm.exe (Desktop Window Manager)...
@@ -648,7 +743,7 @@ echo Arret du service TabletInputService...
 net stop TabletInputService >nul 2>&1
 
 echo Desactivation du peripherique tactile...
-powershell -Command "& { $touchDevices = Get-PnpDevice | Where-Object { ($_.FriendlyName -like '*HID*' -and ($_.FriendlyName -like '*tactile*' -or $_.FriendlyName -like '*touch*')) -or ($_.Class -eq 'HIDClass' -and $_.FriendlyName -like '*ecran*') }; if ($touchDevices) { foreach ($device in $touchDevices) { Write-Host 'Desactivation:' $device.FriendlyName; Disable-PnpDevice -InstanceId $device.InstanceId -Confirm:$false } } else { Write-Host 'Aucun peripherique tactile trouve' } }"
+powershell.exe -Command "& { $touchDevices = Get-PnpDevice | Where-Object { ($_.FriendlyName -like '*HID*' -and ($_.FriendlyName -like '*tactile*' -or $_.FriendlyName -like '*touch*')) -or ($_.Class -eq 'HIDClass' -and $_.FriendlyName -like '*ecran*') }; if ($touchDevices) { foreach ($device in $touchDevices) { Write-Host 'Desactivation:' $device.FriendlyName; Disable-PnpDevice -InstanceId $device.InstanceId -Confirm:$false } } else { Write-Host 'Aucun peripherique tactile trouve' } }"
 
 echo.
 echo === Pilote tactile desactive ===
@@ -664,7 +759,7 @@ echo === Activation du pilote tactile ===
 echo.
 
 echo Activation du peripherique tactile...
-powershell -Command "& { $touchDevices = Get-PnpDevice | Where-Object { ($_.FriendlyName -like '*HID*' -and ($_.FriendlyName -like '*tactile*' -or $_.FriendlyName -like '*touch*')) -or ($_.Class -eq 'HIDClass' -and $_.FriendlyName -like '*ecran*') }; if ($touchDevices) { foreach ($device in $touchDevices) { Write-Host 'Activation:' $device.FriendlyName; Enable-PnpDevice -InstanceId $device.InstanceId -Confirm:$false } } else { Write-Host 'Aucun peripherique tactile trouve' } }"
+powershell.exe -Command "& { $touchDevices = Get-PnpDevice | Where-Object { ($_.FriendlyName -like '*HID*' -and ($_.FriendlyName -like '*tactile*' -or $_.FriendlyName -like '*touch*')) -or ($_.Class -eq 'HIDClass' -and $_.FriendlyName -like '*ecran*') }; if ($touchDevices) { foreach ($device in $touchDevices) { Write-Host 'Activation:' $device.FriendlyName; Enable-PnpDevice -InstanceId $device.InstanceId -Confirm:$false } } else { Write-Host 'Aucun peripherique tactile trouve' } }"
 
 echo Demarrage du service TabletInputService...
 net start TabletInputService >nul 2>&1
@@ -804,19 +899,11 @@ echo ======================================================
 echo Vidage du cache DNS...
 ipconfig /flushdns
 echo ======================================================
-echo [1] Utiliser DNS Google (8.8.8.8 / 8.8.4.4)
-echo [2] Utiliser DNS Cloudflare (1.1.1.1 / 1.0.0.1)
-echo [3] Restaurer les DNS d'origine
-echo [4] Saisir vos DNS personnalises
-echo [5] Retour au menu
+echo [1] Retour au menu
 echo ======================================================
 set /p dns_opt_choice=Entrez votre choix: 
 
-if "%dns_opt_choice%"=="1" goto set_google_dns
-if "%dns_opt_choice%"=="2" goto set_cloudflare_dns
-if "%dns_opt_choice%"=="3" goto restore_dns_default
-if "%dns_opt_choice%"=="4" goto custom_dns
-if "%dns_opt_choice%"=="5" goto system_tools
+if "%dns_opt_choice%"=="1" goto system_tools
 
 echo Choix invalide, veuillez recommencer.
 pause
@@ -978,7 +1065,7 @@ echo Un redemarrage est recommande pour un effet complet.
 echo.
 set /p restart_net=Souhaitez-vous redemarrer maintenant ? (O/N): 
 if /i "%restart_net%"=="O" (
-    shutdown /r /t 5
+    shutdown.exe /r /t 5 >nul 2>&1
 ) else (
     pause
     goto system_tools
@@ -997,12 +1084,12 @@ echo ===============================================
 echo Analyse avancee des erreurs sur tous les lecteurs...
 echo ===============================================
 
-for /f "delims=" %%d in ('powershell -NoProfile -Command ^
+for /f "delims=" %%d in ('powershell.exe -NoProfile -Command ^
   "Get-PSDrive -PSProvider FileSystem | Where-Object { $_.Free -ne $null } | ForEach-Object { $_.Name + ':' }" 
 ') do (
     echo.
     echo Analyse du lecteur %%d ...
-    chkdsk %%d /f /r /x
+    chkdsk.exe %%d /f /r /x
 )
 
 echo.
@@ -1183,11 +1270,11 @@ cls
 echo Generation de rapports systeme separes...
 echo.
 
-for /f "usebackq delims=" %%d in (`powershell -NoProfile -Command "$env:USERPROFILE + '\Desktop'"`) do (
+for /f "usebackq delims=" %%d in (`powershell.exe -NoProfile -Command "$env:USERPROFILE + '\Desktop'"`) do (
     set "DESKTOP=%%d"
 )
 
-for /f "usebackq delims=" %%t in (`powershell -NoProfile -Command "Get-Date -Format yyyy-MM-dd"`) do (
+for /f "usebackq delims=" %%t in (`powershell.exe -NoProfile -Command "Get-Date -Format yyyy-MM-dd"`) do (
     set "DATESTR=%%t"
 )
 
