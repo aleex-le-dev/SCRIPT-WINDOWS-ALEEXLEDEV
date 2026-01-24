@@ -24,7 +24,7 @@ echo ======================================================
 echo.
 echo      === OUTILS PRINCIPAUX ===
 echo   [1] Gestionnaire DNS (Google / Cloudflare)
-echo   [2] Mises à jour des applications
+echo   [2] Mises a jour des applications
 echo   [3] Menu contextuel Windows 11
 echo   [4] Formatage avec DISKPART
 echo   [5] Voir les outils systeme avances
