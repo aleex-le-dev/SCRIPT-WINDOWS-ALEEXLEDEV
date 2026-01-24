@@ -319,26 +319,14 @@ goto dns_manager
 
 :get_interface
 set "interface="
+set "fallback_interface="
 for /f "skip=3 tokens=1,2,3*" %%a in ('netsh interface show interface') do (
-    if /i "%%b"=="Connecté" (
-        set "interface=%%d"
-        goto :interface_found
-    )
-    if /i "%%b"=="Connected" (
-        set "interface=%%d"
-        goto :interface_found
-    )
+    if /i "%%b"=="Connecté" set "interface=%%d" & goto :interface_found
+    if /i "%%b"=="Connected" set "interface=%%d" & goto :interface_found
+    if /i "%%c"=="Dédié" if not defined fallback_interface set "fallback_interface=%%d"
+    if /i "%%c"=="Dedicated" if not defined fallback_interface set "fallback_interface=%%d"
 )
-for /f "skip=3 tokens=1,2,3*" %%a in ('netsh interface show interface') do (
-    if /i "%%c"=="Dédié" (
-        set "interface=%%d"
-        goto :interface_found
-    )
-    if /i "%%c"=="Dedicated" (
-        set "interface=%%d"
-        goto :interface_found
-    )
-)
+if not defined interface set "interface=%fallback_interface%"
 :interface_found
 if defined interface (
     set "interface=%interface: =%"
@@ -568,7 +556,7 @@ echo %disk_num%| findstr.exe /r "^[0-9][0-9]*$" >nul
 if %errorLevel% neq 0 (
     echo.
     echo ❌ Erreur : Veuillez entrer un numero valide !
-    timeout /t 3 >nul
+    timeout /t 1 >nul
     goto disk_manager
 )
 
@@ -709,12 +697,12 @@ echo.
 
 echo Redemarrage du service TabletInputService...
 net stop TabletInputService >nul 2>&1
-timeout /t 2 /nobreak >nul
+timeout /t 1 /nobreak >nul
 net start TabletInputService >nul 2>&1
 
 echo Redemarrage du service HidServ...
 net stop HidServ >nul 2>&1
-timeout /t 2 /nobreak >nul
+timeout /t 1 /nobreak >nul
 net start HidServ >nul 2>&1
 
 echo.
@@ -1026,15 +1014,20 @@ set count=0
 set safe_count=0
 
 echo Analyse du Registre Windows pour les erreurs et problemes de performance...
-for /f "tokens=*" %%A in ('reg query HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall 2^>nul') do (
+echo Analyse du Registre en cours (mode optimise)...
+set "regTempFile=%TEMP%\reg_uninstall_keys.txt"
+reg query HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall 2>nul > "%regTempFile%"
+
+for /f "usebackq delims=" %%A in ("%regTempFile%") do (
     set /a count+=1
-    set entries[!count!]=%%A
-    
-    echo %%A | findstr /I "IE40 IE4Data DirectDrawEx DXM_Runtime SchedulingAgent" >nul && (
-        set /a safe_count+=1
-        set safe_entries[!safe_count!]=%%A
-    )
+    set "entries[!count!]=%%A"
 )
+
+for /f "delims=" %%B in ('findstr /I "IE40 IE4Data DirectDrawEx DXM_Runtime SchedulingAgent" "%regTempFile%"') do (
+    set /a safe_count+=1
+    set "safe_entries[!safe_count!]=%%B"
+)
+if exist "%regTempFile%" del "%regTempFile%"
 
 if %count%==0 (
     echo Aucune entree superflue trouvee dans le Registre.
