@@ -12,14 +12,14 @@ if %errorlevel% neq 0 (
 )
 
 cd /d "%~dp0"
-title Boite a Scripts Windows - By ALEEXLEDEV (v2.3)
+title Boite a Scripts Windows - By ALEEXLEDEV (v2.4)
 color 0B
 
 :menu_principal
 cls
 color 0B
 echo ======================================================
-echo     BOITE A SCRIPTS WINDOWS - By ALEEXLEDEV v2.3
+echo     BOITE A SCRIPTS WINDOWS - By ALEEXLEDEV v2.4
 echo ======================================================
 echo.
 echo      === OUTILS PRINCIPAUX ===
@@ -29,6 +29,7 @@ echo   [3] Menu contextuel Windows 11
 echo   [4] Formatage avec DISKPART
 echo   [5] Installation de logiciels
 echo   [6] Voir les outils systeme avances
+echo   [7] Raccourcis bureau
 echo.
 echo   [0] Quitter
 echo.
@@ -41,6 +42,7 @@ if "%main_choice%"=="3" goto context_menu
 if "%main_choice%"=="4" goto disk_manager
 if "%main_choice%"=="5" goto install_softwares
 if "%main_choice%"=="6" goto system_tools
+if "%main_choice%"=="7" goto shortcuts_manager
 if "%main_choice%"=="0" goto exit_script
 echo Choix invalide, veuillez recommencer.
 pause
@@ -707,6 +709,68 @@ echo.
 echo Toutes les installations sont terminees !
 pause
 goto install_softwares
+
+REM ===================================================================
+REM               RACCOURCIS BUREAU (ARRET / VEILLE / REDEMARRER)
+REM ===================================================================
+:shortcuts_manager
+cls
+color 0E
+echo ======================================================
+echo     CREATION DE RACCOURCIS BUREAU
+echo ======================================================
+echo.
+echo   [1] Creer raccourci "Arreter"
+echo   [2] Creer raccourci "Mettre en veille"
+echo   [3] Creer raccourci "Redemarrer"
+echo   [4] Creer les 3 raccourcis
+echo   [0] Retour au menu principal
+echo.
+echo ======================================================
+set /p shortcut_choice=Votre choix: 
+
+if "%shortcut_choice%"=="1" goto create_shutdown
+if "%shortcut_choice%"=="2" goto create_sleep
+if "%shortcut_choice%"=="3" goto create_restart
+if "%shortcut_choice%"=="4" goto create_all_shortcuts
+if "%shortcut_choice%"=="0" goto menu_principal
+echo Choix invalide.
+pause
+goto shortcuts_manager
+
+:create_shutdown
+echo.
+echo Creation du raccourci ARRET...
+powershell -command "$ws = New-Object -ComObject WScript.Shell; $s = $ws.CreateShortcut('%USERPROFILE%\Desktop\Arret_PC.lnk'); $s.TargetPath = 'shutdown.exe'; $s.Arguments = '/s /t 0'; $s.IconLocation = '%SystemRoot%\system32\shell32.dll,27'; $s.Save()"
+echo Raccourci cree sur le Bureau !
+pause
+goto shortcuts_manager
+
+:create_sleep
+echo.
+echo Creation du raccourci VEILLE...
+powershell -command "$ws = New-Object -ComObject WScript.Shell; $s = $ws.CreateShortcut('%USERPROFILE%\Desktop\Veille_PC.lnk'); $s.TargetPath = 'rundll32.exe'; $s.Arguments = 'powrprof.dll,SetSuspendState 0,1,0'; $s.IconLocation = '%SystemRoot%\system32\shell32.dll,223'; $s.Save()"
+echo Raccourci cree sur le Bureau !
+pause
+goto shortcuts_manager
+
+:create_restart
+echo.
+echo Creation du raccourci REDEMARRAGE...
+powershell -command "$ws = New-Object -ComObject WScript.Shell; $s = $ws.CreateShortcut('%USERPROFILE%\Desktop\Redemarrer_PC.lnk'); $s.TargetPath = 'shutdown.exe'; $s.Arguments = '/r /t 0'; $s.IconLocation = '%SystemRoot%\system32\shell32.dll,238'; $s.Save()"
+echo Raccourci cree sur le Bureau !
+pause
+goto shortcuts_manager
+
+:create_all_shortcuts
+echo.
+echo Creation des 3 raccourcis...
+powershell -command "$ws = New-Object -ComObject WScript.Shell; $s = $ws.CreateShortcut('%USERPROFILE%\Desktop\Arret_PC.lnk'); $s.TargetPath = 'shutdown.exe'; $s.Arguments = '/s /t 0'; $s.IconLocation = '%SystemRoot%\system32\shell32.dll,27'; $s.Save()"
+powershell -command "$ws = New-Object -ComObject WScript.Shell; $s = $ws.CreateShortcut('%USERPROFILE%\Desktop\Veille_PC.lnk'); $s.TargetPath = 'rundll32.exe'; $s.Arguments = 'powrprof.dll,SetSuspendState 0,1,0'; $s.IconLocation = '%SystemRoot%\system32\shell32.dll,223'; $s.Save()"
+powershell -command "$ws = New-Object -ComObject WScript.Shell; $s = $ws.CreateShortcut('%USERPROFILE%\Desktop\Redemarrer_PC.lnk'); $s.TargetPath = 'shutdown.exe'; $s.Arguments = '/r /t 0'; $s.IconLocation = '%SystemRoot%\system32\shell32.dll,238'; $s.Save()"
+echo Termine !
+pause
+goto shortcuts_manager
 
 REM ===================================================================
 REM                    OUTILS SYSTEME AVANCES
