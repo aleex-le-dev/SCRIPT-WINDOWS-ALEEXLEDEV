@@ -12,14 +12,14 @@ if %errorlevel% neq 0 (
 )
 
 cd /d "%~dp0"
-title Boite a Scripts Windows - By ALEEXLEDEV (v2.2)
+title Boite a Scripts Windows - By ALEEXLEDEV (v2.3)
 color 0B
 
 :menu_principal
 cls
 color 0B
 echo ======================================================
-echo     BOITE A SCRIPTS WINDOWS - By ALEEXLEDEV v2.2
+echo     BOITE A SCRIPTS WINDOWS - By ALEEXLEDEV v2.3
 echo ======================================================
 echo.
 echo      === OUTILS PRINCIPAUX ===
@@ -27,7 +27,8 @@ echo   [1] Gestionnaire DNS (Google / Cloudflare)
 echo   [2] Mises a jour des applications
 echo   [3] Menu contextuel Windows 11
 echo   [4] Formatage avec DISKPART
-echo   [5] Voir les outils systeme avances
+echo   [5] Installation de logiciels
+echo   [6] Voir les outils systeme avances
 echo.
 echo   [0] Quitter
 echo.
@@ -38,7 +39,8 @@ if "%main_choice%"=="1" goto dns_manager
 if "%main_choice%"=="2" goto winget_manager
 if "%main_choice%"=="3" goto context_menu
 if "%main_choice%"=="4" goto disk_manager
-if "%main_choice%"=="5" goto system_tools
+if "%main_choice%"=="5" goto install_softwares
+if "%main_choice%"=="6" goto system_tools
 if "%main_choice%"=="0" goto exit_script
 echo Choix invalide, veuillez recommencer.
 pause
@@ -651,6 +653,60 @@ echo === Pilote tactile active ===
 echo.
 pause
 goto touch_screen_manager
+
+REM ===================================================================
+REM                    INSTALLATION LOGICIELS (CHROME / VLC / PDF)
+REM ===================================================================
+:install_softwares
+cls
+color 0B
+echo ======================================================
+echo     INSTALLATION DE LOGICIELS
+echo ======================================================
+echo.
+echo   [1] Google Chrome
+echo   [2] Sumatra PDF
+echo   [3] VLC Media Player
+echo   [4] Installer TOUS les logiciels (Chrome + PDF + VLC)
+echo   [0] Retour au menu principal
+echo.
+echo ======================================================
+set /p soft_choice=Votre choix: 
+
+if "%soft_choice%"=="1" set "apps=Google.Chrome" & goto install_apps_single
+if "%soft_choice%"=="2" set "apps=SumatraPDF.SumatraPDF" & goto install_apps_single
+if "%soft_choice%"=="3" set "apps=VideoLAN.VLC" & goto install_apps_single
+if "%soft_choice%"=="4" goto install_apps_all
+if "%soft_choice%"=="0" goto menu_principal
+echo Choix invalide.
+pause
+goto install_softwares
+
+:install_apps_single
+cls
+echo Installation de %apps% en cours...
+winget install -e --id %apps% --accept-source-agreements --accept-package-agreements
+echo.
+echo Installation terminee.
+pause
+goto install_softwares
+
+:install_apps_all
+cls
+echo Installation de TOUS les logiciels en cours...
+echo.
+echo 1/3 Installation de Google Chrome...
+winget install -e --id Google.Chrome --accept-source-agreements --accept-package-agreements
+echo.
+echo 2/3 Installation de Sumatra PDF...
+winget install -e --id SumatraPDF.SumatraPDF --accept-source-agreements --accept-package-agreements
+echo.
+echo 3/3 Installation de VLC Media Player...
+winget install -e --id VideoLAN.VLC --accept-source-agreements --accept-package-agreements
+echo.
+echo Toutes les installations sont terminees !
+pause
+goto install_softwares
 
 REM ===================================================================
 REM                    OUTILS SYSTEME AVANCES
