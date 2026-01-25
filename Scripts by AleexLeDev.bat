@@ -28,8 +28,9 @@ echo   [2] Mises a jour des applications
 echo   [3] Menu contextuel Windows 11
 echo   [4] Formatage avec DISKPART
 echo   [5] Installation de logiciels
-echo   [6] Voir les outils systeme avances
-echo   [7] Raccourcis bureau
+echo   [6] Raccourcis bureau
+echo.
+echo   [7] Voir les outils systeme avances
 echo.
 echo   [0] Quitter
 echo.
@@ -41,8 +42,8 @@ if "%main_choice%"=="2" goto winget_manager
 if "%main_choice%"=="3" goto context_menu
 if "%main_choice%"=="4" goto disk_manager
 if "%main_choice%"=="5" goto install_softwares
-if "%main_choice%"=="6" goto system_tools
-if "%main_choice%"=="7" goto shortcuts_manager
+if "%main_choice%"=="6" goto shortcuts_manager
+if "%main_choice%"=="7" goto system_tools
 if "%main_choice%"=="0" goto exit_script
 echo Choix invalide, veuillez recommencer.
 pause
