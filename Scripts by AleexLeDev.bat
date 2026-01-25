@@ -671,6 +671,7 @@ echo   [1] Google Chrome
 echo   [2] Sumatra PDF
 echo   [3] VLC Media Player
 echo   [4] Installer TOUS les logiciels (Chrome + PDF + VLC)
+echo   [5] Pack Office (Telechargement + Install)
 echo   [0] Retour au menu principal
 echo.
 echo ======================================================
@@ -680,6 +681,7 @@ if "%soft_choice%"=="1" set "apps=Google.Chrome" & goto install_apps_single
 if "%soft_choice%"=="2" set "apps=SumatraPDF.SumatraPDF" & goto install_apps_single
 if "%soft_choice%"=="3" set "apps=VideoLAN.VLC" & goto install_apps_single
 if "%soft_choice%"=="4" goto install_apps_all
+if "%soft_choice%"=="5" goto install_office
 if "%soft_choice%"=="0" goto menu_principal
 echo Choix invalide.
 pause
@@ -708,6 +710,35 @@ echo 3/3 Installation de VLC Media Player...
 winget install -e --id VideoLAN.VLC --accept-source-agreements --accept-package-agreements
 echo.
 echo Toutes les installations sont terminees !
+pause
+goto install_softwares
+
+:install_office
+cls
+echo ======================================================
+echo    TELECHARGEMENT ET INSTALLATION DE MICROSOFT OFFICE
+echo ======================================================
+echo.
+echo Telechargement de l'installateur en cours...
+echo Veuillez patienter, cela peut prendre un moment selon votre connexion.
+echo.
+
+set "office_installer=%temp%\OfficeSetup.exe"
+curl -L -o "%office_installer%" "https://drive.usercontent.google.com/download?id=1wf1eqVkXIM0f0R2963Ee4RKK-a_rgWld&export=download&authuser=0&confirm=t&uuid=941d1835-9870-4115-8baa-5155c2bcbeb8&at=AKSUxGOpxt6HuTVCq4_qMaWEBFoX:1761170678446"
+
+if exist "%office_installer%" (
+    echo.
+    echo Telechargement reussi. Lancement de l'installation...
+    echo.
+    start /wait "" "%office_installer%"
+    echo.
+    echo Installation lancee. Suivez les instructions a l'ecran.
+    echo Une fois termine, appuyez sur une touche.
+) else (
+    echo.
+    echo ERREUR : Le telechargement a echoue.
+    echo Verifiez votre connexion internet.
+)
 pause
 goto install_softwares
 
@@ -815,6 +846,9 @@ echo.
 echo      === MATERIEL ===
 echo  [18] Gestion de l'ecran tactile
 echo.
+echo      === PERFORMANCES ===
+echo  [20] Analyse de performance PC (Score type Windows Experience)
+echo.
 echo   [0] Retour au menu principal
 echo.
 echo ------------------------------------------------------
@@ -838,6 +872,7 @@ if "%sys_choice%"=="16" goto sys_reset_windows_update
 if "%sys_choice%"=="17" goto sys_wifi_passwords
 if "%sys_choice%"=="18" goto touch_screen_manager
 if "%sys_choice%"=="19" goto sys_menu_showdelay
+if "%sys_choice%"=="20" goto sys_winsat
 if "%sys_choice%"=="0" goto menu_principal
 echo Choix invalide.
 pause
@@ -847,6 +882,41 @@ goto system_tools
 cls
 echo Analyse des fichiers systeme (SFC /scannow)...
 sfc /scannow
+pause
+goto system_tools
+
+:sys_winsat
+cls
+echo ========================================================
+echo        ANALYSE DE PERFORMANCE DU PC (WinSAT)
+echo ========================================================
+echo.
+echo ATTENTION : 
+echo 1. Cette operation peut prendre plusieurs minutes.
+echo 2. Votre ecran clignotera pendant les tests graphiques.
+echo 3. VOUS DEVEZ ETRE BRANCHE SUR SECTEUR (sinon erreur).
+echo.
+echo Appuyez sur une touche pour commencer l'analyse...
+pause >nul
+
+echo.
+echo Execution des tests en cours...
+winsat formal
+echo.
+echo Analyse terminee. Affichage des resultats...
+timeout /t 2 >nul
+
+:winsat_show_results
+cls
+echo.
+echo ========================================================
+echo               RESULTATS DE PERFORMANCE
+echo ========================================================
+echo.
+powershell -Command "Get-CimInstance Win32_WinSat | Select-Object @{N='Processeur';E={$_.CPUScore}}, @{N='Memoire RAM';E={$_.MemoryScore}}, @{N='Graphique';E={$_.GraphicsScore}}, @{N='Jeux 3D';E={$_.D3DScore}}, @{N='Disque Dur';E={$_.DiskScore}}, @{N='Score Global';E={$_.WinSPRLevel}} | Format-List"
+echo.
+echo Note : Les scores sont sur une echelle de 1.0 a 9.9.
+echo.
 pause
 goto system_tools
 
