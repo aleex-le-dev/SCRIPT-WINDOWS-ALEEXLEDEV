@@ -12,14 +12,14 @@ if %errorlevel% neq 0 (
 )
 
 cd /d "%~dp0"
-title Boite a Scripts Windows - By ALEEXLEDEV (v2.0)
+title Boite a Scripts Windows - By ALEEXLEDEV (v2.2)
 color 0B
 
 :menu_principal
 cls
 color 0B
 echo ======================================================
-echo     BOITE A SCRIPTS WINDOWS - By ALEEXLEDEV v2.0
+echo     BOITE A SCRIPTS WINDOWS - By ALEEXLEDEV v2.2
 echo ======================================================
 echo.
 echo      === OUTILS PRINCIPAUX ===
@@ -54,23 +54,19 @@ echo ================================================
 echo     GESTIONNAIRE DNS (GOOGLE / CLOUDFLARE)
 echo ================================================
 echo.
-echo   [1] Installation des DNS Google (IPv4 + IPv6)
-echo   [2] Installation des DNS Google (IPv4 seulement)
-echo   [3] Installation des DNS Cloudflare (IPv4 + IPv6)
-echo   [4] Installation des DNS Cloudflare (IPv4 seulement)
-echo   [5] Restauration des DNS par defaut
-echo   [6] Affichage de la configuration actuelle
+echo   [1] DNS Google (8.8.8.8 / 8.8.4.4)
+echo   [2] DNS Cloudflare (1.1.1.1 / 1.0.0.1)
+echo   [3] Restauration des DNS par defaut
+echo   [4] Affichage de la configuration actuelle
 echo   [0] Retour au menu principal
 echo.
 echo ================================================
 set /p dns_choice=Choisissez une option: 
 
 if "%dns_choice%"=="1" goto install_google_full
-if "%dns_choice%"=="2" goto install_google_ipv4
-if "%dns_choice%"=="3" goto install_cloudflare_full
-if "%dns_choice%"=="4" goto install_cloudflare_ipv4
-if "%dns_choice%"=="5" goto restore_dns
-if "%dns_choice%"=="6" goto show_dns_config
+if "%dns_choice%"=="2" goto install_cloudflare_full
+if "%dns_choice%"=="3" goto restore_dns
+if "%dns_choice%"=="4" goto show_dns_config
 if "%dns_choice%"=="0" goto menu_principal
 echo Option invalide.
 pause
@@ -125,47 +121,7 @@ echo.
 pause
 goto dns_manager
 
-:install_google_ipv4
-cls
-echo ================================================
-echo     INSTALLATION DNS GOOGLE (IPv4 seulement)
-echo ================================================
-echo.
 
-call :get_interface
-if "%interface%"=="" (
-    echo ERREUR: Aucune interface reseau active trouvee
-    pause
-    goto dns_manager
-)
-
-echo Interface reseau detectee: %interface%
-echo.
-
-echo Sauvegarde de la configuration DNS actuelle...
-if not exist "dns_backups" mkdir dns_backups
-netsh interface ip show dns "%interface%" > "dns_backups\dns_backup_%date:~-4,4%%date:~-10,2%%date:~-7,2%_%time:~0,2%%time:~3,2%.txt"
-echo Sauvegarde creee dans dns_backups
-echo.
-
-echo Configuration des DNS Google IPv4...
-netsh interface ip set dns "%interface%" static 8.8.8.8
-netsh interface ip add dns "%interface%" 8.8.4.4 index=2
-
-echo Vidage du cache DNS...
-ipconfig /flushdns
-
-echo.
-echo ================================================
-echo     INSTALLATION TERMINEE AVEC SUCCES !
-echo ================================================
-echo.
-echo DNS Google configures:
-echo   IPv4 - Primaire: 8.8.8.8
-echo   IPv4 - Secondaire: 8.8.4.4
-echo.
-pause
-goto dns_manager
 
 :install_cloudflare_full
 cls
@@ -216,47 +172,7 @@ echo.
 pause
 goto dns_manager
 
-:install_cloudflare_ipv4
-cls
-echo ================================================
-echo     INSTALLATION DNS CLOUDFLARE (IPv4 seulement)
-echo ================================================
-echo.
 
-call :get_interface
-if "%interface%"=="" (
-    echo ERREUR: Aucune interface reseau active trouvee
-    pause
-    goto dns_manager
-)
-
-echo Interface reseau detectee: %interface%
-echo.
-
-echo Sauvegarde de la configuration DNS actuelle...
-if not exist "dns_backups" mkdir dns_backups
-netsh interface ip show dns "%interface%" > "dns_backups\dns_backup_%date:~-4,4%%date:~-10,2%%date:~-7,2%_%time:~0,2%%time:~3,2%.txt"
-echo Sauvegarde creee dans dns_backups
-echo.
-
-echo Configuration des DNS Cloudflare IPv4...
-netsh interface ip set dns "%interface%" static 1.1.1.1
-netsh interface ip add dns "%interface%" 1.0.0.1 index=2
-
-echo Vidage du cache DNS...
-ipconfig /flushdns
-
-echo.
-echo ================================================
-echo     INSTALLATION TERMINEE AVEC SUCCES ! 
-echo ================================================
-echo.
-echo DNS Cloudflare configures:
-echo   IPv4 - Primaire: 1.1.1.1
-echo   IPv4 - Secondaire: 1.0.0.1
-echo.
-pause
-goto dns_manager
 
 :restore_dns
 cls
