@@ -50,14 +50,11 @@ echo.
 echo      === OUTILS PRINCIPAUX ===
 echo   [1] Gestionnaire DNS
 echo   [2] Mises a jour des applications
-echo   [3] Menu contextuel Windows 11
-echo   [4] Formatage avec DISKPART
-echo   [5] Installation de logiciels
-echo   [6] Raccourcis bureau
-echo   [7] Recherche FTP (Index Of / Google Dorks)
+echo   [3] Formatage avec DISKPART
+echo   [4] Installation de logiciels
+echo   [5] Depannage et Reparations
 echo.
-echo   [8] Voir les outils systeme avances
-echo   [9] Depannage et Reparations
+echo   [6] Voir les outils systeme avances
 echo.
 echo   [0] Quitter
 echo.
@@ -66,13 +63,10 @@ set /p main_choice=Entrez votre choix:
 
 if "%main_choice%"=="1" goto dns_manager
 if "%main_choice%"=="2" goto winget_manager
-if "%main_choice%"=="3" goto context_menu
-if "%main_choice%"=="4" goto disk_manager
-if "%main_choice%"=="5" goto install_softwares
-if "%main_choice%"=="6" goto shortcuts_manager
-if "%main_choice%"=="7" goto ftp_search
-if "%main_choice%"=="8" goto system_tools
-if "%main_choice%"=="9" goto depannage_menu
+if "%main_choice%"=="3" goto disk_manager
+if "%main_choice%"=="4" goto install_softwares
+if "%main_choice%"=="5" goto depannage_menu
+if "%main_choice%"=="6" goto system_tools
 if "%main_choice%"=="0" goto exit_script
 echo Choix invalide, veuillez recommencer.
 pause
@@ -395,7 +389,7 @@ set /p ctx_choice=Votre choix:
 
 if "%ctx_choice%"=="1" goto activate_classic
 if "%ctx_choice%"=="2" goto restore_modern
-if "%ctx_choice%"=="0" goto menu_principal
+if "%ctx_choice%"=="0" goto system_tools
 echo Choix invalide.
 pause
 goto context_menu
@@ -794,7 +788,7 @@ if "%shortcut_choice%"=="1" goto create_shutdown
 if "%shortcut_choice%"=="2" goto create_sleep
 if "%shortcut_choice%"=="3" goto create_restart
 if "%shortcut_choice%"=="4" goto create_all_shortcuts
-if "%shortcut_choice%"=="0" goto menu_principal
+if "%shortcut_choice%"=="0" goto system_tools
 echo Choix invalide.
 pause
 goto shortcuts_manager
@@ -859,7 +853,7 @@ echo.
 echo ======================================================
 set /p ftp_type=Votre choix: 
 
-if "%ftp_type%"=="0" goto menu_principal
+if "%ftp_type%"=="0" goto system_tools
 if "%ftp_type%"=="1" goto set_type_music
 if "%ftp_type%"=="2" goto set_type_video
 if "%ftp_type%"=="3" goto set_type_docs
@@ -956,6 +950,9 @@ echo  [13] Afficher les pilotes installes
 echo  [14] Outil de reparation Windows Update
 echo  [15] Generer un rapport systeme complet
 echo  [16] Utilitaire de reinitialisation Windows Update
+echo  [24] Menu contextuel Windows 11
+echo  [25] Raccourcis bureau
+echo  [26] Recherche FTP (Index Of / Google Dorks)
 echo.
 echo      === MOT DE PASSE ===
 echo  [17] Gestion des mots de passe Wi-Fi
@@ -997,6 +994,9 @@ if "%sys_choice%"=="20" goto sys_winsat
 if "%sys_choice%"=="21" goto sys_smart_check
 if "%sys_choice%"=="22" goto sys_ram_check
 if "%sys_choice%"=="23" goto sys_ping_test
+if "%sys_choice%"=="24" goto context_menu
+if "%sys_choice%"=="25" goto shortcuts_manager
+if "%sys_choice%"=="26" goto ftp_search
 if "%sys_choice%"=="0" goto menu_principal
 echo Choix invalide.
 pause
