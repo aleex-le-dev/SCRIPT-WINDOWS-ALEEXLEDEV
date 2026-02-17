@@ -29,8 +29,9 @@ echo   [3] Menu contextuel Windows 11
 echo   [4] Formatage avec DISKPART
 echo   [5] Installation de logiciels
 echo   [6] Raccourcis bureau
+echo   [7] Recherche FTP (Index Of / Google Dorks)
 echo.
-echo   [7] Voir les outils systeme avances
+echo   [8] Voir les outils systeme avances
 echo.
 echo   [0] Quitter
 echo.
@@ -43,7 +44,8 @@ if "%main_choice%"=="3" goto context_menu
 if "%main_choice%"=="4" goto disk_manager
 if "%main_choice%"=="5" goto install_softwares
 if "%main_choice%"=="6" goto shortcuts_manager
-if "%main_choice%"=="7" goto system_tools
+if "%main_choice%"=="7" goto ftp_search
+if "%main_choice%"=="8" goto system_tools
 if "%main_choice%"=="0" goto exit_script
 echo Choix invalide, veuillez recommencer.
 pause
@@ -805,6 +807,93 @@ pause
 goto shortcuts_manager
 
 REM ===================================================================
+REM               RECHERCHE FTP / INDEX OF (GOOGLE DORKS)
+REM ===================================================================
+:ftp_search
+cls
+color 0D
+echo ======================================================
+echo     RECHERCHE AVANCEE (Index Of / FTP)
+echo ======================================================
+echo.
+echo   Cet outil utilise des commandes Google (Dorks) pour
+echo   trouver des repertoires ouverts (Index Of).
+echo.
+echo   Que recherchez-vous ?
+echo.
+echo   [1] Musique (mp3, wav, flac...)
+echo   [2] Video (mkv, avi, mp4...)
+echo   [3] Documents (Office, PDF, TXT...)
+echo   [4] Logiciels / Executables (exe, iso, rar...)
+echo   [5] Images (jpg, png...)
+echo   [6] Personnalise (choisir l'extension)
+echo   [0] Retour
+echo.
+echo ======================================================
+set /p ftp_type=Votre choix: 
+
+if "%ftp_type%"=="0" goto menu_principal
+if "%ftp_type%"=="1" goto set_type_music
+if "%ftp_type%"=="2" goto set_type_video
+if "%ftp_type%"=="3" goto set_type_docs
+if "%ftp_type%"=="4" goto set_type_soft
+if "%ftp_type%"=="5" goto set_type_img
+if "%ftp_type%"=="6" goto ftp_custom_ext
+goto ftp_search
+
+:set_type_music
+set "file_ext=(mp3|wav|flac|aac|ogg)"
+goto ftp_query
+
+:set_type_video
+set "file_ext=(mkv|avi|mp4|mov|wmv)"
+goto ftp_query
+
+:set_type_docs
+set "file_ext=(pdf|txt|doc|docx|xls|xlsx|csv|ppt|pptx|pps|epub|odt)"
+goto ftp_query
+
+:set_type_soft
+set "file_ext=(exe|iso|rar|zip|apk)"
+goto ftp_query
+
+:set_type_img
+set "file_ext=(jpg|png|gif|bmp)"
+goto ftp_query
+
+:ftp_custom_ext
+echo.
+set /p user_ext=Entrez l'extension (ex: py, php, bat) : 
+set "file_ext=(%user_ext%)"
+goto ftp_query
+
+REM ===================================================================
+REM                    MOTEUR DE RECHERCHE VIA POWERSHELL
+REM ===================================================================
+:ftp_query
+echo.
+echo Entrez le nom du fichier ou votre recherche :
+set /p user_query=Recherche : 
+if "%user_query%"=="" goto ftp_search
+
+echo.
+echo Recherche : %user_query%
+echo.
+echo Lancement de la recherche Google (Moteur Avance)...
+
+REM Definition du Dork Google
+REM On passe les variables a PowerShell via l'environnement pour eviter les problemes avec les caracteres speciaux
+set "file_ext=%file_ext%"
+set "user_query=%user_query%"
+
+powershell -Command "$ext = $env:file_ext; $query = $env:user_query; $baseUrl = 'https://www.google.com/search?q='; $dork = 'intitle:\"index of\" \"parent directory\" ' + $ext + ' \"' + $query + '\"'; Write-Host 'Requete :' $dork; $url = $baseUrl + [Uri]::EscapeDataString($dork); Start-Process $url"
+
+echo.
+echo La page de resultats devrait s'ouvrir dans votre navigateur.
+pause
+goto ftp_search
+
+REM ===================================================================
 REM                    OUTILS SYSTEME AVANCES
 REM ===================================================================
 :system_tools
@@ -821,16 +910,16 @@ echo   [3] Restaurer l'etat Windows (DISM /RestoreHealth)
 echo   [4] Analyse d'erreurs avancee (CHKDSK)
 echo.
 echo      === NETTOYAGE ^& OPTIMISATION ===
-echo   [5] Nettoyage de disque (cleanmgr)
+echo   [5] Nettoyage de disque
 echo  [6] Optimisation systeme (suppression fichiers temp)
 echo  [7] Nettoyage/optimisation avancee du Registre
-echo  [19] Acceleration ouverture menus (MenuShowDelay=10)
+echo   [8] Acceleration ouverture menus
 echo.
 echo      === DISQUE DUR ===
-echo   [8] Verifier chiffrement BitLocker / Dechiffrer
+echo   [9] Verifier chiffrement BitLocker / Dechiffrer
 echo.
 echo      === OUTILS RESEAU ===
-echo   [10] Afficher les informations reseau (ipconfig /all)
+echo   [10] Afficher les informations reseau
 echo   [11] Redemarrer les cartes reseau
 echo   [12] Reparation reseau - Assistant automatique
 echo.
@@ -845,9 +934,10 @@ echo  [17] Gestion des mots de passe Wi-Fi
 echo.
 echo      === MATERIEL ===
 echo  [18] Gestion de l'ecran tactile
+echo  [19] Analyse de la batterie
 echo.
 echo      === PERFORMANCES ===
-echo  [20] Analyse de performance PC (Score type Windows Experience)
+echo  [20] Analyse de performance PC
 echo.
 echo   [0] Retour au menu principal
 echo.
@@ -861,7 +951,8 @@ if "%sys_choice%"=="4" goto sys_chkdsk
 if "%sys_choice%"=="5" goto sys_cleanmgr
 if "%sys_choice%"=="6" goto sys_temp_cleanup
 if "%sys_choice%"=="7" goto sys_registry_cleanup
-if "%sys_choice%"=="8" goto sys_bitlocker_check
+if "%sys_choice%"=="8" goto sys_menu_showdelay
+if "%sys_choice%"=="9" goto sys_bitlocker_check
 if "%sys_choice%"=="10" goto sys_ipconfig
 if "%sys_choice%"=="11" goto sys_restart_network
 if "%sys_choice%"=="12" goto sys_repair_network
@@ -871,7 +962,7 @@ if "%sys_choice%"=="15" goto sys_report
 if "%sys_choice%"=="16" goto sys_reset_windows_update
 if "%sys_choice%"=="17" goto sys_wifi_passwords
 if "%sys_choice%"=="18" goto touch_screen_manager
-if "%sys_choice%"=="19" goto sys_menu_showdelay
+if "%sys_choice%"=="19" goto sys_battery_report
 if "%sys_choice%"=="20" goto sys_winsat
 if "%sys_choice%"=="0" goto menu_principal
 echo Choix invalide.
@@ -963,16 +1054,6 @@ echo Restauration de l'etat de Windows (DISM /RestoreHealth)...
 dism /online /cleanup-image /restorehealth
 pause
 goto system_tools
-
-
-
-
-
-
-
-
-
-
 
 :sys_ipconfig
 cls
@@ -1542,6 +1623,33 @@ goto menu_wifi
 :wifi_exit
 if exist "%MAPFILE%" del "%MAPFILE%" >nul 2>&1
 endlocal
+goto system_tools
+
+:sys_battery_report
+cls
+echo ======================================================
+echo     ANALYSE DE LA BATTERIE
+echo ======================================================
+echo.
+echo Generation du rapport via powercfg...
+set "report_path=%USERPROFILE%\Desktop\battery-report.html"
+powercfg /batteryreport /output "%report_path%" >nul
+
+if exist "%report_path%" (
+    echo.
+    echo Rapport genere : %report_path%
+    echo.
+    echo Analyse du fichier en cours...
+    echo.
+    powershell -NoProfile -ExecutionPolicy Bypass -Command "$c = Get-Content -Path '%report_path%' -Raw; $dPat = '(?:DESIGN CAPACITY|CAPACIT. DE CONCEPTION).*?(\d[\d\s\.,]*)\s*mWh'; $fPat = '(?:FULL CHARGE CAPACITY|CAPACIT. DE RECHARGE COMPL.TE).*?(\d[\d\s\.,]*)\s*mWh'; $cPat = '(?:CYCLE COUNT|NOMBRE DE CYCLES).*?<\/td>\s*<td>\s*(\d+)'; $chemPat = '(?:CHEMISTRY|CHIMIE).*?<\/td>\s*<td>\s*(\w+)'; $d=0; $f=0; if($c -match $dPat){$d=[long]($matches[1] -replace '[^0-9]','')}; if($c -match $fPat){$f=[long]($matches[1] -replace '[^0-9]','')}; if($d -gt 0){$pc=[math]::Round(($f/$d)*100, 2); Write-Host 'Technologie        :' $(if($c -match $chemPat){$matches[1]}else{'Inconnue'}) -ForegroundColor Gray; Write-Host 'Cycles de charge   :' $(if($c -match $cPat){$matches[1]}else{'Non disponible'}) -ForegroundColor Cyan; Write-Host 'Capacite Usine     :' $d 'mWh' -ForegroundColor Gray; Write-Host 'Capacite Actuelle  :' $f 'mWh' -ForegroundColor Gray; Write-Host 'SANTE BATTERIE     :' $pc '%' -ForegroundColor Green} else {Write-Host 'Impossible de trouver les valeurs de capacite dans le rapport.' -ForegroundColor Yellow}"
+    echo.
+) else (
+    echo.
+    echo Erreur lors de la generation du rapport.
+)
+
+echo.
+pause
 goto system_tools
 
 REM ===================================================================
