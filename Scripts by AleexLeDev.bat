@@ -949,6 +949,7 @@ echo      === OUTILS RESEAU ===
 echo   [10] Afficher les informations reseau
 echo   [11] Redemarrer les cartes reseau
 echo   [12] Reparation reseau - Assistant automatique
+echo   [23] Test de Connexion Complet (Ping/DNS)
 echo.
 echo      === UTILITAIRES ^& EXTRAS ===
 echo  [13] Afficher les pilotes installes
@@ -962,6 +963,8 @@ echo.
 echo      === MATERIEL ===
 echo  [18] Gestion de l'ecran tactile
 echo  [19] Analyse de la batterie
+echo  [21] Sante des Disques (S.M.A.R.T)
+echo  [22] Diagnostic Memoire (RAM)
 echo.
 echo      === PERFORMANCES ===
 echo  [20] Analyse de performance PC
@@ -991,6 +994,9 @@ if "%sys_choice%"=="17" goto sys_wifi_passwords
 if "%sys_choice%"=="18" goto touch_screen_manager
 if "%sys_choice%"=="19" goto sys_battery_report
 if "%sys_choice%"=="20" goto sys_winsat
+if "%sys_choice%"=="21" goto sys_smart_check
+if "%sys_choice%"=="22" goto sys_ram_check
+if "%sys_choice%"=="23" goto sys_ping_test
 if "%sys_choice%"=="0" goto menu_principal
 echo Choix invalide.
 pause
@@ -1676,6 +1682,130 @@ if exist "%report_path%" (
 )
 
 echo.
+pause
+goto system_tools
+
+:sys_smart_check
+cls
+echo ======================================================
+echo     ETAT DE SANTE DES DISQUES (S.M.A.R.T)
+echo ======================================================
+echo.
+echo Analyse en cours...
+echo.
+
+powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "Get-PhysicalDisk | Sort-Object DeviceId | ForEach-Object { $d=$_; $s=$d.Size; if($s -gt 1099511627776){$sz=[math]::Round($s/1TB,2).ToString()+' To'}else{$sz=[math]::Round($s/1GB,0).ToString()+' Go'}; $h=$d.HealthStatus; if($h -eq 'Healthy'){$h='Bonne Sante'}elseif($h -eq 'Warning'){$h='ATTENTION'}elseif($h -eq 'Unhealthy'){$h='CRITIQUE'}; $ct=($d | Get-StorageReliabilityCounter -ErrorAction SilentlyContinue); if($ct.Wear -ne $null){$p=100-$ct.Wear; $h=$h+' ('+$p+'%%)'}; $lws=($d | Get-Disk -ErrorAction SilentlyContinue | Get-Partition -ErrorAction SilentlyContinue | Where-Object DriveLetter | Select-Object -ExpandProperty DriveLetter) -join ' '; if($lws){$ltr='['+$lws+']'}else{$ltr='    '}; $t=$d.MediaType; if($d.BusType -eq 'USB'){$t='USB'}elseif($t -eq 'Unspecified'){$t='---'}; Write-Host ('{0,-6} [{1,-3}] {2,-30} ({3}) : {4}' -f $ltr, $t, $d.FriendlyName, $sz, $h) }"
+
+echo.
+pause
+goto system_tools
+
+:sys_ram_check
+cls
+echo ======================================================
+echo     DIAGNOSTIC MEMOIRE WINDOWS (RAM)
+echo ======================================================
+echo.
+echo L'outil de diagnostic de memoire Windows (mdsched.exe)
+echo permet de tester vos barrettes de RAM au demarrage.
+echo.
+echo Voulez-vous redemarrer maintenant pour lancer le test ?
+echo.
+echo   [O] OUI - Redemarrer maintenant
+echo   [N] NON - Planifier au prochain redemarrage
+echo   [A] Annuler
+echo.
+set /p ram_choice=Votre choix : 
+if /i "%ram_choice%"=="O" (
+    mdsched.exe /temp on
+    goto system_tools
+) 
+if /i "%ram_choice%"=="N" (
+    mdsched.exe
+    echo.
+    echo Le test a ete planifie pour le prochain demarrage.
+    pause
+    goto system_tools
+)
+goto system_tools
+
+:sys_ping_test
+cls
+echo ======================================================
+echo     TEST DE CONNEXION COMPLET (PING / DNS)
+echo ======================================================
+echo.
+echo Ce test va verifier ou se situe le probleme de connexion.
+echo.
+
+echo Etape 1 : Verification Carte Reseau (127.0.0.1)...
+ping 127.0.0.1 -n 1 >nul
+if %errorlevel% neq 0 goto ping_fail_nic
+echo [OK] Carte reseau active.
+echo.
+
+echo Etape 2 : Verification Passerelle (Box)...
+set "gateway="
+REM Methode robuste pour trouver la passerelle via route print
+for /f "tokens=3" %%g in ('route print 0.0.0.0 ^| findstr "\<0.0.0.0\>"') do set "gateway=%%g"
+
+if not defined gateway (
+    echo [!] Impossible de detecter la passerelle par defaut.
+    echo     (Vous n'etes peut-etre pas connecte au reseau)
+    goto skip_gateway_ping
+)
+
+echo Ping de la passerelle detectee (%gateway%)...
+ping %gateway% -n 1 >nul
+if %errorlevel% neq 0 goto ping_fail_gateway
+echo [OK] Connexion a la Box reussie.
+
+:skip_gateway_ping
+echo.
+echo Etape 3 : Verification Internet (Google 8.8.8.8)...
+ping 8.8.8.8 -n 1 >nul
+if %errorlevel% neq 0 goto ping_fail_internet
+echo [OK] Connexion Internet fonctionnelle.
+echo.
+
+echo Etape 4 : Verification DNS (google.com)...
+ping google.com -n 1 >nul
+if %errorlevel% neq 0 goto ping_fail_dns
+echo [OK] DNS fonctionnels.
+goto end_ping_success
+
+:ping_fail_nic
+echo.
+echo [ECHEC] Carte reseau HS ou desactivee.
+goto end_ping_test
+
+:ping_fail_gateway
+echo.
+echo [ECHEC] La Box/Routeur ne repond pas.
+echo         Verifiez le cable Ethernet ou la connexion Wi-Fi.
+goto end_ping_test
+
+:ping_fail_internet
+echo.
+echo [ECHEC] Pas d'acces Internet.
+echo         La Box repond mais pas Internet (Probleme FAI/Ligne).
+goto end_ping_test
+
+:ping_fail_dns
+echo.
+echo [ECHEC] Probleme DNS !
+echo         Vous avez Internet mais ne pouvez pas naviguer.
+echo         Changez vos DNS via le Menu Principal [1].
+goto end_ping_test
+
+:end_ping_success
+echo.
+echo [SUCCES] Tout semble fonctionner correctement !
+
+:end_ping_test
+echo.
+echo ------------------------------------------------------
+echo Diagnostic termine.
 pause
 goto system_tools
 
