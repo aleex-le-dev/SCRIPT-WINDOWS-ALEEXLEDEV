@@ -956,8 +956,9 @@ echo  [26] Recherche FTP (Index Of / Google Dorks)
 echo.
 echo      === MOT DE PASSE ===
 echo  [17] Gestion des mots de passe Wi-Fi
-echo  [27] Creer un point de restauration (Sauvegarde)
+echo  [27] Creer un point de restauration
 echo  [28] Reinitialiser MDP Session (Tutoriel Utilman)
+echo  [29] Gestion Compte Super Admin
 echo.
 echo      === MATERIEL ===
 echo  [18] Gestion de l'ecran tactile
@@ -1001,6 +1002,7 @@ if "%sys_choice%"=="25" goto shortcuts_manager
 if "%sys_choice%"=="26" goto ftp_search
 if "%sys_choice%"=="27" goto create_restore_point
 if "%sys_choice%"=="28" goto utilman_guide
+if "%sys_choice%"=="29" goto manage_super_admin
 if "%sys_choice%"=="0" goto menu_principal
 echo Choix invalide.
 pause
@@ -1857,6 +1859,51 @@ echo.
 echo Restauration terminee.
 pause
 goto utilman_guide
+
+:manage_super_admin
+cls
+echo ======================================================
+echo    GESTION DU COMPTE SUPER ADMINISTRATEUR
+echo ======================================================
+echo.
+echo Le compte "Super Admin" a tous les privileges (Systeme).
+echo UAC desactive, acces total aux fichiers systeme.
+echo.
+echo   [1] ACTIVER le compte Super Admin
+echo   [2] DESACTIVER le compte Super Admin (Cache)
+echo   [0] Retour
+echo.
+set /p admin_choice=Votre choix: 
+
+if "%admin_choice%"=="1" goto enable_super_admin_exec
+if "%admin_choice%"=="2" goto disable_super_admin_exec
+if "%admin_choice%"=="0" goto system_tools
+goto manage_super_admin
+
+:enable_super_admin_exec
+net user administrateur /active:yes
+if %errorlevel% equ 0 (
+    echo.
+    echo [SUCCES] Le compte Super Admin est ACTIF.
+    echo Il apparaitra au prochain demarrage ou changement de session.
+) else (
+    echo.
+    echo [ECHEC] Erreur. Etes-vous bien lance en Administrateur ?
+)
+pause
+goto system_tools
+
+:disable_super_admin_exec
+net user administrateur /active:no
+if %errorlevel% equ 0 (
+    echo.
+    echo [SUCCES] Le compte Super Admin est DESACTIVE (Cache).
+) else (
+    echo.
+    echo [ECHEC] Erreur lors de la desactivation.
+)
+pause
+goto system_tools
 
 :sys_battery_report
 cls
