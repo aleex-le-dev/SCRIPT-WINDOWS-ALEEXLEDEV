@@ -2,13 +2,38 @@
 setlocal EnableExtensions EnableDelayedExpansion
 
 REM === AUTO-ELEVATION EN ADMINISTRATEUR ===
-net session >nul 2>&1
+REM Changement de methode pour compatibilite Mode Sans Echec (net session depend du service Serveur qui est arrete en Safe Mode)
+fsutil dirty query %systemdrive% >nul 2>&1
 if %errorlevel% neq 0 (
     echo.
     echo Cette boite a script doit etre lancee en mode administrateur.
     echo Demande des droits en cours...
     powershell.exe -Command "Start-Process -FilePath '%~f0' -Verb RunAs"
     exit /b
+)
+
+REM === DETECTION ET NETTOYAGE AUTO MODE SANS ECHEC ===
+reg query "HKLM\SYSTEM\CurrentControlSet\Control\SafeBoot\Option" /v OptionValue >nul 2>&1
+if %errorlevel% equ 0 (
+    echo.
+    echo ======================================================
+    echo           MODE SANS ECHEC DETECTE
+    echo ======================================================
+    echo.
+    echo Le script a detecte que vous etes en Mode Sans Echec.
+    echo Suppression automatique du flag 'SafeBoot' pour que
+    echo le prochain redemarrage se fasse en MODE NORMAL.
+    echo.
+    
+    bcdedit /deletevalue {current} safeboot >nul 2>&1
+    bcdedit /deletevalue {current} safebootalternateshell >nul 2>&1
+    
+    echo [OK] Configuration appliquee !
+    echo Vous pouvez continuer vos operations.
+    echo Au prochain redemarrage, Windows reviendra a la normale.
+    echo.
+    echo Appuyez sur une touche pour acceder au menu...
+    pause >nul
 )
 
 cd /d "%~dp0"
@@ -32,6 +57,7 @@ echo   [6] Raccourcis bureau
 echo   [7] Recherche FTP (Index Of / Google Dorks)
 echo.
 echo   [8] Voir les outils systeme avances
+echo   [9] Depannage et Reparations
 echo.
 echo   [0] Quitter
 echo.
@@ -46,6 +72,7 @@ if "%main_choice%"=="5" goto install_softwares
 if "%main_choice%"=="6" goto shortcuts_manager
 if "%main_choice%"=="7" goto ftp_search
 if "%main_choice%"=="8" goto system_tools
+if "%main_choice%"=="9" goto depannage_menu
 if "%main_choice%"=="0" goto exit_script
 echo Choix invalide, veuillez recommencer.
 pause
@@ -1651,6 +1678,203 @@ if exist "%report_path%" (
 echo.
 pause
 goto system_tools
+
+REM ===================================================================
+REM                    MENU DEPANNAGE & REPARATIONS
+REM ===================================================================
+:depannage_menu
+cls
+color 0C
+echo ======================================================
+echo     DEPANNAGE ET REPARATIONS
+echo ======================================================
+echo.
+echo   [1] Reparer le Spouleur d'Impression
+echo   [2] Recuperer la cle de produit Windows
+echo   [3] Options de Demarrage Avancees
+echo.
+echo   [0] Retour au menu principal
+echo.
+echo ======================================================
+set "dep_choice="
+set /p dep_choice=Votre choix: 
+
+if "%dep_choice%"=="1" goto repair_spooler
+if "%dep_choice%"=="2" goto get_win_key
+if "%dep_choice%"=="3" goto menu_boot_safe
+if "%dep_choice%"=="0" goto menu_principal
+
+echo.
+echo Choix invalide.
+pause
+goto depannage_menu
+
+:repair_spooler
+cls
+echo.
+echo ======================================================
+echo   REPARATION DU SPOULEUR D'IMPRESSION
+echo ======================================================
+echo.
+echo 1. Arret du service Spouleur...
+net stop spooler /y
+echo.
+echo 2. Suppression des fichiers en attente (file d'impression)...
+del /F /Q "%systemroot%\System32\spool\PRINTERS\*.*"
+echo.
+echo 3. Redemarrage du service Spouleur...
+net start spooler
+echo.
+echo Reparation terminee. Essayez d'imprimer a nouveau.
+pause
+goto depannage_menu
+
+:get_win_key
+cls
+echo.
+echo ======================================================
+echo   RECUPERATION CLE PRODUIT WINDOWS
+echo ======================================================
+echo.
+echo Recherche de la cle dans le BIOS/UEFI...
+echo.
+
+set "key="
+REM Methode PowerShell (plus fiable)
+for /f "usebackq delims=" %%I in (`powershell -command "(Get-WmiObject -query 'select * from SoftwareLicensingService').OA3xOriginalProductKey"`) do set "key=%%I"
+
+if "%key%"=="" (
+    REM Fallback methode WMIC standard
+    for /f "tokens=2 delims==" %%I in ('wmic path softwarelicensingservice get OA3xOriginalProductKey /value 2^>nul') do set "key=%%I"
+)
+
+if "%key%"=="" (
+    echo [!] Aucune cle OEM trouvee dans le BIOS.
+    echo.
+    echo Causes possibles :
+    echo  - Windows active par licence numerique (compte Microsoft)
+    echo  - Cle Retail non integree a la carte mere
+    echo  - PC assemble sans licence pre-installee
+) else (
+    echo =================================================
+    echo CLE TROUVEE : %key%
+    echo =================================================
+    echo.
+    set /p save_key=Voulez-vous enregistrer cette cle sur le Bureau ? (O/N): 
+    
+    if /i "!save_key!"=="O" (
+        echo Cle Windows Recovered: %key% > "%USERPROFILE%\Desktop\Cle_Windows_%computername%.txt"
+        echo.
+        echo [OK] Fichier enregistre : %USERPROFILE%\Desktop\Cle_Windows_%computername%.txt
+    )
+)
+echo.
+pause
+goto depannage_menu
+
+:menu_boot_safe
+echo.
+echo DIAGNOSTIC : Entree dans menu_boot_safe...
+timeout /t 1 >nul
+cls
+echo ======================================================
+echo     OPTIONS DE DEMARRAGE AVANCEES
+echo ======================================================
+echo.
+echo   [1] Redemarrer en Mode Sans Echec - Minimal
+echo   [2] Redemarrer en Mode Sans Echec - avec Reseau
+echo   [3] Redemarrer avec Invite de Commandes - Sans Echec
+echo   [4] Redemarrer sur les Options de Recuperation - Menu Bleu
+echo       - Pour: UEFI, Restauration config, Reparation auto...
+echo.
+echo   [5] RETOUR MODE NORMAL - Desactiver Mode Sans Echec
+echo       - Utilisez ceci si vous etes bloque en mode sans echec
+echo.
+echo   [0] Retour
+echo.
+echo ======================================================
+echo   ATTENTION : Les options 1-3 forcent le demarrage.
+echo   Pour revenir a la normale, il faudra utiliser l option 5.
+echo ======================================================
+set "boot_choice="
+set /p boot_choice=Votre choix: 
+
+if "%boot_choice%"=="1" goto boot_safe_minimal
+if "%boot_choice%"=="2" goto boot_safe_network
+if "%boot_choice%"=="3" goto boot_safe_cmd
+if "%boot_choice%"=="4" goto boot_recovery
+if "%boot_choice%"=="5" goto boot_normal
+if "%boot_choice%"=="0" goto depannage_menu
+
+echo Choix invalide.
+pause
+goto menu_boot_safe
+
+:boot_safe_minimal
+echo.
+echo Configuration du demarrage en Mode Sans Echec [Minimal]...
+echo Application de la commande bcdedit...
+C:\Windows\System32\bcdedit.exe /set {current} safeboot minimal
+if errorlevel 1 (
+    echo.
+    echo ERREUR : La commande a echoue. Etes-vous bien Administrateur ?
+    pause
+    goto boot_troubleshoot
+)
+echo Configuration reconnue.
+goto confirm_reboot
+
+:boot_safe_network
+echo.
+echo Configuration du demarrage en Mode Sans Echec [Reseau]...
+C:\Windows\System32\bcdedit.exe /set {current} safeboot network
+if errorlevel 1 (
+    echo.
+    echo ERREUR : La commande a echoue.
+    pause
+    goto boot_troubleshoot
+)
+goto confirm_reboot
+
+:boot_safe_cmd
+echo.
+echo Configuration du demarrage en Mode Sans Echec [Invite de commandes]...
+C:\Windows\System32\bcdedit.exe /set {current} safeboot minimal
+C:\Windows\System32\bcdedit.exe /set {current} safebootalternateshell yes
+if errorlevel 1 (
+    echo.
+    echo ERREUR : La commande a echoue.
+    pause
+    goto boot_troubleshoot
+)
+goto confirm_reboot
+
+:boot_recovery
+echo.
+echo Redemarrage vers le menu de recuperation...
+echo Le PC va redemarrer dans quelques instants...
+timeout /t 3
+shutdown /r /o /t 0
+exit
+
+:boot_normal
+echo.
+echo Restauration du demarrage normal...
+C:\Windows\System32\bcdedit.exe /deletevalue {current} safeboot
+C:\Windows\System32\bcdedit.exe /deletevalue {current} safebootalternateshell >nul 2>&1
+echo.
+echo Pret a redemarrer en mode normal.
+
+:confirm_reboot
+echo.
+set /p reboot=Redemarrer l'ordinateur maintenant ? (O/N): 
+if /i "%reboot%"=="O" (
+    shutdown /r /t 0
+) else (
+    echo Modifications appliquees pour le prochain redemarrage.
+    pause
+    goto boot_troubleshoot
+)
 
 REM ===================================================================
 REM                    SORTIE DU SCRIPT
