@@ -930,47 +930,47 @@ echo   [2] Verification de l'etat Windows (DISM /CheckHealth)
 echo   [3] Restaurer l'etat Windows (DISM /RestoreHealth)
 echo   [4] Analyse d'erreurs avancee (CHKDSK)
 echo.
-echo      === NETTOYAGE ^& OPTIMISATION ===
+echo      === NETTOYAGE & OPTIMISATION ===
 echo   [5] Nettoyage de disque
-echo  [6] Optimisation systeme (suppression fichiers temp)
-echo  [32] Verificateur de fichiers volumineux
-echo  [7] Nettoyage/optimisation avancee du Registre
-echo   [8] Acceleration ouverture menus
+echo   [6] Optimisation systeme (suppression fichiers temp)
+echo   [7] Verificateur de dossiers/fichiers volumineux
+echo   [8] Nettoyage/optimisation avancee du Registre
+echo   [9] Acceleration ouverture menus
 echo.
 echo      === DISQUE DUR ===
-echo   [9] Verifier chiffrement BitLocker / Dechiffrer
+echo   [10] Verifier chiffrement BitLocker / Dechiffrer
 echo.
 echo      === OUTILS RESEAU ===
-echo   [10] Afficher les informations reseau
-echo   [11] Redemarrer les cartes reseau
-echo   [12] Reparation reseau - Assistant automatique
-echo   [23] Test de Connexion Complet (Ping/DNS)
+echo   [11] Afficher les informations reseau
+echo   [12] Redemarrer les cartes reseau
+echo   [13] Reparation reseau - Assistant automatique
+echo   [14] Test de Connexion Complet (Ping/DNS)
 echo.
-echo      === UTILITAIRES ^& EXTRAS ===
-echo  [13] Afficher les pilotes installes
-echo  [14] Outil de reparation Windows Update
-echo  [15] Generer un rapport systeme complet
-echo  [16] Utilitaire de reinitialisation Windows Update
-echo  [24] Menu contextuel Windows 11
-echo  [25] Raccourcis bureau (Veille/Redemarrer/eteindre)
-echo  [30] Clic-droit : S'approprier un fichier/dossier
-echo  [31] Creer dossier "God Mode" sur le Bureau
-echo  [26] Recherche FTP (Index Of / Google Dorks)
+echo      === UTILITAIRES & EXTRAS ===
+echo   [15] Afficher les pilotes installes
+echo   [16] Outil de reparation Windows Update
+echo   [17] Generer un rapport systeme complet
+echo   [18] Utilitaire de reinitialisation Windows Update
+echo   [19] Menu contextuel Windows 11
+echo   [20] Raccourcis bureau (Veille/Redemarrer/eteindre)
+echo   [21] Clic-droit : S'approprier un fichier/dossier
+echo   [22] Creer dossier "God Mode" sur le Bureau
+echo   [23] Recherche FTP (Index Of / Google Dorks)
 echo.
 echo      === MOT DE PASSE ===
-echo  [17] Gestion des mots de passe Wi-Fi
-echo  [27] Creer un point de restauration
-echo  [28] Reinitialiser MDP Session (Tutoriel Utilman)
-echo  [29] Ajouter Compte Super Admin
+echo   [24] Gestion des mots de passe Wi-Fi
+echo   [25] Creer un point de restauration
+echo   [26] Reinitialiser MDP Session (Tutoriel Utilman)
+echo   [27] Ajouter Compte Super Admin
 echo.
 echo      === MATERIEL ===
-echo  [18] Gestion de l'ecran tactile
-echo  [19] Analyse de la batterie
-echo  [21] Sante des Disques (S.M.A.R.T)
-echo  [22] Diagnostic Memoire (RAM)
+echo   [28] Gestion de l'ecran tactile
+echo   [29] Analyse de la batterie
+echo   [30] Sante des Disques (S.M.A.R.T)
+echo   [31] Diagnostic Memoire (RAM)
 echo.
 echo      === PERFORMANCES ===
-echo  [20] Analyse de performance PC
+echo   [32] Analyse de performance PC (WinSAT)
 echo.
 echo   [0] Retour au menu principal
 echo.
@@ -983,32 +983,32 @@ if "%sys_choice%"=="3" goto sys_dism_restore
 if "%sys_choice%"=="4" goto sys_chkdsk
 if "%sys_choice%"=="5" goto sys_cleanmgr
 if "%sys_choice%"=="6" goto sys_temp_cleanup
-if "%sys_choice%"=="7" goto sys_registry_cleanup
-if "%sys_choice%"=="8" goto sys_menu_showdelay
-if "%sys_choice%"=="9" goto sys_bitlocker_check
-if "%sys_choice%"=="10" goto sys_ipconfig
-if "%sys_choice%"=="11" goto sys_restart_network
-if "%sys_choice%"=="12" goto sys_repair_network
-if "%sys_choice%"=="13" goto sys_drivers
-if "%sys_choice%"=="14" goto sys_windows_update
-if "%sys_choice%"=="15" goto sys_report
-if "%sys_choice%"=="16" goto sys_reset_windows_update
-if "%sys_choice%"=="17" goto sys_wifi_passwords
-if "%sys_choice%"=="18" goto touch_screen_manager
-if "%sys_choice%"=="19" goto sys_battery_report
-if "%sys_choice%"=="20" goto sys_winsat
-if "%sys_choice%"=="21" goto sys_smart_check
-if "%sys_choice%"=="22" goto sys_ram_check
-if "%sys_choice%"=="23" goto sys_ping_test
-if "%sys_choice%"=="24" goto context_menu
-if "%sys_choice%"=="25" goto shortcuts_manager
-if "%sys_choice%"=="26" goto ftp_search
-if "%sys_choice%"=="27" goto create_restore_point
-if "%sys_choice%"=="28" goto utilman_guide
-if "%sys_choice%"=="29" goto manage_super_admin
-if "%sys_choice%"=="30" goto sys_take_ownership
-if "%sys_choice%"=="31" goto sys_god_mode
-if "%sys_choice%"=="32" goto sys_large_files
+if "%sys_choice%"=="7" goto sys_large_files
+if "%sys_choice%"=="8" goto sys_registry_cleanup
+if "%sys_choice%"=="9" goto sys_menu_showdelay
+if "%sys_choice%"=="10" goto sys_bitlocker_check
+if "%sys_choice%"=="11" goto sys_ipconfig
+if "%sys_choice%"=="12" goto sys_restart_network
+if "%sys_choice%"=="13" goto sys_repair_network
+if "%sys_choice%"=="14" goto sys_ping_test
+if "%sys_choice%"=="15" goto sys_drivers
+if "%sys_choice%"=="16" goto sys_windows_update
+if "%sys_choice%"=="17" goto sys_report
+if "%sys_choice%"=="18" goto sys_reset_windows_update
+if "%sys_choice%"=="19" goto context_menu
+if "%sys_choice%"=="20" goto shortcuts_manager
+if "%sys_choice%"=="21" goto sys_take_ownership
+if "%sys_choice%"=="22" goto sys_god_mode
+if "%sys_choice%"=="23" goto ftp_search
+if "%sys_choice%"=="24" goto sys_wifi_passwords
+if "%sys_choice%"=="25" goto create_restore_point
+if "%sys_choice%"=="26" goto utilman_guide
+if "%sys_choice%"=="27" goto manage_super_admin
+if "%sys_choice%"=="28" goto touch_screen_manager
+if "%sys_choice%"=="29" goto sys_battery_report
+if "%sys_choice%"=="30" goto sys_smart_check
+if "%sys_choice%"=="31" goto sys_ram_check
+if "%sys_choice%"=="32" goto sys_winsat
 if "%sys_choice%"=="0" goto menu_principal
 echo Choix invalide.
 pause
@@ -1977,17 +1977,46 @@ goto system_tools
 :sys_large_files
 cls
 echo ======================================================
-echo    VERIFICATEUR DE DOSSIERS VOLUMINEUX
+echo    VERIFICATEUR DE DONNEES VOLUMINEUSES
 echo ======================================================
 echo.
-echo Recherche des 20 dossiers les plus lourds sur C:\...
-echo ATTENTION : Cela scanne tout le disque, soyez patient.
+echo  Que voulez-vous analyser sur le disque C: ?
 echo.
+echo   [1] Les 20 FICHIERS les plus lourds
+echo   [2] Les 20 DOSSIERS les plus lourds (Analyse racine)
+echo   [0] Retour
+echo.
+set /p scan_choice=Votre choix : 
+
+if "%scan_choice%"=="1" goto scan_files
+if "%scan_choice%"=="2" goto scan_folders
+if "%scan_choice%"=="0" goto system_tools
+goto sys_large_files
+
+:scan_files
+cls
+echo ======================================================
+echo    ANALYSE DES FICHIERS LES PLUS LOURDS
+echo ======================================================
+echo.
+echo [INFO] Scan en cours sur C:\...
 echo [CONSEIL] Appuyez sur CTRL+C pour annuler la recherche.
 echo.
-echo [INFO] Analyse en cours (Progression affichee ci-dessous)...
+powershell -NoProfile -Command "$fichiers = New-Object System.Collections.Generic.List[PSObject]; Get-ChildItem -Path C:\ -File -Recurse -ErrorAction SilentlyContinue | ForEach-Object { if ($_.Length -gt 100MB) { Write-Host 'Analyse :' $_.FullName -ForegroundColor Gray; $fichiers.Add($_) } }; echo ''; echo '--- TOP 20 DES FICHIERS LES PLUS LOURDS ---'; $fichiers | Sort-Object Length -Descending | Select-Object -First 20 | ForEach-Object { [PSCustomObject]@{ 'Nom' = $_.Name; 'Taille(Go)' = [math]::Round($_.Length / 1GB, 2); 'Chemin' = $_.FullName } } | Format-Table -AutoSize"
 echo.
-powershell -NoProfile -Command "$resultats = @(); $dossiers = Get-ChildItem -Path C:\ -Directory -ErrorAction SilentlyContinue; foreach ($d in $dossiers) { Write-Host 'Analyse de :' $d.FullName -ForegroundColor Gray; try { $taille = (Get-ChildItem $d.FullName -Recurse -File -ErrorAction SilentlyContinue | Measure-Object -Property Length -Sum).Sum; if ($taille -gt 0) { $obj = [PSCustomObject]@{ 'Nom' = $d.Name; 'Taille(Go)' = [math]::Round($taille / 1GB, 2); 'Chemin' = $d.FullName }; $resultats += $obj } } catch {} }; echo ''; echo '--- TOP DES DOSSIERS LES PLUS LOURDS (RACINE C:\) ---'; $resultats | Sort-Object 'Taille(Go)' -Descending | Select-Object -First 20 | Format-Table -AutoSize"
+pause
+goto system_tools
+
+:scan_folders
+cls
+echo ======================================================
+echo    ANALYSE DES DOSSIERS LES PLUS LOURDS
+echo ======================================================
+echo.
+echo [INFO] Scan en cours sur C:\ (Analyse des dossiers racines)...
+echo [CONSEIL] Appuyez sur CTRL+C pour annuler la recherche.
+echo.
+powershell -NoProfile -Command "$resultats = @(); $dossiers = Get-ChildItem -Path C:\ -Directory -ErrorAction SilentlyContinue; foreach ($d in $dossiers) { Write-Host 'Analyse du dossier :' $d.FullName -ForegroundColor Gray; try { $taille = (Get-ChildItem $d.FullName -Recurse -File -ErrorAction SilentlyContinue | Measure-Object -Property Length -Sum).Sum; if ($taille -gt 0) { $obj = [PSCustomObject]@{ 'Nom' = $d.Name; 'Taille(Go)' = [math]::Round($taille / 1GB, 2); 'Chemin' = $d.FullName }; $resultats += $obj } } catch {} }; echo ''; echo '--- TOP 20 DES DOSSIERS LES PLUS LOURDS ---'; $resultats | Sort-Object 'Taille(Go)' -Descending | Select-Object -First 20 | Format-Table -AutoSize"
 echo.
 pause
 goto system_tools
