@@ -933,6 +933,7 @@ echo.
 echo      === NETTOYAGE ^& OPTIMISATION ===
 echo   [5] Nettoyage de disque
 echo  [6] Optimisation systeme (suppression fichiers temp)
+echo  [32] Verificateur de fichiers volumineux
 echo  [7] Nettoyage/optimisation avancee du Registre
 echo   [8] Acceleration ouverture menus
 echo.
@@ -951,14 +952,16 @@ echo  [14] Outil de reparation Windows Update
 echo  [15] Generer un rapport systeme complet
 echo  [16] Utilitaire de reinitialisation Windows Update
 echo  [24] Menu contextuel Windows 11
-echo  [25] Raccourcis bureau
+echo  [25] Raccourcis bureau (Veille/Redemarrer/eteindre)
+echo  [30] Clic-droit : S'approprier un fichier/dossier
+echo  [31] Creer dossier "God Mode" sur le Bureau
 echo  [26] Recherche FTP (Index Of / Google Dorks)
 echo.
 echo      === MOT DE PASSE ===
 echo  [17] Gestion des mots de passe Wi-Fi
 echo  [27] Creer un point de restauration
 echo  [28] Reinitialiser MDP Session (Tutoriel Utilman)
-echo  [29] Gestion Compte Super Admin
+echo  [29] Ajouter Compte Super Admin
 echo.
 echo      === MATERIEL ===
 echo  [18] Gestion de l'ecran tactile
@@ -1003,6 +1006,9 @@ if "%sys_choice%"=="26" goto ftp_search
 if "%sys_choice%"=="27" goto create_restore_point
 if "%sys_choice%"=="28" goto utilman_guide
 if "%sys_choice%"=="29" goto manage_super_admin
+if "%sys_choice%"=="30" goto sys_take_ownership
+if "%sys_choice%"=="31" goto sys_god_mode
+if "%sys_choice%"=="32" goto sys_large_files
 if "%sys_choice%"=="0" goto menu_principal
 echo Choix invalide.
 pause
@@ -1902,6 +1908,87 @@ if %errorlevel% equ 0 (
     echo.
     echo [ECHEC] Erreur lors de la desactivation.
 )
+pause
+goto system_tools
+
+:sys_take_ownership
+cls
+echo ======================================================
+echo    GESTION DU CLIC-DROIT : S'APPROPRIER (TAKE OWNERSHIP)
+echo ======================================================
+echo.
+echo Cette option permet d'ajouter ou de retirer une entree 
+echo au menu clic-droit pour s'approprier n'importe quel 
+echo fichier ou dossier (utile en cas d'Acces refuse).
+echo.
+echo   [1] AJOUTER l'option au clic-droit
+echo   [2] RETIRER l'option du clic-droit
+echo   [0] Retour
+echo.
+set /p take_choice=Votre choix : 
+
+if "%take_choice%"=="0" goto system_tools
+if "%take_choice%"=="1" goto add_take_ownership
+if "%take_choice%"=="2" goto remove_take_ownership
+goto sys_take_ownership
+
+:add_take_ownership
+echo Modification du registre pour l'ajout...
+reg add "HKCR\*\shell\runas" /ve /t REG_SZ /d "S'approprier (Take Ownership)" /f >nul 2>&1
+reg add "HKCR\*\shell\runas" /v "NoWorkingDirectory" /t REG_SZ /d "" /f >nul 2>&1
+reg add "HKCR\*\shell\runas\command" /ve /t REG_SZ /d "cmd.exe /c takeown /f \"%%1\" && icacls \"%%1\" /grant administrators:F" /f >nul 2>&1
+reg add "HKCR\*\shell\runas\command" /v "IsolatedCommand" /t REG_SZ /d "cmd.exe /c takeown /f \"%%1\" && icacls \"%%1\" /grant administrators:F" /f >nul 2>&1
+reg add "HKCR\Directory\shell\runas" /ve /t REG_SZ /d "S'approprier (Take Ownership)" /f >nul 2>&1
+reg add "HKCR\Directory\shell\runas" /v "NoWorkingDirectory" /t REG_SZ /d "" /f >nul 2>&1
+reg add "HKCR\Directory\shell\runas\command" /ve /t REG_SZ /d "cmd.exe /c takeown /f \"%%1\" /r /d y && icacls \"%%1\" /grant administrators:F /t" /f >nul 2>&1
+reg add "HKCR\Directory\shell\runas\command" /v "IsolatedCommand" /t REG_SZ /d "cmd.exe /c takeown /f \"%%1\" /r /d y && icacls \"%%1\" /grant administrators:F /t" /f >nul 2>&1
+echo.
+echo [OK] L'option a ete ajoutee au menu contextuel.
+pause
+goto system_tools
+
+:remove_take_ownership
+echo Modification du registre pour la suppression...
+reg delete "HKCR\*\shell\runas" /f >nul 2>&1
+reg delete "HKCR\Directory\shell\runas" /f >nul 2>&1
+echo.
+echo [OK] L'option a ete retiree du menu contextuel.
+pause
+goto system_tools
+
+:sys_god_mode
+cls
+echo ======================================================
+echo    CREATION DU DOSSIER "GOD MODE"
+echo ======================================================
+echo.
+echo Le "God Mode" est un dossier special qui regroupe tous
+echo les parametres de Windows au meme endroit.
+echo.
+set /p confirm_god=Creer le dossier sur le Bureau ? (O/N) : 
+if /i not "%confirm_god%"=="O" goto system_tools
+
+mkdir "%USERPROFILE%\Desktop\GodMode.{ED7BA470-8E54-465E-825C-99712043E01C}" 2>nul
+echo.
+echo [SUCCES] Le dossier "GodMode" a ete cree sur votre Bureau.
+pause
+goto system_tools
+
+:sys_large_files
+cls
+echo ======================================================
+echo    VERIFICATEUR DE DOSSIERS VOLUMINEUX
+echo ======================================================
+echo.
+echo Recherche des 20 dossiers les plus lourds sur C:\...
+echo ATTENTION : Cela scanne tout le disque, soyez patient.
+echo.
+echo [CONSEIL] Appuyez sur CTRL+C pour annuler la recherche.
+echo.
+echo [INFO] Analyse en cours (Progression affichee ci-dessous)...
+echo.
+powershell -NoProfile -Command "$resultats = @(); $dossiers = Get-ChildItem -Path C:\ -Directory -ErrorAction SilentlyContinue; foreach ($d in $dossiers) { Write-Host 'Analyse de :' $d.FullName -ForegroundColor Gray; try { $taille = (Get-ChildItem $d.FullName -Recurse -File -ErrorAction SilentlyContinue | Measure-Object -Property Length -Sum).Sum; if ($taille -gt 0) { $obj = [PSCustomObject]@{ 'Nom' = $d.Name; 'Taille(Go)' = [math]::Round($taille / 1GB, 2); 'Chemin' = $d.FullName }; $resultats += $obj } } catch {} }; echo ''; echo '--- TOP DES DOSSIERS LES PLUS LOURDS (RACINE C:\) ---'; $resultats | Sort-Object 'Taille(Go)' -Descending | Select-Object -First 20 | Format-Table -AutoSize"
+echo.
 pause
 goto system_tools
 
