@@ -919,55 +919,133 @@ REM ===================================================================
 cls
 color 0B
 echo ======================================================
-echo     INSTALLATION DE LOGICIELS
+echo           STORE DE LOGICIELS ALEEXLEDEV
 echo ======================================================
 echo.
-echo   [1] Google Chrome
-echo   [2] Sumatra PDF
-echo   [3] VLC Media Player
-echo   [4] Installer TOUS les logiciels (Chrome + PDF + VLC)
-echo   [5] Pack Office (Telechargement + Install)
+echo  Choisissez les logiciels a installer en tapant leurs numeros
+echo  separes par des virgules (exemple: 1,5,10,12)
 echo.
-echo   [0] Retour au menu principal
+
+REM --- DEFINITION DU CATALOGUE (IDs Winget) ---
+REM [INDISPENSABLES]
+set "s1_n=Google Chrome"        & set "s1_id=Google.Chrome"
+set "s2_n=VLC Media Player"     & set "s2_id=VideoLAN.VLC"
+set "s3_n=Sumatra PDF"          & set "s3_id=SumatraPDF.SumatraPDF"
+set "s4_n=7-Zip"                & set "s4_id=7zip.7zip"
+set "s5_n=CCleaner"             & set "s5_id=Piriform.CCleaner"
+set "s6_n=Avast Free Antivirus" & set "s6_id=Avast.AvastFreeAntivirus"
+
+REM [WEB]
+set "s11_n=Mozilla Firefox"     & set "s11_id=Mozilla.Firefox"
+set "s12_n=Brave Browser"       & set "s12_id=Brave.Brave"
+set "s13_n=Opera GX"            & set "s13_id=Opera.OperaGX"
+set "s14_n=Netflix"             & set "s14_id=9WZDNCRFJ3TJ"
+set "s15_n=Facebook Messenger"  & set "s15_id=Facebook.Messenger"
+
+REM [MEDIA & SOCIAL]
+set "s20_n=Spotify"             & set "s20_id=Spotify.Spotify"
+set "s23_n=Discord"             & set "s23_id=Discord.Discord"
+set "s24_n=Telegram Desktop"    & set "s24_id=Telegram.TelegramDesktop"
+set "s25_n=WhatsApp"            & set "s25_id=WhatsApp.WhatsApp"
+set "s26_n=Slack"               & set "s26_id=SlackTechnologies.Slack"
+
+REM [DEV]
+set "s30_n=VS Code"             & set "s30_id=Microsoft.VisualStudioCode"
+set "s31_n=Git"                 & set "s31_id=Git.Git"
+set "s32_n=Python 3"            & set "s32_id=Python.Python.3.12"
+set "s33_n=Node.js (LTS)"       & set "s33_id=OpenJS.NodeJS.LTS"
+set "s34_n=Cursor AI (Editor)"  & set "s34_id=Anysphere.Cursor"
+set "s35_n=Antigravity SDK"     & set "s35_id=Google.Antigravity"
+
+REM [MATERIEL & UTILS]
+set "s40_n=HP Smart"            & set "s40_id=9wzdncrfhwlh"
+set "s41_n=Windows Scan"        & set "s41_id=9wzdncrfj3pv"
+set "s42_n=Notepad++"           & set "s42_id=Notepad++.Notepad++"
+set "s43_n=WinRAR"              & set "s43_id=RARLab.WinRAR"
+set "s44_n=PowerToys"           & set "s44_id=Microsoft.PowerToys"
+set "s45_n=Adobe Reader DC"     & set "s45_id=Adobe.AdobeAuthenticate"
+set "s46_n=LibreOffice"         & set "s46_id=LibreOffice.LibreOffice"
+
+REM [JEUX]
+set "s50_n=Steam"               & set "s50_id=Valve.Steam"
+set "s51_n=Epic Games Launcher"  & set "s51_id=EpicGames.EpicGamesLauncher"
+set "s52_n=Ubisoft Connect"     & set "s52_id=Ubisoft.Connect"
+
+echo  LES INDISPENSABLES (Nouveaux !)
+echo    [1] Chrome          [2] VLC Player      [3] Sumatra PDF
+echo    [4] 7-Zip           [5] CCleaner        [6] Avast
+echo.
+echo  WEB ^& NAVIGATION
+echo    [11] Firefox        [12] Brave          [13] Opera GX
+echo    [14] Netflix        [15] Messenger
+echo.
+echo  MULTIMEDIA ^& SOCIAL
+echo    [20] Spotify        [23] Discord        [24] Telegram
+echo    [25] WhatsApp       [26] Slack
+echo.
+echo  DEVELOPPEMENT ^& CODE
+echo    [30] VS Code        [31] Git            [32] Python 3
+echo    [33] Node.js        [34] Cursor AI      [35] Antigravity
+echo.
+echo  MATERIEL ^& UTILS
+echo    [40] HP Smart       [41] Windows Scan   [42] Notepad++
+echo    [43] WinRAR         [44] PowerToys      [45] Adobe Reader
+echo    [46] LibreOffice
+echo.
+echo  JEUX / GAMING
+echo    [50] Steam          [51] Epic Games     [52] Ubisoft
+echo.
+echo  SPECIAL
+echo    [99] PACK OFFICE (Direct)
+echo.
+echo    [0] Retour au menu principal
+echo ======================================================
+set /p store_choice=Numeros a installer (ex: 1,5,13): 
+
+if "%store_choice%"=="0" goto menu_principal
+if "%store_choice%"=="99" goto install_office
+
+echo.
+echo Preparation de l'installation de la liste : %store_choice%
+echo.
+
+REM --- BOUCLE DE PARSING DE LA LISTE ---
+set "list=%store_choice%"
+:process_list
+for /f "tokens=1* delims=," %%a in ("%list%") do (
+    set "current=%%a"
+    set "list=%%b"
+    
+    REM Nettoyage espaces
+    set "current=!current: =!"
+    
+    if defined s!current!_id (
+        set "app_name=!s%current%_n!"
+        set "app_id=!s%current%_id!"
+        echo.
+        echo ======================================================
+        echo  [+] INSTALLATION : !app_name!
+        echo ======================================================
+        winget install -e --id !app_id! --accept-source-agreements --accept-package-agreements --silent
+        if !errorlevel! equ 0 (
+            echo [OK] !app_name! installe avec succes.
+        ) else (
+            echo [!] Erreur ou deja installe pour !app_name!.
+        )
+    ) else (
+        if "!current!" neq "" echo [!] Numero !current! invalide, ignore.
+    )
+    
+    if defined list goto process_list
+)
+
 echo.
 echo ======================================================
-set /p soft_choice=Votre choix: 
-
-if "%soft_choice%"=="1" set "apps=Google.Chrome" & goto install_apps_single
-if "%soft_choice%"=="2" set "apps=SumatraPDF.SumatraPDF" & goto install_apps_single
-if "%soft_choice%"=="3" set "apps=VideoLAN.VLC" & goto install_apps_single
-if "%soft_choice%"=="4" goto install_apps_all
-if "%soft_choice%"=="5" goto install_office
-if "%soft_choice%"=="0" goto menu_principal
-echo Choix invalide.
+echo     TOUTES LES INSTALLATIONS SONT TERMINEES !
+echo ======================================================
 pause
 goto install_softwares
 
-:install_apps_single
-cls
-echo Installation de %apps% en cours...
-winget install -e --id %apps% --accept-source-agreements --accept-package-agreements
-echo.
-echo Installation terminee.
-pause
-goto install_softwares
-
-:install_apps_all
-cls
-echo Installation de TOUS les logiciels en cours...
-echo.
-echo 1/3 Installation de Google Chrome...
-winget install -e --id Google.Chrome --accept-source-agreements --accept-package-agreements
-echo.
-echo 2/3 Installation de Sumatra PDF...
-winget install -e --id SumatraPDF.SumatraPDF --accept-source-agreements --accept-package-agreements
-echo.
-echo 3/3 Installation de VLC Media Player...
-winget install -e --id VideoLAN.VLC --accept-source-agreements --accept-package-agreements
-echo.
-echo Toutes les installations sont terminees !
-pause
-goto install_softwares
 
 :install_office
 cls
