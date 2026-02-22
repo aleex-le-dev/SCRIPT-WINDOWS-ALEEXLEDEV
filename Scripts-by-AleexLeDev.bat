@@ -92,7 +92,7 @@ REM Nettoyage des anciennes variables boutons
 for /f "tokens=1 delims==" %%v in ('set btn_ 2^>nul') do set "%%v="
 
 echo ======================================================
-echo     BOITE A SCRIPTS WINDOWS - By ALEEXLEDEV v2.4
+echo     BOITE A SCRIPTS WINDOWS - By ALEEXLEDEV v2.5
 echo ======================================================
 echo.
 echo   ---- [*] FAVORIS ACTUELS ----
@@ -133,7 +133,7 @@ echo     [14] Demarrage ^& Mode Sans Echec
 echo.
 echo   ---- [b] BOOST ^& SPEED ----
 echo     [15] FULL AUTO FIX (Tout Reparer)
-echo     [16] BOOSTER DE PERFORMANCE
+echo     [16] OPTIMISATION ^& BOOSTER (Debloat)
 echo.
 echo ======================================================
 echo     [0] QUITTER LE SCRIPT
@@ -171,7 +171,7 @@ if "%main_choice%"=="12" goto menu_reports_key
 if "%main_choice%"=="13" goto menu_tweak_perso
 if "%main_choice%"=="14" goto menu_boot_safe
 if "%main_choice%"=="15" goto sys_full_auto_fix
-if "%main_choice%"=="16" goto sys_perf_booster
+if "%main_choice%"=="16" goto menu_perf_opti
 
 if "%main_choice%"=="0" goto exit_script
 echo Choix invalide.
@@ -273,15 +273,17 @@ goto menu_security_admin
 :menu_reports_key
 cls
 echo ======================================================
-echo             CLE ^& PERFORMANCES
+echo             CLE, WinSAT ^& INFOS PC
 echo ======================================================
 echo  [1] Recuperer Cle Windows
 echo  [2] Rapport WinSAT / Systeme
+echo  [3] Informations Systemes Completes
 echo.
 echo  [0] Retour
 set /p rk_choice=Choix: 
 if "%rk_choice%"=="1" goto get_win_key
 if "%rk_choice%"=="2" goto sys_perf_report_hub
+if "%rk_choice%"=="3" goto sys_system_info
 if "%rk_choice%"=="0" goto menu_principal
 goto menu_reports_key
 
@@ -2818,6 +2820,110 @@ echo ======================================================
 pause
 goto menu_principal
 
+:menu_perf_opti
+cls
+color 0D
+echo ======================================================
+echo           OPTIMISATION ^& BOOSTER
+echo ======================================================
+echo.
+echo   [1] ACTIVER le Booster de Performance (Boost FPS/^& Vitesse)
+echo   [2] DESACTIVER le Booster (Retour aux reglages par defaut)
+echo   [3] SCRIPT DEBLOAT (Supprimer les apps inutiles)
+echo.
+echo   [0] Retour
+echo.
+echo ======================================================
+set /p po_choice=Votre choix : 
+if "%po_choice%"=="1" goto sys_perf_booster
+if "%po_choice%"=="2" goto sys_perf_undo
+if "%po_choice%"=="3" goto sys_debloat
+if "%po_choice%"=="0" goto menu_principal
+goto menu_perf_opti
+
+:sys_system_info
+cls
+color 0B
+echo ======================================================
+echo         INFORMATIONS SYSTEME COMPLETES
+echo ======================================================
+echo.
+echo Analyse du materiel en cours...
+echo.
+powershell -NoProfile -ExecutionPolicy Bypass -Command "& { $os = Get-CimInstance Win32_OperatingSystem; $cpu = Get-CimInstance Win32_Processor; $cs = Get-CimInstance Win32_ComputerSystem; $ram = [math]::Round($cs.TotalPhysicalMemory / 1GB, 2); $bios = Get-CimInstance Win32_BIOS; $gpu = Get-CimInstance Win32_VideoController; $disk = Get-PhysicalDisk | Sort-Object DeviceId; Write-Host '--- SYSTEME ---' -ForegroundColor Cyan; Write-Host ('OS          : ' + $os.Caption + ' ' + $os.OSArchitecture); Write-Host ('Version     : ' + $os.Version + ' (Build ' + $os.BuildNumber + ')'); Write-Host ('Utilisateur : ' + $env:USERNAME); Write-Host ('PC Nom      : ' + $env:COMPUTERNAME); Write-Host ''; Write-Host '--- MATERIEL ---' -ForegroundColor Cyan; Write-Host ('Processeur  : ' + $cpu.Name.Trim()); Write-Host ('Coeurs      : ' + $cpu.NumberOfCores + ' Coeurs / ' + $cpu.NumberOfLogicalProcessors + ' Threads'); Write-Host ('Memoire RAM : ' + $ram + ' Go'); Write-Host ('BIOS        : ' + $bios.Manufacturer + ' ' + $bios.SMBIOSBIOSVersion); Write-Host ('Carte Mere  : ' + $cs.Manufacturer + ' ' + $cs.Model); Write-Host ''; Write-Host '--- GRAPHIQUES ---' -ForegroundColor Cyan; foreach ($v in $gpu) { Write-Host ('Carte GPU   : ' + $v.Name) }; Write-Host ''; Write-Host '--- STOCKAGE ---' -ForegroundColor Cyan; foreach ($d in $disk) { $size = if ($d.Size -gt 1TB) {[math]::Round($d.Size/1TB,2).ToString()+' To'} else {[math]::Round($d.Size/1GB,0).ToString()+' Go'}; Write-Host ('Disque [' + $d.DeviceId + '] : ' + $d.FriendlyName + ' (' + $size + ') - ' + $d.MediaType) } }"
+echo.
+echo ======================================================
+pause
+goto menu_reports_key
+
+:sys_perf_undo
+cls
+color 0E
+echo ======================================================
+echo           DESACTIVATION DU BOOST
+echo ======================================================
+echo.
+echo Restauration des parametres Windows par defaut...
+echo.
+echo [1/8] Remise du plan d'alimentation 'Equilibre'...
+powercfg -setactive 381b4222-f694-41f0-9685-ff5bb260df2e >nul 2>&1
+echo [OK] Energie restauree.
+echo.
+echo [2/8] Re-activation de la telemetrie...
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\DataCollection" /v "AllowTelemetry" /t REG_DWORD /d 1 /f >nul 2>&1
+echo [OK] Telemetrie restauree.
+echo.
+echo [3/8] Restauration des delais menus (400ms)...
+reg add "HKCU\Control Panel\Desktop" /v "MenuShowDelay" /t REG_SZ /d "400" /f >nul 2>&1
+reg add "HKLM\SYSTEM\CurrentControlSet\Control" /v "WaitToKillServiceTimeout" /t REG_SZ /d "5000" /f >nul 2>&1
+echo [OK] Delais restaures.
+echo.
+echo [4/8] Restauration du Menu Contextuel Moderne (Win11)...
+reg delete "HKCU\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}" /f >nul 2>&1
+echo [OK] Menu Win11 restaure.
+echo.
+echo [5/8] Re-activation de BING dans le menu Demarrer...
+reg delete "HKCU\Software\Policies\Microsoft\Windows\Explorer" /v "DisableSearchBoxSuggestions" /f >nul 2>&1
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Search" /v "BingSearchEnabled" /t REG_DWORD /d 1 /f >nul 2>&1
+echo [OK] Recherche Bing restauree.
+echo.
+echo [6/8] Re-activation des Widgets ^& Actualites...
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Feeds" /v "ShellFeedsTaskbarViewMode" /t REG_DWORD /d 0 /f >nul 2>&1
+echo [OK] Widgets restaures.
+echo.
+echo [7/8] Desactivation du Mode Jeu...
+reg add "HKCU\Software\Microsoft\GameBar" /v "AllowAutoGameMode" /t REG_DWORD /d 0 /f >nul 2>&1
+echo [OK] Mode Jeu desactive.
+echo.
+echo [8/8] Retablissement des effets visuels...
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\VisualEffects" /v "VisualFXSetting" /t REG_DWORD /d 0 /f >nul 2>&1
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" /v "EnableTransparency" /t REG_DWORD /d 1 /f >nul 2>&1
+echo [OK] Effets visuels restaures.
+echo.
+echo ======================================================
+echo    RESTAURATION TERMINEE !
+echo ======================================================
+pause
+goto menu_perf_opti
+
+:sys_debloat
+cls
+color 0C
+echo ======================================================
+echo               SCRIPT DEBLOAT (Windows 10/11)
+echo ======================================================
+echo.
+echo Nettoyage des applications inutiles en cours...
+echo.
+powershell -NoProfile -ExecutionPolicy Bypass -Command "& { $apps = @('*Disney*', '*Spotify*', '*CandyCrush*', '*BingNews*', '*BingWeather*', '*BingFinance*', '*BingSports*', '*ZuneMusic*', '*ZuneVideo*', '*3DBuilder*', '*Office.OneNote*', '*SkypeApp*', '*GetStarted*', '*Messaging*', '*SolitaireCollection*', '*YourPhone*', '*FeedbackHub*', '*OneConnect*', '*People*', '*StickyNotes*', '*ScreenSketch*', '*PowerBI.Phone*', '*LinkedInforWindows*'); foreach ($app in $apps) { Write-Host ('Suppression de ' + $app + '...') -ForegroundColor Gray; Get-AppxPackage -Name $app -AllUsers | Remove-AppxPackage -ErrorAction SilentlyContinue } }"
+echo.
+echo [INFO] Desactivation de la telemetrie...
+sc stop DiagTrack >nul 2>&1
+sc config DiagTrack start= disabled >nul 2>&1
+echo [OK] Nettoyage termine.
+pause
+goto menu_perf_opti
+
 :sys_perf_booster
 cls
 color 0D
@@ -2825,91 +2931,25 @@ echo ======================================================
 echo            BOOSTER DE PERFORMANCE
 echo ======================================================
 echo.
-echo Ce module va optimiser Windows pour les performances :
-echo - Activation du mode "Performances Ultimes" (Energie)
-echo - Reduction de la telemetrie Windows (CPU/RAM)
-echo - Optimisation de la vitesse des menus (MenuShowDelay)
-echo - Activation du Menu Contextuel Classique (Win11 - Plus rapide)
-echo - Activation du Mode Jeu (Windows Game Mode)
-echo - Desactivation de la transparence ^& effets visuels (Optimisation GPU)
-echo - Nettoyage complet du DEMARRAGE AUTOMATIQUE (Dossiers ^& Registre)
-echo - Desactivation de la recherche BING (Menu Demarrer plus rapide)
-echo - Desactivation des Widgets ^& Actualites
+echo Application des optimisations...
 echo.
-set /p confirm_perf=Appliquer toutes ces optimisations ? (O/N) : 
-if /i not "%confirm_perf%"=="O" goto menu_principal
-
-echo.
-echo [1/10] Activation du plan "Performances Ultimes"...
 powercfg -duplicatescheme e9a42b02-d5df-448d-aa00-03f14749eb61 >nul 2>&1
 powercfg -setactive e9a42b02-d5df-448d-aa00-03f14749eb61 >nul 2>&1
-echo [OK] Plan d'alimentation active.
-
-echo.
-echo [2/10] Desactivation de la telemetrie...
 reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\DataCollection" /v "AllowTelemetry" /t REG_DWORD /d 0 /f >nul 2>&1
-echo [OK] Telemetrie reduite.
-
-echo.
-echo [3/10] Vitesse des menus ^& Delais systeme...
 reg add "HKCU\Control Panel\Desktop" /v "MenuShowDelay" /t REG_SZ /d "0" /f >nul 2>&1
-reg add "HKLM\SYSTEM\CurrentControlSet\Control" /v "WaitToKillServiceTimeout" /t REG_SZ /d "2000" /f >nul 2>&1
-echo [OK] Menus instantanes.
-
-echo.
-echo [4/10] Activation du Menu Contextuel Classique...
 reg add "HKCU\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\InprocServer32" /f /ve >nul 2>&1
-echo [OK] Menu classique active.
-
-echo.
-echo [5/10] Desactivation de BING dans le menu Demarrer...
 reg add "HKCU\Software\Policies\Microsoft\Windows\Explorer" /v "DisableSearchBoxSuggestions" /t REG_DWORD /d 1 /f >nul 2>&1
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Search" /v "BingSearchEnabled" /t REG_DWORD /d 0 /f >nul 2>&1
-echo [OK] Recherche Bing desactivee.
-
-echo.
-echo [6/10] Nettoyage FORCE du DEMARRAGE (Startup)...
-REM Nettoyage des dossiers de demarrage
-del /q /f "%AppData%\Microsoft\Windows\Start Menu\Programs\Startup\*.*" >nul 2>&1
-del /q /f "C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Startup\*.*" >nul 2>&1
-REM Nettoyage des cles Run du registre (Logiciels tiers uniquement via PowerShell simplifie)
-powershell -Command "Get-ItemProperty -Path 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Run' | Get-Member -MemberType NoteProperty | ForEach-Object { if($_.Name -notmatch 'SecurityHealth|WindowsDefender|OneDrive'){ Remove-ItemProperty -Path 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Run' -Name $_.Name } }" >nul 2>&1
-echo [OK] Logiciels au demarrage desactives.
-
-echo.
-echo [7/10] Desactivation des Widgets ^& Actualites...
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Feeds" /v "ShellFeedsTaskbarViewMode" /t REG_DWORD /d 2 /f >nul 2>&1
-echo [OK] Widgets masques.
-
-echo.
-echo [8/10] Activation du Mode Jeu (Windows Game Mode)...
 reg add "HKCU\Software\Microsoft\GameBar" /v "AllowAutoGameMode" /t REG_DWORD /d 1 /f >nul 2>&1
-echo [OK] Mode Jeu actif.
-
-echo.
-echo [9/10] Basculement FORCE en mode "Meilleures Performances"...
-REM Force le mode performance au niveau systeme (VisualFXSetting = 2)
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\VisualEffects" /v "VisualFXSetting" /t REG_DWORD /d 2 /f >nul 2>&1
-REM Desactivation massive des effets visuels individuels
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" /v "EnableTransparency" /t REG_DWORD /d 0 /f >nul 2>&1
-reg add "HKCU\Control Panel\Desktop\WindowMetrics" /v "MinAnimate" /t REG_SZ /d "0" /f >nul 2>&1
-echo [OK] Interface configuree pour la performance.
-
-echo.
-echo [10/10] Conservation des Indispensables (Miniatures ^& Polices)...
-REM On reactive EXCLUSIVEMENT le lissage et les miniatures pour le confort
-reg add "HKCU\Control Panel\Desktop" /v "FontSmoothing" /t REG_SZ /d "2" /f >nul 2>&1
-reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "IconsOnly" /t REG_DWORD /d 0 /f >nul 2>&1
-echo [OK] Lisibilite et miniatures preservees.
-
 echo.
 echo ======================================================
-echo    BOOST TOTAL TERMINE !
-echo    LE PC EST MAINTENANT CONFIGURÉ POUR LA VITESSE.
-echo    (Un redemarrage est indispensable pour tout appliquer)
+echo    BOOST TERMINE !
 echo ======================================================
 pause
-goto menu_principal
+goto menu_perf_opti
 
 :exit_script
 cls
