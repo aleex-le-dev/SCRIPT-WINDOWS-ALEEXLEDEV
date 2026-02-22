@@ -1641,35 +1641,16 @@ exit
 :DynamicMenu
 :: Arguments: %1="Titre", %2="Option1;Option2;Option3"
 :: Retourne: ERRORLEVEL (1, 2, 3...) ou 0 pour Echap/Retour
-setlocal enabledelayedexpansion
-set "opts=%~2"
-set "title=%~1"
-powershell -NoProfile -ExecutionPolicy Bypass -Command ^
-"$options = '%opts%' -split ';'; ^
-$title = '%title%'; ^
-$index = 0; ^
-while($true){ ^
-    Clear-Host; ^
-    Write-Host '======================================================' -ForegroundColor Cyan; ^
-    Write-Host \" $title\" -ForegroundColor White; ^
-    Write-Host '======================================================' -ForegroundColor Cyan; ^
-    Write-Host ''; ^
-    for($i=0; $i -lt $options.Count; $i++){ ^
-        if($i -eq $index){ Write-Host \"  >> [\" ($i+1) \"] $($options[$i])\" -ForegroundColor Black -BackgroundColor White } ^
-        else { Write-Host \"     [\" ($i+1) \"] $($options[$i])\" -ForegroundColor Gray } ^
-    }; ^
-    Write-Host ''; ^
-    Write-Host '------------------------------------------------------' -ForegroundColor Cyan; ^
-    Write-Host ' [FLÈCHES] Naviguer | [ENTRÉE] Valider | [0/ECHAP] Retour' -ForegroundColor DarkGray; ^
-    $key = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown'); ^
-    $vk = $key.VirtualKeyCode; ^
-    if($vk -eq 38){ $index--; if($index -lt 0){ $index = $options.Count - 1 } } ^
-    elseif($vk -eq 40){ $index++; if($index -ge $options.Count){ $index = 0 } } ^
-    elseif($vk -eq 13){ exit ($index + 1) } ^
-    elseif($vk -eq 27 -or $key.Character -eq '0'){ exit 0 } ^
-    elseif($key.Character -ge '1' -and $key.Character -le [char]('0' + $options.Count)){ exit ([int][string]$key.Character) } ^
-}"
-exit /b %errorlevel%
+setlocal
+set "m_title=%~1"
+set "m_opts=%~2"
+
+rem Script PowerShell aéré pour un look plus premium
+set "ps_code=$o='%m_opts%'-split';';$t='%m_title%';$idx=0;while($true){clear-host;write-host '';write-host '  ======================================================' -f Cyan;write-host \"   $t\" -f White;write-host '  ======================================================' -f Cyan;write-host '';write-host '';for($i=0;$i -lt $o.Count;$i++){$s=$o[$i];if($i -eq $idx){write-host \"    >> [$($i+1^)] $s  \" -f Black -b White}else{write-host \"       [$($i+1^)] $s  \" -f Gray};write-host ''};write-host '';write-host '  ------------------------------------------------------' -f Cyan;write-host '   [FLECHES] Naviguer | [ENTREE] Valider | [0/ECHAP] Retour' -f DarkGray;write-host '';$k=$Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown');$v=$k.VirtualKeyCode;if($v -eq 38){$idx--;if($idx -lt 0){$idx=$o.Count-1}}elseif($v -eq 40){$idx++;if($idx -ge $o.Count){$idx=0}}elseif($v -eq 13){exit ($idx+1)}elseif($v -eq 27 -or $k.Character -eq '0'){exit 0}elseif($k.Character -ge '1' -and $k.Character -le [char]('0'+$o.Count)){exit ([int][string]$k.Character)}}"
+
+powershell -NoProfile -ExecutionPolicy Bypass -Command "%ps_code%"
+set "res=%errorlevel%"
+exit /b %res%
 
 
 :sys_unlock_notes
