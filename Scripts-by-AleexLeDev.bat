@@ -40,37 +40,264 @@ cd /d "%~dp0"
 title Boite a Scripts Windows - By ALEEXLEDEV (v2.4)
 color 0B
 
+REM === INITIALISATION BASE DE DONNEES SCRIPTS ===
+set "t1_n=SFC (Reparation fichiers)" & set "t1_l=sys_sfc"
+set "t2_n=DISM (Reparation image)" & set "t2_l=sys_dism_menu"
+set "t3_n=CHKDSK (Erreurs disque)" & set "t3_l=sys_chkdsk"
+set "t4_n=Nettoyage Disque/Temp" & set "t4_l=sys_clean_options"
+set "t5_n=Nettoyage Registre" & set "t5_l=sys_registry_cleanup"
+set "t6_n=Reparer Spouleur" & set "t6_l=repair_spooler"
+set "t7_n=Reparer Windows Update" & set "t7_l=sys_windows_update_hub"
+set "t8_n=Point de Restauration" & set "t8_l=create_restore_point"
+set "t9_n=Gestionnaire DNS" & set "t9_l=dns_manager"
+set "t10_n=Mots de passe Wi-Fi" & set "t10_l=sys_wifi_passwords"
+set "t11_n=Outils Reseau (Infos/Fix)" & set "t11_l=sys_network_hub"
+set "t12_n=Test Connexion (Ping/DNS)" & set "t12_l=sys_ping_test"
+set "t13_n=Recherche FTP (Dorks)" & set "t13_l=ftp_search"
+set "t14_n=Formatage DISKPART" & set "t14_l=disk_manager"
+set "t15_n=Sante Disques (SMART)" & set "t15_l=sys_smart_check"
+set "t16_n=Dossiers Volumineux" & set "t16_l=sys_large_files"
+set "t17_n=Gestion BitLocker" & set "t17_l=sys_bitlocker_check"
+set "t18_n=Batterie ^& RAM" & set "t18_l=sys_hardware_diag"
+set "t19_n=Gestion des Drivers" & set "t19_l=sys_drivers"
+set "t20_n=Ecran Tactile" & set "t20_l=touch_screen_manager"
+set "t21_n=Installation Logiciels" & set "t21_l=install_softwares"
+set "t22_n=Mise a Jour Apps (Winget)" & set "t22_l=winget_manager"
+set "t23_n=Reset MDP (Utilman)" & set "t23_l=utilman_guide"
+set "t24_n=Cle de Produit Win" & set "t24_l=get_win_key"
+set "t25_n=Super Administrateur" & set "t25_l=manage_super_admin"
+set "t26_n=Menu Win11 Classique" & set "t26_l=context_menu"
+set "t27_n=Raccourcis ^& God Mode" & set "t27_l=sys_shortcuts_hub"
+set "t28_n=S'approprier (TakeOwn)" & set "t28_l=sys_take_ownership"
+set "t29_n=Vitesse Menus" & set "t29_l=sys_menu_showdelay"
+set "t30_n=Rapport WinSAT/Systeme" & set "t30_l=menu_reports_key"
+set "t31_n=Demarrage ^& Mode Sans Echec" & set "t31_l=menu_boot_safe"
+set "max_tools=31"
+
+REM === CHARGEMENT DES FAVORIS ===
+set "fav_file=favoris.dat"
+if not exist "%fav_file%" (
+    echo t14> "%fav_file%"
+    echo t21>> "%fav_file%"
+    echo t22>> "%fav_file%"
+)
+
+
 :menu_principal
 cls
 color 0B
+
+REM Nettoyage des anciennes variables boutons
+for /f "tokens=1 delims==" %%v in ('set btn_ 2^>nul') do set "%%v="
+
 echo ======================================================
 echo     BOITE A SCRIPTS WINDOWS - By ALEEXLEDEV v2.4
 echo ======================================================
 echo.
-echo      === OUTILS PRINCIPAUX ===
-echo   [1] Gestionnaire DNS
-echo   [2] Mises a jour des applications
-echo   [3] Formatage avec DISKPART
-echo   [4] Installation de logiciels
-echo   [5] Depannage et Reparations
+echo   ---- [*] FAVORIS ACTUELS ----
+set "f_count=0"
+for /f "usebackq delims=" %%F in ("%fav_file%") do (
+    set /a f_count+=1
+    set "f_id=%%F"
+    set "f_name=!%%F_n!"
+    set "f_label=!%%F_l!"
+    echo     [F!f_count!] !f_name!
+    set "btn_!f_count!=!f_label!"
+)
+if %f_count%==0 echo     (Aucun favori selectionne)
 echo.
-echo   [6] Voir les outils systeme avances
+echo     [F] GERER MES FAVORIS
 echo.
-echo   [0] Quitter
+echo   ---- [+] MAINTENANCE ^& REPARATION ----
+echo     [1] SFC / DISM / CHKDSK
+echo     [2] Nettoyage (Fichiers, Registre)
+echo     [3] Reparer Windows Update ^& Spouleur
+echo     [4] Point de Restauration
+echo.
+echo   ---- [i] INTERNET ^& LOGICIELS ----
+echo     [5] DNS ^& Mots de Passe Wi-Fi
+echo     [6] Outils ^& Test Reseau
+echo     [7] Recherche FTP (Google Dorks)
+echo.
+echo   ---- [d] DISQUES ^& MATERIEL ----
+echo     [8] Sante Disques, Batterie ^& RAM
+echo     [9] Dossiers Volumineux ^& BitLocker
+echo     [10] Drivers ^& Ecran Tactile
+echo.
+echo   ---- [s] SYSTEME ^& PERSO ----
+echo     [11] Mot de Passe Session ^& Super Admin
+echo     [12] Cle Produit ^& Rapports WinSAT
+echo     [13] Menu Win11, God Mode ^& Clic-Droit
+echo     [14] Demarrage ^& Mode Sans Echec
 echo.
 echo ======================================================
-set /p main_choice=Entrez votre choix: 
+echo     [0] QUITTER LE SCRIPT
+echo ======================================================
+set /p main_choice=Votre choix : 
 
-if "%main_choice%"=="1" goto dns_manager
-if "%main_choice%"=="2" goto winget_manager
-if "%main_choice%"=="3" goto disk_manager
-if "%main_choice%"=="4" goto install_softwares
-if "%main_choice%"=="5" goto depannage_menu
-if "%main_choice%"=="6" goto system_tools
+if /i "%main_choice%"=="F" goto manage_favs
+
+REM Gestion des favoris (F1, F2...)
+if /i "%main_choice:~0,1%"=="F" (
+    set "target_num=%main_choice:~1%"
+    for /f "delims=" %%L in ("btn_!target_num!") do (
+        if defined %%L (
+            set "target_label=!%%L!"
+            goto !target_label!
+        )
+    )
+)
+
+if "%main_choice%"=="1" goto menu_maint_diag
+if "%main_choice%"=="2" goto sys_clean_options
+if "%main_choice%"=="3" goto sys_repair_hub
+if "%main_choice%"=="4" goto create_restore_point
+
+if "%main_choice%"=="5" goto menu_internet_wifi
+if "%main_choice%"=="6" goto sys_network_hub
+if "%main_choice%"=="7" goto ftp_search
+
+if "%main_choice%"=="8" goto sys_hardware_diag
+if "%main_choice%"=="9" goto menu_disk_adv
+if "%main_choice%"=="10" goto menu_drivers_touch
+
+if "%main_choice%"=="11" goto menu_security_admin
+if "%main_choice%"=="12" goto menu_reports_key
+if "%main_choice%"=="13" goto menu_tweak_perso
+if "%main_choice%"=="14" goto menu_boot_safe
+
 if "%main_choice%"=="0" goto exit_script
-echo Choix invalide, veuillez recommencer.
+echo Choix invalide.
 pause
 goto menu_principal
+
+:menu_maint_diag
+cls
+echo ======================================================
+echo            DIAGNOSTIC ^& INTEGRITE
+echo ======================================================
+echo  [1] SFC /scannow
+echo  [2] DISM (Check/Restore)
+echo  [3] CHKDSK
+echo.
+echo  [0] Retour
+set /p md_choice=Choix: 
+if "%md_choice%"=="1" goto sys_sfc
+if "%md_choice%"=="2" goto sys_dism_menu
+if "%md_choice%"=="3" goto sys_chkdsk
+if "%md_choice%"=="0" goto menu_principal
+goto menu_maint_diag
+
+:sys_repair_hub
+cls
+echo ======================================================
+echo             REPARATION SERVICES
+echo ======================================================
+echo  [1] Windows Update (Assistant/Reset)
+echo  [2] Spouleur d'Impression
+echo.
+echo  [0] Retour
+set /p rh_choice=Choix: 
+if "%rh_choice%"=="1" goto sys_windows_update_hub
+if "%rh_choice%"=="2" goto repair_spooler
+if "%rh_choice%"=="0" goto menu_principal
+goto sys_repair_hub
+
+:menu_internet_wifi
+cls
+echo ======================================================
+echo              CONNEXION ^& WI-FI
+echo ======================================================
+echo  [1] Gestionnaire DNS
+echo  [2] Mots de passe Wi-Fi
+echo.
+echo  [0] Retour
+set /p iw_choice=Choix: 
+if "%iw_choice%"=="1" goto dns_manager
+if "%iw_choice%"=="2" goto sys_wifi_passwords
+if "%iw_choice%"=="0" goto menu_principal
+goto menu_internet_wifi
+
+:menu_disk_adv
+cls
+echo ======================================================
+echo             STOCKAGE AVANCE
+echo ======================================================
+echo  [1] Analyse fichiers volumineux
+echo  [2] Gestion BitLocker
+echo.
+echo  [0] Retour
+set /p da_choice=Choix: 
+if "%da_choice%"=="1" goto sys_large_files
+if "%da_choice%"=="2" goto sys_bitlocker_check
+if "%da_choice%"=="0" goto menu_principal
+goto menu_disk_adv
+
+:menu_drivers_touch
+cls
+echo ======================================================
+echo             PILOTES ^& MATERIEL
+echo ======================================================
+echo  [1] Gestionnaire de Pilotes (Drivers)
+echo  [2] Gestion Ecran Tactile
+echo.
+echo  [0] Retour
+set /p dt_choice=Choix: 
+if "%dt_choice%"=="1" goto sys_drivers
+if "%dt_choice%"=="2" goto touch_screen_manager
+if "%dt_choice%"=="0" goto menu_principal
+goto menu_drivers_touch
+
+:menu_security_admin
+cls
+echo ======================================================
+echo             SECURITE ^& COMPTES
+echo ======================================================
+echo  [1] Reset Mot de Passe (Utilman)
+echo  [2] Gestion Super Admin
+echo.
+echo  [0] Retour
+set /p sa_choice=Choix: 
+if "%sa_choice%"=="1" goto utilman_guide
+if "%sa_choice%"=="2" goto manage_super_admin
+if "%sa_choice%"=="0" goto menu_principal
+goto menu_security_admin
+
+:menu_reports_key
+cls
+echo ======================================================
+echo             CLE ^& PERFORMANCES
+echo ======================================================
+echo  [1] Recuperer Cle Windows
+echo  [2] Rapport WinSAT / Systeme
+echo.
+echo  [0] Retour
+set /p rk_choice=Choix: 
+if "%rk_choice%"=="1" goto get_win_key
+if "%rk_choice%"=="2" goto sys_perf_report_hub
+if "%rk_choice%"=="0" goto menu_principal
+goto menu_reports_key
+
+:menu_tweak_perso
+cls
+echo ======================================================
+echo             TWEAKS ^& PERSO
+echo ======================================================
+echo  [1] Menu Windows 11
+echo  [2] Raccourcis ^& God Mode
+echo  [3] Take Ownership (Clic-droit)
+echo  [4] Acceleration Menus
+echo.
+echo  [0] Retour
+set /p tp_choice=Choix: 
+if "%tp_choice%"=="1" goto context_menu
+if "%tp_choice%"=="2" goto sys_shortcuts_hub
+if "%tp_choice%"=="3" goto sys_take_ownership
+if "%tp_choice%"=="4" goto sys_menu_showdelay
+if "%tp_choice%"=="0" goto menu_principal
+goto menu_tweak_perso
+
+
 
 REM ===================================================================
 REM                    GESTIONNAIRE DNS (GOOGLE / CLOUDFLARE)
@@ -86,6 +313,7 @@ echo   [1] DNS Google (8.8.8.8 / 8.8.4.4)
 echo   [2] DNS Cloudflare (1.1.1.1 / 1.0.0.1)
 echo   [3] Restauration des DNS par defaut
 echo   [4] Affichage de la configuration actuelle
+echo.
 echo   [0] Retour au menu principal
 echo.
 echo ================================================
@@ -304,6 +532,7 @@ echo.
 echo   [1] Mettre a jour une application (liste et choix)
 echo   [2] Mettre a jour toutes les applications
 echo   [3] Voir les application facultatives (Windows Update)
+echo.
 echo   [0] Retour au menu principal
 echo.
 set /p winget_choice=Choisissez une option: 
@@ -383,6 +612,7 @@ echo ========================================================
 echo.
 echo   [1] Activer le menu contextuel classique (recommande)
 echo   [2] Restaurer le menu contextuel moderne de Windows 11
+echo.
 echo   [0] Retour au menu principal
 echo.
 set /p ctx_choice=Votre choix: 
@@ -459,10 +689,11 @@ echo =============================================================
 echo.
 echo Analyse des disques disponibles...
 echo.
+echo.
 echo =============================================================
 echo.
 
-echo list disk | diskpart
+(echo list disk) | diskpart
 
 echo.
 echo =============================================================
@@ -599,6 +830,7 @@ echo.
 echo   [1] Redemarrer le pilote tactile
 echo   [2] Desactiver le pilote tactile
 echo   [3] Activer le pilote tactile
+echo.
 echo   [0] Retour au menu principal
 echo.
 set /p touch_choice=Votre choix: 
@@ -695,6 +927,7 @@ echo   [2] Sumatra PDF
 echo   [3] VLC Media Player
 echo   [4] Installer TOUS les logiciels (Chrome + PDF + VLC)
 echo   [5] Pack Office (Telechargement + Install)
+echo.
 echo   [0] Retour au menu principal
 echo.
 echo ======================================================
@@ -779,6 +1012,7 @@ echo   [1] Creer raccourci "Arreter"
 echo   [2] Creer raccourci "Mettre en veille"
 echo   [3] Creer raccourci "Redemarrer"
 echo   [4] Creer les 3 raccourcis
+echo.
 echo   [0] Retour au menu principal
 echo.
 echo ======================================================
@@ -848,6 +1082,7 @@ echo   [3] Documents (Office, PDF, TXT...)
 echo   [4] Logiciels / Executables (exe, iso, rar...)
 echo   [5] Images (jpg, png...)
 echo   [6] Personnalise (choisir l'extension)
+echo.
 echo   [0] Retour
 echo.
 echo ======================================================
@@ -917,102 +1152,130 @@ goto ftp_search
 REM ===================================================================
 REM                    OUTILS SYSTEME AVANCES
 REM ===================================================================
-:system_tools
+:sys_dism_menu
 cls
-color 07
 echo ======================================================
-echo     OUTILS SYSTEME AVANCES
+echo             OUTILS DISM (IMAGE WINDOWS)
 echo ======================================================
 echo.
-echo      === VERIFICATIONS D'INTEGRITE SYSTEME ===
-echo   [1] Analyse et reparation des fichiers (SFC /scannow)
-echo   [2] Verification de l'etat Windows (DISM /CheckHealth)
-echo   [3] Restaurer l'etat Windows (DISM /RestoreHealth)
-echo   [4] Analyse d'erreurs avancee (CHKDSK)
+echo   [1] Verification rapide (CheckHealth)
+echo   [2] Correction avancee (RestoreHealth)
 echo.
-echo      === NETTOYAGE & OPTIMISATION ===
-echo   [5] Nettoyage de disque
-echo   [6] Optimisation systeme (suppression fichiers temp)
-echo   [7] Verificateur de dossiers/fichiers volumineux
-echo   [8] Nettoyage/optimisation avancee du Registre
-echo   [9] Acceleration ouverture menus
+echo   [0] Retour
 echo.
-echo      === DISQUE DUR ===
-echo   [10] Verifier chiffrement BitLocker / Dechiffrer
-echo.
-echo      === OUTILS RESEAU ===
-echo   [11] Afficher les informations reseau
-echo   [12] Redemarrer les cartes reseau
-echo   [13] Reparation reseau - Assistant automatique
-echo   [14] Test de Connexion Complet (Ping/DNS)
-echo.
-echo      === UTILITAIRES & EXTRAS ===
-echo   [15] Afficher les pilotes installes
-echo   [16] Outil de reparation Windows Update
-echo   [17] Generer un rapport systeme complet
-echo   [18] Utilitaire de reinitialisation Windows Update
-echo   [19] Menu contextuel Windows 11
-echo   [20] Raccourcis bureau (Veille/Redemarrer/eteindre)
-echo   [21] Clic-droit : S'approprier un fichier/dossier
-echo   [22] Creer dossier "God Mode" sur le Bureau
-echo   [23] Recherche FTP (Index Of / Google Dorks)
-echo.
-echo      === MOT DE PASSE ===
-echo   [24] Gestion des mots de passe Wi-Fi
-echo   [25] Creer un point de restauration
-echo   [26] Reinitialiser MDP Session (Tutoriel Utilman)
-echo   [27] Ajouter Compte Super Admin
-echo.
-echo      === MATERIEL ===
-echo   [28] Gestion de l'ecran tactile
-echo   [29] Analyse de la batterie
-echo   [30] Sante des Disques (S.M.A.R.T)
-echo   [31] Diagnostic Memoire (RAM)
-echo.
-echo      === PERFORMANCES ===
-echo   [32] Analyse de performance PC (WinSAT)
-echo.
-echo   [0] Retour au menu principal
-echo.
-echo ------------------------------------------------------
-set /p sys_choice=Entrez votre choix: 
+set /p dism_c=Choix: 
+if "%dism_c%"=="1" goto sys_dism_check
+if "%dism_c%"=="2" goto sys_dism_restore
+if "%dism_c%"=="0" goto menu_maintenance
+goto sys_dism_menu
 
-if "%sys_choice%"=="1" goto sys_sfc
-if "%sys_choice%"=="2" goto sys_dism_check
-if "%sys_choice%"=="3" goto sys_dism_restore
-if "%sys_choice%"=="4" goto sys_chkdsk
-if "%sys_choice%"=="5" goto sys_cleanmgr
-if "%sys_choice%"=="6" goto sys_temp_cleanup
-if "%sys_choice%"=="7" goto sys_large_files
-if "%sys_choice%"=="8" goto sys_registry_cleanup
-if "%sys_choice%"=="9" goto sys_menu_showdelay
-if "%sys_choice%"=="10" goto sys_bitlocker_check
-if "%sys_choice%"=="11" goto sys_ipconfig
-if "%sys_choice%"=="12" goto sys_restart_network
-if "%sys_choice%"=="13" goto sys_repair_network
-if "%sys_choice%"=="14" goto sys_ping_test
-if "%sys_choice%"=="15" goto sys_drivers
-if "%sys_choice%"=="16" goto sys_windows_update
-if "%sys_choice%"=="17" goto sys_report
-if "%sys_choice%"=="18" goto sys_reset_windows_update
-if "%sys_choice%"=="19" goto context_menu
-if "%sys_choice%"=="20" goto shortcuts_manager
-if "%sys_choice%"=="21" goto sys_take_ownership
-if "%sys_choice%"=="22" goto sys_god_mode
-if "%sys_choice%"=="23" goto ftp_search
-if "%sys_choice%"=="24" goto sys_wifi_passwords
-if "%sys_choice%"=="25" goto create_restore_point
-if "%sys_choice%"=="26" goto utilman_guide
-if "%sys_choice%"=="27" goto manage_super_admin
-if "%sys_choice%"=="28" goto touch_screen_manager
-if "%sys_choice%"=="29" goto sys_battery_report
-if "%sys_choice%"=="30" goto sys_smart_check
-if "%sys_choice%"=="31" goto sys_ram_check
-if "%sys_choice%"=="32" goto sys_winsat
-if "%sys_choice%"=="0" goto menu_principal
-echo Choix invalide.
-pause
-goto system_tools
+:sys_clean_options
+cls
+echo ======================================================
+echo               NETTOYAGE SYSTEME
+echo ======================================================
+echo.
+echo   [1] Nettoyage de disque Windows (cleanmgr)
+echo   [2] Suppression des fichiers temporaires (Script)
+echo.
+echo   [0] Retour
+echo.
+set /p clean_c=Choix: 
+if "%clean_c%"=="1" goto sys_cleanmgr
+if "%clean_c%"=="2" goto sys_temp_cleanup
+if "%clean_c%"=="0" goto menu_maintenance
+goto sys_clean_options
+
+:sys_windows_update_hub
+cls
+echo ======================================================
+echo            REPARATION WINDOWS UPDATE
+echo ======================================================
+echo.
+echo   [1] Assistant de reparation Windows Update
+echo   [2] Reinitialisation complete des composants
+echo.
+echo   [0] Retour
+echo.
+set /p wu_c=Choix: 
+if "%wu_c%"=="1" goto sys_windows_update
+if "%wu_c%"=="2" goto sys_reset_windows_update
+if "%wu_c%"=="0" goto menu_maintenance
+goto sys_windows_update_hub
+
+:sys_network_hub
+cls
+echo ======================================================
+echo                  OUTILS RESEAU
+echo ======================================================
+echo.
+echo   [1] Afficher les informations IP
+echo   [2] Redemarrer les cartes reseau
+echo   [3] Reparation reseau automatique
+echo.
+echo   [0] Retour
+echo.
+set /p net_h=Choix: 
+if "%net_h%"=="1" goto sys_ipconfig
+if "%net_h%"=="2" goto sys_restart_network
+if "%net_h%"=="3" goto sys_repair_network
+if "%net_h%"=="0" goto menu_internet_logiciels
+goto sys_network_hub
+
+:sys_hardware_diag
+cls
+echo ======================================================
+echo               HARDWARE ^& DIAGNOSTIC
+echo ======================================================
+echo.
+echo   [1] Rapport de sante Batterie
+echo   [2] Diagnostic Memoire (RAM)
+echo.
+echo   [0] Retour
+echo.
+set /p hard_c=Choix: 
+if "%hard_c%"=="1" goto sys_battery_report
+if "%hard_c%"=="2" goto sys_ram_check
+if "%hard_c%"=="0" goto menu_disques_materiel
+goto sys_hardware_diag
+
+:sys_shortcuts_hub
+cls
+echo ======================================================
+echo            RACCOURCIS ^& PERSONNALISATION
+echo ======================================================
+echo.
+echo   [1] Creer Raccourcis Bureau (Arret/Veille/etc.)
+echo   [2] Creer le dossier "God Mode"
+echo.
+echo   [0] Retour
+echo.
+set /p short_c=Choix: 
+if "%short_c%"=="1" goto shortcuts_manager
+if "%short_c%"=="2" goto sys_god_mode
+if "%short_c%"=="0" goto menu_systeme_perso
+goto sys_shortcuts_hub
+
+:sys_perf_report_hub
+cls
+echo ======================================================
+echo             PERFORMANCES ^& RAPPORTS
+echo ======================================================
+echo.
+echo   [1] Generer un rapport systeme complet
+echo   [2] Analyse de performance WinSAT
+echo.
+echo   [0] Retour
+echo.
+set /p perf_c=Choix: 
+if "%perf_c%"=="1" goto sys_report
+if "%perf_c%"=="2" goto sys_winsat
+if "%perf_c%"=="0" goto menu_systeme_perso
+goto sys_perf_report_hub
+
+:system_tools
+goto menu_principal
+
 
 :sys_sfc
 cls
@@ -1877,6 +2140,7 @@ echo UAC desactive, acces total aux fichiers systeme.
 echo.
 echo   [1] ACTIVER le compte Super Admin
 echo   [2] DESACTIVER le compte Super Admin (Cache)
+echo.
 echo   [0] Retour
 echo.
 set /p admin_choice=Votre choix: 
@@ -1923,6 +2187,7 @@ echo fichier ou dossier (utile en cas d'Acces refuse).
 echo.
 echo   [1] AJOUTER l'option au clic-droit
 echo   [2] RETIRER l'option du clic-droit
+echo.
 echo   [0] Retour
 echo.
 set /p take_choice=Votre choix : 
@@ -1984,6 +2249,7 @@ echo  Que voulez-vous analyser sur le disque C: ?
 echo.
 echo   [1] Les 20 FICHIERS les plus lourds
 echo   [2] Les 20 DOSSIERS les plus lourds (Analyse racine)
+echo.
 echo   [0] Retour
 echo.
 set /p scan_choice=Votre choix : 
@@ -2176,31 +2442,8 @@ REM ===================================================================
 REM                    MENU DEPANNAGE & REPARATIONS
 REM ===================================================================
 :depannage_menu
-cls
-color 0C
-echo ======================================================
-echo     DEPANNAGE ET REPARATIONS
-echo ======================================================
-echo.
-echo   [1] Reparer le Spouleur d'Impression
-echo   [2] Recuperer la cle de produit Windows
-echo   [3] Options de Demarrage Avancees
-echo.
-echo   [0] Retour au menu principal
-echo.
-echo ======================================================
-set "dep_choice="
-set /p dep_choice=Votre choix: 
+goto menu_maintenance
 
-if "%dep_choice%"=="1" goto repair_spooler
-if "%dep_choice%"=="2" goto get_win_key
-if "%dep_choice%"=="3" goto menu_boot_safe
-if "%dep_choice%"=="0" goto menu_principal
-
-echo.
-echo Choix invalide.
-pause
-goto depannage_menu
 
 :repair_spooler
 cls
@@ -2372,6 +2615,73 @@ if /i "%reboot%"=="O" (
 REM ===================================================================
 REM                    SORTIE DU SCRIPT
 REM ===================================================================
+:manage_favs
+cls
+color 0E
+echo ======================================================
+echo             GESTION DES FAVORIS
+echo ======================================================
+echo.
+echo  --- VOS FAVORIS ACTUELS ---
+if exist "%fav_file%" (
+    for /f "usebackq delims=" %%F in ("%fav_file%") do (
+        set "id_raw=%%F"
+        set "num_raw=!id_raw:t=!"
+        echo    [*] [!num_raw!] !%%F_n!
+    )
+) else (
+    echo    (Aucun favori selectionne)
+)
+echo.
+echo  --- LISTE COMPLETE (Tapez le numero pour Ajouter/Retirer) ---
+for /l %%i in (1,1,%max_tools%) do (
+    set "status=   "
+    if exist "%fav_file%" (
+        findstr /x "t%%i" "%fav_file%" >nul && set "status=[*]"
+    )
+    echo    !status! [%%i] !t%%i_n!
+)
+echo.
+echo  [R] Reinitialiser tous les favoris
+echo.
+echo  [0] Retour au menu principal
+echo.
+echo  Votre choix :
+set /p fav_choice=
+
+if "%fav_choice%"=="0" goto menu_principal
+if /i "%fav_choice%"=="R" del "%fav_file%" & goto menu_principal
+
+REM Verification si c'est un numero valide
+echo !fav_choice!| findstr /r "^[0-9][0-9]*$" >nul
+if errorlevel 1 goto manage_favs
+if !fav_choice! GTR %max_tools% goto manage_favs
+
+set "new_fav=t!fav_choice!"
+set "tool_name=!%new_fav%_n!"
+set "found_f=0"
+
+REM On cree un fichier temporaire pour filtrer
+if exist "%fav_file%" (
+    findstr /v /x "!new_fav!" "%fav_file%" > "%fav_file%.tmp"
+    for /f %%A in ('findstr /x "!new_fav!" "%fav_file%"') do set "found_f=1"
+    
+    if !found_f!==1 (
+        move /y "%fav_file%.tmp" "%fav_file%" >nul
+        echo !tool_name! retire des favoris.
+    ) else (
+        echo !new_fav!>> "%fav_file%"
+        if exist "%fav_file%.tmp" del "%fav_file%.tmp"
+        echo !tool_name! ajoute aux favoris.
+    )
+) else (
+    echo !new_fav!> "%fav_file%"
+    echo !tool_name! ajoute aux favoris.
+)
+
+timeout /t 2 >nul
+goto manage_favs
+
 :exit_script
 cls
 echo ======================================================
