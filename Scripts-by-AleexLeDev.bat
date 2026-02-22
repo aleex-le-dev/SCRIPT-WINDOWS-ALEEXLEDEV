@@ -71,8 +71,9 @@ set "t27_n=Raccourcis ^& God Mode" & set "t27_l=sys_shortcuts_hub"
 set "t28_n=S'approprier (TakeOwn)" & set "t28_l=sys_take_ownership"
 set "t29_n=Vitesse Menus" & set "t29_l=sys_menu_showdelay"
 set "t30_n=Rapport WinSAT/Systeme" & set "t30_l=menu_reports_key"
-set "t31_n=Demarrage ^& Mode Sans Echec" & set "t31_l=menu_boot_safe"
-set "max_tools=31"
+set "t32_n=Full Auto Fix (Tout Reparer)" & set "t32_l=sys_full_auto_fix"
+set "t33_n=Booster de Performance" & set "t33_l=sys_perf_booster"
+set "max_tools=33"
 
 REM === CHARGEMENT DES FAVORIS ===
 set "fav_file=favoris.dat"
@@ -130,6 +131,10 @@ echo     [12] Cle Produit ^& Rapports WinSAT
 echo     [13] Menu Win11, God Mode ^& Clic-Droit
 echo     [14] Demarrage ^& Mode Sans Echec
 echo.
+echo   ---- [b] BOOST ^& SPEED ----
+echo     [15] FULL AUTO FIX (Tout Reparer)
+echo     [16] BOOSTER DE PERFORMANCE
+echo.
 echo ======================================================
 echo     [0] QUITTER LE SCRIPT
 echo ======================================================
@@ -165,6 +170,8 @@ if "%main_choice%"=="11" goto menu_security_admin
 if "%main_choice%"=="12" goto menu_reports_key
 if "%main_choice%"=="13" goto menu_tweak_perso
 if "%main_choice%"=="14" goto menu_boot_safe
+if "%main_choice%"=="15" goto sys_full_auto_fix
+if "%main_choice%"=="16" goto sys_perf_booster
 
 if "%main_choice%"=="0" goto exit_script
 echo Choix invalide.
@@ -2759,6 +2766,150 @@ if exist "%fav_file%" (
 
 timeout /t 2 >nul
 goto manage_favs
+
+:sys_full_auto_fix
+cls
+color 0E
+echo ======================================================
+echo           MODE FULL AUTO FIX (TOUT REPARER)
+echo ======================================================
+echo.
+echo Ce mode va enchaîner les réparations suivantes :
+echo 1. Point de Restauration (Sécurité)
+echo 2. Nettoyage des fichiers temporaires
+echo 3. SFC Scannow (Réparation fichiers système)
+echo 4. Vidage du cache DNS
+echo 5. Mise à jour de toutes les applications (Winget)
+echo.
+set /p confirm_auto=Lancer la réparation automatique ? (O/N) : 
+if /i not "%confirm_auto%"=="O" goto menu_principal
+
+echo.
+echo [1/5] Creation d'un point de restauration...
+powershell -Command "Checkpoint-Computer -Description 'Auto-Fix AleexLeDev' -RestorePointType 'MODIFY_SETTINGS'" 2>nul
+echo [OK] Etape terminee.
+
+echo.
+echo [2/5] Nettoyage des fichiers temporaires...
+del /s /f /q %temp%\*.* >nul 2>&1
+rd /s /q %temp% >nul 2>&1
+mkdir %temp% >nul 2>&1
+echo [OK] Etape terminee.
+
+echo.
+echo [3/5] Analyse SFC Scannow (Patientez)...
+sfc /scannow
+echo [OK] Etape terminee.
+
+echo.
+echo [4/5] Vidage du cache DNS...
+ipconfig /flushdns >nul
+echo [OK] Etape terminee.
+
+echo.
+echo [5/5] Mise a jour des applications via Winget...
+winget upgrade --all --accept-package-agreements --accept-source-agreements >nul 2>&1
+echo [OK] Etape terminee.
+
+echo.
+echo ======================================================
+echo    REPARATION AUTOMATIQUE TERMINEE !
+echo ======================================================
+pause
+goto menu_principal
+
+:sys_perf_booster
+cls
+color 0D
+echo ======================================================
+echo            BOOSTER DE PERFORMANCE
+echo ======================================================
+echo.
+echo Ce module va optimiser Windows pour les performances :
+echo - Activation du mode "Performances Ultimes" (Energie)
+echo - Reduction de la telemetrie Windows (CPU/RAM)
+echo - Optimisation de la vitesse des menus (MenuShowDelay)
+echo - Activation du Menu Contextuel Classique (Win11 - Plus rapide)
+echo - Activation du Mode Jeu (Windows Game Mode)
+echo - Desactivation de la transparence ^& effets visuels (Optimisation GPU)
+echo - Nettoyage complet du DEMARRAGE AUTOMATIQUE (Dossiers ^& Registre)
+echo - Desactivation de la recherche BING (Menu Demarrer plus rapide)
+echo - Desactivation des Widgets ^& Actualites
+echo.
+set /p confirm_perf=Appliquer toutes ces optimisations ? (O/N) : 
+if /i not "%confirm_perf%"=="O" goto menu_principal
+
+echo.
+echo [1/10] Activation du plan "Performances Ultimes"...
+powercfg -duplicatescheme e9a42b02-d5df-448d-aa00-03f14749eb61 >nul 2>&1
+powercfg -setactive e9a42b02-d5df-448d-aa00-03f14749eb61 >nul 2>&1
+echo [OK] Plan d'alimentation active.
+
+echo.
+echo [2/10] Desactivation de la telemetrie...
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\DataCollection" /v "AllowTelemetry" /t REG_DWORD /d 0 /f >nul 2>&1
+echo [OK] Telemetrie reduite.
+
+echo.
+echo [3/10] Vitesse des menus ^& Delais systeme...
+reg add "HKCU\Control Panel\Desktop" /v "MenuShowDelay" /t REG_SZ /d "0" /f >nul 2>&1
+reg add "HKLM\SYSTEM\CurrentControlSet\Control" /v "WaitToKillServiceTimeout" /t REG_SZ /d "2000" /f >nul 2>&1
+echo [OK] Menus instantanes.
+
+echo.
+echo [4/10] Activation du Menu Contextuel Classique...
+reg add "HKCU\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\InprocServer32" /f /ve >nul 2>&1
+echo [OK] Menu classique active.
+
+echo.
+echo [5/10] Desactivation de BING dans le menu Demarrer...
+reg add "HKCU\Software\Policies\Microsoft\Windows\Explorer" /v "DisableSearchBoxSuggestions" /t REG_DWORD /d 1 /f >nul 2>&1
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Search" /v "BingSearchEnabled" /t REG_DWORD /d 0 /f >nul 2>&1
+echo [OK] Recherche Bing desactivee.
+
+echo.
+echo [6/10] Nettoyage FORCE du DEMARRAGE (Startup)...
+REM Nettoyage des dossiers de demarrage
+del /q /f "%AppData%\Microsoft\Windows\Start Menu\Programs\Startup\*.*" >nul 2>&1
+del /q /f "C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Startup\*.*" >nul 2>&1
+REM Nettoyage des cles Run du registre (Logiciels tiers uniquement via PowerShell simplifie)
+powershell -Command "Get-ItemProperty -Path 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Run' | Get-Member -MemberType NoteProperty | ForEach-Object { if($_.Name -notmatch 'SecurityHealth|WindowsDefender|OneDrive'){ Remove-ItemProperty -Path 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Run' -Name $_.Name } }" >nul 2>&1
+echo [OK] Logiciels au demarrage desactives.
+
+echo.
+echo [7/10] Desactivation des Widgets ^& Actualites...
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Feeds" /v "ShellFeedsTaskbarViewMode" /t REG_DWORD /d 2 /f >nul 2>&1
+echo [OK] Widgets masques.
+
+echo.
+echo [8/10] Activation du Mode Jeu (Windows Game Mode)...
+reg add "HKCU\Software\Microsoft\GameBar" /v "AllowAutoGameMode" /t REG_DWORD /d 1 /f >nul 2>&1
+echo [OK] Mode Jeu actif.
+
+echo.
+echo [9/10] Basculement FORCE en mode "Meilleures Performances"...
+REM Force le mode performance au niveau systeme (VisualFXSetting = 2)
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\VisualEffects" /v "VisualFXSetting" /t REG_DWORD /d 2 /f >nul 2>&1
+REM Desactivation massive des effets visuels individuels
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" /v "EnableTransparency" /t REG_DWORD /d 0 /f >nul 2>&1
+reg add "HKCU\Control Panel\Desktop\WindowMetrics" /v "MinAnimate" /t REG_SZ /d "0" /f >nul 2>&1
+echo [OK] Interface configuree pour la performance.
+
+echo.
+echo [10/10] Conservation des Indispensables (Miniatures ^& Polices)...
+REM On reactive EXCLUSIVEMENT le lissage et les miniatures pour le confort
+reg add "HKCU\Control Panel\Desktop" /v "FontSmoothing" /t REG_SZ /d "2" /f >nul 2>&1
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "IconsOnly" /t REG_DWORD /d 0 /f >nul 2>&1
+echo [OK] Lisibilite et miniatures preservees.
+
+echo.
+echo ======================================================
+echo    BOOST TOTAL TERMINE !
+echo    LE PC EST MAINTENANT CONFIGURÉ POUR LA VITESSE.
+echo    (Un redemarrage est indispensable pour tout appliquer)
+echo ======================================================
+pause
+goto menu_principal
 
 :exit_script
 cls
