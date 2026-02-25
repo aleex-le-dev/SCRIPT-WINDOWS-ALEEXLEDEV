@@ -553,30 +553,34 @@ REM ===================================================================
 REM                    OUTILS SYSTEME AVANCES
 REM ===================================================================
 :system_tools
-set "opts=SFC (Scannow);DISM Check;DISM Restore;CHKDSK;Nettoyage de disque;Nettoyage Temp/Cache;Nettoyage Registre;BitLocker;Options DNS;ipconfig /all;Redemarrer cartes reseau;Reparation reseau;Pilotes;Reparation Windows Update;Rapport systeme complet;Reset Windows Update;Mots de passe Wi-Fi;Gestion tactile;Gestion utilisateurs;Notes Debloquage"
+set "opts=[--- REPARATION ET MAINTENANCE ---];SFC (Scannow);DISM Check;DISM Restore;CHKDSK;Reparation Windows Update;Reset Windows Update;[--- NETTOYAGE ET OPTIMISATION ---];Nettoyage de disque;Nettoyage Temp/Cache;Nettoyage Registre;[--- RESEAU ET INTERNET ---];Options DNS;ipconfig /all;Redemarrer cartes reseau;Reparation reseau;Mots de passe Wi-Fi;[--- SECURITE ET GESTION ---];BitLocker;Pilotes;Rapport systeme;Gestion tactile;Gestion utilisateurs;Notes Debloquage"
 call :DynamicMenu "OUTILS SYSTEME AVANCES" "%opts%"
 set "sys_choice=%errorlevel%"
 
-if "%sys_choice%"=="1" goto sys_sfc
-if "%sys_choice%"=="2" goto sys_dism_check
-if "%sys_choice%"=="3" goto sys_dism_restore
-if "%sys_choice%"=="4" goto sys_chkdsk
-if "%sys_choice%"=="5" goto sys_cleanmgr
-if "%sys_choice%"=="6" goto sys_temp_cleanup
-if "%sys_choice%"=="7" goto sys_registry_cleanup
-if "%sys_choice%"=="8" goto sys_bitlocker_check
-if "%sys_choice%"=="9" goto sys_dns_options
-if "%sys_choice%"=="10" goto sys_ipconfig
-if "%sys_choice%"=="11" goto sys_restart_network
-if "%sys_choice%"=="12" goto sys_repair_network
-if "%sys_choice%"=="13" goto sys_drivers
-if "%sys_choice%"=="14" goto sys_windows_update
-if "%sys_choice%"=="15" goto sys_report
-if "%sys_choice%"=="16" goto sys_reset_windows_update
+if "%sys_choice%"=="1" goto system_tools
+if "%sys_choice%"=="2" goto sys_sfc
+if "%sys_choice%"=="3" goto sys_dism_check
+if "%sys_choice%"=="4" goto sys_dism_restore
+if "%sys_choice%"=="5" goto sys_chkdsk
+if "%sys_choice%"=="6" goto sys_windows_update
+if "%sys_choice%"=="7" goto sys_reset_windows_update
+if "%sys_choice%"=="8" goto system_tools
+if "%sys_choice%"=="9" goto sys_cleanmgr
+if "%sys_choice%"=="10" goto sys_temp_cleanup
+if "%sys_choice%"=="11" goto sys_registry_cleanup
+if "%sys_choice%"=="12" goto system_tools
+if "%sys_choice%"=="13" goto sys_dns_options
+if "%sys_choice%"=="14" goto sys_ipconfig
+if "%sys_choice%"=="15" goto sys_restart_network
+if "%sys_choice%"=="16" goto sys_repair_network
 if "%sys_choice%"=="17" goto sys_wifi_passwords
-if "%sys_choice%"=="18" goto touch_screen_manager
-if "%sys_choice%"=="19" goto um_menu
-if "%sys_choice%"=="20" goto sys_unlock_notes
+if "%sys_choice%"=="18" goto system_tools
+if "%sys_choice%"=="19" goto sys_bitlocker_check
+if "%sys_choice%"=="20" goto sys_drivers
+if "%sys_choice%"=="21" goto sys_report
+if "%sys_choice%"=="22" goto touch_screen_manager
+if "%sys_choice%"=="23" goto um_menu
+if "%sys_choice%"=="24" goto sys_unlock_notes
 if "%sys_choice%"=="0" goto menu_principal
 goto system_tools
 
@@ -1646,7 +1650,7 @@ set "m_title=%~1"
 set "m_opts=%~2"
 
 rem Script PowerShell aéré pour un look plus premium
-set "ps_code=$o='%m_opts%'-split';';$t='%m_title%';$idx=0;while($true){clear-host;write-host '';write-host '  ======================================================' -f Cyan;write-host ('   ' + $t) -f White;write-host '  ======================================================' -f Cyan;write-host '';for($i=0;$i -lt $o.Count;$i++){$num=$i+1;$s=$o[$i];if($i -eq $idx){write-host ('    >> [{0}] {1}  ' -f $num, $s) -f Black -b White}else{write-host ('       [{0}] {1}  ' -f $num, $s) -f Gray}};write-host '';write-host '  ------------------------------------------------------' -f Cyan;write-host '   [FLECHES] Naviguer | [ENTREE] Valider | [0/ECHAP] Retour' -f DarkGray;write-host '';$k=$Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown');$v=$k.VirtualKeyCode;if($v -eq 38){$idx--;if($idx -lt 0){$idx=$o.Count-1}}elseif($v -eq 40){$idx++;if($idx -ge $o.Count){$idx=0}}elseif($v -eq 13){exit ($idx+1)}elseif($v -eq 27 -or $k.Character -eq '0'){exit 0}elseif($k.Character -ge '1' -and $k.Character -le [char]('0'+$o.Count)){exit ([int][string]$k.Character)}}"
+set "ps_code=$o='%m_opts%'-split';';$t='%m_title%';$idx=0;while($true){clear-host;write-host '';write-host '  ======================================================' -f Cyan;write-host ('   ' + $t) -f White;write-host '  ======================================================' -f Cyan;write-host '';for($i=0;$i -lt $o.Count;$i++){$num=$i+1;$s=$o[$i];if($s -match '^\[---'){if($i -gt 0){write-host ''};if($i -eq $idx){write-host ('    >> [{0}] {1}  ' -f $num, $s) -f Black -b Cyan}else{write-host ('       [{0}] {1}  ' -f $num, $s) -f Cyan}}else{if($i -eq $idx){write-host ('    >> [{0}] {1}  ' -f $num, $s) -f Black -b White}else{write-host ('       [{0}] {1}  ' -f $num, $s) -f Gray}}};write-host '';write-host '  ------------------------------------------------------' -f Cyan;write-host '   [FLECHES] Naviguer | [ENTREE] Valider | [0/ECHAP] Retour' -f DarkGray;write-host '';$k=$Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown');$v=$k.VirtualKeyCode;if($v -eq 38){$idx--;if($idx -lt 0){$idx=$o.Count-1}}elseif($v -eq 40){$idx++;if($idx -ge $o.Count){$idx=0}}elseif($v -eq 13){exit ($idx+1)}elseif($v -eq 27 -or $k.Character -eq '0'){exit 0}elseif($k.Character -ge '1' -and $k.Character -le [char]('0'+$o.Count)){exit ([int][string]$k.Character)}}"
 
 powershell -NoProfile -ExecutionPolicy Bypass -Command "%ps_code%"
 set "res=%errorlevel%"
