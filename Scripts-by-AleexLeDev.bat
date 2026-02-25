@@ -471,7 +471,7 @@ REM                    GESTIONNAIRE D'ECRAN TACTILE
 REM ===================================================================
 :touch_screen_manager
 set "opts=Redemarrer le pilote tactile;Desactiver le pilote tactile;Activer le pilote tactile"
-call :DynamicMenu "GESTION D'ECRAN TACTILE" "%opts%"
+call :DynamicMenu "GESTION ECRAN TACTILE" "%opts%"
 set "touch_choice=%errorlevel%"
 
 if "%touch_choice%"=="1" goto touch_restart
@@ -553,7 +553,7 @@ REM ===================================================================
 REM                    OUTILS SYSTEME AVANCES
 REM ===================================================================
 :system_tools
-set "opts=[--- REPARATION ET MAINTENANCE ---];SFC (Scannow);DISM Check;DISM Restore;CHKDSK;Reparation Windows Update;Reset Windows Update;[--- NETTOYAGE ET OPTIMISATION ---];Nettoyage de disque;Nettoyage Temp/Cache;Nettoyage Registre;[--- RESEAU ET INTERNET ---];Options DNS;ipconfig /all;Redemarrer cartes reseau;Reparation reseau;Mots de passe Wi-Fi;[--- SECURITE ET GESTION ---];BitLocker;Pilotes;Rapport systeme;Gestion tactile;Gestion utilisateurs;Notes Debloquage"
+set "opts=[--- REPARATION ET MAINTENANCE ---];SFC (Scannow)~Verifie et repare les fichiers systeme Windows corrompus;DISM Check~Verifie integrite de image de Windows sans la modifier;DISM Restore~Repare image Windows a aide de Windows Update;CHKDSK~Analyse et repare les erreurs sur les disques durs;Reparation Windows Update~Reinitialise les composants de mise a jour de Windows;Reset Windows Update~Redemarre les services lies a Windows Update;[--- NETTOYAGE ET OPTIMISATION ---];Nettoyage de disque~Lance utilitaire classique de nettoyage de Windows;Nettoyage Temp/Cache~Supprime les fichiers temporaires et le cache systeme;Nettoyage Registre~Optimise et nettoie les entrees invalides du registre;[--- RESEAU ET INTERNET ---];Options DNS~Change facilement les serveurs DNS (Cloudflare, Google, etc.);ipconfig /all~Affiche la configuration detaillee de toutes les cartes reseau;Redemarrer cartes reseau~Desactive puis reactive les adaptateurs Wi-Fi et Ethernet;Reparation reseau~Renouvelle adresse IP et vide le cache DNS;Mots de passe Wi-Fi~Affiche ou sauvegarde les mots de passe des reseaux connus;[--- SECURITE ET GESTION ---];BitLocker~Verifie etat de chiffrement de vos disques;Pilotes~Exporte la liste complete des pilotes installes sur le PC;Rapport systeme~Genere un diagnostic hardware et reseau sur le Bureau;Gestion tactile~Desactive, active ou redemarre ecran tactile;Gestion utilisateurs~Cree, modifie ou supprime des comptes locaux Windows;Notes Debloquage~Affiche la procedure de recuperation de compte bloque"
 call :DynamicMenu "OUTILS SYSTEME AVANCES" "%opts%"
 set "sys_choice=%errorlevel%"
 
@@ -762,28 +762,70 @@ goto :eof
 
 :sys_sfc
 cls
-echo Analyse des fichiers systeme (SFC /scannow)...
+echo ==============================================================
+echo     Analyse des fichiers systeme (SFC /scannow)
+echo ==============================================================
+echo.
+echo Cette operation peut prendre plusieurs minutes.
+echo.
+powershell -NoProfile -Command "Write-Host '   Appuyez sur [ENTREE] pour Lancer ou [ECHAP] pour Annuler...' -ForegroundColor Yellow; $Host.UI.RawUI.FlushInputBuffer(); while($true){$k=$Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown'); $v=$k.VirtualKeyCode; if($v -eq 27){exit 1}elseif($v -eq 13){exit 0}}"
+if %errorlevel% neq 0 (
+    echo.
+    echo [X] Operation annulee par l'utilisateur.
+    timeout /t 2 >nul
+    goto system_tools
+)
+echo.
+echo Lancement de l'analyse, veuillez patienter...
 sfc /scannow
 pause
 goto system_tools
 
 :sys_dism_check
 cls
-echo Verification de l'etat de Windows (DISM /CheckHealth)...
+echo ==============================================================
+echo     Verification rapide de l'etat de Windows (DISM /CheckHealth)
+echo ==============================================================
+echo.
+echo Cette operation est tres rapide et va verifier si l'image est corrompue.
+echo.
+powershell -NoProfile -Command "Write-Host '   Appuyez sur [ENTREE] pour Lancer ou [ECHAP] pour Annuler...' -ForegroundColor Yellow; $Host.UI.RawUI.FlushInputBuffer(); while($true){$k=$Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown'); $v=$k.VirtualKeyCode; if($v -eq 27){exit 1}elseif($v -eq 13){exit 0}}"
+if %errorlevel% neq 0 (
+    echo.
+    echo [X] Operation annulee par l'utilisateur.
+    timeout /t 2 >nul
+    goto system_tools
+)
+echo.
+echo Lancement de la verification...
 dism /online /cleanup-image /checkhealth
 pause
 goto system_tools
 
 :sys_dism_restore
 cls
-echo Restauration de l'etat de Windows (DISM /RestoreHealth)...
+echo ==============================================================
+echo     Restauration de l'etat de Windows (DISM /RestoreHealth)
+echo ==============================================================
+echo.
+echo Cette operation peut prendre du temps (connexion Internet requise).
+echo.
+powershell -NoProfile -Command "Write-Host '   Appuyez sur [ENTREE] pour Lancer ou [ECHAP] pour Annuler...' -ForegroundColor Yellow; $Host.UI.RawUI.FlushInputBuffer(); while($true){$k=$Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown'); $v=$k.VirtualKeyCode; if($v -eq 27){exit 1}elseif($v -eq 13){exit 0}}"
+if %errorlevel% neq 0 (
+    echo.
+    echo [X] Operation annulee par l'utilisateur.
+    timeout /t 2 >nul
+    goto system_tools
+)
+echo.
+echo Lancement de la restauration, veuillez patienter...
 dism /online /cleanup-image /restorehealth
 pause
 goto system_tools
 
 :sys_dns_options
 ipconfig /flushdns >nul
-set "opts=Utiliser DNS Google (8.8.8.8);Utiliser DNS Cloudflare (1.1.1.1);Restaurer les DNS d'origine;Saisir vos DNS personnalises"
+set "opts=Utiliser DNS Google (8.8.8.8);Utiliser DNS Cloudflare (1.1.1.1);Restaurer les DNS par defaut;Saisir vos DNS personnalises"
 call :DynamicMenu "OPTIONS DNS" "%opts%"
 set "dns_opt_choice=%errorlevel%"
 
@@ -1347,13 +1389,35 @@ set "MAPFILE=%TEMP%\wifi_map_%RANDOM%.txt"
 
 :menu_wifi
 call :wifi_collect
-set "opts=Supprimer un reseau Wi-Fi;Generer un rapport sur le Bureau"
+set "opts=Afficher les mots de passe Wi-Fi;Supprimer un reseau Wi-Fi;Generer un rapport sur le Bureau"
 call :DynamicMenu "MOTS DE PASSE WI-FI" "%opts%"
 set "wchoice=%errorlevel%"
 
-if "%wchoice%"=="1" goto wifi_display
-if "%wchoice%"=="2" goto wifi_report
+if "%wchoice%"=="1" goto wifi_view
+if "%wchoice%"=="2" goto wifi_display
+if "%wchoice%"=="3" goto wifi_report
 if "%wchoice%"=="0" goto wifi_exit
+goto menu_wifi
+
+:wifi_view
+call :wifi_collect
+cls
+echo ==============================================================
+echo             LISTE DES RESEAUX WI-FI ENREGISTRES
+echo ==============================================================
+echo.
+if %found%==0 (
+    echo Aucun profil Wi-Fi trouve.
+    pause
+    goto menu_wifi
+)
+for /f "tokens=1,2 delims=|" %%A in ('type "%MAPFILE%"') do (
+    echo SSID: %%A 
+    echo MDP : %%B
+    echo ------------------------------------------
+)
+echo.
+pause
 goto menu_wifi
 
 :wifi_collect
@@ -1649,8 +1713,8 @@ setlocal
 set "m_title=%~1"
 set "m_opts=%~2"
 
-rem Script PowerShell aéré pour un look plus premium
-set "ps_code=$o='%m_opts%'-split';';$t='%m_title%';$sel=@();for($i=0;$i -lt $o.Count;$i++){if($o[$i] -notmatch '^\[---'){$sel+=$i}};$sIdx=0;while($true){clear-host;write-host '';write-host '  ======================================================' -f Cyan;write-host ('   ' + $t) -f White;write-host '  ======================================================' -f Cyan;write-host '';$num=1;for($i=0;$i -lt $o.Count;$i++){$s=$o[$i];if($s -match '^\[---'){if($i -gt 0){write-host ''};write-host ('       ' + $s) -f Cyan}else{if($i -eq $sel[$sIdx]){write-host ('    >> [{0}] {1}  ' -f $num, $s) -f Black -b White}else{write-host ('       [{0}] {1}  ' -f $num, $s) -f Gray};$num++}};write-host '';write-host '  ------------------------------------------------------' -f Cyan;write-host '   [FLECHES] Naviguer | [ENTREE] Valider | [0/ECHAP] Retour' -f DarkGray;write-host '';try{[console]::WindowTop=0}catch{};$k=$Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown');$v=$k.VirtualKeyCode;if($v -eq 38){$sIdx--;if($sIdx -lt 0){$sIdx=$sel.Count-1}}elseif($v -eq 40){$sIdx++;if($sIdx -ge $sel.Count){$sIdx=0}}elseif($v -eq 13){clear-host;exit ($sel[$sIdx]+1)}elseif($v -eq 27 -or $k.Character -eq '0'){clear-host;exit 0}elseif([string]$k.Character -match '^[1-9]$' -and [int][string]$k.Character -le $sel.Count){clear-host;exit ($sel[[int][string]$k.Character - 1]+1)}}"
+rem Script PowerShell aéré pour un look plus premium avec descriptions
+set "ps_code=$o='%m_opts%'-split';';$t='%m_title%';$sel=@();for($i=0;$i -lt $o.Count;$i++){if($o[$i] -notmatch '^\[---'){$sel+=$i}};$sIdx=0;while($true){clear-host;write-host '';write-host '  ======================================================' -f Cyan;write-host ('   ' + $t) -f White;write-host '  ======================================================' -f Cyan;write-host '';$num=1;for($i=0;$i -lt $o.Count;$i++){$parts=$o[$i]-split'~';$s=$parts[0];$d='';if($parts.Count -gt 1){$d=$parts[1]};if($s -match '^\[---'){if($i -gt 0){write-host ''};write-host ('       ' + $s) -f Cyan}else{if($i -eq $sel[$sIdx]){$cY=[console]::CursorTop;write-host ('    >> [{0}] {1}  ' -f $num, $s) -NoNewline -f Black -b White;if($d){write-host ('   - ' + $d) -f Yellow}else{write-host ''}}else{write-host ('       [{0}] {1}  ' -f $num, $s) -f Gray};$num++}};write-host '';write-host '  ------------------------------------------------------' -f Cyan;write-host '   [FLECHES] Naviguer | [ENTREE] Valider | [0/ECHAP] Retour' -f DarkGray;write-host '';try{[console]::WindowTop=[math]::Max(0,$cY-10)}catch{};$k=$Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown');$v=$k.VirtualKeyCode;if($v -eq 38){$sIdx--;if($sIdx -lt 0){$sIdx=$sel.Count-1}}elseif($v -eq 40){$sIdx++;if($sIdx -ge $sel.Count){$sIdx=0}}elseif($v -eq 13){clear-host;exit ($sel[$sIdx]+1)}elseif($v -eq 27 -or $k.Character -eq '0'){clear-host;exit 0}elseif([string]$k.Character -match '^[1-9]$' -and [int][string]$k.Character -le $sel.Count){clear-host;exit ($sel[[int][string]$k.Character - 1]+1)}}"
 
 powershell -NoProfile -ExecutionPolicy Bypass -Command "%ps_code%"
 set "res=%errorlevel%"
