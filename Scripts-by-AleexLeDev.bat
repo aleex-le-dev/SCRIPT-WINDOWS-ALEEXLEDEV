@@ -477,7 +477,7 @@ set "touch_choice=%errorlevel%"
 if "%touch_choice%"=="1" goto touch_restart
 if "%touch_choice%"=="2" goto touch_disable
 if "%touch_choice%"=="3" goto touch_enable
-if "%touch_choice%"=="0" goto menu_principal
+if "%touch_choice%"=="0" goto system_tools
 goto touch_screen_manager
 
 :touch_restart
@@ -553,34 +553,30 @@ REM ===================================================================
 REM                    OUTILS SYSTEME AVANCES
 REM ===================================================================
 :system_tools
-set "opts=[--- REPARATION ET MAINTENANCE ---];SFC (Scannow)~Verifie et repare les fichiers systeme Windows corrompus;DISM Check~Verifie integrite de image de Windows sans la modifier;DISM Restore~Repare image Windows a aide de Windows Update;CHKDSK~Analyse et repare les erreurs sur les disques durs;Reparation Windows Update~Reinitialise les composants de mise a jour de Windows;Reset Windows Update~Redemarre les services lies a Windows Update;[--- NETTOYAGE ET OPTIMISATION ---];Nettoyage de disque~Lance utilitaire classique de nettoyage de Windows;Nettoyage Temp/Cache~Supprime les fichiers temporaires et le cache systeme;Nettoyage Registre~Optimise et nettoie les entrees invalides du registre;[--- RESEAU ET INTERNET ---];Options DNS~Change facilement les serveurs DNS (Cloudflare, Google, etc.);ipconfig /all~Affiche la configuration detaillee de toutes les cartes reseau;Redemarrer cartes reseau~Desactive puis reactive les adaptateurs Wi-Fi et Ethernet;Reparation reseau~Renouvelle adresse IP et vide le cache DNS;Mots de passe Wi-Fi~Affiche ou sauvegarde les mots de passe des reseaux connus;[--- SECURITE ET GESTION ---];BitLocker~Verifie etat de chiffrement de vos disques;Pilotes~Exporte la liste complete des pilotes installes sur le PC;Rapport systeme~Genere un diagnostic hardware et reseau sur le Bureau;Gestion tactile~Desactive, active ou redemarre ecran tactile;Gestion utilisateurs~Cree, modifie ou supprime des comptes locaux Windows;Notes Debloquage~Affiche la procedure de recuperation de compte bloque"
+set "opts=[--- VERIFICATIONS D INTEGRITE SYSTEME ---];SFC (Scannow)~Verifie et repare les fichiers systeme Windows corrompus;DISM Check~Verifie integrite de image de Windows sans la modifier;DISM Restore~Repare image Windows a aide de Windows Update;CHKDSK~Analyse avancee des erreurs sur tous les lecteurs;[--- NETTOYAGE ET OPTIMISATION ---];Nettoyage de disque~Lance utilitaire classique de nettoyage de Windows;Nettoyage Temp/Cache~Supprime les fichiers temporaires et le cache systeme;Nettoyage Registre~Optimise et nettoie les entrees invalides du Registre;[--- DISQUE DUR ---];BitLocker (Verification/Dechiffrement)~Verifie etat de chiffrement de vos disques;[--- OUTILS RESEAU ---];Options DNS~Change facilement les serveurs DNS (Cloudflare, Google, etc.);ipconfig /all~Affiche la configuration detaillee de toutes les cartes reseau;Redemarrer cartes reseau~Desactive puis reactive les adaptateurs Wi-Fi et Ethernet;Reparation reseau~Renouvelle adresse IP et vide le cache DNS;[--- UTILITAIRES ET EXTRAS ---];Pilotes installes~Exporte la liste complete des pilotes installes sur le PC;Reparation Windows Update~Outil de reparation des fichiers de mise a jour;Rapport systeme~Genere un diagnostic hardware et reseau sur le Bureau;Reset Windows Update~Redemarre les services lies a Windows Update;Gestion utilisateurs locaux~Cree, modifie ou supprime des comptes locaux Windows;[--- MOT DE PASSE ---];Mots de passe Wi-Fi~Affiche ou sauvegarde les mots de passe des reseaux connus;Notes: Debloquer session~Affiche la procedure de recuperation de compte bloque;[--- MATERIEL ---];Gestion ecran tactile~Desactive, active ou redemarre ecran tactile"
 call :DynamicMenu "OUTILS SYSTEME AVANCES" "%opts%"
 set "sys_choice=%errorlevel%"
 
-if "%sys_choice%"=="1" goto system_tools
-if "%sys_choice%"=="2" goto sys_sfc
-if "%sys_choice%"=="3" goto sys_dism_check
-if "%sys_choice%"=="4" goto sys_dism_restore
-if "%sys_choice%"=="5" goto sys_chkdsk
-if "%sys_choice%"=="6" goto sys_windows_update
-if "%sys_choice%"=="7" goto sys_reset_windows_update
-if "%sys_choice%"=="8" goto system_tools
-if "%sys_choice%"=="9" goto sys_cleanmgr
-if "%sys_choice%"=="10" goto sys_temp_cleanup
-if "%sys_choice%"=="11" goto sys_registry_cleanup
-if "%sys_choice%"=="12" goto system_tools
-if "%sys_choice%"=="13" goto sys_dns_options
-if "%sys_choice%"=="14" goto sys_ipconfig
-if "%sys_choice%"=="15" goto sys_restart_network
-if "%sys_choice%"=="16" goto sys_repair_network
-if "%sys_choice%"=="17" goto sys_wifi_passwords
-if "%sys_choice%"=="18" goto system_tools
-if "%sys_choice%"=="19" goto sys_bitlocker_check
-if "%sys_choice%"=="20" goto sys_drivers
-if "%sys_choice%"=="21" goto sys_report
-if "%sys_choice%"=="22" goto touch_screen_manager
-if "%sys_choice%"=="23" goto um_menu
-if "%sys_choice%"=="24" goto sys_unlock_notes
+if "%sys_choice%"=="1" goto sys_sfc
+if "%sys_choice%"=="2" goto sys_dism_check
+if "%sys_choice%"=="3" goto sys_dism_restore
+if "%sys_choice%"=="4" goto sys_chkdsk
+if "%sys_choice%"=="5" goto sys_cleanmgr
+if "%sys_choice%"=="6" goto sys_temp_cleanup
+if "%sys_choice%"=="7" goto sys_registry_cleanup
+if "%sys_choice%"=="8" goto sys_bitlocker_check
+if "%sys_choice%"=="9" goto sys_dns_options
+if "%sys_choice%"=="10" goto sys_ipconfig
+if "%sys_choice%"=="11" goto sys_restart_network
+if "%sys_choice%"=="12" goto sys_repair_network
+if "%sys_choice%"=="13" goto sys_drivers
+if "%sys_choice%"=="14" goto sys_windows_update
+if "%sys_choice%"=="15" goto sys_report
+if "%sys_choice%"=="16" goto sys_reset_windows_update
+if "%sys_choice%"=="17" goto um_menu
+if "%sys_choice%"=="18" goto sys_wifi_passwords
+if "%sys_choice%"=="19" goto sys_unlock_notes
+if "%sys_choice%"=="20" goto touch_screen_manager
 if "%sys_choice%"=="0" goto menu_principal
 goto system_tools
 
@@ -1507,7 +1503,7 @@ net localgroup "%UM_ADMIN_GROUP%" >nul 2>&1 || set "UM_ADMIN_GROUP=Administrateu
 set "UM_STR_PWD_REQ_EN=Password required"
 set "UM_STR_PWD_REQ_FR=Mot de passe requis"
 
-set "opts=Lister les utilisateurs;Ajouter un utilisateur;Supprimer un utilisateur;Ajouter/retirer un administrateur;Modifier un mot de passe"
+set "opts=Lister les utilisateurs;Ajouter un utilisateur;Supprimer un utilisateur;Ajouter/retirer un administrateur;Modifier un mot de passe;Supprimer le mot de passe (Auto-login)"
 call :DynamicMenu "GESTION UTILISATEURS LOCAUX" "%opts%"
 set "um_choice=%errorlevel%"
 
@@ -1516,7 +1512,7 @@ if "%um_choice%"=="2" goto um_add
 if "%um_choice%"=="3" goto um_del
 if "%um_choice%"=="4" goto um_admin
 if "%um_choice%"=="5" goto um_reset
-if "%um_choice%"=="6" goto um_exit
+if "%um_choice%"=="6" goto um_remove_pwd
 if "%um_choice%"=="0" goto um_exit
 goto um_menu
 
@@ -1678,6 +1674,52 @@ if %errorlevel%==0 (
 pause
 goto um_menu
 
+:um_remove_pwd
+cls
+set "user_opts="
+for /f "tokens=*" %%U in ('powershell -NoProfile -Command "Get-LocalUser | Where-Object Enabled | Select-Object -ExpandProperty Name"') do (
+    if defined user_opts (set "user_opts=!user_opts!;%%U") else (set "user_opts=%%U")
+)
+if not defined user_opts (
+    echo Aucun utilisateur actif trouve.
+    pause
+    goto um_menu
+)
+
+call :DynamicMenu "SUPPRIMER MDP (AUTO-LOGIN)" "%user_opts%"
+set "res=%errorlevel%"
+if "%res%"=="0" goto um_menu
+
+set /a idx=1
+set "RUSER="
+for /f "tokens=*" %%U in ('powershell -NoProfile -Command "Get-LocalUser | Where-Object Enabled | Select-Object -ExpandProperty Name"') do (
+    if !idx! equ %res% set "RUSER=%%U"
+    set /a idx+=1
+)
+
+if not defined RUSER goto um_menu
+
+echo.
+echo ======================================================
+echo ATTENTION : Vous allez supprimer le mot de passe de '%RUSER%' !
+echo Cela permettra a toute personne d'y acceder sans mot de passe a l'allumage.
+echo.
+set /p RCONFIRM=Voulez-vous vraiment continuer ? (O/N) ^> 
+if /I not "%RCONFIRM%"=="O" (
+    echo [X] Operation annulee.
+    pause
+    goto um_menu
+)
+
+net user "%RUSER%" "" >nul 2>&1
+if %errorlevel%==0 (
+    echo [OK] Mot de passe de l'utilisateur '%RUSER%' supprime avec succes.
+) else (
+    echo [ECHEC] Impossible de supprimer le mot de passe de '%RUSER%'.
+)
+pause
+goto um_menu
+
 
 :um_show_active
 echo.
@@ -1714,7 +1756,7 @@ set "m_title=%~1"
 set "m_opts=%~2"
 
 rem Script PowerShell aéré pour un look plus premium avec descriptions
-set "ps_code=$o='%m_opts%'-split';';$t='%m_title%';$sel=@();for($i=0;$i -lt $o.Count;$i++){if($o[$i] -notmatch '^\[---'){$sel+=$i}};$sIdx=0;while($true){clear-host;write-host '';write-host '  ======================================================' -f Cyan;write-host ('   ' + $t) -f White;write-host '  ======================================================' -f Cyan;write-host '';$num=1;for($i=0;$i -lt $o.Count;$i++){$parts=$o[$i]-split'~';$s=$parts[0];$d='';if($parts.Count -gt 1){$d=$parts[1]};if($s -match '^\[---'){if($i -gt 0){write-host ''};write-host ('       ' + $s) -f Cyan}else{if($i -eq $sel[$sIdx]){$cY=[console]::CursorTop;write-host ('    >> [{0}] {1}  ' -f $num, $s) -NoNewline -f Black -b White;if($d){write-host ('   - ' + $d) -f Yellow}else{write-host ''}}else{write-host ('       [{0}] {1}  ' -f $num, $s) -f Gray};$num++}};write-host '';write-host '  ------------------------------------------------------' -f Cyan;write-host '   [FLECHES] Naviguer | [ENTREE] Valider | [0/ECHAP] Retour' -f DarkGray;write-host '';try{[console]::WindowTop=[math]::Max(0,$cY-10)}catch{};$k=$Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown');$v=$k.VirtualKeyCode;if($v -eq 38){$sIdx--;if($sIdx -lt 0){$sIdx=$sel.Count-1}}elseif($v -eq 40){$sIdx++;if($sIdx -ge $sel.Count){$sIdx=0}}elseif($v -eq 13){clear-host;exit ($sel[$sIdx]+1)}elseif($v -eq 27 -or $k.Character -eq '0'){clear-host;exit 0}elseif([string]$k.Character -match '^[1-9]$' -and [int][string]$k.Character -le $sel.Count){clear-host;exit ($sel[[int][string]$k.Character - 1]+1)}}"
+set "ps_code=$o='%m_opts%'-split';';$t='%m_title%';$sel=@();for($i=0;$i -lt $o.Count;$i++){if($o[$i] -notmatch '^\[---'){$sel+=$i}};$sIdx=0;clear-host;while($true){[console]::SetCursorPosition(0,0);write-host '                                                                      ';write-host '  ======================================================' -f Cyan;write-host ('   ' + $t) -f White;write-host '  ======================================================' -f Cyan;write-host '                                                                      ';$num=1;for($i=0;$i -lt $o.Count;$i++){$parts=$o[$i]-split'~';$s=$parts[0];$d='';if($parts.Count -gt 1){$d=$parts[1]};if($s -match '^\[---'){if($i -gt 0){write-host '                                                                      '};write-host ('       ' + $s.PadRight(80)) -f Cyan}else{if($i -eq $sel[$sIdx]){$cY=[console]::CursorTop;write-host ('    >> [{0}] {1}  ' -f $num, $s) -NoNewline -f Black -b White;if($d){write-host ('   - ' + $d).PadRight(120) -f Yellow}else{write-host '                                                                                                                           '}}else{write-host ('       [{0}] {1}  ' -f $num, $s).PadRight(120) -f Gray};$num++}};write-host '                                                                      ';write-host '  ------------------------------------------------------' -f Cyan;write-host '   [FLECHES] Naviguer | [ENTREE] Valider | [0/ECHAP] Retour                                       ' -f DarkGray;write-host '                                                                      ';try{[console]::WindowTop=[math]::Max(0,$cY-10)}catch{};$k=$Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown');$v=$k.VirtualKeyCode;if($v -eq 38){$sIdx--;if($sIdx -lt 0){$sIdx=$sel.Count-1}}elseif($v -eq 40){$sIdx++;if($sIdx -ge $sel.Count){$sIdx=0}}elseif($v -eq 13){clear-host;exit ($sIdx+1)}elseif($v -eq 27 -or $k.Character -eq '0'){clear-host;exit 0}elseif([string]$k.Character -match '^[1-9]$' -and [int][string]$k.Character -le $sel.Count){clear-host;exit ([int][string]$k.Character)}}"
 
 powershell -NoProfile -ExecutionPolicy Bypass -Command "%ps_code%"
 set "res=%errorlevel%"
