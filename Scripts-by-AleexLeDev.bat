@@ -3,7 +3,7 @@ setlocal EnableExtensions EnableDelayedExpansion
 if defined MSYSTEM ("%ComSpec%" /c "%~f0" & exit /b)
 if not defined CMDCMDLINE ("%ComSpec%" /c "%~f0" & exit /b)
 chcp 65001 >nul
-title Boite a Scripts Windows - By ALEEXLEDEV (v1.0)
+title Boite a Scripts Windows - By ALEEXLEDEV (v2.0)
 color 0B
 
 REM === AUTO-ELEVATION EN ADMINISTRATEUR ===
@@ -1503,7 +1503,7 @@ net localgroup "%UM_ADMIN_GROUP%" >nul 2>&1 || set "UM_ADMIN_GROUP=Administrateu
 set "UM_STR_PWD_REQ_EN=Password required"
 set "UM_STR_PWD_REQ_FR=Mot de passe requis"
 
-set "opts=Lister les utilisateurs;Ajouter un utilisateur;Supprimer un utilisateur;Ajouter/retirer un administrateur;Ajouter/Modifier un mot de passe;Supprimer le mot de passe (Auto-login)"
+set "opts=Lister les utilisateurs;Ajouter un utilisateur;Supprimer un utilisateur;Gerer les droits (Standard/Admin);Ajouter/Modifier un mot de passe;Supprimer le mot de passe (Auto-login)"
 call :DynamicMenu "GESTION UTILISATEURS LOCAUX" "%opts%"
 set "um_choice=%errorlevel%"
 
@@ -1569,23 +1569,33 @@ goto um_menu
 :um_add
 cls
 call :um_show_active
-set /p NEWU=Nom d'utilisateur a ajouter ^> 
+set "NEWU="
+set /p NEWU="Nom d'utilisateur a ajouter > "
 if "%NEWU%"=="" goto um_menu
-set /p SETPWD=Affecter un mot de passe maintenant ? ^(O/N^) ^> 
-if /I "%SETPWD%"=="O" (
-    set /p NEWP=Mot de passe ^> 
-    net user "%NEWU%" "%NEWP%" /add /y
-) else (
-    net user "%NEWU%" "" /add /y
-)
+set "SETPWD="
+set /p SETPWD="Affecter un mot de passe maintenant ? (O/N) > "
+if /I not "%SETPWD%"=="O" goto um_add_no_pwd
+
+set "NEWP="
+set /p NEWP="Mot de passe > "
+net user "%NEWU%" "%NEWP%" /add /y
+goto um_add_check
+
+:um_add_no_pwd
+net user "%NEWU%" "" /add /y
+
+:um_add_check
 if not %errorlevel%==0 (
     echo Echec de creation de l'utilisateur.
     pause
     goto um_menu
 )
-set /p ADDADM=Ajouter '%NEWU%' aux Administrateurs ? ^(O/N^) ^> 
+
+set "ADDADM="
+set /p ADDADM="Ajouter '%NEWU%' aux Administrateurs ? (O/N) > "
 if /I "%ADDADM%"=="O" net localgroup "%UM_ADMIN_GROUP%" "%NEWU%" /add
-echo Utilisateur cree.
+echo.
+echo [OK] Utilisateur cree avec succes.
 pause
 goto um_menu
 
@@ -1616,14 +1626,55 @@ if not defined DELU goto um_menu
 
 cls
 echo.
-echo ATTENTION: Vous allez supprimer l'utilisateur '%DELU%'
+echo ======================================================
+echo ATTENTION : Vous allez supprimer l'utilisateur '%DELU%'
+echo ET TOUT SON ESPACE SUR LE DISQUE (Images, Documents, Bureau...) !
+echo ======================================================
 echo.
-set /p CONF=Confirmer la suppression ? (Tapez OUI pour valider) > 
-if /I not "%CONF%"=="OUI" goto um_menu
+set /p CONF=Confirmer la suppression totale ? (Tapez OUI pour valider) ^> 
+if /I not "%CONF%"=="OUI" (
+    echo [X] Operation annulee.
+    pause
+    goto um_menu
+)
 
+echo Suppression du compte Windows en cours...
 net localgroup "%UM_ADMIN_GROUP%" "%DELU%" /delete >nul 2>nul
 net user "%DELU%" /delete
-if %errorlevel%==0 (echo Utilisateur supprime.) else (echo Echec de suppression.)
+
+if not %errorlevel%==0 (
+    echo [ECHEC] Impossible de supprimer le compte utilisateur '%DELU%'.
+    pause
+    goto um_menu
+)
+
+echo [OK] Utilisateur Windows supprime.
+echo.
+set "TMP_PS1=%temp%\wipe_profile_%RANDOM%.ps1"
+
+echo param($u, $l) > "%TMP_PS1%"
+echo $arg='/c rmdir /s /q "'+$u+'" ^>^> "'+$l+'" 2^>^&1' >> "%TMP_PS1%"
+echo "RAPPORT: Nettoyage et suppression definitive du dossier "+$u ^| Out-File -Encoding UTF8 $l >> "%TMP_PS1%"
+echo $p=Start-Process 'cmd.exe' -ArgumentList $arg -PassThru -WindowStyle Hidden >> "%TMP_PS1%"
+echo $f=@('-', '\', '^|', '/') >> "%TMP_PS1%"
+echo $i=0 >> "%TMP_PS1%"
+echo while(-not $p.HasExited) { >> "%TMP_PS1%"
+echo     Write-Host -NoNewline "`r[ $($f[$i]) ] (Journal dispo sur le Bureau) Effacement des fichiers...   " -ForegroundColor Cyan >> "%TMP_PS1%"
+echo     $i=($i+1) %% 4 >> "%TMP_PS1%"
+echo     Start-Sleep -Milliseconds 150 >> "%TMP_PS1%"
+echo } >> "%TMP_PS1%"
+echo Write-Host "`r[ OK ] Dossier personnel efface. L'utilisateur a completement disparu.                      " -ForegroundColor Green >> "%TMP_PS1%"
+
+set "LOGFILE=%USERPROFILE%\Desktop\Suppression_Profil_%DELU%.log"
+powershell -NoProfile -ExecutionPolicy Bypass -File "%TMP_PS1%" "C:\Users\%DELU%" "%LOGFILE%"
+del /f /q "%TMP_PS1%" >nul 2>&1
+
+if exist "C:\Users\%DELU%" (
+    echo.
+    echo [!] NOTE: Certains fichiers verrouilles par l'OS n'ont pas pu
+    echo etre effaces automatiquement ^(voir journal sur le Bureau^).
+)
+
 pause
 goto um_menu
 
