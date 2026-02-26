@@ -1503,7 +1503,7 @@ net localgroup "%UM_ADMIN_GROUP%" >nul 2>&1 || set "UM_ADMIN_GROUP=Administrateu
 set "UM_STR_PWD_REQ_EN=Password required"
 set "UM_STR_PWD_REQ_FR=Mot de passe requis"
 
-set "opts=Lister les utilisateurs;Ajouter un utilisateur;Supprimer un utilisateur;Ajouter/retirer un administrateur;Modifier un mot de passe;Supprimer le mot de passe (Auto-login)"
+set "opts=Lister les utilisateurs;Ajouter un utilisateur;Supprimer un utilisateur;Ajouter/retirer un administrateur;Ajouter/Modifier un mot de passe;Supprimer le mot de passe (Auto-login)"
 call :DynamicMenu "GESTION UTILISATEURS LOCAUX" "%opts%"
 set "um_choice=%errorlevel%"
 
@@ -1640,7 +1640,7 @@ if not defined user_opts (
     goto um_menu
 )
 
-call :DynamicMenu "MODIFIER LE MOT DE PASSE" "%user_opts%"
+call :DynamicMenu "AJOUTER/MODIFIER LE MOT DE PASSE" "%user_opts%"
 set "res=%errorlevel%"
 if "%res%"=="0" goto um_menu
 
@@ -1654,23 +1654,28 @@ for /f "tokens=*" %%U in ('powershell -NoProfile -Command "Get-LocalUser | Where
 if not defined RUSER goto um_menu
 
 echo.
-set /p RNEWP=Nouveau mot de passe > 
-set /p RNEWP2=Confirmez le mot de passe > 
+set /p RNEWP=Nouveau mot de passe ^> 
+set /p RNEWP2=Confirmez le mot de passe ^> 
 if not "%RNEWP%"=="%RNEWP2%" (
     echo Les mots de passe ne correspondent pas.
     pause
     goto um_menu
 )
 net user "%RUSER%" "%RNEWP%"
-if %errorlevel%==0 (
-    echo Mot de passe mis a jour.
-    set /p RFORCE=Exiger le changement au prochain logon ? (O/N) > 
-    if /I "%RFORCE%"=="O" (
-        powershell -NoProfile -ExecutionPolicy Bypass -Command "$u=[ADSI](\"WinNT://$env:COMPUTERNAME/%RUSER%,user\"); $u.PasswordExpired=1; $u.SetInfo()" && echo Obligation de changement au prochain logon active.
-    )
-) else (
+if not %errorlevel%==0 (
     echo Echec de la mise a jour du mot de passe.
+    pause
+    goto um_menu
 )
+
+echo Mot de passe mis a jour.
+set /p RFORCE=Exiger le changement au prochain logon ? (O/N) ^> 
+if /I not "%RFORCE%"=="O" goto um_reset_end
+
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$u=[ADSI]('WinNT://' + $env:COMPUTERNAME + '/%RUSER%,user'); $u.PasswordExpired=1; $u.SetInfo()"
+echo Obligation de changement au prochain logon active.
+
+:um_reset_end
 pause
 goto um_menu
 
