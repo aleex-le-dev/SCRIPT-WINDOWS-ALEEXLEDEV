@@ -1529,8 +1529,11 @@ goto um_menu
 :um_admin
 cls
 set "user_opts="
+set /a u_idx=0
 for /f "tokens=*" %%U in ('powershell -NoProfile -Command "Get-LocalUser | Where-Object Enabled | Select-Object -ExpandProperty Name"') do (
     if defined user_opts (set "user_opts=!user_opts!;%%U") else (set "user_opts=%%U")
+    set /a u_idx+=1
+    set "user_arr[!u_idx!]=%%U"
 )
 if not defined user_opts (
     echo Aucun utilisateur actif trouve.
@@ -1542,14 +1545,7 @@ call :DynamicMenu "AJOUT/RETRAIT DROITS ADMIN" "%user_opts%"
 set "res=%errorlevel%"
 if "%res%"=="0" goto um_menu
 
-rem Recuperer le nom de l'utilisateur
-set /a idx=1
-set "UADM="
-for /f "tokens=*" %%U in ('powershell -NoProfile -Command "Get-LocalUser | Where-Object Enabled | Select-Object -ExpandProperty Name"') do (
-    if !idx! equ %res% set "UADM=%%U"
-    set /a idx+=1
-)
-
+set "UADM=!user_arr[%res%]!"
 if not defined UADM goto um_menu
 
 set "opts=Ajouter aux Administrateurs;Retirer des Administrateurs"
@@ -1603,8 +1599,11 @@ goto um_menu
 :um_del
 cls
 set "user_opts="
+set /a u_idx=0
 for /f "tokens=*" %%U in ('powershell -NoProfile -Command "Get-LocalUser | Where-Object Enabled | Select-Object -ExpandProperty Name"') do (
     if defined user_opts (set "user_opts=!user_opts!;%%U") else (set "user_opts=%%U")
+    set /a u_idx+=1
+    set "user_arr[!u_idx!]=%%U"
 )
 if not defined user_opts (
     echo Aucun utilisateur actif trouve.
@@ -1616,13 +1615,7 @@ call :DynamicMenu "SUPPRIMER UN UTILISATEUR" "%user_opts%"
 set "res=%errorlevel%"
 if "%res%"=="0" goto um_menu
 
-set /a idx=1
-set "DELU="
-for /f "tokens=*" %%U in ('powershell -NoProfile -Command "Get-LocalUser | Where-Object Enabled | Select-Object -ExpandProperty Name"') do (
-    if !idx! equ %res% set "DELU=%%U"
-    set /a idx+=1
-)
-
+set "DELU=!user_arr[%res%]!"
 if not defined DELU goto um_menu
 
 cls
@@ -1683,8 +1676,11 @@ goto um_menu
 :um_reset
 cls
 set "user_opts="
+set /a u_idx=0
 for /f "tokens=*" %%U in ('powershell -NoProfile -Command "Get-LocalUser | Where-Object Enabled | Select-Object -ExpandProperty Name"') do (
     if defined user_opts (set "user_opts=!user_opts!;%%U") else (set "user_opts=%%U")
+    set /a u_idx+=1
+    set "user_arr[!u_idx!]=%%U"
 )
 if not defined user_opts (
     echo Aucun utilisateur actif trouve.
@@ -1696,13 +1692,7 @@ call :DynamicMenu "AJOUTER/MODIFIER LE MOT DE PASSE" "%user_opts%"
 set "res=%errorlevel%"
 if "%res%"=="0" goto um_menu
 
-set /a idx=1
-set "RUSER="
-for /f "tokens=*" %%U in ('powershell -NoProfile -Command "Get-LocalUser | Where-Object Enabled | Select-Object -ExpandProperty Name"') do (
-    if !idx! equ %res% set "RUSER=%%U"
-    set /a idx+=1
-)
-
+set "RUSER=!user_arr[%res%]!"
 if not defined RUSER goto um_menu
 
 echo.
@@ -1734,8 +1724,11 @@ goto um_menu
 :um_remove_pwd
 cls
 set "user_opts="
+set /a u_idx=0
 for /f "tokens=*" %%U in ('powershell -NoProfile -Command "Get-LocalUser | Where-Object Enabled | Select-Object -ExpandProperty Name"') do (
     if defined user_opts (set "user_opts=!user_opts!;%%U") else (set "user_opts=%%U")
+    set /a u_idx+=1
+    set "user_arr[!u_idx!]=%%U"
 )
 if not defined user_opts (
     echo Aucun utilisateur actif trouve.
@@ -1747,13 +1740,7 @@ call :DynamicMenu "SUPPRIMER MDP (AUTO-LOGIN)" "%user_opts%"
 set "res=%errorlevel%"
 if "%res%"=="0" goto um_menu
 
-set /a idx=1
-set "RUSER="
-for /f "tokens=*" %%U in ('powershell -NoProfile -Command "Get-LocalUser | Where-Object Enabled | Select-Object -ExpandProperty Name"') do (
-    if !idx! equ %res% set "RUSER=%%U"
-    set /a idx+=1
-)
-
+set "RUSER=!user_arr[%res%]!"
 if not defined RUSER goto um_menu
 
 echo.
