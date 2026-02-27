@@ -1,21 +1,3 @@
-@echo off
-setlocal EnableExtensions EnableDelayedExpansion
-if defined MSYSTEM ("%ComSpec%" /c "%~f0" & exit /b)
-if not defined CMDCMDLINE ("%ComSpec%" /c "%~f0" & exit /b)
-chcp 65001 >nul
-title Boite a Scripts Windows - By ALEEXLEDEV (v2.0)
-color 0B
-mode con: cols=120 lines=45
-
-REM === AUTO-ELEVATION EN ADMINISTRATEUR ===
-net session >nul 2>&1
-if %errorlevel% neq 0 (
-    echo Ce script requiert des privileges administrateur.
-    echo Demande d'elevation en cours...
-    timeout /t 2 >nul
-    powershell -Command "Start-Process '%~f0' -Verb RunAs"
-    exit /b
-)
 
 set /a total_tools=0
 set "t[1]=---:OUTILS PRINCIPAUX"
@@ -1156,7 +1138,7 @@ goto system_tools
 
 :sys_report
 cls
-echo Generation du rapport systeme complet...
+echo Generation de rapports systeme separes...
 echo.
 
 for /f "usebackq delims=" %%d in (`powershell -NoProfile -Command "$env:USERPROFILE + '\Desktop'"`) do (
@@ -1167,30 +1149,21 @@ for /f "usebackq delims=" %%t in (`powershell -NoProfile -Command "Get-Date -For
     set "DATESTR=%%t"
 )
 
-set "REPORT=%DESKTOP%\Rapport_Systeme_Complet_%DATESTR%.txt"
-
-echo ============================================== > "%REPORT%"
-echo          RAPPORT SYSTEME COMPLET                 >> "%REPORT%"
-echo ============================================== >> "%REPORT%"
-echo. >> "%REPORT%"
+set "SYS=%DESKTOP%\Infos_Systeme_%DATESTR%.txt"
+set "NET=%DESKTOP%\Infos_Reseau_%DATESTR%.txt"
+set "DRV=%DESKTOP%\Liste_Pilotes_%DATESTR%.txt"
 
 echo Ecriture des informations systeme...
-echo --- INFORMATIONS SYSTEME --- >> "%REPORT%"
-systeminfo >> "%REPORT%" 2>nul
-echo. >> "%REPORT%"
+systeminfo > "%SYS%" 2>nul
 
 echo Ecriture des informations reseau...
-echo --- INFORMATIONS RESEAU --- >> "%REPORT%"
-ipconfig /all >> "%REPORT%" 2>nul
-echo. >> "%REPORT%"
+ipconfig /all > "%NET%" 2>nul
 
 echo Ecriture de la liste des pilotes...
-echo --- LISTE DES PILOTES --- >> "%REPORT%"
-driverquery >> "%REPORT%" 2>nul
-echo. >> "%REPORT%"
+driverquery > "%DRV%" 2>nul
 
 echo.
-echo Rapport enregistre sur le Bureau : "%REPORT%"
+echo Rapports enregistres sur le Bureau.
 pause
 goto system_tools
 
@@ -1772,7 +1745,7 @@ setlocal
 set "m_title=%~1"
 set "m_opts=%~2"
 
-set "ps_code=$o=($env:m_opts -split ';');$t=$env:m_title;$sel=@();for($i=0;$i -lt $o.Count;$i++){if($o[$i] -notmatch '^\[---'){$sel+=$i}};$sIdx=0;$oldIdx=-1;$iY=@{};clear-host;try{$bY=[console]::CursorTop}catch{$bY=0};function D{ try{[console]::SetCursorPosition(0,$bY)}catch{};write-host '                                                                                                                       ';write-host '  ========================================================================================' -f Cyan;write-host ('   ' + $t) -f White;write-host '  ========================================================================================' -f Cyan;write-host '                                                                                                                       ';$num=1;for($i=0;$i -lt $o.Count;$i++){$parts=$o[$i]-split'~';$s=$parts[0];$d='';if($parts.Count -gt 1){$d=$parts[1]};if($s -match '^\[---'){if($i -gt 0){write-host '                                                                                                                       '};try{$iY[$i]=[console]::CursorTop}catch{};write-host ('       ' + $s).PadRight(119) -f Cyan}else{try{$iY[$i]=[console]::CursorTop}catch{};if($i -eq $sel[$sIdx]){$str='    >> [{0}] {1}  ' -f $num, $s; write-host $str -NoNewline -f Black -b White; $rem=119-$str.Length; if($rem -lt 0){$rem=0}; $ds=if($d){'   - '+$d}else{''}; if($ds.Length -gt $rem){$ds=$ds.Substring(0,$rem)}; write-host $ds.PadRight($rem) -f Yellow}else{$str='       [{0}] {1}  ' -f $num, $s; write-host $str.PadRight(119) -f Gray};$num++}};write-host '                                                                                                                       ';write-host '  ----------------------------------------------------------------------------------------' -f Cyan;write-host '   [FLECHES] Naviguer | [ENTREE] Valider | [F] Favoriser | [0/ECHAP] Retour                     ' -f DarkGray;write-host '                                                                                                                       '};D;while($true){if($oldIdx -ne -1 -and $oldIdx -ne $sIdx){$i=$sel[$oldIdx];$parts=$o[$i]-split'~';$s=$parts[0];$num=$oldIdx+1;try{[console]::SetCursorPosition(0,$iY[$i])}catch{};$str='       [{0}] {1}  ' -f $num, $s; write-host $str.PadRight(119) -f Gray;$i=$sel[$sIdx];$parts=$o[$i]-split'~';$s=$parts[0];$d='';if($parts.Count -gt 1){$d=$parts[1]};$num=$sIdx+1;try{[console]::SetCursorPosition(0,$iY[$i])}catch{};$str='    >> [{0}] {1}  ' -f $num, $s; write-host $str -NoNewline -f Black -b White; $rem=119-$str.Length; if($rem -lt 0){$rem=0}; $ds=if($d){'   - '+$d}else{''}; if($ds.Length -gt $rem){$ds=$ds.Substring(0,$rem)}; write-host $ds.PadRight($rem) -f Yellow};$oldIdx=$sIdx;try{[console]::SetCursorPosition(0,$iY[$o.Count-1]+5)}catch{};$k=$Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown');$v=$k.VirtualKeyCode;if($v -eq 38){$sIdx--;if($sIdx -lt 0){$sIdx=$sel.Count-1}}elseif($v -eq 40){$sIdx++;if($sIdx -ge $sel.Count){$sIdx=0}}elseif($v -eq 13){clear-host;exit ($sIdx+1)}elseif($v -eq 27 -or $k.Character -eq '0'){clear-host;exit 0}elseif($v -eq 70){clear-host;exit (200+$sIdx+1)}elseif([string]$k.Character -match '^[1-9]$' -and [int][string]$k.Character -le $sel.Count){clear-host;exit ([int][string]$k.Character)}}"
+set "ps_code=$o=($env:m_opts -split ';');$t=$env:m_title;$sel=@();for($i=0;$i -lt $o.Count;$i++){if($o[$i] -notmatch '^\[---'){$sel+=$i}};$sIdx=0;$oldIdx=-1;$iY=@{};clear-host;try{$bY=[console]::CursorTop}catch{$bY=0};function D{ try{[console]::SetCursorPosition(0,$bY)}catch{};write-host '                                                                                                                       ';write-host '  ========================================================================================' -f Cyan;write-host ('   ' + $t) -f White;write-host '  ========================================================================================' -f Cyan;write-host '                                                                                                                       ';$num=1;for($i=0;$i -lt $o.Count;$i++){$parts=$o[$i]-split'~';$s=$parts[0];$d='';if($parts.Count -gt 1){$d=$parts[1]};if($s -match '^\[---'){if($i -gt 0){write-host '                                                                                                                       '};try{$iY[$i]=[console]::CursorTop}catch{};write-host ('       ' + $s).PadRight(119) -f Cyan}else{try{$iY[$i]=[console]::CursorTop}catch{};if($i -eq $sel[$sIdx]){$str='    >> [{0}] {1}  ' -f $num, $s; write-host $str -NoNewline -f Black -b White; $rem=119-$str.Length; if($rem -lt 0){$rem=0}; $ds=if($d){'   - '+$d}else{''}; if($ds.Length -gt $rem){$ds=$ds.Substring(0,$rem)}; write-host $ds.PadRight($rem) -f Yellow}else{$str='       [{0}] {1}  ' -f $num, $s; write-host $str.PadRight(119) -f Gray};$num++}};write-host '                                                                                                                       ';write-host '  ----------------------------------------------------------------------------------------' -f Cyan;write-host '   [FLECHES] Naviguer | [ENTREE] Valider | [F] Favoriser | [0/ECHAP] Retour                     ' -f DarkGray;write-host '                                                                                                                       '};D;while($true){if($oldIdx -ne -1 -and $oldIdx -ne $sIdx){$i=$sel[$oldIdx];$parts=$o[$i]-split'~';$s=$parts[0];$num=$oldIdx+1;try{[console]::SetCursorPosition(0,$iY[$i])}catch{};$str='       [{0}] {1}  ' -f $num, $s; write-host $str.PadRight(119) -f Gray;$i=$sel[$sIdx];$parts=$o[$i]-split'~';$s=$parts[0];$d='';if($parts.Count -gt 1){$d=$parts[1]};$num=$sIdx+1;try{[console]::SetCursorPosition(0,$iY[$i])}catch{};$str='    >> [{0}] {1}  ' -f $num, $s; write-host $str -NoNewline -f Black -b White; $rem=119-$str.Length; if($rem -lt 0){$rem=0}; $ds=if($d){'   - '+$d}else{''}; if($ds.Length -gt $rem){$ds=$ds.Substring(0,$rem)}; write-host $ds.PadRight($rem) -f Yellow};$oldIdx=$sIdx;try{[console]::SetCursorPosition(0,$iY[$o.Count-1]+5)}catch{};$k=$Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown');$v=$k.VirtualKeyCode;if($v -eq 38){$sIdx--;if($sIdx -lt 0){$sIdx=$sel.Count-1}}elseif($v -eq 40){$sIdx++;if($sIdx -ge $sel.Count){$sIdx=0}}elseif($v -eq 13){clear-host;exit ($sIdx+1)}elseif($v -eq 27 -or $k.Character -eq '0'){clear-host;exit 0}elseif($v -eq 70){clear-host;exit (200+$sIdx+1)}elseif([string]$k.Character -match '^[1-9]$' -and [int][string]$k.Character -le $sel.Count){clear-host;exit ([int][string]$k.Character)}}"""
 
 powershell -NoProfile -ExecutionPolicy Bypass -Command "%ps_code%"
 set "res=%errorlevel%"
