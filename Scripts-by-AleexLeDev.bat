@@ -5,7 +5,7 @@ if not defined CMDCMDLINE ("%ComSpec%" /c "%~f0" & exit /b)
 chcp 65001 >nul
 title Boite a Scripts Windows - By ALEEXLEDEV (v2.0)
 color 0B
-mode con: cols=120 lines=45
+mode con: cols=120 lines=60
 
 REM === AUTO-ELEVATION EN ADMINISTRATEUR ===
 net session >nul 2>&1
@@ -18,47 +18,40 @@ if %errorlevel% neq 0 (
 )
 
 set /a total_tools=0
-set "t[1]=---:OUTILS PRINCIPAUX"
-set "t[2]=dns_manager:Gestionnaire DNS~Changer DNS Cloudflare/Google"
-set "t[3]=winget_manager:Mises a jour d'applications~Mettre a jour vos logiciels via Winget"
-set "t[4]=context_menu:Menu contextuel Windows 11~Classic/Modern"
-set "t[5]=disk_manager:Formatteur de Disque (DISKPART)~Formater un disque de facon securisee"
-set "t[6]=sys_browser_passwords:Export mots de passe web~Extracteur de pass (Nirsoft)"
-set "t[7]=---:VERIFICATIONS SYSTEME"
-set "t[8]=sys_sfc:SFC (Scannow)~Reparation avancee des fichiers systeme Windows"
-set "t[9]=sys_dism_check:DISM Check~Verification securisee de l'integrite de l'image Windows"
-set "t[10]=sys_dism_restore:DISM Restore~Reparation critique de l'image Windows via Windows Update"
-set "t[11]=sys_chkdsk:CHKDSK~Analyse complete des erreurs sur tous les disques"
-set "t[12]=---:NETTOYAGE ET OPTIMISATION"
-set "t[13]=sys_cleanmgr:Nettoyage de disque~Lancement classique de l'utilitaire de nettoyage"
-set "t[14]=sys_temp_cleanup:Nettoyage complet (Temp/Cache)~Suppression massive des fichiers inutiles"
-set "t[15]=sys_registry_cleanup:Nettoyage du Registre~Optimisation rapide et suppression des entrees mortes"
-set "t[16]=---:DISQUE DUR"
-set "t[17]=sys_bitlocker_check:Verificateur BitLocker~Verifiez l'etat de chiffrement de vos partitions"
-set "t[18]=---:OUTILS RESEAU"
-set "t[19]=sys_ipconfig:ipconfig /all~Affichage de la configuration detaillee des cartes reseau"
-set "t[20]=sys_restart_network:Redemarrer les cartes reseau~Desactivation et reactivation des puces Wi-Fi/Ethernet"
-set "t[21]=sys_repair_network:Reparation reseau complete~Renouvellement d'IP complet et vidage du cache DNS"
-set "t[22]=---:UTILITAIRES ET EXTRAS"
-set "t[23]=sys_drivers:Extraction des pilotes~Sauvegarde de tous les fichiers pilotes natifs"
-set "t[24]=sys_windows_update:Reparation Windows Update~Outil de diagnostique des echecs de MAJ"
-set "t[25]=sys_report:Generer Rapport Hardware~Diagnostic PC global exporte sur le Bureau"
-set "t[26]=sys_reset_windows_update:Reset complet Win Update~Forcer le redemarrage integral des services de MAJ"
-set "t[27]=um_menu:Gestion utilisateurs locaux~Panneau de gestion local (Admin, Pass, Ajouts)"
-set "t[28]=---:MOT DE PASSE"
-set "t[29]=sys_wifi_passwords:Extraire mots de passe Wi-Fi~Dechiffrer tous les mots de passe reseaux connus"
-set "t[30]=sys_unlock_notes:Recuperation de Compte bloque~Instructions pour reprendre controle sans mot de passe"
-set "t[31]=---:MATERIEL"
-set "t[32]=touch_screen_manager:Gestionnaire Ecran Tactile~Activation et desactivation du pilote tactile"
-set "total_tools=32"
+set "t[1]=---:VERIFICATIONS SYSTEME"
+set "t[2]=sys_sfc:SFC (Scannow)~Reparation avancee des fichiers systeme Windows"
+set "t[3]=sys_dism_check:DISM Check~Verification securisee de l'integrite de l'image Windows"
+set "t[4]=sys_dism_restore:DISM Restore~Reparation critique de l'image Windows via Windows Update"
+set "t[5]=sys_chkdsk:CHKDSK~Analyse complete des erreurs sur tous les disques"
+set "t[6]=---:NETTOYAGE ET OPTIMISATION"
+set "t[7]=sys_cleanmgr:Nettoyage de disque~Lancement classique de l'utilitaire de nettoyage"
+set "t[8]=sys_temp_cleanup:Nettoyage complet (Temp/Cache)~Suppression massive des fichiers inutiles"
+set "t[9]=sys_registry_cleanup:Nettoyage du Registre~Optimisation rapide et suppression des entrees mortes"
+set "t[10]=---:DISQUE DUR"
+set "t[11]=disk_manager:Formatteur de Disque (DISKPART)~Formater un disque de facon securisee"
+set "t[12]=sys_bitlocker_check:Verificateur BitLocker~Verifiez l'etat de chiffrement de vos partitions"
+set "t[13]=---:OUTILS RESEAU"
+set "t[14]=dns_manager:Gestionnaire DNS~Changer DNS Cloudflare/Google"
+set "t[15]=sys_ipconfig:ipconfig /all~Affichage de la configuration detaillee des cartes reseau"
+set "t[16]=sys_restart_network:Redemarrer les cartes reseau~Desactivation et reactivation des puces Wi-Fi/Ethernet"
+set "t[17]=sys_repair_network:Reparation reseau complete~Renouvellement d'IP complet et vidage du cache DNS"
+set "t[18]=---:UTILITAIRES ET EXTRAS"
+set "t[19]=winget_manager:Mises a jour d'applications~Mettre a jour vos logiciels via Winget"
+set "t[20]=context_menu:Menu contextuel Windows 11~Classic/Modern"
+set "t[21]=sys_drivers:Extraction des pilotes~Sauvegarde de tous les fichiers pilotes natifs"
+set "t[22]=sys_windows_update:Reparation Windows Update~Outil de diagnostique des echecs de MAJ"
+set "t[23]=sys_report:Generer Rapport Hardware~Diagnostic PC global exporte sur le Bureau"
+set "t[24]=sys_reset_windows_update:Reset complet Win Update~Forcer le redemarrage integral des services de MAJ"
+set "t[25]=um_menu:Gestion utilisateurs locaux~Panneau de gestion local (Admin, Pass, Ajouts)"
+set "t[26]=---:MOT DE PASSE"
+set "t[27]=sys_browser_passwords:Export mots de passe web~Extracteur de pass (Nirsoft)"
+set "t[28]=sys_wifi_passwords:Extraire mots de passe Wi-Fi~Dechiffrer tous les mots de passe reseaux connus"
+set "t[29]=sys_unlock_notes:Recuperation de Compte bloque~Instructions pour reprendre controle sans mot de passe"
+set "t[30]=---:MATERIEL"
+set "t[31]=touch_screen_manager:Gestionnaire Ecran Tactile~Activation et desactivation du pilote tactile"
+set "total_tools=31"
 
-if not exist "favoris.txt" (
-    echo dns_manager>favoris.txt
-    echo winget_manager>>favoris.txt
-    echo context_menu>>favoris.txt
-    echo disk_manager>>favoris.txt
-    echo sys_browser_passwords>>favoris.txt
-)
+if not exist "favoris.txt" type nul > "favoris.txt"
 
 :menu_principal
 cls
@@ -91,7 +84,7 @@ if "!main_choice!"=="0" goto exit_script
 
 if !main_choice! GEQ 200 (
     set /a toggle_idx=!main_choice!-200
-    set "toggle_target=!main_target[%toggle_idx%]!"
+    for %%X in (!toggle_idx!) do set "toggle_target=!main_target[%%X]!"
     if not "!toggle_target!"=="none" call :ToggleFav "!toggle_target!"
     goto menu_principal
 )
@@ -639,7 +632,7 @@ REM ===================================================================
 cls
 set "opts="
 set /a s_idx=0
-for /l %%I in (7,1,%total_tools%) do (
+for /l %%I in (1,1,%total_tools%) do (
     for /f "tokens=1,* delims=:" %%A in ("!t[%%I]!") do (
         if "%%A"=="---" (
             set "opts=!opts!;[--- %%B ---]"
@@ -647,7 +640,7 @@ for /l %%I in (7,1,%total_tools%) do (
             set "is_fav=0"
             for /f "usebackq tokens=*" %%F in ("favoris.txt") do (if "%%F"=="%%A" set "is_fav=1")
             if "!is_fav!"=="1" (
-                set "opts=!opts!;[*] %%B"
+                set "opts=!opts!;(F) %%B"
             ) else (
                 set "opts=!opts!;%%B"
             )
@@ -665,7 +658,7 @@ if "!sys_choice!"=="0" goto menu_principal
 
 if !sys_choice! GEQ 200 (
     set /a toggle_idx=!sys_choice!-200
-    set "toggle_target=!sys_target[%toggle_idx%]!"
+    for %%X in (!toggle_idx!) do set "toggle_target=!sys_target[%%X]!"
     call :ToggleFav "!toggle_target!"
     goto system_tools
 )
@@ -1772,7 +1765,7 @@ setlocal
 set "m_title=%~1"
 set "m_opts=%~2"
 
-set "ps_code=$o=($env:m_opts -split ';');$t=$env:m_title;$sel=@();for($i=0;$i -lt $o.Count;$i++){if($o[$i] -notmatch '^\[---'){$sel+=$i}};$sIdx=0;$oldIdx=-1;$iY=@{};clear-host;try{$bY=[console]::CursorTop}catch{$bY=0};function D{ try{[console]::SetCursorPosition(0,$bY)}catch{};write-host '                                                                                                                       ';write-host '  ========================================================================================' -f Cyan;write-host ('   ' + $t) -f White;write-host '  ========================================================================================' -f Cyan;write-host '                                                                                                                       ';$num=1;for($i=0;$i -lt $o.Count;$i++){$parts=$o[$i]-split'~';$s=$parts[0];$d='';if($parts.Count -gt 1){$d=$parts[1]};if($s -match '^\[---'){if($i -gt 0){write-host '                                                                                                                       '};try{$iY[$i]=[console]::CursorTop}catch{};write-host ('       ' + $s).PadRight(119) -f Cyan}else{try{$iY[$i]=[console]::CursorTop}catch{};if($i -eq $sel[$sIdx]){$str='    >> [{0}] {1}  ' -f $num, $s; write-host $str -NoNewline -f Black -b White; $rem=119-$str.Length; if($rem -lt 0){$rem=0}; $ds=if($d){'   - '+$d}else{''}; if($ds.Length -gt $rem){$ds=$ds.Substring(0,$rem)}; write-host $ds.PadRight($rem) -f Yellow}else{$str='       [{0}] {1}  ' -f $num, $s; write-host $str.PadRight(119) -f Gray};$num++}};write-host '                                                                                                                       ';write-host '  ----------------------------------------------------------------------------------------' -f Cyan;write-host '   [FLECHES] Naviguer | [ENTREE] Valider | [F] Favoriser | [0/ECHAP] Retour                     ' -f DarkGray;write-host '                                                                                                                       '};D;while($true){if($oldIdx -ne -1 -and $oldIdx -ne $sIdx){$i=$sel[$oldIdx];$parts=$o[$i]-split'~';$s=$parts[0];$num=$oldIdx+1;try{[console]::SetCursorPosition(0,$iY[$i])}catch{};$str='       [{0}] {1}  ' -f $num, $s; write-host $str.PadRight(119) -f Gray;$i=$sel[$sIdx];$parts=$o[$i]-split'~';$s=$parts[0];$d='';if($parts.Count -gt 1){$d=$parts[1]};$num=$sIdx+1;try{[console]::SetCursorPosition(0,$iY[$i])}catch{};$str='    >> [{0}] {1}  ' -f $num, $s; write-host $str -NoNewline -f Black -b White; $rem=119-$str.Length; if($rem -lt 0){$rem=0}; $ds=if($d){'   - '+$d}else{''}; if($ds.Length -gt $rem){$ds=$ds.Substring(0,$rem)}; write-host $ds.PadRight($rem) -f Yellow};$oldIdx=$sIdx;try{[console]::SetCursorPosition(0,$iY[$o.Count-1]+5)}catch{};$k=$Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown');$v=$k.VirtualKeyCode;if($v -eq 38){$sIdx--;if($sIdx -lt 0){$sIdx=$sel.Count-1}}elseif($v -eq 40){$sIdx++;if($sIdx -ge $sel.Count){$sIdx=0}}elseif($v -eq 13){clear-host;exit ($sIdx+1)}elseif($v -eq 27 -or $k.Character -eq '0'){clear-host;exit 0}elseif($v -eq 70){clear-host;exit (200+$sIdx+1)}elseif([string]$k.Character -match '^[1-9]$' -and [int][string]$k.Character -le $sel.Count){clear-host;exit ([int][string]$k.Character)}}"
+set "ps_code=$o=($env:m_opts -split ';');$t=$env:m_title;$sel=@();for($i=0;$i -lt $o.Count;$i++){if($o[$i] -notmatch '^\[---'){$sel+=$i}};$sIdx=0;$oldIdx=-1;$iY=@{};clear-host;try{$bY=[console]::CursorTop}catch{$bY=0};function D{ try{[console]::SetCursorPosition(0,$bY)}catch{};write-host '                                                                                                                       ';write-host '  ========================================================================================' -f Cyan;write-host ('   ' + $t) -f White;write-host '  ========================================================================================' -f Cyan;write-host '                                                                                                                       ';$num=1;for($i=0;$i -lt $o.Count;$i++){$parts=$o[$i]-split'~';$s=$parts[0];$d='';if($parts.Count -gt 1){$d=$parts[1]};if($s -match '^\[---'){if($i -gt 0){write-host '                                                                                                                       '};try{$iY[$i]=[console]::CursorTop}catch{};write-host ('       ' + $s).PadRight(119) -f Cyan}else{try{$iY[$i]=[console]::CursorTop}catch{};$f_str='    ';if($s -match '^\(F\) '){$f_str='(F) ';$s=$s.Substring(4)};if($i -eq $sel[$sIdx]){$str='{0}>> [{1}] {2}  ' -f $f_str, $num, $s; write-host $str -NoNewline -f Black -b White; $rem=119-$str.Length; if($rem -lt 0){$rem=0}; $ds=if($d){'   - '+$d}else{''}; if($ds.Length -gt $rem){$ds=$ds.Substring(0,$rem)}; write-host $ds.PadRight($rem) -f Yellow}else{$str='{0}   [{1}] {2}  ' -f $f_str, $num, $s; write-host $str.PadRight(119) -f Gray};$num++}};write-host '                                                                                                                       ';write-host '  ----------------------------------------------------------------------------------------' -f Cyan;write-host '   [FLECHES] Naviguer | [ENTREE] Valider | [F] Favoriser | [0/ECHAP] Retour                     ' -f DarkGray;write-host '                                                                                                                       '};D;while($true){if($oldIdx -ne -1 -and $oldIdx -ne $sIdx){$i=$sel[$oldIdx];$parts=$o[$i]-split'~';$s=$parts[0];$num=$oldIdx+1;try{[console]::SetCursorPosition(0,$iY[$i])}catch{};$f_str='    ';if($s -match '^\(F\) '){$f_str='(F) ';$s=$s.Substring(4)};$str='{0}   [{1}] {2}  ' -f $f_str, $num, $s; write-host $str.PadRight(119) -f Gray;$i=$sel[$sIdx];$parts=$o[$i]-split'~';$s=$parts[0];$d='';if($parts.Count -gt 1){$d=$parts[1]};$num=$sIdx+1;try{[console]::SetCursorPosition(0,$iY[$i])}catch{};$f_str='    ';if($s -match '^\(F\) '){$f_str='(F) ';$s=$s.Substring(4)};$str='{0}>> [{1}] {2}  ' -f $f_str, $num, $s; write-host $str -NoNewline -f Black -b White; $rem=119-$str.Length; if($rem -lt 0){$rem=0}; $ds=if($d){'   - '+$d}else{''}; if($ds.Length -gt $rem){$ds=$ds.Substring(0,$rem)}; write-host $ds.PadRight($rem) -f Yellow};$oldIdx=$sIdx;try{[console]::SetCursorPosition(0,$iY[$o.Count-1]+5)}catch{};$k=$Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown');$v=$k.VirtualKeyCode;if($v -eq 38){$sIdx--;if($sIdx -lt 0){$sIdx=$sel.Count-1}}elseif($v -eq 40){$sIdx++;if($sIdx -ge $sel.Count){$sIdx=0}}elseif($v -eq 13){clear-host;exit ($sIdx+1)}elseif($v -eq 27 -or $k.Character -eq '0'){clear-host;exit 0}elseif($v -eq 70){clear-host;exit (200+$sIdx+1)}elseif([string]$k.Character -match '^[1-9]$' -and [int][string]$k.Character -le $sel.Count){clear-host;exit ([int][string]$k.Character)}}"
 
 powershell -NoProfile -ExecutionPolicy Bypass -Command "%ps_code%"
 set "res=%errorlevel%"
