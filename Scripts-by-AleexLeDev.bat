@@ -43,13 +43,17 @@ set "t[22]=sys_windows_update:Reparation Windows Update~Outil de diagnostique de
 set "t[23]=sys_report:Generer Rapport Hardware~Diagnostic PC global exporte sur le Bureau"
 set "t[24]=sys_reset_windows_update:Reset complet Win Update~Forcer le redemarrage integral des services de MAJ"
 set "t[25]=um_menu:Gestion utilisateurs locaux~Panneau de gestion local (Admin, Pass, Ajouts)"
-set "t[26]=---:MOT DE PASSE"
-set "t[27]=sys_browser_passwords:Export mots de passe web~Extracteur de pass (Nirsoft)"
-set "t[28]=sys_wifi_passwords:Extraire mots de passe Wi-Fi~Dechiffrer tous les mots de passe reseaux connus"
-set "t[29]=sys_unlock_notes:Recuperation de Compte bloque~Instructions pour reprendre controle sans mot de passe"
-set "t[30]=---:MATERIEL"
-set "t[31]=touch_screen_manager:Gestionnaire Ecran Tactile~Activation et desactivation du pilote tactile"
-set "total_tools=31"
+set "t[26]=sys_repair_icons:Reparation Cache Icones~Corrige les icones/miniatures corrompues"
+set "t[27]=sys_win_key:Cle de licence~Recuperer vos differentes cles de produit"
+set "t[28]=sys_god_mode:Dossier God Mode~Creer le raccourci ultime des parametres"
+set "t[29]=---:MOT DE PASSE"
+set "t[30]=sys_browser_passwords:Export mots de passe web~Extracteur de pass (Nirsoft)"
+set "t[31]=sys_wifi_passwords:Extraire mots de passe Wi-Fi~Dechiffrer tous les mots de passe reseaux connus"
+set "t[32]=sys_unlock_notes:Recuperation de Compte bloque~Instructions pour reprendre controle sans mot de passe"
+set "t[33]=---:MATERIEL"
+set "t[34]=touch_screen_manager:Gestionnaire Ecran Tactile~Activation et desactivation du pilote tactile"
+set "t[35]=sys_battery_report:Rapport de Batterie~Usure, Sante et stats en temps reel"
+set "total_tools=35"
 
 if not exist "favoris.txt" type nul > "favoris.txt"
 
@@ -1283,6 +1287,139 @@ echo. >> "%REPORT%"
 
 echo.
 echo Rapport enregistre sur le Bureau : "%REPORT%"
+pause
+goto system_tools
+
+:sys_repair_icons
+cls
+echo ===============================================
+echo      Reparation du Cache des Icones/Miniatures
+echo ===============================================
+echo.
+echo Arret de l'explorateur Windows...
+taskkill /f /im explorer.exe >nul 2>&1
+echo Reparation en cours (Suppression du cache)...
+timeout /t 2 /nobreak >nul
+del /A /F /Q "%localappdata%\IconCache.db" >nul 2>&1
+del /A /F /Q "%localappdata%\Microsoft\Windows\Explorer\iconcache*" >nul 2>&1
+del /A /F /Q "%localappdata%\Microsoft\Windows\Explorer\thumbcache*" >nul 2>&1
+echo Redemarrage de l'explorateur Windows...
+start explorer.exe
+echo.
+echo [OK] Le cache des icones a ete vide !
+echo Il se reconstruira progressivement et reparera vos icones.
+pause
+goto system_tools
+
+:sys_win_key
+set "opts=Cle Windows OEM (Incrustee au BIOS);Cle Windows Actuelle (Installee);Cle Produit Office (via CMD)"
+call :DynamicMenu "RECUPERATION DE CLES DE PRODUIT" "%opts%"
+set "wk_choice=%errorlevel%"
+
+if "%wk_choice%"=="1" goto win_key_oem
+if "%wk_choice%"=="2" goto win_key_registry
+if "%wk_choice%"=="3" goto win_key_office
+if "%wk_choice%"=="0" goto system_tools
+goto sys_win_key
+
+:win_key_oem
+cls
+echo ===============================================
+echo      Cle Windows OEM (Carte mere / BIOS)
+echo ===============================================
+echo.
+echo Interrogation du firmware...
+powershell -NoProfile -Command "$k = (Get-CimInstance -Query 'Select * from SoftwareLicensingService' -ErrorAction SilentlyContinue).OA3xOriginalProductKey; if([string]::IsNullOrWhiteSpace($k)) { Write-Host '[ECHEC] Aucune cle OEM detectee.' ; Write-Host 'Cela signifie que ce PC ne contenait pas de licence incluse a l''achat' ; Write-Host 'ou utilise une licence numerique liee a un compte Microsoft.' } else { Write-Host '[OK] Cle de produit Windows (OEM) detectee :'; Write-Host ''; Write-Host ('    ' + $k) -ForegroundColor Green; Write-Host ''; Write-Host 'Cette cle est incrustee dans la carte mere.' }"
+echo.
+pause
+goto sys_win_key
+
+:win_key_registry
+cls
+echo ===============================================
+echo      Cle Windows Installée (Registre)
+echo ===============================================
+echo.
+echo Recherche de la cle actuellement utilisee par Windows...
+set "WINKEY="
+for /f "tokens=3" %%A in ('reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform" /v BackupProductKeyDefault 2^>nul ^| findstr /i "BackupProductKeyDefault"') do (
+    set "WINKEY=%%A"
+)
+if "!WINKEY!"=="" (
+    echo [ECHEC] Impossible de lire la cle par defaut dans le registre.
+) else (
+    echo [OK] Cle Windows installee :
+    echo.
+    powershell -NoProfile -Command "Write-Host '    !WINKEY!' -ForegroundColor Green"
+    echo.
+)
+pause
+goto sys_win_key
+
+:win_key_office
+cls
+echo ===============================================
+echo      Cle de produit Microsoft Office
+echo ===============================================
+echo.
+echo Recherche des licences Office installees...
+echo.
+set "office_vbs="
+if exist "%ProgramFiles%\Microsoft Office\Office16\ospp.vbs" set "office_vbs=%ProgramFiles%\Microsoft Office\Office16\ospp.vbs"
+if exist "%ProgramFiles(x86)%\Microsoft Office\Office16\ospp.vbs" set "office_vbs=%ProgramFiles(x86)%\Microsoft Office\Office16\ospp.vbs"
+
+if "!office_vbs!"=="" (
+    echo [INFO] Script de statut Office non trouve ^(ospp.vbs^).
+    echo Si Office est installe, sa version est peut-etre differente ^(pas 2016/2019/365^).
+) else (
+    echo [INFO] Depuis Office 2013, Microsoft masque volontairement 
+    echo la cle de licence complete sur votre ordinateur par securite.
+    echo Seuls les 5 derniers caracteres sont stockes sur ce PC.
+    echo.
+    powershell -NoProfile -Command "$raw = cscript //nologo '!office_vbs!' /dstatus; $matches = $raw | Select-String -Pattern 'KEY'; if ($matches) { foreach($m in $matches) { Write-Host '   '$m.Line.Trim() -ForegroundColor Cyan } } else { Write-Host 'Aucune cle detectee ou en mode Abonnement / Inactif.' -ForegroundColor Yellow }"
+)
+echo.
+pause
+goto sys_win_key
+
+:sys_god_mode
+cls
+echo ===============================================
+echo      Creation du dossier "God Mode"
+echo ===============================================
+echo.
+echo Le "God Mode" centralise tous les parametres de Windows 
+echo (+ de 200 options^) dans un seul et meme dossier.
+echo.
+set "GODMODE_PATH=%USERPROFILE%\Desktop\God Mode.{ED7BA470-8E54-465E-825C-99712043E01C}"
+if exist "!GODMODE_PATH!" (
+    echo [INFO] Le dossier God Mode existe deja sur votre Bureau.
+) else (
+    mkdir "!GODMODE_PATH!" >nul 2>&1
+    if !errorlevel!==0 (
+        echo [OK] Le dossier God Mode a ete cree sur votre Bureau !
+    ) else (
+        echo [ECHEC] Impossible de creer le dossier.
+    )
+)
+echo.
+pause
+goto system_tools
+
+:sys_battery_report
+cls
+echo ===============================================
+echo      Rapport de Batterie (Sante et Usure)
+echo ===============================================
+echo.
+echo Generation du rapport en cours...
+powercfg /batteryreport /output "%USERPROFILE%\Desktop\battery_report.html" >nul 2>&1
+echo.
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$r='%USERPROFILE%\Desktop\battery_report.html';if(Test-Path $r){$c=Get-Content $r -Raw;$d=0;$f=0;if($c -match '(?s)DESIGN CAPACITY.*?([\d\s,\xA0]+)\s*mWh'){$d=[int]($matches[1] -replace '\D','')};if($c -match '(?s)FULL CHARGE CAPACITY.*?([\d\s,\xA0]+)\s*mWh'){$f=[int]($matches[1] -replace '\D','')};if($d -gt 0){$h=[math]::Round(($f/$d)*100,2);if($h -gt 100){$h=100};$w=[math]::Round(100-$h,2);if($w -lt 0){$w=0};Write-Host ('  - Capacite d''usine : '+$d+' mWh') -f Cyan;Write-Host ('  - Capacite actuelle : '+$f+' mWh') -f Cyan;Write-Host ('  - Sante de la batterie : '+$h+'%%') -f Green;Write-Host ('  - Niveau d''usure : '+$w+'%%') -f Yellow}else{Write-Host 'Impossible de lire les donnees de capacite. (PC Fixe ou pas de batterie ?)' -f Red}}else{Write-Host 'Le fichier de rapport n''a pas pu etre cree.' -f Red}"
+echo.
+echo Le rapport complet (Historique, Cycles) est sur votre Bureau:
+echo battery_report.html
+echo.
 pause
 goto system_tools
 
