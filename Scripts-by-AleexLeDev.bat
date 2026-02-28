@@ -19,40 +19,35 @@ if %errorlevel% neq 0 (
 
 set /a total_tools=0
 set "t[1]=---:VERIFICATIONS SYSTEME"
-set "t[2]=sys_sfc:SFC (Scannow)~Reparation avancee des fichiers systeme Windows"
-set "t[3]=sys_dism_check:DISM Check~Verification securisee de l'integrite de l'image Windows"
-set "t[4]=sys_dism_restore:DISM Restore~Reparation critique de l'image Windows via Windows Update"
-set "t[5]=sys_chkdsk:CHKDSK~Analyse complete des erreurs sur tous les disques"
-set "t[6]=---:NETTOYAGE ET OPTIMISATION"
-set "t[7]=sys_cleanmgr:Nettoyage de disque~Lancement classique de l'utilitaire de nettoyage"
-set "t[8]=sys_temp_cleanup:Nettoyage complet (Temp/Cache)~Suppression massive des fichiers inutiles"
-set "t[9]=sys_registry_cleanup:Nettoyage du Registre~Optimisation rapide et suppression des entrees mortes"
-set "t[10]=---:DISQUE DUR"
-set "t[11]=disk_manager:Formatteur de Disque (DISKPART)~Formater un disque de facon securisee"
-set "t[12]=sys_bitlocker_check:Verificateur BitLocker~Verifiez l'etat de chiffrement de vos partitions"
-set "t[13]=---:OUTILS RESEAU"
-set "t[14]=dns_manager:Gestionnaire DNS~Changer DNS Cloudflare/Google"
-set "t[15]=sys_network_menu:Menu de Depannage Reseau~Outils avances (DNS, ARP, TCP/IP, Autoreset)"
-set "t[16]=sys_diag_network:Diagnostic Reseau~Test de connexion (Local, Box, Internet, DNS)"
-set "t[17]=---:UTILITAIRES ET EXTRAS"
-set "t[18]=winget_manager:Mises a jour d'applications~Mettre a jour vos logiciels via Winget"
-set "t[19]=context_menu:Menu contextuel Windows 11~Classic/Modern"
-set "t[20]=sys_drivers:Extraction des pilotes~Sauvegarde de tous les fichiers pilotes natifs"
-set "t[21]=sys_windows_update:Reparation Windows Update~Outil de diagnostique des echecs de MAJ"
-set "t[22]=sys_report:Generer Rapport Hardware~Diagnostic PC global exporte sur le Bureau"
-set "t[23]=sys_reset_windows_update:Reset complet Win Update~Forcer le redemarrage integral des services de MAJ"
-set "t[24]=um_menu:Gestion utilisateurs locaux~Panneau de gestion local (Admin, Pass, Ajouts)"
-set "t[25]=sys_repair_icons:Reparation Cache Icones~Corrige les icones/miniatures corrompues"
-set "t[26]=sys_win_key:Cle de licence~Recuperer vos differentes cles de produit"
-set "t[27]=sys_god_mode:Dossier God Mode~Creer le raccourci ultime des parametres"
-set "t[28]=---:MOT DE PASSE"
-set "t[29]=sys_browser_passwords:Export mots de passe web~Extracteur de pass (Nirsoft)"
-set "t[30]=sys_wifi_passwords:Extraire mots de passe Wi-Fi~Dechiffrer tous les mots de passe reseaux connus"
-set "t[31]=sys_unlock_notes:Recuperation de Compte bloque~Instructions pour reprendre controle sans mot de passe"
-set "t[32]=---:MATERIEL"
-set "t[33]=touch_screen_manager:Gestionnaire Ecran Tactile~Activation et desactivation du pilote tactile"
-set "t[34]=sys_battery_report:Rapport de Batterie~Usure, Sante et stats en temps reel"
-set "total_tools=34"
+set "t[2]=sys_rescue_menu:Outil Reparation Windows (Rescue)~Menu multi-outils (SFC, DISM, CHKDSK, Reset WinUpdate...)"
+set "t[3]=---:NETTOYAGE ET OPTIMISATION"
+set "t[4]=sys_cleanmgr:Nettoyage de disque~Lancement classique de l'utilitaire de nettoyage"
+set "t[5]=sys_registry_cleanup:Nettoyage du Registre~Optimisation rapide et suppression des entrees mortes"
+set "t[6]=sys_tweaks_menu:Menu Optimisation Windows 11~Bloatwares, Telemetrie, Performances, Cortana"
+set "t[7]=---:DISQUE DUR"
+set "t[8]=disk_manager:Formatteur de Disque (DISKPART)~Formater un disque de facon securisee"
+set "t[9]=sys_bitlocker_check:Verificateur BitLocker~Verifiez l'etat de chiffrement de vos partitions"
+set "t[10]=---:OUTILS RESEAU"
+set "t[11]=dns_manager:Gestionnaire DNS~Changer DNS Cloudflare/Google"
+set "t[12]=sys_network_menu:Menu de Depannage Reseau~Outils avances (DNS, ARP, TCP/IP, Autoreset)"
+set "t[13]=sys_diag_network:Diagnostic Reseau~Test de connexion (Local, Box, Internet, DNS)"
+set "t[14]=---:UTILITAIRES ET EXTRAS"
+set "t[15]=winget_manager:Mises a jour d'applications~Mettre a jour vos logiciels via Winget"
+set "t[16]=context_menu:Menu contextuel Windows 11~Classic/Modern"
+set "t[17]=sys_drivers:Extraction des pilotes~Sauvegarde de tous les fichiers pilotes natifs"
+set "t[18]=sys_report:Diagnostic Systeme Complet~Affiche les specifications et l'etat de sante global"
+set "t[19]=um_menu:Gestion utilisateurs locaux~Panneau de gestion local (Admin, Pass, Ajouts)"
+set "t[20]=sys_repair_icons:Reparation Cache Icones~Corrige les icones/miniatures corrompues"
+set "t[21]=sys_win_key:Cle de licence~Recuperer vos differentes cles de produit"
+set "t[22]=sys_god_mode:Dossier God Mode~Creer le raccourci ultime des parametres"
+set "t[23]=---:MOT DE PASSE"
+set "t[24]=sys_browser_passwords:Export mots de passe web~Extracteur de pass (Nirsoft)"
+set "t[25]=sys_wifi_passwords:Extraire mots de passe Wi-Fi~Dechiffrer tous les mots de passe reseaux connus"
+set "t[26]=sys_unlock_notes:Recuperation de Compte bloque~Instructions pour reprendre controle sans mot de passe"
+set "t[27]=---:MATERIEL"
+set "t[28]=touch_screen_manager:Gestionnaire Ecran Tactile~Activation et desactivation du pilote tactile"
+set "t[29]=sys_battery_report:Rapport de Batterie~Usure, Sante et stats en temps reel"
+set "total_tools=29"
 
 if not exist "favoris.txt" type nul > "favoris.txt"
 
@@ -846,68 +841,86 @@ if exist "%UNIQUE_FILE%" (
 )
 goto :eof
 
-:sys_sfc
+:sys_rescue_menu
+set "opts=Scan RAPIDE du systeme~Le classique SFC /scannow pour reparer l'OS"
+set "opts=%opts%;Verification image base~Examine rapidement l'integration (DISM /CheckHealth)"
+set "opts=%opts%;Reparation profonde~Telecharge les bons fichiers endommages (DISM /RestoreHealth)"
+set "opts=%opts%;Nettoyage massif (Temp/Cache)~Detruit la totalite des fichiers inutiles cachant de l'espace"
+set "opts=%opts%;Planifier un CHKDSK (C:)~Audite et repare les secteurs defectueux au prochain boot"
+set "opts=%opts%;Reset Fix Windows Update~Redemarre brutalement le catalogue WU bloque ou corrompu"
+
+call :DynamicMenu "OUTIL DE REPARATION WINDOWS (Rescue)" "%opts%"
+set "reschoice=%errorlevel%"
+
+if "%reschoice%"=="1" goto res_sfc
+if "%reschoice%"=="2" goto res_dism_check
+if "%reschoice%"=="3" goto res_dism_restore
+if "%reschoice%"=="4" goto res_temp_clean
+if "%reschoice%"=="5" goto res_chkdsk
+if "%reschoice%"=="6" goto res_wu_reset
+if "%reschoice%"=="0" goto system_tools
+goto sys_rescue_menu
+
+:res_sfc
 cls
-echo ==============================================================
-echo     Analyse des fichiers systeme (SFC /scannow)
-echo ==============================================================
-echo.
-echo Cette operation peut prendre plusieurs minutes.
-echo.
-powershell -NoProfile -Command "Write-Host '   Appuyez sur [ENTREE] pour Lancer ou [ECHAP] pour Annuler...' -ForegroundColor Yellow; $Host.UI.RawUI.FlushInputBuffer(); while($true){$k=$Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown'); $v=$k.VirtualKeyCode; if($v -eq 27){exit 1}elseif($v -eq 13){exit 0}}"
-if %errorlevel% neq 0 (
-    echo.
-    echo [X] Operation annulee par l'utilisateur.
-    timeout /t 2 >nul
-    goto system_tools
-)
-echo.
-echo Lancement de l'analyse, veuillez patienter...
+echo [OPERATION] SFC Scannow en cours (Cela peut prendre plusieurs minutes)...
 sfc /scannow
 pause
-goto system_tools
+goto sys_rescue_menu
 
-:sys_dism_check
+:res_dism_check
 cls
-echo ==============================================================
-echo     Verification rapide de l'etat de Windows (DISM /CheckHealth)
-echo ==============================================================
-echo.
-echo Cette operation est tres rapide et va verifier si l'image est corrompue.
-echo.
-powershell -NoProfile -Command "Write-Host '   Appuyez sur [ENTREE] pour Lancer ou [ECHAP] pour Annuler...' -ForegroundColor Yellow; $Host.UI.RawUI.FlushInputBuffer(); while($true){$k=$Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown'); $v=$k.VirtualKeyCode; if($v -eq 27){exit 1}elseif($v -eq 13){exit 0}}"
-if %errorlevel% neq 0 (
-    echo.
-    echo [X] Operation annulee par l'utilisateur.
-    timeout /t 2 >nul
-    goto system_tools
-)
-echo.
-echo Lancement de la verification...
-dism /online /cleanup-image /checkhealth
+echo [OPERATION] DISM /CheckHealth puis ScanHealth...
+DISM /Online /Cleanup-Image /CheckHealth
+DISM /Online /Cleanup-Image /ScanHealth
 pause
-goto system_tools
+goto sys_rescue_menu
 
-:sys_dism_restore
+:res_dism_restore
 cls
-echo ==============================================================
-echo     Restauration de l'etat de Windows (DISM /RestoreHealth)
-echo ==============================================================
-echo.
-echo Cette operation peut prendre du temps (connexion Internet requise).
-echo.
-powershell -NoProfile -Command "Write-Host '   Appuyez sur [ENTREE] pour Lancer ou [ECHAP] pour Annuler...' -ForegroundColor Yellow; $Host.UI.RawUI.FlushInputBuffer(); while($true){$k=$Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown'); $v=$k.VirtualKeyCode; if($v -eq 27){exit 1}elseif($v -eq 13){exit 0}}"
-if %errorlevel% neq 0 (
-    echo.
-    echo [X] Operation annulee par l'utilisateur.
-    timeout /t 2 >nul
-    goto system_tools
-)
-echo.
-echo Lancement de la restauration, veuillez patienter...
-dism /online /cleanup-image /restorehealth
+echo [OPERATION] DISM /RestoreHealth (Restauration systeme)...
+DISM /Online /Cleanup-Image /RestoreHealth
 pause
-goto system_tools
+goto sys_rescue_menu
+
+:res_temp_clean
+cls
+echo [OPERATION] Purge absolue des fichiers inutiles...
+echo Suppression de %TEMP%...
+del /q /f /s "%TEMP%\*" >nul 2>&1
+echo Suppression de C:\Windows\Temp...
+del /q /f /s "C:\Windows\Temp\*" >nul 2>&1
+echo Suppression du cache Windows Update (SoftwareDistribution\Download)...
+net stop wuauserv >nul 2>&1
+del /q /f /s "C:\Windows\SoftwareDistribution\Download\*" >nul 2>&1
+net start wuauserv >nul 2>&1
+echo Nettoyage termine ! De l'espace a ete libere.
+pause
+goto sys_rescue_menu
+
+:res_chkdsk
+cls
+echo [OPERATION] Planification d'une reparation CHKDSK sur C:
+echo Le disque sera scanne au prochain demarrage du PC.
+chkdsk C: /F /R /X
+pause
+goto sys_rescue_menu
+
+:res_wu_reset
+cls
+echo [OPERATION] Reinitialisation totale de l'infrastructure Windows Update...
+net stop bits >nul 2>&1
+net stop wuauserv >nul 2>&1
+net stop appidsvc >nul 2>&1
+net stop cryptsvc >nul 2>&1
+del "%ALLUSERSPROFILE%\Application Data\Microsoft\Network\Downloader\qmgr*.dat" >nul 2>&1
+net start bits >nul 2>&1
+net start wuauserv >nul 2>&1
+net start appidsvc >nul 2>&1
+net start cryptsvc >nul 2>&1
+echo Les services de mises a jour ont ete recrees de force.
+pause
+goto sys_rescue_menu
 
 
 :sys_network_menu
@@ -1154,59 +1167,114 @@ cleanmgr
 pause
 goto system_tools
 
-:sys_chkdsk
+:sys_tweaks_menu
+set "opts=Desactiver Telemetrie~Coupe l'espionnage et l'envoi de donnees a Microsoft"
+set "opts=%opts%;Plan Performances Ultimes~Active le plan d'alimentation secret de Windows"
+set "opts=%opts%;Desactiver Cortana completement~Empeche Cortana de tourner en arriere-plan"
+set "opts=%opts%;Desactiver la recherche Bing~Rend le menu Demarrer beaucoup plus rapide (Local uniquement)"
+set "opts=%opts%;Mode Sombre global~Force l'activation du theme sombre systeme"
+set "opts=%opts%;Desactiver l'Hibernation~Libere plusieurs Giga-Octets d'espace disque (Taille de RAM)"
+set "opts=%opts%;Purger les Bloatwares~Desinstalle Xbox, 3DBuilder, Skype, Zune, etc."
+set "opts=%opts%;Supprimer les pubs de Windows~Retire les applications preinstallees forcees (Jeux)"
+
+call :DynamicMenu "MENU OPTIMISATIONS WINDOWS (Tweaks)" "%opts%"
+set "tw_choice=%errorlevel%"
+
+if "%tw_choice%"=="1" goto tweak_telemetry
+if "%tw_choice%"=="2" goto tweak_ultimate_power
+if "%tw_choice%"=="3" goto tweak_cortana
+if "%tw_choice%"=="4" goto tweak_bing
+if "%tw_choice%"=="5" goto tweak_darkmode
+if "%tw_choice%"=="6" goto tweak_hibernation
+if "%tw_choice%"=="7" goto tweak_bloatware
+if "%tw_choice%"=="8" goto tweak_ads
+if "%tw_choice%"=="0" goto system_tools
+goto sys_tweaks_menu
+
+:tweak_telemetry
 cls
-echo ===============================================
-echo Analyse avancee des erreurs sur tous les lecteurs...
-echo ===============================================
-
-for /f "delims=" %%d in ('powershell -NoProfile -Command ^
-  "Get-PSDrive -PSProvider FileSystem | Where-Object { $_.Free -ne $null } | ForEach-Object { $_.Name + ':' }" 
-') do (
-    echo.
-    echo Analyse du lecteur %%d ...
-    chkdsk %%d /f /r /x
-)
-
-echo.
-echo Tous les lecteurs ont ete analyses.
+echo [TWEAK] Desactivation de la Telemetrie Windows...
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\DataCollection" /v AllowTelemetry /t REG_DWORD /d 0 /f >nul
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\DataCollection" /v "DoNotShowFeedbackNotifications" /t REG_DWORD /d 1 /f >nul
+sc stop DiagTrack >nul 2>&1
+sc config DiagTrack start= disabled >nul 2>&1
+sc stop dmwappushservice >nul 2>&1
+sc config dmwappushservice start= disabled >nul 2>&1
+echo Telemetrie desactivee !
 pause
-goto system_tools
+goto sys_tweaks_menu
 
-:sys_temp_cleanup
+:tweak_ultimate_power
 cls
-
-:confirm_cleanup_loop
-echo Voulez-vous supprimer les fichiers temporaires et le cache systeme ? (O/N)
-set /p confirm_cleanup=Tapez O ou N: 
-
-if /i "%confirm_cleanup%"=="Y" (
-    goto delete_temp_files
-) else if /i "%confirm_cleanup%"=="YES" (
-    goto delete_temp_files
-) else if /i "%confirm_cleanup%"=="O" (
-    goto delete_temp_files
-) else if /i "%confirm_cleanup%"=="N" (
-    echo Operation annulee.
-    pause
-    goto system_tools
-) else if /i "%confirm_cleanup%"=="NO" (
-    echo Operation annulee.
-    pause
-    goto system_tools
-) else (
-    echo Saisie invalide. Veuillez taper O ou N.
-    goto confirm_cleanup_loop
-)
-
-:delete_temp_files
-echo Suppression des fichiers temporaires et du cache systeme...
-del /s /f /q %temp%\*.* 2>nul
-del /s /f /q C:\Windows\Temp\*.* 2>nul
-del /s /f /q "C:\Users\%USERNAME%\AppData\Local\Temp\*.*" 2>nul
-echo Fichiers temporaires supprimes.
+echo [TWEAK] Activation des Performances Ultimes Caches...
+powercfg -duplicatescheme e9a42b02-d5df-448d-aa00-03f14749eb61 >nul
+echo Plan d'alimentation 'Performances Ultimes' active. Allez dans vos reglages d'energie pour le selectionner.
 pause
-goto system_tools
+goto sys_tweaks_menu
+
+:tweak_cortana
+cls
+echo [TWEAK] Desactivation complete de Cortana...
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\Windows Search" /v "AllowCortana" /t REG_DWORD /d 0 /f >nul
+echo Cortana ne demarrera plus en arriere-plan.
+pause
+goto sys_tweaks_menu
+
+:tweak_bing
+cls
+echo [TWEAK] Desactiver la recherche internet (Bing) dans le menu Demarrer...
+reg add "HKCU\SOFTWARE\Policies\Microsoft\Windows\Explorer" /v "DisableSearchBoxSuggestions" /t REG_DWORD /d 1 /f >nul
+reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Search" /v "BingSearchEnabled" /t REG_DWORD /d 0 /f >nul
+reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Search" /v "CortanaConsent" /t REG_DWORD /d 0 /f >nul
+echo La recherche locale est desormais plus rapide et sans pub internet !
+pause
+goto sys_tweaks_menu
+
+:tweak_darkmode
+cls
+echo [TWEAK] Activation du Mode Sombre global de Windows 11...
+reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Themes\Personalize" /v "AppsUseLightTheme" /t REG_DWORD /d 0 /f >nul
+reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Themes\Personalize" /v "SystemUsesLightTheme" /t REG_DWORD /d 0 /f >nul
+echo Mode sombre applique (si pris en charge par votre version/theme).
+pause
+goto sys_tweaks_menu
+
+:tweak_hibernation
+cls
+echo [TWEAK] Desactivation du fichier hiberfil.sys (Gain d'espace libre gigantesque)...
+powercfg.exe /hibernate off >nul
+echo Hibernation coupee ! Vous recuperez la taille de votre RAM en espace de stockage disque (Giga-Octets).
+pause
+goto sys_tweaks_menu
+
+:tweak_bloatware
+cls
+echo [TWEAK] Desinstallation automatique des Bloatwares inutiles...
+echo Cela peut prendre un peu de temps.
+powershell -Command "Get-AppxPackage *3DBuilder* | Remove-AppxPackage" >nul 2>&1
+powershell -Command "Get-AppxPackage *Getstarted* | Remove-AppxPackage" >nul 2>&1
+powershell -Command "Get-AppxPackage *WindowsAlarms* | Remove-AppxPackage" >nul 2>&1
+powershell -Command "Get-AppxPackage *bing* | Remove-AppxPackage" >nul 2>&1
+powershell -Command "Get-AppxPackage *MicrosoftOfficeHub* | Remove-AppxPackage" >nul 2>&1
+powershell -Command "Get-AppxPackage *OneNote* | Remove-AppxPackage" >nul 2>&1
+powershell -Command "Get-AppxPackage *SkypeApp* | Remove-AppxPackage" >nul 2>&1
+powershell -Command "Get-AppxPackage *ZuneMusic* | Remove-AppxPackage" >nul 2>&1
+powershell -Command "Get-AppxPackage *ZuneVideo* | Remove-AppxPackage" >nul 2>&1
+powershell -Command "Get-AppxPackage *SolitaireCollection* | Remove-AppxPackage" >nul 2>&1
+echo Logiciels superflus retires avec succes !
+pause
+goto sys_tweaks_menu
+
+:tweak_ads
+cls
+echo [TWEAK] Suppression des publicites du Menu Demarrer et des notifications Windows...
+reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /v "SystemPaneSuggestionsEnabled" /t REG_DWORD /d 0 /f >nul
+reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /v "SoftLandingEnabled" /t REG_DWORD /d 0 /f >nul
+reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /v "SilentInstalledAppsEnabled" /t REG_DWORD /d 0 /f >nul
+reg add "HKCU\SOFTWARE\Policies\Microsoft\Windows\CloudContent" /v "DisableWindowsConsumerFeatures" /t REG_DWORD /d 1 /f >nul
+echo Termine ! Fini les pubs de jeux preinstalles dans Windows.
+pause
+goto sys_tweaks_menu
 
 :sys_registry_cleanup
 cls
@@ -1343,42 +1411,8 @@ goto system_tools
 
 :sys_report
 cls
-echo Generation du rapport systeme complet...
-echo.
-
-for /f "usebackq delims=" %%d in (`powershell -NoProfile -Command "$env:USERPROFILE + '\Desktop'"`) do (
-    set "DESKTOP=%%d"
-)
-
-for /f "usebackq delims=" %%t in (`powershell -NoProfile -Command "Get-Date -Format yyyy-MM-dd"`) do (
-    set "DATESTR=%%t"
-)
-
-set "REPORT=%DESKTOP%\Rapport_Systeme_Complet_%DATESTR%.txt"
-
-echo ============================================== > "%REPORT%"
-echo          RAPPORT SYSTEME COMPLET                 >> "%REPORT%"
-echo ============================================== >> "%REPORT%"
-echo. >> "%REPORT%"
-
-echo Ecriture des informations systeme...
-echo --- INFORMATIONS SYSTEME --- >> "%REPORT%"
-systeminfo >> "%REPORT%" 2>nul
-echo. >> "%REPORT%"
-
-echo Ecriture des informations reseau...
-echo --- INFORMATIONS RESEAU --- >> "%REPORT%"
-ipconfig /all >> "%REPORT%" 2>nul
-echo. >> "%REPORT%"
-
-echo Ecriture de la liste des pilotes...
-echo --- LISTE DES PILOTES --- >> "%REPORT%"
-driverquery >> "%REPORT%" 2>nul
-echo. >> "%REPORT%"
-
-echo.
-echo Rapport enregistre sur le Bureau : "%REPORT%"
-pause
+echo Lancement du script Powershell de Diagnostic Systeme Complet...
+powershell -ExecutionPolicy Bypass -File "%~dp0Diagnostic_Systeme_Complet.ps1"
 goto system_tools
 
 :sys_repair_icons
@@ -1514,108 +1548,7 @@ echo.
 pause
 goto system_tools
 
-:sys_reset_windows_update
-cls
-echo ======================================================
-echo            Utilitaire Windows Update ^& Reset Services
-echo ======================================================
-echo Cet outil va redemarrer les services Windows Update principaux.
-echo Assurez-vous qu'aucune mise a jour n'est en cours d'installation.
-pause
 
-echo.
-echo [1] Reinitialiser les services (wuauserv, cryptsvc, appidsvc, bits)
-echo [0] Retour au menu
-echo.
-set /p fixchoice=Choisissez une option: 
-
-if "%fixchoice%"=="1" goto reset_wu_services
-if "%fixchoice%"=="2" goto system_tools
-if "%fixchoice%"=="0" goto system_tools
-
-echo Saisie invalide. Reessayez.
-pause
-goto sys_reset_windows_update
-
-:reset_wu_services
-cls
-echo ======================================================
-echo     Redemarrage des services Windows Update
-echo ======================================================
-
-echo Arret du service Windows Update...
-net stop wuauserv >nul
-
-echo Arret du service de Chiffrement...
-net stop cryptsvc >nul
-
-echo Demarrage du service Application Identity...
-net start appidsvc >nul
-
-echo Demarrage du service Windows Update...
-net start wuauserv >nul
-
-echo Demarrage du service BITS...
-net start bits >nul
-
-echo.
-echo [OK] Services lies aux mises a jour redemarres.
-pause
-goto system_tools
-
-::sys_support
-cls
-echo Fonction en cours de developpement...
-pause
-goto system_tools
-
-:sys_windows_update
-cls
-echo ===============================================
-echo      Outil de reparation Windows Update
-echo ===============================================
-echo.
-echo [1/4] Arret des services lies aux mises a jour...
-
-call :stopIfExists wuauserv
-call :stopIfExists bits
-call :stopIfExists cryptsvc
-call :stopIfExists msiserver
-timeout /t 2 >nul
-
-echo [2/4] Renommage des dossiers de cache...
-set "SUFFIX=.bak_%RANDOM%"
-if exist "%windir%\SoftwareDistribution" (
-    ren "%windir%\SoftwareDistribution" "SoftwareDistribution%SUFFIX%" 2>nul
-)
-if exist "%windir%\System32\catroot2" (
-    ren "%windir%\System32\catroot2" "catroot2%SUFFIX%" 2>nul
-)
-
-echo [3/4] Redemarrage des services...
-call :startIfExists wuauserv
-call :startIfExists bits
-call :startIfExists cryptsvc
-call :startIfExists msiserver
-
-echo.
-echo [4/4] Les composants de Windows Update ont ete reinitialises.
-pause
-goto system_tools
-
-:stopIfExists
-sc query "%~1" | findstr /i "STATE" >nul
-if not errorlevel 1 (
-    net stop "%~1" >nul 2>&1
-)
-goto :eof
-
-:startIfExists
-sc query "%~1" | findstr /i "STATE" >nul
-if not errorlevel 1 (
-    net start "%~1" >nul 2>&1
-)
-goto :eof
 
 :sys_bitlocker_check
 cls
