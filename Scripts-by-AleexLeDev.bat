@@ -32,9 +32,9 @@ set "t[11]=disk_manager:Formatteur de Disque (DISKPART)~Formater un disque de fa
 set "t[12]=sys_bitlocker_check:Verificateur BitLocker~Verifiez l'etat de chiffrement de vos partitions"
 set "t[13]=---:OUTILS RESEAU"
 set "t[14]=dns_manager:Gestionnaire DNS~Changer DNS Cloudflare/Google"
-set "t[15]=sys_ipconfig:ipconfig /all~Affichage de la configuration detaillee des cartes reseau"
-set "t[16]=sys_restart_network:Redemarrer les cartes reseau~Desactivation et reactivation des puces Wi-Fi/Ethernet"
-set "t[17]=sys_repair_network:Reparation reseau complete~Renouvellement d'IP complet et vidage du cache DNS"
+set "t[15]=sys_restart_network:Redemarrer les cartes reseau~Desactivation et reactivation des puces Wi-Fi/Ethernet"
+set "t[16]=sys_repair_network:Reparation reseau complete~Renouvellement d'IP complet et vidage du cache DNS"
+set "t[17]=sys_diag_network:Diagnostic Reseau~Test de connexion (Local, Box, Internet, DNS)"
 set "t[18]=---:UTILITAIRES ET EXTRAS"
 set "t[19]=winget_manager:Mises a jour d'applications~Mettre a jour vos logiciels via Winget"
 set "t[20]=context_menu:Menu contextuel Windows 11~Classic/Modern"
@@ -906,12 +906,6 @@ dism /online /cleanup-image /restorehealth
 pause
 goto system_tools
 
-:sys_ipconfig
-cls
-echo Affichage des informations reseau...
-ipconfig /all
-pause
-goto system_tools
 
 :sys_restart_network
 cls
@@ -952,6 +946,111 @@ if /i "%restart_net%"=="O" (
     pause
     goto system_tools
 )
+
+:sys_diag_network
+cls
+set "DIAG_LOG=%USERPROFILE%\Desktop\Diagnostic_Reseau.log"
+echo ================================
+echo    DIAGNOSTIC RESEAU COMPLET
+echo ================================
+echo Analyse de l'etat de votre connexion.
+echo Un journal complet est genere en temps reel sur le Bureau.
+echo.
+
+echo ================================ > "%DIAG_LOG%"
+echo    DIAGNOSTIC RESEAU COMPLET     >> "%DIAG_LOG%"
+echo       %date% %time%              >> "%DIAG_LOG%"
+echo ================================ >> "%DIAG_LOG%"
+echo. >> "%DIAG_LOG%"
+
+echo [1/4] Test de la carte reseau locale (TCP/IP)...
+echo [1/4] Test de la carte reseau locale (TCP/IP)... >> "%DIAG_LOG%"
+ping -n 2 127.0.0.1 | findstr /i "temps= TTL= attente impossible" > "%TEMP%\netdiag_ping.txt"
+powershell -NoProfile -Command "Get-Content '%TEMP%\netdiag_ping.txt' -Encoding OEM | ForEach-Object { $l = '   ' + $_.Trim(); Write-Host $l -ForegroundColor DarkGray; $l | Out-File -FilePath '%DIAG_LOG%' -Append -Encoding UTF8 }"
+findstr /i "temps= TTL=" "%TEMP%\netdiag_ping.txt" >nul
+if !errorlevel!==0 (
+    echo   -^> [OK] La carte reseau fonctionne ^(pilote OK^).
+    echo   -^> [OK] La carte reseau fonctionne ^(pilote OK^). >> "%DIAG_LOG%"
+) else (
+    echo   -^> [ECHEC] Probleme avec la carte reseau locale ^(Pilote ou materiel^).
+    echo   -^> [ECHEC] Probleme avec la carte reseau locale ^(Pilote ou materiel^). >> "%DIAG_LOG%"
+)
+
+echo.
+echo. >> "%DIAG_LOG%"
+echo [2/4] Test de connexion a la Box/Routeur (Passerelle par defaut)...
+echo [2/4] Test de connexion a la Box/Routeur (Passerelle par defaut)... >> "%DIAG_LOG%"
+set "gateway="
+for /f "usebackq tokens=*" %%g in (`powershell -NoProfile -Command "(Get-NetRoute -DestinationPrefix '0.0.0.0/0' -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty NextHop) 2>$null"`) do set "gateway=%%g"
+
+if "!gateway!"=="" (
+    echo [INFO] Aucune IP de passerelle trouvee via l'interface reseau.
+    echo [INFO] Aucune IP de passerelle trouvee via l'interface reseau. >> "%DIAG_LOG%"
+    echo   -^> [ECHEC] Aucune passerelle detectee ^(Cable debranche ou probleme Wi-Fi / DHCP^).
+    echo   -^> [ECHEC] Aucune passerelle detectee ^(Cable debranche ou probleme Wi-Fi / DHCP^). >> "%DIAG_LOG%"
+) else (
+    echo [INFO] Passerelle detectee : !gateway!
+    echo [INFO] Passerelle detectee : !gateway! >> "%DIAG_LOG%"
+    ping -n 2 !gateway! | findstr /i "temps= TTL= attente impossible" > "%TEMP%\netdiag_ping.txt"
+    powershell -NoProfile -Command "Get-Content '%TEMP%\netdiag_ping.txt' -Encoding OEM | ForEach-Object { $l = '   ' + $_.Trim(); Write-Host $l -ForegroundColor DarkGray; $l | Out-File -FilePath '%DIAG_LOG%' -Append -Encoding UTF8 }"
+    findstr /i "temps= TTL=" "%TEMP%\netdiag_ping.txt" >nul
+    if !errorlevel!==0 (
+        echo   -^> [OK] Connecte a la Box/Routeur ^(!gateway!^).
+        echo   -^> [OK] Connecte a la Box/Routeur ^(!gateway!^). >> "%DIAG_LOG%"
+    ) else (
+        echo   -^> [ECHEC] Impossible de joindre la Box/Routeur ^(!gateway!^).
+        echo   -^> [ECHEC] Impossible de joindre la Box/Routeur ^(!gateway!^). >> "%DIAG_LOG%"
+    )
+)
+
+echo.
+echo. >> "%DIAG_LOG%"
+echo [3/4] Test de connexion a Internet (Serveur externe 8.8.8.8)...
+echo [3/4] Test de connexion a Internet (Serveur externe 8.8.8.8)... >> "%DIAG_LOG%"
+ping -n 2 8.8.8.8 | findstr /i "temps= TTL= attente impossible" > "%TEMP%\netdiag_ping.txt"
+powershell -NoProfile -Command "Get-Content '%TEMP%\netdiag_ping.txt' -Encoding OEM | ForEach-Object { $l = '   ' + $_.Trim(); Write-Host $l -ForegroundColor DarkGray; $l | Out-File -FilePath '%DIAG_LOG%' -Append -Encoding UTF8 }"
+findstr /i "temps= TTL=" "%TEMP%\netdiag_ping.txt" >nul
+if !errorlevel!==0 (
+    echo   -^> [OK] Acces Internet externe etabli.
+    echo   -^> [OK] Acces Internet externe etabli. >> "%DIAG_LOG%"
+) else (
+    echo   -^> [ECHEC] Pas d'acces Internet ^(Coupure operateur FAI ou Box non connectee^).
+    echo   -^> [ECHEC] Pas d'acces Internet ^(Coupure operateur FAI ou Box non connectee^). >> "%DIAG_LOG%"
+)
+
+echo.
+echo. >> "%DIAG_LOG%"
+echo [4/4] Test de resolution DNS (Ping domaine)...
+echo [4/4] Test de resolution DNS (Ping domaine)... >> "%DIAG_LOG%"
+ping -n 2 google.com | findstr /i "temps= TTL= attente impossible" > "%TEMP%\netdiag_ping.txt"
+powershell -NoProfile -Command "Get-Content '%TEMP%\netdiag_ping.txt' -Encoding OEM | ForEach-Object { $l = '   ' + $_.Trim(); Write-Host $l -ForegroundColor DarkGray; $l | Out-File -FilePath '%DIAG_LOG%' -Append -Encoding UTF8 }"
+findstr /i "temps= TTL=" "%TEMP%\netdiag_ping.txt" >nul
+if !errorlevel!==0 (
+    echo   -^> [OK] Les serveurs DNS fonctionnent et traduisent les IP.
+    echo   -^> [OK] Les serveurs DNS fonctionnent et traduisent les IP. >> "%DIAG_LOG%"
+) else (
+    echo   -^> [ECHEC] Probleme DNS. Impossible de se rendre sur des sites par leur nom.
+    echo   -^> [ECHEC] Probleme DNS. Impossible de se rendre sur des sites par leur nom. >> "%DIAG_LOG%"
+)
+
+echo.
+echo ================================
+echo Si vous rencontrez un [ECHEC], utilisez les outils de reparation
+echo reseau ou de configuration DNS presents dans ce script.
+echo.
+echo ================================
+echo Appuyez sur une touche pour afficher votre configuration IP (ipconfig /all)
+pause >nul
+cls
+echo Affichage des informations reseau (ipconfig /all)...
+echo ================================ >> "%DIAG_LOG%"
+echo     Rapport IPCONFIG /ALL        >> "%DIAG_LOG%"
+echo ================================ >> "%DIAG_LOG%"
+ipconfig /all > "%TEMP%\netdiag_ipconfig.txt"
+powershell -NoProfile -Command "Get-Content '%TEMP%\netdiag_ipconfig.txt' -Encoding OEM | ForEach-Object { Write-Host $_ -ForegroundColor DarkGray; $_ | Out-File -FilePath '%DIAG_LOG%' -Append -Encoding UTF8 }"
+echo.
+pause
+goto system_tools
 
 :sys_cleanmgr
 cls
