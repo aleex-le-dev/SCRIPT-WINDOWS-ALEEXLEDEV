@@ -32,28 +32,27 @@ set "t[11]=disk_manager:Formatteur de Disque (DISKPART)~Formater un disque de fa
 set "t[12]=sys_bitlocker_check:Verificateur BitLocker~Verifiez l'etat de chiffrement de vos partitions"
 set "t[13]=---:OUTILS RESEAU"
 set "t[14]=dns_manager:Gestionnaire DNS~Changer DNS Cloudflare/Google"
-set "t[15]=sys_restart_network:Redemarrer les cartes reseau~Desactivation et reactivation des puces Wi-Fi/Ethernet"
-set "t[16]=sys_repair_network:Reparation reseau complete~Renouvellement d'IP complet et vidage du cache DNS"
-set "t[17]=sys_diag_network:Diagnostic Reseau~Test de connexion (Local, Box, Internet, DNS)"
-set "t[18]=---:UTILITAIRES ET EXTRAS"
-set "t[19]=winget_manager:Mises a jour d'applications~Mettre a jour vos logiciels via Winget"
-set "t[20]=context_menu:Menu contextuel Windows 11~Classic/Modern"
-set "t[21]=sys_drivers:Extraction des pilotes~Sauvegarde de tous les fichiers pilotes natifs"
-set "t[22]=sys_windows_update:Reparation Windows Update~Outil de diagnostique des echecs de MAJ"
-set "t[23]=sys_report:Generer Rapport Hardware~Diagnostic PC global exporte sur le Bureau"
-set "t[24]=sys_reset_windows_update:Reset complet Win Update~Forcer le redemarrage integral des services de MAJ"
-set "t[25]=um_menu:Gestion utilisateurs locaux~Panneau de gestion local (Admin, Pass, Ajouts)"
-set "t[26]=sys_repair_icons:Reparation Cache Icones~Corrige les icones/miniatures corrompues"
-set "t[27]=sys_win_key:Cle de licence~Recuperer vos differentes cles de produit"
-set "t[28]=sys_god_mode:Dossier God Mode~Creer le raccourci ultime des parametres"
-set "t[29]=---:MOT DE PASSE"
-set "t[30]=sys_browser_passwords:Export mots de passe web~Extracteur de pass (Nirsoft)"
-set "t[31]=sys_wifi_passwords:Extraire mots de passe Wi-Fi~Dechiffrer tous les mots de passe reseaux connus"
-set "t[32]=sys_unlock_notes:Recuperation de Compte bloque~Instructions pour reprendre controle sans mot de passe"
-set "t[33]=---:MATERIEL"
-set "t[34]=touch_screen_manager:Gestionnaire Ecran Tactile~Activation et desactivation du pilote tactile"
-set "t[35]=sys_battery_report:Rapport de Batterie~Usure, Sante et stats en temps reel"
-set "total_tools=35"
+set "t[15]=sys_network_menu:Menu de Depannage Reseau~Outils avances (DNS, ARP, TCP/IP, Autoreset)"
+set "t[16]=sys_diag_network:Diagnostic Reseau~Test de connexion (Local, Box, Internet, DNS)"
+set "t[17]=---:UTILITAIRES ET EXTRAS"
+set "t[18]=winget_manager:Mises a jour d'applications~Mettre a jour vos logiciels via Winget"
+set "t[19]=context_menu:Menu contextuel Windows 11~Classic/Modern"
+set "t[20]=sys_drivers:Extraction des pilotes~Sauvegarde de tous les fichiers pilotes natifs"
+set "t[21]=sys_windows_update:Reparation Windows Update~Outil de diagnostique des echecs de MAJ"
+set "t[22]=sys_report:Generer Rapport Hardware~Diagnostic PC global exporte sur le Bureau"
+set "t[23]=sys_reset_windows_update:Reset complet Win Update~Forcer le redemarrage integral des services de MAJ"
+set "t[24]=um_menu:Gestion utilisateurs locaux~Panneau de gestion local (Admin, Pass, Ajouts)"
+set "t[25]=sys_repair_icons:Reparation Cache Icones~Corrige les icones/miniatures corrompues"
+set "t[26]=sys_win_key:Cle de licence~Recuperer vos differentes cles de produit"
+set "t[27]=sys_god_mode:Dossier God Mode~Creer le raccourci ultime des parametres"
+set "t[28]=---:MOT DE PASSE"
+set "t[29]=sys_browser_passwords:Export mots de passe web~Extracteur de pass (Nirsoft)"
+set "t[30]=sys_wifi_passwords:Extraire mots de passe Wi-Fi~Dechiffrer tous les mots de passe reseaux connus"
+set "t[31]=sys_unlock_notes:Recuperation de Compte bloque~Instructions pour reprendre controle sans mot de passe"
+set "t[32]=---:MATERIEL"
+set "t[33]=touch_screen_manager:Gestionnaire Ecran Tactile~Activation et desactivation du pilote tactile"
+set "t[34]=sys_battery_report:Rapport de Batterie~Usure, Sante et stats en temps reel"
+set "total_tools=34"
 
 if not exist "favoris.txt" type nul > "favoris.txt"
 
@@ -911,45 +910,137 @@ pause
 goto system_tools
 
 
-:sys_restart_network
+:sys_network_menu
+set "opts=Vider le cache DNS~Supprime et reinitialise le cache du resolveur (ipconfig /flushdns)"
+set "opts=%opts%;Afficher le cache DNS~Liste toutes les entrees DNS stockees en memoire locale (ipconfig /displaydns)"
+set "opts=%opts%;Vider le cache ARP~Nettoie instantanement la table de correspondance des IP/MAC (arp -d *)"
+set "opts=%opts%;Afficher la table ARP~Affiche les appareils de votre reseau recemment contactes (arp -a)"
+set "opts=%opts%;Liberer et Renouveler l'IP~Demande une nouvelle adresse IP au serveur DHCP / Box (release / renew)"
+set "opts=%opts%;Reset TCP/IP Stack IPv4/IPv6~Repare la pile reseau vitale de Windows (netsh int ip reset)"
+set "opts=%opts%;Reset des Sockets Windows~Reinitialise le catalogue Winsock corrompu (netsh winsock reset)"
+set "opts=%opts%;Reset Reseau Automatique~Enchaine silencieusement le Flush DNS, Winsock, et TCP/IP"
+set "opts=%opts%;Redemarrer les cartes reseau~Vos pilotes Ethernet et Wi-Fi sont mis hors puis sous tension"
+set "opts=%opts%;Executer le Script d'Urgence~Sequence immediate de 7 commandes de depannage massif (Fast Reset)"
+
+call :DynamicMenu "MENU DE DEPANNAGE RESEAU" "%opts%"
+set "netchoice=%errorlevel%"
+
+if "%netchoice%"=="1" goto net_flush_dns
+if "%netchoice%"=="2" goto net_display_dns
+if "%netchoice%"=="3" goto net_clear_arp
+if "%netchoice%"=="4" goto net_display_arp
+if "%netchoice%"=="5" goto net_renew_ip
+if "%netchoice%"=="6" goto net_reset_tcpip
+if "%netchoice%"=="7" goto net_reset_winsock
+if "%netchoice%"=="8" goto net_reset_all
+if "%netchoice%"=="9" goto net_restart_adapters
+if "%netchoice%"=="10" goto net_fast_reset
+if "%netchoice%"=="0" goto system_tools
+goto sys_network_menu
+
+:net_flush_dns
 cls
-echo Redemarrage des cartes reseau...
+echo Vidage du cache DNS...
+ipconfig /flushdns
+pause
+goto sys_network_menu
+
+:net_display_dns
+cls
+echo Affichage du cache DNS...
+ipconfig /displaydns | more
+pause
+goto sys_network_menu
+
+:net_clear_arp
+cls
+echo Nettoyage du cache ARP...
+arp -d *
+echo Cache ARP vide !
+pause
+goto sys_network_menu
+
+:net_display_arp
+cls
+echo Affichage de la table ARP...
+arp -a
+pause
+goto sys_network_menu
+
+:net_renew_ip
+cls
+echo Liberation de l'IP...
+ipconfig /release
+echo Renouvellement de l'IP...
+ipconfig /renew
+pause
+goto sys_network_menu
+
+:net_reset_tcpip
+cls
+echo Reset de la pile TCP/IP...
+netsh int ip reset >nul
+netsh int ipv6 reset >nul
+echo Pile TCP/IP reinitialisee. (Un redemarrage peut etre necessaire)
+pause
+goto sys_network_menu
+
+:net_reset_winsock
+cls
+echo Reset du catalogue Winsock...
+netsh winsock reset >nul
+echo Winsock reinitialise. (Un redemarrage est necessaire)
+pause
+goto sys_network_menu
+
+:net_reset_all
+cls
+echo ==== LANCEMENT DU RESET COMPLET ====
+ipconfig /flushdns >nul
+netsh winsock reset >nul
+netsh int ip reset >nul
+netsh int ipv6 reset >nul
+arp -d * >nul 2>&1
+echo.
+echo Reset complet effectue ! Veuillez redemarrer votre ordinateur.
+pause
+goto sys_network_menu
+
+:net_restart_adapters
+cls
+echo Redemarrage des interfaces reseau...
 netsh interface set interface "Wi-Fi" admin=disable 2>nul
 netsh interface set interface "Wi-Fi" admin=enable 2>nul
 netsh interface set interface "Ethernet" admin=disable 2>nul
 netsh interface set interface "Ethernet" admin=enable 2>nul
-echo Cartes reseau redemarrees.
+echo Interfaces redemarrees silencieusement.
 pause
-goto system_tools
+goto sys_network_menu
 
-:sys_repair_network
+:net_fast_reset
 cls
-echo ================================
-echo     Reparation reseau automatique
-echo ================================
+echo =========================================
+echo       Script Rapide de Reparation
+echo =========================================
 echo.
-echo Etape 1 : Renouvellement de l'adresse IP...
+echo [*] Liberation de l'adresse IP actuelle (release)...
 ipconfig /release >nul
+echo [*] Vidage du cache ARP...
+arp -d * >nul 2>&1
+echo [*] Vidage du cache NetBIOS (R)...
+nbtstat -R >nul
+echo [*] Renouvellement du bail DHCP (renew)...
 ipconfig /renew >nul
-
-echo Etape 2 : Actualisation des parametres DNS...
+echo [*] Vidage du cache DNS...
 ipconfig /flushdns >nul
-
-echo Etape 3 : Reinitialisation des composants reseau...
-netsh winsock reset >nul
-netsh int ip reset >nul
-
+echo [*] Re-enregistrement avec WINS...
+nbtstat -RR >nul
+echo [*] Re-enregistrement avec DNS...
+ipconfig /registerdns >nul
 echo.
-echo Les parametres reseau ont ete actualises.
-echo Un redemarrage est recommande pour un effet complet.
-echo.
-set /p restart_net=Souhaitez-vous redemarrer maintenant ? (O/N): 
-if /i "%restart_net%"=="O" (
-    shutdown /r /t 5
-) else (
-    pause
-    goto system_tools
-)
+echo Reinitialisation reseau terminee avec succes !
+pause
+goto sys_network_menu
 
 :sys_diag_network
 cls
