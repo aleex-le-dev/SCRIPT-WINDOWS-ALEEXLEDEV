@@ -803,7 +803,8 @@ if "%custom_filename%"=="" (
     echo Le nom de fichier ne peut pas etre vide.
     goto ask_filename
 )
-set "OUTPUT=%~dp0%custom_filename%.txt"
+set "OUTPUT_NAME=%custom_filename%.txt"
+set "OUTPUT=%~dp0%OUTPUT_NAME%"
 
 echo.
 echo Lancement de WebBrowserPassView...
@@ -812,7 +813,7 @@ start "" "%WBPV%"
 timeout /t 5 /nobreak >nul
 
 echo Traitement en cours...
-powershell -Command "Set-Clipboard -Value '%OUTPUT%'; $wsh = New-Object -ComObject WScript.Shell; $wsh.AppActivate('WebBrowserPassView'); Start-Sleep -Milliseconds 2000; $wsh.SendKeys('^a'); Start-Sleep -Milliseconds 2000; $wsh.SendKeys('^s'); Start-Sleep -Milliseconds 2000; $wsh.SendKeys('^v'); Start-Sleep -Milliseconds 1000; $wsh.SendKeys('{ENTER}')" >nul 2>&1
+powershell -Command "Set-Clipboard -Value '%OUTPUT_NAME%'; $wsh = New-Object -ComObject WScript.Shell; $wsh.AppActivate('WebBrowserPassView'); Start-Sleep -Milliseconds 2000; $wsh.SendKeys('^a'); Start-Sleep -Milliseconds 2000; $wsh.SendKeys('^s'); Start-Sleep -Milliseconds 2000; $wsh.SendKeys('^v'); Start-Sleep -Milliseconds 1000; $wsh.SendKeys('{ENTER}')" >nul 2>&1
 
 timeout /t 3 /nobreak >nul
 
