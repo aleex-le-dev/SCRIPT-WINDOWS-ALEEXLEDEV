@@ -795,8 +795,15 @@ if not exist "%WBPV%" (
 )
 
 rem Generer un nom de fichier unique
-call :GET_UNIQUE_FILENAME
-set "OUTPUT=%UNIQUE_FILE%"
+:ask_filename
+echo.
+set "custom_filename="
+set /p custom_filename="Entrez le nom du fichier d'export (sans extension, ex: mes_mots_de_passe) : "
+if "%custom_filename%"=="" (
+    echo Le nom de fichier ne peut pas etre vide.
+    goto ask_filename
+)
+set "OUTPUT=%~dp0%custom_filename%.txt"
 
 echo.
 echo Lancement de WebBrowserPassView...
@@ -842,20 +849,6 @@ echo.
 echo Fermeture automatique dans 2 secondes...
 timeout /t 2 /nobreak >nul
 goto system_tools
-
-:GET_UNIQUE_FILENAME
-set "BASE=%~dp0passwords_export"
-set "EXT=.txt"
-set "COUNTER=0"
-set "UNIQUE_FILE=%BASE%%EXT%"
-
-:CHECK_FILE
-if exist "%UNIQUE_FILE%" (
-  set /a COUNTER+=1
-  set "UNIQUE_FILE=%BASE%_%COUNTER%%EXT%"
-  goto CHECK_FILE
-)
-goto :eof
 
 :sys_rescue_menu
 set "opts=Scan RAPIDE du systeme~Le classique SFC /scannow pour reparer l'OS"
