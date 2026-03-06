@@ -51,17 +51,19 @@ set "t[25]=sys_unlock_notes:Recuperation de Compte bloque~Instructions pour repr
 set "t[26]=---:MATERIEL"
 set "t[27]=touch_screen_manager:Gestionnaire Ecran Tactile~Activation et desactivation du pilote tactile"
 set "t[28]=sys_battery_report:Rapport de Batterie~Usure, Sante et stats en temps reel"
+set "t[29]=---:INSTALLATION D'APPLICATIONS"
+set "t[30]=app_installer:Installateur d'applications~Installer des logiciels par categorie via Winget"
 :: Sous-items pour gestion des favoris individuels
-set "t[29]=dump_credman:Gestionnaire d'identifiants (Windows)~Extrait le Credential Manager Windows (WCMDump):HIDDEN"
-set "t[30]=dump_wifi:Extraction reseaux Wi-Fi (Powershell)~Script WWP puissant listant psw et noms:HIDDEN"
-set "t[31]=sys_nirsoft_pw:WebBrowserPassView (Classique Nirsoft)~Ancien utilitaire graphique pour les mots de passe:HIDDEN"
-set "t[32]=res_sfc:Scan RAPIDE du systeme~SFC /scannow (Verification systeme rapide):HIDDEN"
-set "t[33]=res_dism_check:Verification image base~DISM /CheckHealth et /ScanHealth (Analyse image):HIDDEN"
-set "t[34]=res_dism_restore:Reparation profonde~DISM /RestoreHealth (Reparation fichiers systeme):HIDDEN"
-set "t[35]=res_temp_clean:Nettoyage massif (Temp/Cache)~Purge des fichiers temporaires et cache Windows Update:HIDDEN"
-set "t[36]=res_chkdsk:Planifier un CHKDSK (C:)~Verification disque au prochain demarrage (CHKDSK /F /R):HIDDEN"
-set "t[37]=res_wu_reset:Reset Fix Windows Update~Reinitialisation forcee des composants Windows Update:HIDDEN"
-set "total_tools=37"
+set "t[31]=dump_credman:Gestionnaire d'identifiants (Windows)~Extrait le Credential Manager Windows (WCMDump):HIDDEN"
+set "t[32]=dump_wifi:Extraction reseaux Wi-Fi (Powershell)~Script WWP puissant listant psw et noms:HIDDEN"
+set "t[33]=sys_nirsoft_pw:WebBrowserPassView (Classique Nirsoft)~Ancien utilitaire graphique pour les mots de passe:HIDDEN"
+set "t[34]=res_sfc:Scan RAPIDE du systeme~SFC /scannow (Verification systeme rapide):HIDDEN"
+set "t[35]=res_dism_check:Verification image base~DISM /CheckHealth et /ScanHealth (Analyse image):HIDDEN"
+set "t[36]=res_dism_restore:Reparation profonde~DISM /RestoreHealth (Reparation fichiers systeme):HIDDEN"
+set "t[37]=res_temp_clean:Nettoyage massif (Temp/Cache)~Purge des fichiers temporaires et cache Windows Update:HIDDEN"
+set "t[38]=res_chkdsk:Planifier un CHKDSK (C:)~Verification disque au prochain demarrage (CHKDSK /F /R):HIDDEN"
+set "t[39]=res_wu_reset:Reset Fix Windows Update~Reinitialisation forcee des composants Windows Update:HIDDEN"
+set "total_tools=39"
 
 if not exist "%SCRIPT_DIR%\favoris.txt" type nul > "%SCRIPT_DIR%\favoris.txt"
 
@@ -678,6 +680,89 @@ if !sys_choice! GEQ 200 (
 set "target=!sys_target[%sys_choice%]!"
 if defined target goto !target!
 goto system_tools
+
+REM ===================================================================
+REM              INSTALLATEUR D'APPLICATIONS (WINGET)
+REM ===================================================================
+:app_installer
+cls
+set "opts=[--- NAVIGATEURS ---];Google Chrome~Navigateur web Google;Mozilla Firefox~Navigateur libre et rapide;Brave~Navigateur axe confidentialite"
+set "opts=%opts%;[--- MULTIMEDIA ---];VLC Media Player~Lecteur multimedia universel;Spotify~Musique en streaming;Audacity~Editeur audio gratuit"
+set "opts=%opts%;[--- PDF ET DOCUMENTS ---];Sumatra PDF~Lecteur PDF ultra-leger;LibreOffice~Suite bureautique gratuite (Writer, Calc...)"
+set "opts=%opts%;[--- ARCHIVAGE ---];WinRAR~Gestionnaire d'archives (RAR/ZIP);7-Zip~Archiveur libre et puissant"
+set "opts=%opts%;[--- UTILITAIRES ---];Notepad++~Editeur de texte avance;Everything~Recherche instantanee de fichiers;CrystalDiskInfo~Sante et temperature des disques;CPU-Z~Informations CPU/RAM/carte mere"
+set "opts=%opts%;[--- DEVELOPPEMENT ---];Git~Gestionnaire de versions;Visual Studio Code~Editeur de code Microsoft;Node.js (LTS)~Runtime JavaScript;Python 3~Langage de programmation"
+
+call :DynamicMenu "INSTALLATEUR D'APPLICATIONS - Choisissez une application" "!opts!"
+set "app_choice=%errorlevel%"
+if "!app_choice!"=="0" goto system_tools
+
+REM Mapping : index selectionnable -> ID Winget
+set "wg[1]=Google.Chrome"
+set "wg[2]=Mozilla.Firefox"
+set "wg[3]=Brave.Brave"
+set "wg[4]=VideoLAN.VLC"
+set "wg[5]=Spotify.Spotify"
+set "wg[6]=Audacity.Audacity"
+set "wg[7]=SumatraPDF.SumatraPDF"
+set "wg[8]=TheDocumentFoundation.LibreOffice"
+set "wg[9]=RARLab.WinRAR"
+set "wg[10]=7zip.7zip"
+set "wg[11]=Notepad++.Notepad++"
+set "wg[12]=voidtools.Everything"
+set "wg[13]=CrystalDewWorld.CrystalDiskInfo"
+set "wg[14]=CPUID.CPU-Z"
+set "wg[15]=Git.Git"
+set "wg[16]=Microsoft.VisualStudioCode"
+set "wg[17]=OpenJS.NodeJS.LTS"
+set "wg[18]=Python.Python.3"
+
+set "wg_name[1]=Google Chrome"
+set "wg_name[2]=Mozilla Firefox"
+set "wg_name[3]=Brave"
+set "wg_name[4]=VLC Media Player"
+set "wg_name[5]=Spotify"
+set "wg_name[6]=Audacity"
+set "wg_name[7]=Sumatra PDF"
+set "wg_name[8]=LibreOffice"
+set "wg_name[9]=WinRAR"
+set "wg_name[10]=7-Zip"
+set "wg_name[11]=Notepad++"
+set "wg_name[12]=Everything"
+set "wg_name[13]=CrystalDiskInfo"
+set "wg_name[14]=CPU-Z"
+set "wg_name[15]=Git"
+set "wg_name[16]=Visual Studio Code"
+set "wg_name[17]=Node.js LTS"
+set "wg_name[18]=Python 3"
+
+for %%X in (!app_choice!) do (
+    set "wg_id=!wg[%%X]!"
+    set "wg_label=!wg_name[%%X]!"
+)
+
+if not defined wg_id goto app_installer
+
+cls
+echo ================================================
+echo   INSTALLATION : !wg_label!
+echo ================================================
+echo.
+echo [INFO] Winget ID : !wg_id!
+echo [INFO] Lancement de l'installation...
+echo.
+winget install --id "!wg_id!" --accept-package-agreements --accept-source-agreements --silent
+if !errorlevel!==0 (
+    echo.
+    echo [OK] !wg_label! installe avec succes !
+) else (
+    echo.
+    echo [!] Echec ou application deja installee.
+    echo     Verifiez votre connexion internet ou relancez sans --silent.
+)
+echo.
+pause
+goto app_installer
 
 :: ===============================================
 :: Menu d'extraction de mots de passe
