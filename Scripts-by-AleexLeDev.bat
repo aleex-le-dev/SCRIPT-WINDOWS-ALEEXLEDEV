@@ -60,7 +60,7 @@ set "opts=[--- MES FAVORIS ---]"
 set /a fav_idx=0
 for /f "usebackq tokens=*" %%F in ("favoris.txt") do (
   for /l %%I in (1,1,%total_tools%) do (
-    for /f "tokens=1,* delims=:" %%A in ("!t[%%I]!") do (
+    for /f "tokens=1,2 delims=:" %%A in ("!t[%%I]!") do (
       if "%%A"=="%%F" (
         set "opts=!opts!;%%B"
         set /a fav_idx+=1
