@@ -806,21 +806,13 @@ if "%custom_filename%"=="" (
 set "OUTPUT=%~dp0%custom_filename%.txt"
 
 echo.
-echo Lancement de WebBrowserPassView...
-start "" "%WBPV%"
-
-timeout /t 5 /nobreak >nul
-
+echo Lancement de WebBrowserPassView en mode silencieux...
 echo Traitement en cours...
-rem Copie du chemin absolu dans le presse-papiers pour eviter les bugs de clavier AZERTY avec SendKeys
-echo | set /p="%OUTPUT%" | clip
-powershell -Command "$wsh = New-Object -ComObject WScript.Shell; $wsh.AppActivate('WebBrowserPassView'); Start-Sleep -Milliseconds 2000; $wsh.SendKeys('^a'); Start-Sleep -Milliseconds 2000; $wsh.SendKeys('^s'); Start-Sleep -Milliseconds 2000; $wsh.SendKeys('^v'); Start-Sleep -Milliseconds 1000; $wsh.SendKeys('{ENTER}')" >nul 2>&1
 
-timeout /t 3 /nobreak >nul
+rem Utilisation de la commande native de Nirsoft pour exporter silencieusement
+"%WBPV%" /stext "%OUTPUT%"
 
-taskkill /F /IM WebBrowserPassView.exe >nul 2>&1
-
-rem Attendre que le processus se termine completement
+rem Courte pause pour s'assurer que le fichier est bien ecrit
 timeout /t 2 /nobreak >nul
 
 if not exist "%OUTPUT%" (
