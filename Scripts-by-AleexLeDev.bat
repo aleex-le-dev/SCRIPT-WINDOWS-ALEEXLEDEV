@@ -41,14 +41,16 @@ set "t[20]=sys_repair_icons:Reparation Cache Icones~Corrige les icones/miniature
 set "t[21]=sys_win_key:Cle de licence~Recuperer vos differentes cles de produit"
 set "t[22]=sys_god_mode:Dossier God Mode~Creer le raccourci ultime des parametres"
 set "t[23]=---:MOT DE PASSE"
-set "t[24]=dump_credman:Gestionnaire d'identifiants (Windows)~Extrait le Credential Manager Windows (WCMDump)"
-set "t[25]=dump_wifi:Extraction reseaux Wi-Fi (Powershell)~Script WWP puissant listant psw et noms"
-set "t[26]=sys_nirsoft_pw:WebBrowserPassView (Classique Nirsoft)~Ancien utilitaire graphique pour les mots de passe"
-set "t[27]=sys_unlock_notes:Recuperation de Compte bloque~Instructions pour reprendre controle sans mot de passe"
-set "t[28]=---:MATERIEL"
-set "t[29]=touch_screen_manager:Gestionnaire Ecran Tactile~Activation et desactivation du pilote tactile"
-set "t[30]=sys_battery_report:Rapport de Batterie~Usure, Sante et stats en temps reel"
-set "total_tools=30"
+set "t[24]=sys_passwords_menu:Extracteurs de mots de passe~Outils Powershell (Credentials, Wi-Fi, Nirsoft)"
+set "t[25]=sys_unlock_notes:Recuperation de Compte bloque~Instructions pour reprendre controle sans mot de passe"
+set "t[26]=---:MATERIEL
+set "t[27]=touch_screen_manager:Gestionnaire Ecran Tactile~Activation et desactivation du pilote tactile"
+set "t[28]=sys_battery_report:Rapport de Batterie~Usure, Sante et stats en temps reel"
+:: Sous-items pour gestion des favoris individuels
+set "t[29]=dump_credman:Gestionnaire d'identifiants (Windows)~Extrait le Credential Manager Windows (WCMDump):HIDDEN"
+set "t[30]=dump_wifi:Extraction reseaux Wi-Fi (Powershell)~Script WWP puissant listant psw et noms:HIDDEN"
+set "t[31]=sys_nirsoft_pw:WebBrowserPassView (Classique Nirsoft)~Ancien utilitaire graphique pour les mots de passe:HIDDEN"
+set "total_tools=31"
 
 if not exist "favoris.txt" type nul > "favoris.txt"
 
@@ -632,16 +634,17 @@ cls
 set "opts="
 set /a s_idx=0
 for /l %%I in (1,1,%total_tools%) do (
-    for /f "tokens=1,* delims=:" %%A in ("!t[%%I]!") do (
+    for /f "tokens=1,2,3 delims=:" %%A in ("!t[%%I]!") do (
         if "%%A"=="---" (
             set "opts=!opts!;[--- %%B ---]"
-        ) else (
+        ) else if not "%%C"=="HIDDEN" (
             set "is_fav=0"
             for /f "usebackq tokens=*" %%F in ("favoris.txt") do (if "%%F"=="%%A" set "is_fav=1")
+            set "m_name=%%B"
             if "!is_fav!"=="1" (
-                set "opts=!opts!;(F) %%B"
+                set "opts=!opts!;(F) !m_name!"
             ) else (
-                set "opts=!opts!;%%B"
+                set "opts=!opts!;!m_name!"
             )
             set /a s_idx+=1
             set "sys_target[!s_idx!]=%%A"
@@ -670,6 +673,47 @@ goto system_tools
 :: 19 - Export mots de passe navigateurs (Nirsoft WebBrowserPassView)
 :: ===============================================
 
+
+:: ===============================================
+:: 19 - Menu d'extraction de mots de passe
+:: ===============================================
+:sys_passwords_menu
+set "opts=Gestionnaire d'identifiants (Windows)~Extrait le Credential Manager Windows (WCMDump)"
+set "opts=%opts%;Extraction reseaux Wi-Fi (Powershell)~Script WWP puissant listant psw et noms"
+set "opts=%opts%;WebBrowserPassView (Classique Nirsoft)~Ancien utilitaire graphique pour les mots de passe"
+
+:: Mapping des targets pour gestion des favoris en sous-menu
+set "pw_t[1]=dump_credman"
+set "pw_t[2]=dump_wifi"
+set "pw_t[3]=sys_nirsoft_pw"
+
+:: Marquer les favoris existants dans le sous-menu
+set "pw_opts="
+set /a pwi=0
+for %%O in ("Gestionnaire d'identifiants (Windows)~Extrait le Credential Manager Windows (WCMDump)" "Extraction reseaux Wi-Fi (Powershell)~Script WWP puissant listant psw et noms" "WebBrowserPassView (Classique Nirsoft)~Ancien utilitaire graphique pour les mots de passe") do (
+    set /a pwi+=1
+    set "is_f=0"
+    set "curr_t=!pw_t[%pwi%]!"
+    for /f "usebackq tokens=*" %%F in ("favoris.txt") do (if "%%F"=="!curr_t!" set "is_f=1")
+    if "!is_f!"=="1" (set "pw_opts=!pw_opts!;(F) %%~O") else (set "pw_opts=!pw_opts!;%%~O")
+)
+set "pw_opts=!pw_opts:~1!"
+
+call :DynamicMenu "PIRATAGE / EXTRACTION DE MOTS DE PASSE" "%pw_opts%"
+set "pw_choice=%errorlevel%"
+
+if "%pw_choice%"=="0" goto system_tools
+
+if %pw_choice% GEQ 200 (
+    set /a t_idx=%pw_choice%-200
+    call :ToggleFav "!pw_t[%t_idx%]!"
+    goto sys_passwords_menu
+)
+
+if "%pw_choice%"=="1" goto dump_credman
+if "%pw_choice%"=="2" goto dump_wifi
+if "%pw_choice%"=="3" goto sys_nirsoft_pw
+goto sys_passwords_menu
 
 :dump_credman
 cls
