@@ -685,6 +685,8 @@ REM ===================================================================
 REM              INSTALLATEUR D'APPLICATIONS (WINGET)
 REM ===================================================================
 :app_installer
+set "wg_id="
+set "wg_label="
 cls
 set "opts=[--- NAVIGATEURS ---];Google Chrome~Navigateur web Google"
 set "opts=%opts%;[--- MULTIMEDIA ---];VLC Media Player~Lecteur multimedia universel"
@@ -719,19 +721,19 @@ echo   INSTALLATION : !wg_label!
 echo ================================================
 echo.
 echo [INFO] Winget ID : !wg_id!
-echo [INFO] Lancement de l'installation...
+echo [INFO] Lancement de l'installation en cours...
 echo.
-winget install --id "!wg_id!" --accept-package-agreements --accept-source-agreements --silent
-if !errorlevel!==0 (
-    echo.
-    echo [OK] !wg_label! installe avec succes !
+winget install --id "!wg_id!" --accept-package-agreements --accept-source-agreements
+set "inst_err=!errorlevel!"
+echo.
+if !inst_err!==0 (
+    echo  [OK] !wg_label! installe avec succes !
 ) else (
-    echo.
-    echo [!] Echec ou application deja installee.
-    echo     Verifiez votre connexion internet ou relancez sans --silent.
+    echo  [!] Echec ou application deja a jour/installee.
 )
 echo.
-pause
+echo  Retour au menu dans 3 secondes...
+timeout /t 3 /nobreak >nul
 goto app_installer
 
 :: ===============================================
