@@ -697,7 +697,7 @@ call :DynamicMenu "INSTALLATEUR D'APPLICATIONS - Choisissez une application" "!o
 set "app_choice=%errorlevel%"
 if "!app_choice!"=="0" goto system_tools
 
-REM Mapping : index selectionnable -> ID Winget
+REM Mapping : index selectionnable -> ID Winget + Nom registre
 set "wg[1]=Google.Chrome"
 set "wg[2]=VideoLAN.VLC"
 set "wg[3]=SumatraPDF.SumatraPDF"
@@ -708,9 +708,16 @@ set "wg_name[2]=VLC Media Player"
 set "wg_name[3]=Sumatra PDF"
 set "wg_name[4]=WinRAR"
 
+REM Nom exact tel qu'il apparait dans Ajout/Suppression de programmes (registre)
+set "wg_reg[1]=Google Chrome"
+set "wg_reg[2]=VLC media player"
+set "wg_reg[3]=SumatraPDF"
+set "wg_reg[4]=WinRAR"
+
 for %%X in (!app_choice!) do (
     set "wg_id=!wg[%%X]!"
     set "wg_label=!wg_name[%%X]!"
+    set "wg_reg_name=!wg_reg[%%X]!"
 )
 
 if not defined wg_id goto app_installer
@@ -721,7 +728,9 @@ echo   VERIFICATION : !wg_label!
 echo ================================================
 echo.
 echo  [1/2] Verification de l'installation sur ce systeme...
-winget list --exact --id "!wg_id!" --accept-source-agreements >nul 2>&1
+
+REM Verification via le registre Windows (detecte TOUTES les installations, pas seulement winget)
+powershell -NoProfile -Command "$n='!wg_reg_name!'; $paths=@('HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*','HKLM:\Software\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*','HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*'); $found=$false; foreach($p in $paths){ if(Get-ItemProperty $p -EA SilentlyContinue | Where-Object {$_.DisplayName -like ('*'+$n+'*')}){$found=$true} }; exit $(if($found){0}else{1})" >nul 2>&1
 
 if !errorlevel! NEQ 0 (
     echo  [ ] !wg_label! n'est pas installe.
@@ -749,7 +758,7 @@ if !errorlevel! NEQ 0 (
     if !upg_err!==0 (
         echo  [OK] !wg_label! est a jour.
     ) else (
-        echo  [INFO] !wg_label! - Aucune mise a jour disponible.
+        echo  [INFO] Aucune mise a jour disponible pour !wg_label!.
     )
 )
 echo.
