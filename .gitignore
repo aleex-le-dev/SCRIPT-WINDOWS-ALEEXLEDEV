@@ -5,7 +5,15 @@
 *.exe
 *.cfg
 
-
 # Ignore Chromium/Edge profile state files anywhere in the repo
 **/Local State
 **/login data
+
+# Fichiers temporaires / dev
+nul
+*.py
+*.zip
+debug_*.txt
+diag_*.txt
+v*_info.txt
+test_*.bat
