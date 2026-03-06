@@ -815,10 +815,10 @@ cd /d "%~dp0"
 
 start "" "%WBPV%"
 
-timeout /t 5 /nobreak >nul
+timeout /t 2 /nobreak >nul
 
 echo Traitement en cours...
-powershell -Command "Set-Clipboard -Value '%OUTPUT_NAME%'; $wsh = New-Object -ComObject WScript.Shell; $wsh.AppActivate('WebBrowserPassView'); Start-Sleep -Milliseconds 2000; $wsh.SendKeys('^a'); Start-Sleep -Milliseconds 2000; $wsh.SendKeys('^s'); Start-Sleep -Milliseconds 2000; $wsh.SendKeys('^v'); Start-Sleep -Milliseconds 1000; $wsh.SendKeys('{ENTER}')" >nul 2>&1
+powershell -Command "Set-Clipboard -Value '%OUTPUT%'; $wsh = New-Object -ComObject WScript.Shell; $wsh.AppActivate('WebBrowserPassView'); Start-Sleep -Milliseconds 500; $wsh.SendKeys('^a'); Start-Sleep -Milliseconds 200; $wsh.SendKeys('^s'); Start-Sleep -Milliseconds 400; $wsh.SendKeys('^v'); Start-Sleep -Milliseconds 200; $wsh.SendKeys('{ENTER}')" >nul 2>&1
 
 timeout /t 3 /nobreak >nul
 
