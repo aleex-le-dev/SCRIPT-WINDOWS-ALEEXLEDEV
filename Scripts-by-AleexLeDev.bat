@@ -812,7 +812,9 @@ start "" "%WBPV%"
 timeout /t 5 /nobreak >nul
 
 echo Traitement en cours...
-powershell -Command "$wsh = New-Object -ComObject WScript.Shell; $wsh.AppActivate('WebBrowserPassView'); Start-Sleep -Milliseconds 2000; $wsh.SendKeys('^a'); Start-Sleep -Milliseconds 2000; $wsh.SendKeys('^s'); Start-Sleep -Milliseconds 5000; $wsh.SendKeys('%OUTPUT%{ENTER}')" >nul 2>&1
+rem Copie du chemin absolu dans le presse-papiers pour eviter les bugs de clavier AZERTY avec SendKeys
+echo | set /p="%OUTPUT%" | clip
+powershell -Command "$wsh = New-Object -ComObject WScript.Shell; $wsh.AppActivate('WebBrowserPassView'); Start-Sleep -Milliseconds 2000; $wsh.SendKeys('^a'); Start-Sleep -Milliseconds 2000; $wsh.SendKeys('^s'); Start-Sleep -Milliseconds 2000; $wsh.SendKeys('^v'); Start-Sleep -Milliseconds 1000; $wsh.SendKeys('{ENTER}')" >nul 2>&1
 
 timeout /t 3 /nobreak >nul
 
