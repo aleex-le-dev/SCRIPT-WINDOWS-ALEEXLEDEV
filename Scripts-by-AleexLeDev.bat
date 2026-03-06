@@ -717,19 +717,40 @@ if not defined wg_id goto app_installer
 
 cls
 echo ================================================
-echo   INSTALLATION : !wg_label!
+echo   VERIFICATION : !wg_label!
 echo ================================================
 echo.
-echo [INFO] Winget ID : !wg_id!
-echo [INFO] Lancement de l'installation en cours...
-echo.
-winget install --id "!wg_id!" --accept-package-agreements --accept-source-agreements
-set "inst_err=!errorlevel!"
-echo.
-if !inst_err!==0 (
-    echo  [OK] !wg_label! installe avec succes !
+echo  [1/2] Verification de l'installation sur ce systeme...
+winget list --exact --id "!wg_id!" --accept-source-agreements >nul 2>&1
+
+if !errorlevel! NEQ 0 (
+    echo  [ ] !wg_label! n'est pas installe.
+    echo.
+    echo  [2/2] Installation en cours...
+    echo  ------------------------------------------------
+    winget install --exact --id "!wg_id!" --accept-package-agreements --accept-source-agreements
+    set "inst_err=!errorlevel!"
+    echo  ------------------------------------------------
+    echo.
+    if !inst_err!==0 (
+        echo  [OK] !wg_label! installe avec succes !
+    ) else (
+        echo  [ERREUR] L'installation a echoue. Verifiez votre connexion.
+    )
 ) else (
-    echo  [!] Echec ou application deja a jour/installee.
+    echo  [OK] !wg_label! est deja installe.
+    echo.
+    echo  [2/2] Recherche de mises a jour disponibles...
+    echo  ------------------------------------------------
+    winget upgrade --exact --id "!wg_id!" --accept-package-agreements --accept-source-agreements
+    set "upg_err=!errorlevel!"
+    echo  ------------------------------------------------
+    echo.
+    if !upg_err!==0 (
+        echo  [OK] !wg_label! est a jour.
+    ) else (
+        echo  [INFO] !wg_label! - Aucune mise a jour disponible.
+    )
 )
 echo.
 echo  Retour au menu dans 3 secondes...
