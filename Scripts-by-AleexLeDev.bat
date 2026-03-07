@@ -29,10 +29,10 @@ if %errorlevel% neq 0 (
     echo     ^|                                               ^|
     echo     ^+-----------------------------------------------^+
     echo.
-    echo       Relancement automatique en mode eleve...
+    echo       Relancement automatique en mode administrateur ...
     echo.
     echo       [ = = = = = = = = = = = = = = = = = = = ]
-    timeout /t 3 /nobreak >nul
+    timeout /t 1 /nobreak >nul
     echo       [ = = = = = = = = = = = = = = = = = = = ]
     echo.
     powershell -Command "Start-Process '%~f0' -Verb RunAs"
@@ -44,44 +44,50 @@ set "t[2]=sys_report:Diagnostic Systeme Complet~Affiche les specifications et l'
 set "t[3]=sys_diag_network:Diagnostic Reseau~Test de connexion (Local, Box, Internet, DNS)"
 set "t[4]=sys_battery_report:Rapport de Batterie~Usure, Sante et stats en temps reel"
 set "t[5]=sys_bitlocker_check:Verificateur BitLocker~Verifiez l'etat de chiffrement de vos partitions"
-set "t[6]=---:REPARATION"
-set "t[7]=sys_rescue_menu:Outil Reparation Windows (Rescue)~Menu multi-outils (SFC, DISM, CHKDSK, Reset WinUpdate...)"
-set "t[8]=sys_repair_icons:Reparation Cache Icones~Corrige les icones/miniatures corrompues"
-set "t[9]=---:NETTOYAGE ET OPTIMISATION"
-set "t[10]=sys_cleanmgr:Nettoyage de disque~Lancement classique de l'utilitaire de nettoyage"
-set "t[11]=sys_registry_cleanup:Nettoyage du Registre~Optimisation rapide et suppression des entrees mortes"
-set "t[12]=sys_tweaks_menu:Menu Optimisation Windows 11~Bloatwares, Telemetrie, Performances, Cortana"
-set "t[13]=---:RESEAU"
-set "t[14]=dns_manager:Gestionnaire DNS~Changer DNS Cloudflare/Google"
-set "t[15]=sys_network_menu:Menu de Depannage Reseau~Outils avances (DNS, ARP, TCP/IP, Autoreset)"
-set "t[16]=---:DISQUE"
-set "t[17]=disk_manager:Formatteur de Disque (DISKPART)~Formater un disque de facon securisee"
-set "t[18]=res_chkdsk:Planifier un CHKDSK (C:)~Verification disque au prochain demarrage (CHKDSK /F /R)"
-set "t[19]=---:APPLICATIONS"
-set "t[20]=winget_manager:Mises a jour d'applications~Mettre a jour vos logiciels via Winget"
-set "t[21]=app_installer:Installateur d'applications~Installer des logiciels par categorie via Winget"
-set "t[22]=---:COMPTES ET SECURITE"
-set "t[23]=sys_passwords_menu:Extracteurs de mots de passe~Outils Powershell (Credentials, Wi-Fi, Nirsoft)"
-set "t[24]=sys_unlock_notes:Recuperation de Compte bloque~Instructions pour reprendre controle sans mot de passe"
-set "t[25]=um_menu:Gestion utilisateurs locaux~Panneau de gestion local (Admin, Pass, Ajouts)"
-set "t[26]=---:MATERIEL"
-set "t[27]=touch_screen_manager:Gestionnaire Ecran Tactile~Activation et desactivation du pilote tactile"
-set "t[28]=---:EXTRACTION"
-set "t[29]=sys_win_key:Cle de licence~Recuperer vos differentes cles de produit"
-set "t[30]=sys_drivers:Extraction des pilotes~Sauvegarde de tous les fichiers pilotes natifs"
-set "t[31]=---:PERSONNALISATION"
-set "t[32]=context_menu:Menu contextuel Windows 11~Classic/Modern"
-set "t[33]=sys_god_mode:Dossier God Mode~Creer le raccourci ultime des parametres"
+set "t[6]=sys_event_log:Journaux d'Erreurs Windows~Affiche les erreurs critiques recentes (24h / 7 jours)"
+set "t[7]=sys_hw_test:Test des Composants PC~Benchmark disque, RAM, CPU et SMART en un clic"
+set "t[8]=---:REPARATION"
+set "t[9]=sys_rescue_menu:Outil Reparation Windows (Rescue)~Menu multi-outils (SFC, DISM, CHKDSK, Reset WinUpdate...)"
+set "t[10]=sys_repair_icons:Reparation Cache Icones~Corrige les icones/miniatures corrompues"
+set "t[11]=---:NETTOYAGE ET OPTIMISATION"
+set "t[12]=sys_cleanmgr:Nettoyage de disque~Lancement classique de l'utilitaire de nettoyage"
+set "t[13]=sys_registry_cleanup:Nettoyage du Registre~Optimisation rapide et suppression des entrees mortes"
+set "t[14]=sys_tweaks_menu:Menu Optimisation Windows 11~Bloatwares, Telemetrie, Performances, Cortana"
+set "t[15]=sys_startup_manager:Programmes au Demarrage~Lister et desactiver les logiciels qui demarrent avec Windows"
+set "t[16]=---:RESEAU"
+set "t[17]=dns_manager:Gestionnaire DNS~Changer DNS Cloudflare/Google"
+set "t[18]=sys_network_menu:Menu de Depannage Reseau~Outils avances (DNS, ARP, TCP/IP, Autoreset)"
+set "t[19]=---:DISQUE"
+set "t[20]=disk_manager:Formatteur de Disque (DISKPART)~Formater un disque de facon securisee"
+set "t[21]=res_chkdsk:Planifier un CHKDSK (C:)~Verification disque au prochain demarrage (CHKDSK /F /R)"
+set "t[22]=---:APPLICATIONS"
+set "t[23]=winget_manager:Mises a jour d'applications~Mettre a jour vos logiciels via Winget"
+set "t[24]=app_installer:Installateur d'applications~Installer des logiciels par categorie via Winget"
+set "t[25]=---:COMPTES ET SECURITE"
+set "t[26]=sys_passwords_menu:Extracteurs de mots de passe~Outils Powershell (Credentials, Wi-Fi, Nirsoft)"
+set "t[27]=sys_unlock_notes:Recuperation de Compte bloque~Instructions pour reprendre controle sans mot de passe"
+set "t[28]=um_menu:Gestion utilisateurs locaux~Panneau de gestion local (Admin, Pass, Ajouts)"
+set "t[29]=---:MATERIEL"
+set "t[30]=touch_screen_manager:Gestionnaire Ecran Tactile~Activation et desactivation du pilote tactile"
+set "t[31]=sys_print_manager:Gestionnaire d'Imprimantes~Lister, vider la file d'attente et supprimer des imprimantes"
+set "t[32]=---:EXTRACTION"
+set "t[33]=sys_win_key:Cle de licence~Recuperer vos differentes cles de produit"
+set "t[34]=sys_drivers:Extraction des pilotes~Sauvegarde de tous les fichiers pilotes natifs"
+set "t[35]=sys_export_software:Export Liste des Logiciels~Exporte la liste de tous les programmes installes en CSV/TXT"
+set "t[36]=sys_export_wifi_apps:Export Wi-Fi + Logiciels (TXT)~Genere 2 fichiers TXT sur le Bureau en un seul clic"
+set "t[37]=---:PERSONNALISATION"
+set "t[38]=context_menu:Menu contextuel Windows 11~Classic/Modern"
+set "t[39]=sys_god_mode:Dossier God Mode~Creer le raccourci ultime des parametres"
 :: Sous-items pour gestion des favoris individuels
-set "t[34]=dump_credman:Gestionnaire d'identifiants (Windows)~Extrait le Credential Manager Windows (WCMDump):HIDDEN"
-set "t[35]=dump_wifi:Extraction reseaux Wi-Fi (Powershell)~Script WWP puissant listant psw et noms:HIDDEN"
-set "t[36]=sys_nirsoft_pw:WebBrowserPassView (Classique Nirsoft)~Ancien utilitaire graphique pour les mots de passe:HIDDEN"
-set "t[37]=res_sfc:Scan RAPIDE du systeme~SFC /scannow (Verification systeme rapide):HIDDEN"
-set "t[38]=res_dism_check:Verification image base~DISM /CheckHealth et /ScanHealth (Analyse image):HIDDEN"
-set "t[39]=res_dism_restore:Reparation profonde~DISM /RestoreHealth (Reparation fichiers systeme):HIDDEN"
-set "t[40]=res_temp_clean:Nettoyage massif (Temp/Cache)~Purge des fichiers temporaires et cache Windows Update:HIDDEN"
-set "t[41]=res_wu_reset:Reset Fix Windows Update~Reinitialisation forcee des composants Windows Update:HIDDEN"
-set "total_tools=41"
+set "t[40]=dump_credman:Gestionnaire d'identifiants (Windows)~Extrait le Credential Manager Windows (WCMDump):HIDDEN"
+set "t[41]=dump_wifi:Extraction reseaux Wi-Fi (Powershell)~Script WWP puissant listant psw et noms:HIDDEN"
+set "t[42]=sys_nirsoft_pw:WebBrowserPassView (Classique Nirsoft)~Ancien utilitaire graphique pour les mots de passe:HIDDEN"
+set "t[43]=res_sfc:Scan RAPIDE du systeme~SFC /scannow (Verification systeme rapide):HIDDEN"
+set "t[44]=res_dism_check:Verification image base~DISM /CheckHealth et /ScanHealth (Analyse image):HIDDEN"
+set "t[45]=res_dism_restore:Reparation profonde~DISM /RestoreHealth (Reparation fichiers systeme):HIDDEN"
+set "t[46]=res_temp_clean:Nettoyage massif (Temp/Cache)~Purge des fichiers temporaires et cache Windows Update:HIDDEN"
+set "t[47]=res_wu_reset:Reset Fix Windows Update~Reinitialisation forcee des composants Windows Update:HIDDEN"
+set "total_tools=47"
 
 if not exist "%SCRIPT_DIR%\favoris.txt" type nul > "%SCRIPT_DIR%\favoris.txt"
 
@@ -2042,6 +2048,473 @@ goto :eof
 endlocal
 goto system_tools
 REM ================= End Embedded: Gestion des utilisateurs locaux =================
+
+REM ===================================================================
+REM              EXPORT LISTE DES LOGICIELS INSTALLES
+REM ===================================================================
+:sys_export_software
+cls
+echo ================================================
+echo   EXPORT LISTE DES LOGICIELS INSTALLES
+echo ================================================
+echo.
+echo  Choix du format d'export...
+echo.
+set "opts=Fichier TXT (lisible)~Liste simple texte sur le Bureau;Fichier CSV (Excel)~Format tableur avec colonnes separees par virgules"
+call :DynamicMenu "EXPORT LOGICIELS INSTALLES" "%opts%"
+set "sw_fmt=%errorlevel%"
+if "%sw_fmt%"=="0" goto system_tools
+
+cls
+echo ================================================
+echo   ANALYSE DES LOGICIELS EN COURS...
+echo ================================================
+echo.
+echo  [1/2] Interrogation du registre Windows...
+
+if "%sw_fmt%"=="1" (
+    powershell -NoProfile -ExecutionPolicy Bypass -Command "$f='%USERPROFILE%\Desktop\Logiciels_Installes.txt'; $p=@('HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*','HKLM:\Software\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*','HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*'); $apps=($p | ForEach-Object { Get-ItemProperty $_ -EA SilentlyContinue } | Where-Object { $_.DisplayName } | Sort-Object DisplayName | Select-Object DisplayName,DisplayVersion,Publisher -Unique); $nl=[Environment]::NewLine; $sep=New-Object string '=',60; $h='LISTE DES LOGICIELS INSTALLES - '+(Get-Date -Format 'dd/MM/yyyy HH:mm')+$nl+'Ordinateur : '+$env:COMPUTERNAME+$nl+'Total      : '+$apps.Count+' logiciels'+$nl+$sep; $h | Out-File $f -Encoding UTF8; $apps | ForEach-Object { '[+] '+$_.DisplayName+' v'+$_.DisplayVersion+' | '+$_.Publisher } | Out-File $f -Encoding UTF8 -Append; Write-Host ('  [OK] '+$apps.Count+' logiciels exportes.') -f Green"
+    echo.
+    echo  [2/2] Fichier TXT cree sur le Bureau !
+    echo.
+    echo  Fichier : Logiciels_Installes.txt
+) else (
+    powershell -NoProfile -ExecutionPolicy Bypass -Command "$f='%USERPROFILE%\Desktop\Logiciels_Installes.csv'; $p=@('HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*','HKLM:\Software\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*','HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*'); $apps=($p | ForEach-Object { Get-ItemProperty $_ -EA SilentlyContinue } | Where-Object { $_.DisplayName } | Sort-Object DisplayName | Select-Object DisplayName,DisplayVersion,Publisher,InstallDate -Unique); $apps | Export-Csv $f -NoTypeInformation -Encoding UTF8 -Delimiter ';'; Write-Host ('  [OK] '+$apps.Count+' logiciels exportes en CSV.') -f Green"
+    echo.
+    echo  [2/2] Fichier CSV cree sur le Bureau !
+    echo.
+    echo  Fichier : Logiciels_Installes.csv
+    echo  Ouvrez-le avec Excel ou LibreOffice Calc.
+)
+echo.
+pause
+goto system_tools
+
+REM ===================================================================
+REM              GESTIONNAIRE D'IMPRIMANTES
+REM ===================================================================
+:sys_print_manager
+cls
+set "opts=Lister les imprimantes installees~Affiche toutes les imprimantes et leur statut;Vider la file d'attente~Supprime tous les travaux d'impression bloques (SPOOLER);Supprimer une imprimante~Retire completement une imprimante du systeme;Redemarrer le service Spooler~Relance le gestionnaire d'impression Windows"
+call :DynamicMenu "GESTIONNAIRE D'IMPRIMANTES" "%opts%"
+set "pr_choice=%errorlevel%"
+
+if "%pr_choice%"=="1" goto print_list
+if "%pr_choice%"=="2" goto print_clear_queue
+if "%pr_choice%"=="3" goto print_remove
+if "%pr_choice%"=="4" goto print_restart_spooler
+if "%pr_choice%"=="0" goto system_tools
+goto sys_print_manager
+
+:print_list
+cls
+echo ================================================
+echo   IMPRIMANTES INSTALLEES
+echo ================================================
+echo.
+powershell -NoProfile -Command "Get-Printer | ForEach-Object { $jobs=(Get-PrintJob -PrinterName $_.Name -EA SilentlyContinue).Count; $j=if($jobs){$jobs}else{0}; Write-Host (' [+] '+$_.Name) -f Cyan -NoNewline; Write-Host (' | Statut: '+$_.PrinterStatus+' | Travaux en attente: '+$j) -f $(if($j -gt 0){'Yellow'}else{'Gray'}) }"
+echo.
+pause
+goto sys_print_manager
+
+:print_clear_queue
+cls
+echo ================================================
+echo   VIDAGE DE LA FILE D'ATTENTE D'IMPRESSION
+echo ================================================
+echo.
+echo  [1/3] Arret du service Spooler...
+net stop Spooler >nul 2>&1
+echo  [2/3] Suppression des travaux bloques...
+del /Q /F /S "%SystemRoot%\System32\spool\PRINTERS\*" >nul 2>&1
+echo  [3/3] Redemarrage du service Spooler...
+net start Spooler >nul 2>&1
+echo.
+echo  [OK] File d'attente videe et Spooler redemarre !
+echo  Tous les travaux d'impression bloques ont ete supprimes.
+echo.
+pause
+goto sys_print_manager
+
+:print_remove
+cls
+echo ================================================
+echo   SUPPRIMER UNE IMPRIMANTE
+echo ================================================
+echo.
+echo  Imprimantes disponibles :
+echo.
+powershell -NoProfile -Command "$i=1; Get-Printer | ForEach-Object { Write-Host ('  ['+$i+'] '+$_.Name) -f Cyan; $i++ }"
+echo.
+set /p pr_name= Nom exact de l'imprimante a supprimer: 
+if "%pr_name%"=="" goto sys_print_manager
+echo.
+powershell -NoProfile -Command "Remove-Printer -Name '%pr_name%' -EA SilentlyContinue; if($?){Write-Host '[OK] Imprimante supprimee avec succes.' -f Green}else{Write-Host '[ECHEC] Imprimante introuvable ou erreur.' -f Red}"
+echo.
+pause
+goto sys_print_manager
+
+:print_restart_spooler
+cls
+echo ================================================
+echo   REDEMARRAGE DU SERVICE SPOOLER
+echo ================================================
+echo.
+echo  Arret du Spooler...
+net stop Spooler >nul 2>&1
+timeout /t 2 /nobreak >nul
+echo  Demarrage du Spooler...
+net start Spooler >nul 2>&1
+echo.
+echo  [OK] Service Spooler redemarre avec succes.
+echo.
+pause
+goto sys_print_manager
+
+REM ===================================================================
+REM              GESTIONNAIRE DES PROGRAMMES AU DEMARRAGE
+REM ===================================================================
+:sys_startup_manager
+cls
+echo ================================================
+echo   PROGRAMMES AU DEMARRAGE DE WINDOWS
+echo ================================================
+echo.
+echo  Analyse en cours...
+echo.
+powershell -NoProfile -ExecutionPolicy Bypass -Command ^
+    "$items = Get-CimInstance Win32_StartupCommand | Select-Object Name, Command, Location, User;" ^
+    "$i=1;" ^
+    "Write-Host ('  Trouvé '+$items.Count+' programme(s) au démarrage:') -f Cyan;" ^
+    "Write-Host '';" ^
+    "foreach($x in $items){" ^
+    "    Write-Host ('  ['+$i+'] '+$x.Name) -f White -NoNewline;" ^
+    "    Write-Host (' | User: '+$x.User) -f DarkGray;" ^
+    "    Write-Host ('       '+$x.Command) -f DarkGray;" ^
+    "    $i++" ^
+    "}"
+echo.
+echo ================================================
+echo  Pour desactiver, ouvrez le Gestionnaire des taches
+echo  (Ctrl+Shift+Esc) onglet 'Demarrage'.
+echo.
+set "opts=Desactiver via le Gestionnaire des taches~Ouvre directement Ctrl+Shift+Esc onglet Demarrage;Desactiver via Registre HKCU~Supprime une entree dans HKCU Run (utilisateur courant);Desactiver via Registre HKLM~Supprime une entree dans HKLM Run (tous utilisateurs)"
+call :DynamicMenu "ACTION SUR LES PROGRAMMES DEMARRAGE" "%opts%"
+set "su_choice=%errorlevel%"
+
+if "%su_choice%"=="0" goto system_tools
+if "%su_choice%"=="1" (
+    powershell -Command "Start-Process taskmgr"
+    timeout /t 2 /nobreak >nul
+    goto sys_startup_manager
+)
+if "%su_choice%"=="2" goto startup_del_hkcu
+if "%su_choice%"=="3" goto startup_del_hklm
+goto sys_startup_manager
+
+:startup_del_hkcu
+cls
+echo  Entrees dans HKCU\...\Run (utilisateur courant) :
+echo.
+reg query "HKCU\Software\Microsoft\Windows\CurrentVersion\Run" 2>nul
+echo.
+set /p su_name= Nom de valeur a supprimer: 
+if "%su_name%"=="" goto sys_startup_manager
+reg delete "HKCU\Software\Microsoft\Windows\CurrentVersion\Run" /v "%su_name%" /f
+if %errorlevel%==0 (echo [OK] Entree '%su_name%' supprimee du demarrage.) else (echo [ECHEC] Entree introuvable.)
+pause
+goto sys_startup_manager
+
+:startup_del_hklm
+cls
+echo  Entrees dans HKLM\...\Run (tous utilisateurs) :
+echo.
+reg query "HKLM\Software\Microsoft\Windows\CurrentVersion\Run" 2>nul
+echo.
+set /p su_name= Nom de valeur a supprimer: 
+if "%su_name%"=="" goto sys_startup_manager
+reg delete "HKLM\Software\Microsoft\Windows\CurrentVersion\Run" /v "%su_name%" /f
+if %errorlevel%==0 (echo [OK] Entree '%su_name%' supprimee du demarrage.) else (echo [ECHEC] Entree introuvable.)
+pause
+goto sys_startup_manager
+
+REM ===================================================================
+REM              TEST DES COMPOSANTS PC (BENCHMARK)
+REM ===================================================================
+:sys_hw_test
+cls
+set "opts=Test SMART + Sante Disque~Verifie l'etat de sante SMART de tous les disques;Test de performance disque (WinSAT)~Score de vitesse lecture/ecriture du disque systeme;Test RAM (Windows Memory Diagnostic)~Lance le test memoire au prochain redemarrage;Rapport complet Composants~CPU, RAM, GPU, Disques - Resume technique;Tout tester en sequence~Lance tous les tests disponibles"
+call :DynamicMenu "TEST DES COMPOSANTS PC" "%opts%"
+set "hw_choice=%errorlevel%"
+
+if "%hw_choice%"=="1" goto hw_smart
+if "%hw_choice%"=="2" goto hw_winsat
+if "%hw_choice%"=="3" goto hw_ram_test
+if "%hw_choice%"=="4" goto hw_full_report
+if "%hw_choice%"=="5" goto hw_all
+if "%hw_choice%"=="0" goto system_tools
+goto sys_hw_test
+
+:hw_smart
+cls
+echo ================================================
+echo   SANTE DES DISQUES - SMART
+echo ================================================
+echo.
+powershell -NoProfile -ExecutionPolicy Bypass -Command ^
+    "$disks = Get-PhysicalDisk | Select-Object FriendlyName,MediaType,HealthStatus,OperationalStatus,Size;" ^
+    "foreach($d in $disks){" ^
+    "    $color = if($d.HealthStatus -eq 'Healthy'){'Green'}else{'Red'};" ^
+    "    $size = [math]::Round($d.Size/1GB,1);" ^
+    "    Write-Host ('  [+] '+$d.FriendlyName+' ('+$d.MediaType+', '+$size+' Go)') -f Cyan;" ^
+    "    Write-Host ('      Sante: '+$d.HealthStatus+' | Statut: '+$d.OperationalStatus) -f $color;" ^
+    "    Write-Host '' " ^
+    "}"
+echo.
+pause
+goto sys_hw_test
+
+:hw_winsat
+cls
+echo ================================================
+echo   TEST PERFORMANCE DISQUE (WinSAT)
+echo ================================================
+echo.
+echo  [!] Test en cours, patientez (30-60 secondes)...
+echo.
+winsat disk -drive c >nul 2>&1
+powershell -NoProfile -Command ^
+    "$r=Get-CimInstance -ClassName Win32_WinSAT -EA SilentlyContinue;" ^
+    "if($r){" ^
+    "    Write-Host '  Scores WinSAT:' -f Cyan;" ^
+    "    Write-Host ('  Disque          : '+$r.DiskScore) -f Green;" ^
+    "    Write-Host ('  CPU             : '+$r.CPUScore) -f Green;" ^
+    "    Write-Host ('  RAM             : '+$r.MemoryScore) -f Green;" ^
+    "    Write-Host ('  Graphismes      : '+$r.GraphicsScore) -f Green;" ^
+    "    Write-Host ('  Graphismes Gaming: '+$r.D3DScore) -f Green;" ^
+    "    Write-Host '';" ^
+    "    $d=$r.DiskScore;" ^
+    "    if($d -ge 7.5){Write-Host '  [OK] Disque tres rapide (SSD NVMe ou equivalent)' -f Green}" ^
+    "    elseif($d -ge 5.5){Write-Host '  [OK] Disque rapide (SSD SATA)' -f Yellow}" ^
+    "    elseif($d -ge 3.0){Write-Host '  [ATTENTION] Disque lent (HDD ou SSD use)' -f Yellow}" ^
+    "    else{Write-Host '  [CRITIQUE] Disque tres lent ou defaillant !' -f Red}" ^
+    "}else{Write-Host '  [INFO] Score WinSAT non disponible, relancez le test.' -f Yellow}"
+echo.
+pause
+goto sys_hw_test
+
+:hw_ram_test
+cls
+echo ================================================
+echo   TEST DE LA MEMOIRE RAM
+echo ================================================
+echo.
+echo  Le test RAM necessite un redemarrage du PC.
+echo  Windows effectuera le diagnostic avant de demarrer.
+echo.
+set /p ramconf= Planifier le test RAM au prochain demarrage ? (O/N): 
+if /i "%ramconf%"=="O" (
+    MdSched.exe
+) else (
+    echo  Operation annulee.
+)
+echo.
+pause
+goto sys_hw_test
+
+:hw_full_report
+cls
+echo ================================================
+echo   RAPPORT COMPLET DES COMPOSANTS
+echo ================================================
+echo.
+powershell -NoProfile -ExecutionPolicy Bypass -Command ^
+    "$cpu=Get-CimInstance Win32_Processor | Select-Object -First 1;" ^
+    "$ram=Get-CimInstance Win32_ComputerSystem;" ^
+    "$pm=@(Get-CimInstance Win32_PhysicalMemory);" ^
+    "$gpu=Get-CimInstance Win32_VideoController;" ^
+    "$bios=Get-CimInstance Win32_BIOS;" ^
+    "$mb=Get-CimInstance Win32_BaseBoard;" ^
+    "$memTypes=@{20='DDR';21='DDR2';24='DDR3';26='DDR4';34='DDR5'};" ^
+    "$mtype=if($pm.Count -gt 0 -and $memTypes.ContainsKey($pm[0].SMBIOSMemoryType)){$memTypes[$pm[0].SMBIOSMemoryType]}else{'Inconnu'};" ^
+    "$ramGo=[math]::Round($ram.TotalPhysicalMemory/1GB,2);" ^
+    "Write-Host '';" ^
+    "Write-Host '  PROCESSEUR (CPU)' -f Cyan;" ^
+    "Write-Host ('  '+$cpu.Name);" ^
+    "Write-Host ('  Coeurs: '+$cpu.NumberOfCores+' | Threads: '+$cpu.NumberOfLogicalProcessors+' | Freq. base: '+$cpu.MaxClockSpeed+' MHz');" ^
+    "Write-Host ('  Usage actuel: '+$cpu.LoadPercentage+'%%') -f $(if($cpu.LoadPercentage -lt 70){'Green'}else{'Red'});" ^
+    "Write-Host '';" ^
+    "Write-Host '  MEMOIRE RAM' -f Cyan;" ^
+    "Write-Host ('  '+$ramGo+' Go - Type: '+$mtype+' - Slots utilises: '+$pm.Count);" ^
+    "if($pm.Count -gt 0){Write-Host ('  Vitesse: '+$pm[0].Speed+' MHz | Fabricant: '+$pm[0].Manufacturer)};" ^
+    "Write-Host '';" ^
+    "Write-Host '  CARTE GRAPHIQUE (GPU)' -f Cyan;" ^
+    "foreach($g in $gpu){$vram=[math]::Round($g.AdapterRAM/1MB,0); Write-Host ('  '+$g.Name+' ('+$vram+' Mo VRAM) | Pilote: '+$g.DriverVersion)};" ^
+    "Write-Host '';" ^
+    "Write-Host '  CARTE MERE & BIOS' -f Cyan;" ^
+    "Write-Host ('  Fabricant: '+$mb.Manufacturer+' | Modele: '+$mb.Product);" ^
+    "Write-Host ('  BIOS: '+$bios.Manufacturer+' v'+$bios.SMBIOSBIOSVersion+' ('+$bios.ReleaseDate+')');" ^
+    "Write-Host '';" ^
+    "Write-Host '  DISQUES' -f Cyan;" ^
+    "Get-PhysicalDisk | ForEach-Object {$s=[math]::Round($_.Size/1GB,1); Write-Host ('  '+$_.FriendlyName+' ('+$_.MediaType+', '+$s+' Go) - Sante: '+$_.HealthStatus) -f $(if($_.HealthStatus -eq 'Healthy'){'Green'}else{'Red'})}"
+echo.
+pause
+goto sys_hw_test
+
+:hw_all
+call :hw_smart
+call :hw_winsat
+call :hw_full_report
+goto sys_hw_test
+
+REM ===================================================================
+REM              JOURNAUX D'ERREURS WINDOWS FILTRES
+REM ===================================================================
+:sys_event_log
+cls
+set "opts=Erreurs critiques (24 dernieres heures)~Affiche les crashes et erreurs graves du jour;Erreurs critiques (7 derniers jours)~Vue hebdomadaire des problemes systeme;Erreurs application (24h)~Logiciels plantes ou en erreur aujourd'hui;Avertissements disque / stockage~Detecte les signes de defaillance materielle;Exporter un rapport complet (Bureau)~Genere un fichier TXT avec toutes les erreurs"
+call :DynamicMenu "JOURNAUX D'ERREURS WINDOWS" "%opts%"
+set "ev_choice=%errorlevel%"
+
+if "%ev_choice%"=="0" goto system_tools
+if "%ev_choice%"=="1" goto ev_critical_24h
+if "%ev_choice%"=="2" goto ev_critical_7d
+if "%ev_choice%"=="3" goto ev_app_24h
+if "%ev_choice%"=="4" goto ev_disk_warn
+if "%ev_choice%"=="5" goto ev_export
+goto sys_event_log
+
+:ev_critical_24h
+cls
+echo ================================================
+echo   ERREURS CRITIQUES - 24 DERNIERES HEURES
+echo ================================================
+echo.
+powershell -NoProfile -ExecutionPolicy Bypass -Command ^
+    "$since=(Get-Date).AddHours(-24);" ^
+    "$evts=Get-WinEvent -FilterHashtable @{LogName='System';Level=1,2;StartTime=$since} -EA SilentlyContinue | Select-Object -First 30;" ^
+    "if(-not $evts){Write-Host '  [OK] Aucune erreur critique dans les 24 dernieres heures !' -f Green}" ^
+    "else{Write-Host ('  '+$evts.Count+' evenement(s) critique(s):') -f Red; foreach($e in $evts){Write-Host ('  ['+$e.TimeCreated.ToString('HH:mm:ss')+'] '+$e.Id+' - '+$e.ProviderName) -f Yellow; Write-Host ('  '+$e.Message.Split([char]10)[0].Trim()) -f DarkGray; Write-Host ''}}"
+echo.
+pause
+goto sys_event_log
+
+:ev_critical_7d
+cls
+echo ================================================
+echo   ERREURS CRITIQUES - 7 DERNIERS JOURS
+echo ================================================
+echo.
+powershell -NoProfile -ExecutionPolicy Bypass -Command ^
+    "$since=(Get-Date).AddDays(-7);" ^
+    "$evts=Get-WinEvent -FilterHashtable @{LogName='System';Level=1,2;StartTime=$since} -EA SilentlyContinue | Select-Object -First 50;" ^
+    "if(-not $evts){Write-Host '  [OK] Aucune erreur critique cette semaine !' -f Green}" ^
+    "else{Write-Host ('  '+$evts.Count+' evenement(s) critique(s) (50 max):') -f Red; foreach($e in $evts){Write-Host ('  ['+$e.TimeCreated.ToString('dd/MM HH:mm')+'] '+$e.Id+' - '+$e.ProviderName) -f Yellow; Write-Host ('  '+$e.Message.Split([char]10)[0].Trim()) -f DarkGray; Write-Host ''}}"
+echo.
+pause
+goto sys_event_log
+
+:ev_app_24h
+cls
+echo ================================================
+echo   ERREURS APPLICATIONS - 24H
+echo ================================================
+echo.
+powershell -NoProfile -ExecutionPolicy Bypass -Command ^
+    "$since=(Get-Date).AddHours(-24);" ^
+    "$evts=Get-WinEvent -FilterHashtable @{LogName='Application';Level=1,2;StartTime=$since} -EA SilentlyContinue | Select-Object -First 30;" ^
+    "if(-not $evts){Write-Host '  [OK] Aucun crash applicatif dans les 24 dernieres heures !' -f Green}" ^
+    "else{Write-Host ('  '+$evts.Count+' crash(s) applicatif(s):') -f Red; foreach($e in $evts){Write-Host ('  ['+$e.TimeCreated.ToString('HH:mm:ss')+'] '+$e.Id+' - '+$e.ProviderName) -f Yellow; Write-Host ('  '+$e.Message.Split([char]10)[0].Trim()) -f DarkGray; Write-Host ''}}"
+echo.
+pause
+goto sys_event_log
+
+:ev_disk_warn
+cls
+echo ================================================
+echo   AVERTISSEMENTS DISQUE / STOCKAGE
+echo ================================================
+echo.
+powershell -NoProfile -ExecutionPolicy Bypass -Command ^
+    "$since=(Get-Date).AddDays(-30);" ^
+    "$evts=Get-WinEvent -FilterHashtable @{LogName='System';ProviderName='disk','nvme','stornvme','iaStorAV';StartTime=$since} -EA SilentlyContinue | Where-Object {$_.Level -le 3} | Select-Object -First 20;" ^
+    "if(-not $evts){Write-Host '  [OK] Aucun avertissement disque detecte (30 derniers jours).' -f Green}" ^
+    "else{Write-Host ('  '+$evts.Count+' avertissement(s) disque:') -f Yellow; foreach($e in $evts){$lv=if($e.Level -eq 2){'ERREUR'}elseif($e.Level -eq 3){'ALERTE'}else{'CRITIQUE'}; Write-Host ('  ['+$lv+']['+$e.TimeCreated.ToString('dd/MM HH:mm')+'] '+$e.Id+' - '+$e.ProviderName) -f $(if($e.Level -eq 2){'Red'}else{'Yellow'}); Write-Host ('  '+$e.Message.Split([char]10)[0].Trim()) -f DarkGray; Write-Host ''}}"
+echo.
+pause
+goto sys_event_log
+
+:ev_export
+cls
+echo ================================================
+echo   EXPORT DES JOURNAUX (Bureau)
+echo ================================================
+echo.
+echo  Export en cours (Systeme + Application - 7 jours)...
+powershell -NoProfile -ExecutionPolicy Bypass -Command ^
+    "$out='%USERPROFILE%\Desktop\Journaux_Windows.txt';" ^
+    "$since=(Get-Date).AddDays(-7);" ^
+    "$header='RAPPORT JOURNAUX WINDOWS - '+$(Get-Date -Format 'dd/MM/yyyy HH:mm')+'`n'+'Machine: '+$env:COMPUTERNAME+'`n'+'='*60+'`n';" ^
+    "$sys=Get-WinEvent -FilterHashtable @{LogName='System';Level=1,2,3;StartTime=$since} -EA SilentlyContinue | Select-Object -First 100;" ^
+    "$app=Get-WinEvent -FilterHashtable @{LogName='Application';Level=1,2,3;StartTime=$since} -EA SilentlyContinue | Select-Object -First 100;" ^
+    "$lines=@($header,'=== JOURNAL SYSTEME ('+$sys.Count+' evenements) ===','');" ^
+    "foreach($e in $sys){$lines+='['+$e.TimeCreated.ToString('dd/MM/yyyy HH:mm:ss')+'] ID:'+$e.Id+' | '+$e.ProviderName; $lines+='  '+$e.Message.Split([char]10)[0].Trim(); $lines+=''};" ^
+    "$lines+='','=== JOURNAL APPLICATION ('+$app.Count+' evenements) ===','';" ^
+    "foreach($e in $app){$lines+='['+$e.TimeCreated.ToString('dd/MM/yyyy HH:mm:ss')+'] ID:'+$e.Id+' | '+$e.ProviderName; $lines+='  '+$e.Message.Split([char]10)[0].Trim(); $lines+=''};" ^
+    "$lines | Out-File $out -Encoding UTF8"
+echo.
+echo  Rapport enregistre sur le Bureau : Journaux_Windows.txt
+echo.
+pause
+goto sys_event_log
+
+REM ===================================================================
+REM              EXPORT WI-FI + LOGICIELS (COMBO TXT BUREAU)
+REM ===================================================================
+:sys_export_wifi_apps
+cls
+echo ================================================
+echo   EXPORT Wi-Fi + Logiciels - Fichiers TXT Bureau
+echo ================================================
+echo.
+echo  [1/2] Export de la liste des logiciels...
+echo.
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$f='%USERPROFILE%\Desktop\Logiciels_Installes.txt'; $p=@('HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*','HKLM:\Software\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*','HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*'); $apps=($p | ForEach-Object { Get-ItemProperty $_ -EA SilentlyContinue } | Where-Object { $_.DisplayName } | Sort-Object DisplayName | Select-Object DisplayName,DisplayVersion,Publisher -Unique); $nl=[Environment]::NewLine; $sep=New-Object string '=',60; $h='LOGICIELS INSTALLES - '+(Get-Date -Format 'dd/MM/yyyy HH:mm')+$nl+'Ordinateur : '+$env:COMPUTERNAME+$nl+'Total      : '+$apps.Count+' logiciels'+$nl+$sep; $h | Out-File $f -Encoding UTF8; $apps | ForEach-Object { '[+] '+$_.DisplayName+' v'+$_.DisplayVersion+' | '+$_.Publisher } | Out-File $f -Encoding UTF8 -Append; Write-Host ('  [OK] '+$apps.Count+' logiciels exportes.') -f Green"
+echo.
+echo  [2/2] Export des mots de passe Wi-Fi...
+echo.
+set "FWIFI=%USERPROFILE%\Desktop\Mots_de_passe_WiFi.txt"
+> "%FWIFI%" echo Mots de passe Wi-Fi - %date% %time%
+>> "%FWIFI%" echo Ordinateur : %COMPUTERNAME%
+>> "%FWIFI%" echo ============================================================
+setlocal enabledelayedexpansion
+set "wifi_found=0"
+for /f "tokens=2 delims=:" %%I in ('netsh wlan show profiles ^| findstr /C:"Profil Tous" /C:"All User Profile"') do (
+    set "ssid=%%I"
+    set "ssid=!ssid:~1!"
+    if not "!ssid!"=="" (
+        set "wifi_found=1"
+        set "pwd="
+        for /f "tokens=2 delims=:" %%K in ('netsh wlan show profile name^="!ssid!" key^=clear ^| findstr /C:"Contenu de la cl" /C:"Key Content"') do (
+            set "pwd=%%K"
+        )
+        set "pwd=!pwd:~1!"
+        if "!pwd!"=="" set "pwd=(Aucun / Reseau ouvert)"
+        >> "%FWIFI%" echo [+] SSID : !ssid!
+        >> "%FWIFI%" echo     MDP  : !pwd!
+        >> "%FWIFI%" echo.
+        echo  [+] !ssid!
+    )
+)
+endlocal
+echo.
+echo ================================================
+if exist "%USERPROFILE%\Desktop\Logiciels_Installes.txt" echo  [OK] Logiciels_Installes.txt cree sur le Bureau
+if exist "%USERPROFILE%\Desktop\Mots_de_passe_WiFi.txt"  echo  [OK] Mots_de_passe_WiFi.txt  cree sur le Bureau
+echo ================================================
+echo.
+pause
+goto system_tools
 
 REM ===================================================================
 REM                    SORTIE DU SCRIPT
