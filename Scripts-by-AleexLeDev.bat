@@ -8,16 +8,33 @@ REM === FORCER LE REPERTOIRE COURANT SUR LE DOSSIER DU .BAT ===
 set "SCRIPT_DIR=%~dp0"
 if "%SCRIPT_DIR:~-1%"=="\" set "SCRIPT_DIR=%SCRIPT_DIR:~0,-1%"
 cd /d "%SCRIPT_DIR%"
-title Boite a Scripts Windows - By ALEEXLEDEV (v2.0)
+title Boite a Scripts Windows - By ALEEXLEDEV (v3.0)
 color 0B
 mode con: cols=120 lines=60
 
 REM === AUTO-ELEVATION EN ADMINISTRATEUR ===
 net session >nul 2>&1
 if %errorlevel% neq 0 (
-    echo Ce script requiert des privileges administrateur.
-    echo Demande d'elevation en cours...
-    timeout /t 2 >nul
+    cls
+    echo.
+    echo     ^+-----------------------------------------------^+
+    echo     ^|                                               ^|
+    echo     ^|        /\     ACCES REFUSE                    ^|
+    echo     ^|       /  \    Droits insuffisants             ^|
+    echo     ^|      / !! \                                   ^|
+    echo     ^|     /______\  Ce script necessite             ^|
+    echo     ^|    [  ADMIN ]  des privileges ADMINISTRATEUR  ^|
+    echo     ^|                                               ^|
+    echo     ^|       Developpe par  ALEEXLEDEV               ^|
+    echo     ^|                                               ^|
+    echo     ^+-----------------------------------------------^+
+    echo.
+    echo       Relancement automatique en mode eleve...
+    echo.
+    echo       [ = = = = = = = = = = = = = = = = = = = ]
+    timeout /t 3 /nobreak >nul
+    echo       [ = = = = = = = = = = = = = = = = = = = ]
+    echo.
     powershell -Command "Start-Process '%~f0' -Verb RunAs"
     exit /b
 )
