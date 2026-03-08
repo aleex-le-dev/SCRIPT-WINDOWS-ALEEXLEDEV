@@ -12,6 +12,10 @@ title Boite a Scripts Windows - By ALEEXLEDEV (v3.0)
 color 0B
 mode con: cols=120 lines=60
 
+REM === DETECTION MODE SANS ECHEC (DOIT ETRE AVANT l'elevation admin) ===
+REM === En mode sans echec, net session echoue -> boucle RunAs infinie ===
+if defined SAFEBOOT_OPTION goto sys_safemode
+
 REM === AUTO-ELEVATION EN ADMINISTRATEUR ===
 net session >nul 2>&1
 if %errorlevel% neq 0 (
@@ -23,7 +27,7 @@ if %errorlevel% neq 0 (
     echo     ^|       /  \    Droits insuffisants             ^|
     echo     ^|      / !! \                                   ^|
     echo     ^|     /______\  Ce script necessite             ^|
-    echo     ^|    [  ADMIN ]  des privileges ADMINISTRATEUR  ^|
+    echo     ^|    [  ALEX  ]  des privileges ADMINISTRATEUR  ^|
     echo     ^|                                               ^|
     echo     ^|       Developpe par  ALEEXLEDEV               ^|
     echo     ^|                                               ^|
@@ -39,7 +43,7 @@ if %errorlevel% neq 0 (
     exit /b
 )
 
-set "t[1]=---:DIAGNOSTIC"
+
 set "t[2]=sys_report:Diagnostic Systeme Complet~Affiche les specifications et l'etat de sante global"
 set "t[3]=sys_diag_network:Diagnostic Reseau~Test de connexion (Local, Box, Internet, DNS)"
 set "t[4]=sys_battery_report:Rapport de Batterie~Usure, Sante et stats en temps reel"
@@ -49,45 +53,46 @@ set "t[7]=sys_hw_test:Test des Composants PC~Benchmark disque, RAM, CPU et SMART
 set "t[8]=---:REPARATION"
 set "t[9]=sys_rescue_menu:Outil Reparation Windows (Rescue)~Menu multi-outils (SFC, DISM, CHKDSK, Reset WinUpdate...)"
 set "t[10]=sys_repair_icons:Reparation Cache Icones~Corrige les icones/miniatures corrompues"
-set "t[11]=---:NETTOYAGE ET OPTIMISATION"
-set "t[12]=sys_cleanmgr:Nettoyage de disque~Lancement classique de l'utilitaire de nettoyage"
-set "t[13]=sys_registry_cleanup:Nettoyage du Registre~Optimisation rapide et suppression des entrees mortes"
-set "t[14]=sys_tweaks_menu:Menu Optimisation Windows 11~Bloatwares, Telemetrie, Performances, Cortana"
-set "t[15]=sys_startup_manager:Programmes au Demarrage~Lister et desactiver les logiciels qui demarrent avec Windows"
-set "t[16]=---:RESEAU"
-set "t[17]=dns_manager:Gestionnaire DNS~Changer DNS Cloudflare/Google"
-set "t[18]=sys_network_menu:Menu de Depannage Reseau~Outils avances (DNS, ARP, TCP/IP, Autoreset)"
-set "t[19]=---:DISQUE"
-set "t[20]=disk_manager:Formatteur de Disque (DISKPART)~Formater un disque de facon securisee"
-set "t[21]=res_chkdsk:Planifier un CHKDSK (C:)~Verification disque au prochain demarrage (CHKDSK /F /R)"
-set "t[22]=---:APPLICATIONS"
-set "t[23]=winget_manager:Mises a jour d'applications~Mettre a jour vos logiciels via Winget"
-set "t[24]=app_installer:Installateur d'applications~Installer des logiciels par categorie via Winget"
-set "t[25]=---:COMPTES ET SECURITE"
-set "t[26]=sys_passwords_menu:Extracteurs de mots de passe~Outils Powershell (Credentials, Wi-Fi, Nirsoft)"
-set "t[27]=sys_unlock_notes:Recuperation de Compte bloque~Instructions pour reprendre controle sans mot de passe"
-set "t[28]=um_menu:Gestion utilisateurs locaux~Panneau de gestion local (Admin, Pass, Ajouts)"
-set "t[29]=---:MATERIEL"
-set "t[30]=touch_screen_manager:Gestionnaire Ecran Tactile~Activation et desactivation du pilote tactile"
-set "t[31]=sys_print_manager:Gestionnaire d'Imprimantes~Lister, vider la file d'attente et supprimer des imprimantes"
-set "t[32]=---:EXTRACTION"
-set "t[33]=sys_win_key:Cle de licence~Recuperer vos differentes cles de produit"
-set "t[34]=sys_drivers:Extraction des pilotes~Sauvegarde de tous les fichiers pilotes natifs"
-set "t[35]=sys_export_software:Export Liste des Logiciels~Exporte la liste de tous les programmes installes en CSV/TXT"
-set "t[36]=sys_export_wifi_apps:Export Wi-Fi + Logiciels (TXT)~Genere 2 fichiers TXT sur le Bureau en un seul clic"
-set "t[37]=---:PERSONNALISATION"
-set "t[38]=context_menu:Menu contextuel Windows 11~Classic/Modern"
-set "t[39]=sys_god_mode:Dossier God Mode~Creer le raccourci ultime des parametres"
+set "t[11]=sys_safemode:Mode Sans Echec (Toggle)~Demarrer en mode sans echec et revenir automatiquement en mode normal"
+set "t[12]=---:NETTOYAGE ET OPTIMISATION"
+set "t[13]=sys_cleanmgr:Nettoyage de disque~Lancement classique de l'utilitaire de nettoyage"
+set "t[14]=sys_registry_cleanup:Nettoyage du Registre~Optimisation rapide et suppression des entrees mortes"
+set "t[15]=sys_tweaks_menu:Menu Optimisation Windows 11~Bloatwares, Telemetrie, Performances, Cortana"
+set "t[16]=sys_startup_manager:Programmes au Demarrage~Lister et desactiver les logiciels qui demarrent avec Windows"
+set "t[17]=---:RESEAU"
+set "t[18]=dns_manager:Gestionnaire DNS~Changer DNS Cloudflare/Google"
+set "t[19]=sys_network_menu:Menu de Depannage Reseau~Outils avances (DNS, ARP, TCP/IP, Autoreset)"
+set "t[20]=---:DISQUE"
+set "t[21]=disk_manager:Formatteur de Disque (DISKPART)~Formater un disque de facon securisee"
+set "t[22]=res_chkdsk:Planifier un CHKDSK (C:)~Verification disque au prochain demarrage (CHKDSK /F /R)"
+set "t[23]=---:APPLICATIONS"
+set "t[24]=winget_manager:Mises a jour d'applications~Mettre a jour vos logiciels via Winget"
+set "t[25]=app_installer:Installateur d'applications~Installer des logiciels par categorie via Winget"
+set "t[26]=---:COMPTES ET SECURITE"
+set "t[27]=sys_passwords_menu:Extracteurs de mots de passe~Outils Powershell (Credentials, Wi-Fi, Nirsoft)"
+set "t[28]=sys_unlock_notes:Recuperation de Compte bloque~Instructions pour reprendre controle sans mot de passe"
+set "t[29]=um_menu:Gestion utilisateurs locaux~Panneau de gestion local (Admin, Pass, Ajouts)"
+set "t[30]=---:MATERIEL"
+set "t[31]=touch_screen_manager:Gestionnaire Ecran Tactile~Activation et desactivation du pilote tactile"
+set "t[32]=sys_print_manager:Gestionnaire d'Imprimantes~Lister, vider la file d'attente et supprimer des imprimantes"
+set "t[33]=---:EXTRACTION"
+set "t[34]=sys_win_key:Cle de licence~Recuperer vos differentes cles de produit"
+set "t[35]=sys_drivers:Extraction des pilotes~Sauvegarde de tous les fichiers pilotes natifs"
+set "t[36]=sys_export_software:Export Liste des Logiciels~Exporte la liste de tous les programmes installes en CSV/TXT"
+set "t[37]=sys_export_wifi_apps:Export Wi-Fi + Logiciels (TXT)~Genere 2 fichiers TXT sur le Bureau en un seul clic"
+set "t[38]=---:PERSONNALISATION"
+set "t[39]=context_menu:Menu contextuel Windows 11~Classic/Modern"
+set "t[40]=sys_god_mode:Dossier God Mode~Creer le raccourci ultime des parametres"
 :: Sous-items pour gestion des favoris individuels
-set "t[40]=dump_credman:Gestionnaire d'identifiants (Windows)~Extrait le Credential Manager Windows (WCMDump):HIDDEN"
-set "t[41]=dump_wifi:Extraction reseaux Wi-Fi (Powershell)~Script WWP puissant listant psw et noms:HIDDEN"
-set "t[42]=sys_nirsoft_pw:WebBrowserPassView (Classique Nirsoft)~Ancien utilitaire graphique pour les mots de passe:HIDDEN"
-set "t[43]=res_sfc:Scan RAPIDE du systeme~SFC /scannow (Verification systeme rapide):HIDDEN"
-set "t[44]=res_dism_check:Verification image base~DISM /CheckHealth et /ScanHealth (Analyse image):HIDDEN"
-set "t[45]=res_dism_restore:Reparation profonde~DISM /RestoreHealth (Reparation fichiers systeme):HIDDEN"
-set "t[46]=res_temp_clean:Nettoyage massif (Temp/Cache)~Purge des fichiers temporaires et cache Windows Update:HIDDEN"
-set "t[47]=res_wu_reset:Reset Fix Windows Update~Reinitialisation forcee des composants Windows Update:HIDDEN"
-set "total_tools=47"
+set "t[41]=dump_credman:Gestionnaire d'identifiants (Windows)~Extrait le Credential Manager Windows (WCMDump):HIDDEN"
+set "t[42]=dump_wifi:Extraction reseaux Wi-Fi (Powershell)~Script WWP puissant listant psw et noms:HIDDEN"
+set "t[43]=sys_nirsoft_pw:WebBrowserPassView (Classique Nirsoft)~Ancien utilitaire graphique pour les mots de passe:HIDDEN"
+set "t[44]=res_sfc:Scan RAPIDE du systeme~SFC /scannow (Verification systeme rapide):HIDDEN"
+set "t[45]=res_dism_check:Verification image base~DISM /CheckHealth et /ScanHealth (Analyse image):HIDDEN"
+set "t[46]=res_dism_restore:Reparation profonde~DISM /RestoreHealth (Reparation fichiers systeme):HIDDEN"
+set "t[47]=res_temp_clean:Nettoyage massif (Temp/Cache)~Purge des fichiers temporaires et cache Windows Update:HIDDEN"
+set "t[48]=res_wu_reset:Reset Fix Windows Update~Reinitialisation forcee des composants Windows Update:HIDDEN"
+set "total_tools=48"
 
 if not exist "%SCRIPT_DIR%\favoris.txt" type nul > "%SCRIPT_DIR%\favoris.txt"
 
@@ -2468,6 +2473,9 @@ echo.
 pause
 goto sys_event_log
 
+
+
+
 REM ===================================================================
 REM              EXPORT WI-FI + LOGICIELS (COMBO TXT BUREAU)
 REM ===================================================================
@@ -2515,6 +2523,100 @@ echo ================================================
 echo.
 pause
 goto system_tools
+
+REM ===================================================================
+REM              MODE SANS ECHEC (TOGGLE) - CORRIGE
+REM ===================================================================
+:sys_safemode
+cls
+REM === Supprimer RunOnce EN PREMIER pour eviter toute boucle ===
+reg delete "HKLM\Software\Microsoft\Windows\CurrentVersion\RunOnce" /v "SafeModeRevert" /f >nul 2>&1
+
+if not defined SAFEBOOT_OPTION goto safemode_config
+
+REM =====================================================
+REM  ON EST EN MODE SANS ECHEC -> MENU RETOUR
+REM =====================================================
+color 0E
+set "opts=Revenir en mode NORMAL~Restaurer le demarrage standard et redemarrer le PC;Quitter~Rester en mode sans echec et fermer ce script"
+call :DynamicMenu "MODE SANS ECHEC ACTIF - Type: %SAFEBOOT_OPTION%" "%opts%"
+set "sm_res=%errorlevel%"
+
+if "%sm_res%"=="0" (
+    echo.
+    echo  Pour revenir en mode normal plus tard, relancez ce script.
+    pause
+    exit
+)
+if "%sm_res%"=="1" goto safemode_revert
+if "%sm_res%"=="2" (
+    echo.
+    echo  Pour revenir en mode normal plus tard, relancez ce script.
+    pause
+    exit
+)
+goto sys_safemode
+
+:safemode_revert
+cls
+echo.
+echo  [1/2] Suppression de la config mode sans echec...
+bcdedit /deletevalue {current} safeboot >nul 2>&1
+if %errorlevel%==0 (
+    echo  [OK] Mode normal restaure.
+) else (
+    echo  [INFO] Deja en mode normal ou erreur bcdedit.
+)
+echo  [2/2] Redemarrage dans 5 secondes...
+echo.
+echo  ================================================
+echo  [OK] Le PC va redemarrer NORMALEMENT.
+echo  ================================================
+timeout /t 5 /nobreak >nul
+shutdown /r /t 0
+exit
+
+REM =====================================================
+REM  ON EST EN MODE NORMAL -> ACTIVATION SAFE MODE
+REM =====================================================
+:safemode_config
+color 0B
+set "opts=Mode Minimal~Pilotes de base uniquement - le plus stable;Avec Reseau~Acces internet disponible (Wi-Fi ou Ethernet)"
+call :DynamicMenu "MODE SANS ECHEC - Choisissez le type de demarrage" "%opts%"
+set "sm_cfg=%errorlevel%"
+
+if "%sm_cfg%"=="0" goto system_tools
+if "%sm_cfg%"=="1" set "SM_TYPE=minimal"
+if "%sm_cfg%"=="2" set "SM_TYPE=network"
+if not defined SM_TYPE goto safemode_config
+
+cls
+echo.
+echo  [1/3] Configuration bcdedit (%SM_TYPE%)...
+bcdedit /set {current} safeboot %SM_TYPE% >nul 2>&1
+if %errorlevel% neq 0 (
+    echo  [ERREUR] bcdedit a echoue. Droits insuffisants ?
+    pause
+    goto system_tools
+)
+echo  [OK] Mode sans echec (%SM_TYPE%) programme.
+
+echo  [2/3] Inscription RunOnce pour restauration automatique...
+reg add "HKLM\Software\Microsoft\Windows\CurrentVersion\RunOnce" /v "SafeModeRevert" /t REG_SZ /d "\"%~f0\"" /f >nul 2>&1
+echo  [OK] Script inscrit au demarrage automatique.
+
+echo  [3/3] Redemarrage dans 5 secondes...
+echo.
+echo  ================================================
+echo  APRES LE REDEMARRAGE :
+echo  - Windows demarrera en MODE SANS ECHEC
+echo  - Ce script se relancera automatiquement
+echo  - Selectionnez "Revenir en mode NORMAL"
+echo  ================================================
+timeout /t 5 /nobreak >nul
+shutdown /r /t 0
+exit
+
 
 REM ===================================================================
 REM                    SORTIE DU SCRIPT
