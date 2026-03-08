@@ -53,47 +53,48 @@ set "t[7]=sys_hw_test:Test des Composants PC~Benchmark disque, RAM, CPU et SMART
 set "t[8]=---:REPARATION"
 set "t[9]=sys_rescue_menu:Outil Reparation Windows (Rescue)~Menu multi-outils (SFC, DISM, CHKDSK, Reset WinUpdate...)"
 set "t[10]=sys_repair_icons:Reparation Cache Icones~Corrige les icones/miniatures corrompues"
-set "t[11]=sys_safemode:Mode Sans Echec (Toggle)~Demarrer en mode sans echec et revenir automatiquement en mode normal"
-set "t[12]=sys_winre:Mode Reparation (WinRE)~Demarrer dans l'environnement de reparation Windows (WinRE/BIOS/Options avancees)"
-set "t[13]=---:NETTOYAGE ET OPTIMISATION"
-set "t[14]=sys_cleanmgr:Nettoyage de disque~Lancement classique de l'utilitaire de nettoyage"
-set "t[15]=sys_registry_cleanup:Nettoyage du Registre~Optimisation rapide et suppression des entrees mortes"
-set "t[16]=sys_tweaks_menu:Menu Optimisation Windows 11~Bloatwares, Telemetrie, Performances, Cortana"
-set "t[17]=sys_startup_manager:Programmes au Demarrage~Lister et desactiver les logiciels qui demarrent avec Windows"
-set "t[18]=---:RESEAU"
-set "t[19]=dns_manager:Gestionnaire DNS~Changer DNS Cloudflare/Google"
-set "t[20]=sys_network_menu:Menu de Depannage Reseau~Outils avances (DNS, ARP, TCP/IP, Autoreset)"
-set "t[21]=---:DISQUE"
-set "t[22]=disk_manager:Formatteur de Disque (DISKPART)~Formater un disque de facon securisee"
-set "t[23]=res_chkdsk:Planifier un CHKDSK (C:)~Verification disque au prochain demarrage (CHKDSK /F /R)"
-set "t[24]=---:APPLICATIONS"
-set "t[25]=winget_manager:Mises a jour d'applications~Mettre a jour vos logiciels via Winget"
-set "t[26]=app_installer:Installateur d'applications~Installer des logiciels par categorie via Winget"
-set "t[27]=---:COMPTES ET SECURITE"
-set "t[28]=sys_passwords_menu:Extracteurs de mots de passe~Outils Powershell (Credentials, Wi-Fi, Nirsoft)"
-set "t[29]=sys_unlock_notes:Recuperation de Compte bloque~Instructions pour reprendre controle sans mot de passe"
-set "t[30]=um_menu:Gestion utilisateurs locaux~Panneau de gestion local (Admin, Pass, Ajouts)"
-set "t[31]=---:MATERIEL"
-set "t[32]=touch_screen_manager:Gestionnaire Ecran Tactile~Activation et desactivation du pilote tactile"
-set "t[33]=sys_print_manager:Gestionnaire d'Imprimantes~Lister, vider la file d'attente et supprimer des imprimantes"
-set "t[34]=---:EXTRACTION"
-set "t[35]=sys_win_key:Cle de licence~Recuperer vos differentes cles de produit"
-set "t[36]=sys_drivers:Extraction des pilotes~Sauvegarde de tous les fichiers pilotes natifs"
-set "t[37]=sys_export_software:Export Liste des Logiciels~Exporte la liste de tous les programmes installes en CSV/TXT"
-set "t[38]=sys_export_wifi_apps:Export Wi-Fi + Logiciels (TXT)~Genere 2 fichiers TXT sur le Bureau en un seul clic"
-set "t[39]=---:PERSONNALISATION"
-set "t[40]=context_menu:Menu contextuel Windows 11~Classic/Modern"
-set "t[41]=sys_god_mode:Dossier God Mode~Creer le raccourci ultime des parametres"
+set "t[11]=sys_winre:Mode Reparation (WinRE)~Demarrer dans l'environnement de reparation Windows (WinRE/BIOS/Boot Menu/Safe Mode...)"
+set "t[12]=---:NETTOYAGE ET OPTIMISATION"
+set "t[13]=sys_cleanmgr:Nettoyage de disque~Lancement classique de l'utilitaire de nettoyage"
+set "t[14]=sys_registry_cleanup:Nettoyage du Registre~Optimisation rapide et suppression des entrees mortes"
+set "t[15]=sys_tweaks_menu:Menu Optimisation Windows 11~Bloatwares, Telemetrie, Performances, Cortana"
+set "t[16]=sys_startup_manager:Programmes au Demarrage~Lister et desactiver les logiciels qui demarrent avec Windows"
+set "t[17]=---:RESEAU"
+set "t[18]=dns_manager:Gestionnaire DNS~Changer DNS Cloudflare/Google"
+set "t[19]=sys_network_menu:Menu de Depannage Reseau~Outils avances (DNS, ARP, TCP/IP, Autoreset)"
+set "t[20]=---:DISQUE"
+set "t[21]=disk_manager:Formatteur de Disque (DISKPART)~Formater un disque de facon securisee"
+set "t[22]=res_chkdsk:Planifier un CHKDSK (C:)~Verification disque au prochain demarrage (CHKDSK /F /R)"
+set "t[23]=---:APPLICATIONS"
+set "t[24]=winget_manager:Mises a jour d'applications~Mettre a jour vos logiciels via Winget"
+set "t[25]=app_installer:Installateur d'applications~Installer des logiciels par categorie via Winget"
+set "t[26]=---:COMPTES ET SECURITE"
+set "t[27]=sys_passwords_menu:Extracteurs de mots de passe~Outils Powershell (Credentials, Wi-Fi, Nirsoft)"
+set "t[28]=sys_unlock_notes:Recuperation de Compte bloque~Instructions pour reprendre controle sans mot de passe"
+set "t[29]=um_menu:Gestion utilisateurs locaux~Panneau de gestion local (Admin, Pass, Ajouts)"
+set "t[30]=---:MATERIEL"
+set "t[31]=touch_screen_manager:Gestionnaire Ecran Tactile~Activation et desactivation du pilote tactile"
+set "t[32]=sys_print_manager:Gestionnaire d'Imprimantes~Lister, vider la file d'attente et supprimer des imprimantes"
+set "t[33]=---:EXTRACTION"
+set "t[34]=sys_win_key:Cle de licence~Recuperer vos differentes cles de produit"
+set "t[35]=sys_drivers:Extraction des pilotes~Sauvegarde de tous les fichiers pilotes natifs"
+set "t[36]=sys_export_software:Export Liste des Logiciels~Exporte la liste de tous les programmes installes en CSV/TXT"
+set "t[37]=sys_export_wifi_apps:Export Wi-Fi + Logiciels (TXT)~Genere 2 fichiers TXT sur le Bureau en un seul clic"
+set "t[38]=---:PERSONNALISATION"
+set "t[39]=context_menu:Menu contextuel Windows 11~Classic/Modern"
+set "t[40]=sys_god_mode:Dossier God Mode~Creer le raccourci ultime des parametres"
 :: Sous-items pour gestion des favoris individuels
-set "t[42]=dump_credman:Gestionnaire d'identifiants (Windows)~Extrait le Credential Manager Windows (WCMDump):HIDDEN"
-set "t[43]=dump_wifi:Extraction reseaux Wi-Fi (Powershell)~Script WWP puissant listant psw et noms:HIDDEN"
-set "t[44]=sys_nirsoft_pw:WebBrowserPassView (Classique Nirsoft)~Ancien utilitaire graphique pour les mots de passe:HIDDEN"
-set "t[45]=res_sfc:Scan RAPIDE du systeme~SFC /scannow (Verification systeme rapide):HIDDEN"
-set "t[46]=res_dism_check:Verification image base~DISM /CheckHealth et /ScanHealth (Analyse image):HIDDEN"
-set "t[47]=res_dism_restore:Reparation profonde~DISM /RestoreHealth (Reparation fichiers systeme):HIDDEN"
-set "t[48]=res_temp_clean:Nettoyage massif (Temp/Cache)~Purge des fichiers temporaires et cache Windows Update:HIDDEN"
-set "t[49]=res_wu_reset:Reset Fix Windows Update~Reinitialisation forcee des composants Windows Update:HIDDEN"
-set "total_tools=49"
+set "t[41]=dump_credman:Gestionnaire d'identifiants (Windows)~Extrait le Credential Manager Windows (WCMDump):HIDDEN"
+set "t[42]=dump_wifi:Extraction reseaux Wi-Fi (Powershell)~Script WWP puissant listant psw et noms:HIDDEN"
+set "t[43]=sys_nirsoft_pw:WebBrowserPassView (Classique Nirsoft)~Ancien utilitaire graphique pour les mots de passe:HIDDEN"
+set "t[44]=res_sfc:Scan RAPIDE du systeme~SFC /scannow (Verification systeme rapide):HIDDEN"
+set "t[45]=res_dism_check:Verification image base~DISM /CheckHealth et /ScanHealth (Analyse image):HIDDEN"
+set "t[46]=res_dism_restore:Reparation profonde~DISM /RestoreHealth (Reparation fichiers systeme):HIDDEN"
+set "t[47]=res_temp_clean:Nettoyage massif (Temp/Cache)~Purge des fichiers temporaires et cache Windows Update:HIDDEN"
+set "t[48]=res_wu_reset:Reset Fix Windows Update~Reinitialisation forcee des composants Windows Update:HIDDEN"
+set "total_tools=48"
+
+
 
 if not exist "%SCRIPT_DIR%\favoris.txt" type nul > "%SCRIPT_DIR%\favoris.txt"
 
@@ -2479,51 +2480,40 @@ REM              MODE REPARATION ET DEMARRAGE WINDOWS
 REM ===================================================================
 :sys_winre
 cls
-set "opts=WinRE - Environnement de recuperation~Reparation, Restauration systeme, CMD avancee;Options avancees au demarrage~Equivalent F8 au boot (safe mode, reparation, etc.);BIOS / UEFI~Acces direct aux parametres firmware de la carte mere;Menu de demarrage (Boot Menu)~Selectionner le peripherique de demarrage au prochain boot;Mode sans echec - Minimal~Demarrer sans pilotes tiers (plus stable pour diagnostics);Mode sans echec - Avec Reseau~Demarrer sans pilotes tiers + acces internet;Mode sans echec - Invite CMD~Demarrer en mode sans echec avec ligne de commande;Desactiver signature pilotes~Installer des pilotes non signes (1 demarrage seulement);Verifier statut WinRE~Affiche si l environnement de recuperation est actif;Reinitialiser les parametres de demarrage~Supprimer tous les flags bcdedit appliques"
+set "opts=WinRE - Reparation directe~Boot dans l environnement de recuperation Windows (outil reagentc);BIOS / UEFI~Acces direct aux parametres firmware de la carte mere;Menu de demarrage (Boot Menu)~Selectionner le peripherique de demarrage (cle USB, disque...);Mode sans echec - Minimal~Demarrer sans pilotes tiers - le plus stable;Mode sans echec - Avec Reseau~Sans pilotes tiers + acces internet;Mode sans echec - Invite CMD~Safe Mode avec ligne de commande a la place de l Explorer;Desactiver signature pilotes~Installer des pilotes non signes (1 demarrage seulement);Verifier statut WinRE~Affiche l etat de l environnement de recuperation + flags bcdedit;Reinitialiser les parametres de demarrage~Supprimer tous les flags bcdedit appliques"
 call :DynamicMenu "MODE DEMARRAGE / REPARATION WINDOWS" "%opts%"
 set "wr_choice=%errorlevel%"
 
-if "%wr_choice%"=="0"  goto system_tools
-if "%wr_choice%"=="1"  goto winre_boot
-if "%wr_choice%"=="2"  goto winre_advanced
-if "%wr_choice%"=="3"  goto winre_bios
-if "%wr_choice%"=="4"  goto winre_bootmenu
-if "%wr_choice%"=="5"  goto winre_safe_minimal
-if "%wr_choice%"=="6"  goto winre_safe_network
-if "%wr_choice%"=="7"  goto winre_safe_cmd
-if "%wr_choice%"=="8"  goto winre_nosign
-if "%wr_choice%"=="9"  goto winre_status
-if "%wr_choice%"=="10" goto winre_reset
+if "%wr_choice%"=="0" goto system_tools
+if "%wr_choice%"=="1" goto winre_boot
+if "%wr_choice%"=="2" goto winre_bios
+if "%wr_choice%"=="3" goto winre_bootmenu
+if "%wr_choice%"=="4" goto winre_safe_minimal
+if "%wr_choice%"=="5" goto winre_safe_network
+if "%wr_choice%"=="6" goto winre_safe_cmd
+if "%wr_choice%"=="7" goto winre_nosign
+if "%wr_choice%"=="8" goto winre_status
+if "%wr_choice%"=="9" goto winre_reset
 goto sys_winre
 
 :winre_boot
 cls
 echo.
 echo  ================================================
-echo   DEMARRAGE DANS WINRE
+echo   DEMARRAGE DANS WINRE (Environnement Reparation)
 echo  ================================================
-echo  Acces : Reparation / Restauration / CMD avancee
+echo  Acces direct : Reparation / Restauration / CMD
 echo  Redemarrage dans 5 secondes...
 echo.
 reagentc /boottore >nul 2>&1
 if %errorlevel% neq 0 (
-    echo  [ERREUR] WinRE indisponible. Essayez "Options avancees".
+    echo  [ERREUR] WinRE indisponible sur ce PC.
+    echo  Conseil : verifiez avec "Verifier statut WinRE".
     pause & goto sys_winre
 )
-echo  [OK] WinRE programme pour le prochain boot.
+echo  [OK] WinRE programme pour le prochain demarrage.
 timeout /t 5 /nobreak >nul
 shutdown /r /t 0 & exit
-
-:winre_advanced
-cls
-echo.
-echo  ================================================
-echo   OPTIONS AVANCEES AU DEMARRAGE (F8)
-echo  ================================================
-echo  Acces : Safe Mode, Reparation, Restauration...
-echo  Redemarrage dans 5 secondes...
-timeout /t 5 /nobreak >nul
-shutdown /r /o /t 0 & exit
 
 :winre_bios
 cls
