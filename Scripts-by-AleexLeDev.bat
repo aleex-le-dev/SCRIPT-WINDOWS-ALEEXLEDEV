@@ -50,49 +50,53 @@ set "t[4]=sys_battery_report:Rapport de Batterie~Usure, Sante et stats en temps 
 set "t[5]=sys_bitlocker_check:Verificateur BitLocker~Verifiez l'etat de chiffrement de vos partitions"
 set "t[6]=sys_event_log:Journaux d'Erreurs Windows~Affiche les erreurs critiques recentes (24h / 7 jours)"
 set "t[7]=sys_hw_test:Test des Composants PC~Benchmark disque, RAM, CPU et SMART en un clic"
-set "t[8]=---:REPARATION"
-set "t[9]=sys_rescue_menu:Outil Reparation Windows (Rescue)~Menu multi-outils (SFC, DISM, CHKDSK, Reset WinUpdate...)"
-set "t[10]=sys_repair_icons:Reparation Cache Icones~Corrige les icones/miniatures corrompues"
-set "t[11]=sys_winre:Mode Reparation (WinRE)~Demarrer dans l'environnement de reparation Windows (WinRE/BIOS/Boot Menu/Safe Mode...)"
-set "t[12]=---:NETTOYAGE ET OPTIMISATION"
-set "t[13]=sys_cleanmgr:Nettoyage de disque~Lancement classique de l'utilitaire de nettoyage"
-set "t[14]=sys_registry_cleanup:Nettoyage du Registre~Optimisation rapide et suppression des entrees mortes"
-set "t[15]=sys_tweaks_menu:Menu Optimisation Windows 11~Bloatwares, Telemetrie, Performances, Cortana"
-set "t[16]=sys_startup_manager:Programmes au Demarrage~Lister et desactiver les logiciels qui demarrent avec Windows"
-set "t[17]=---:RESEAU"
-set "t[18]=dns_manager:Gestionnaire DNS~Changer DNS Cloudflare/Google"
-set "t[19]=sys_network_menu:Menu de Depannage Reseau~Outils avances (DNS, ARP, TCP/IP, Autoreset)"
-set "t[20]=---:DISQUE"
-set "t[21]=disk_manager:Formatteur de Disque (DISKPART)~Formater un disque de facon securisee"
-set "t[22]=res_chkdsk:Planifier un CHKDSK (C:)~Verification disque au prochain demarrage (CHKDSK /F /R)"
-set "t[23]=---:APPLICATIONS"
-set "t[24]=winget_manager:Mises a jour d'applications~Mettre a jour vos logiciels via Winget"
-set "t[25]=app_installer:Installateur d'applications~Installer des logiciels par categorie via Winget"
-set "t[26]=---:COMPTES ET SECURITE"
-set "t[27]=sys_passwords_menu:Extracteurs de mots de passe~Outils Powershell (Credentials, Wi-Fi, Nirsoft)"
-set "t[28]=sys_unlock_notes:Recuperation de Compte bloque~Instructions pour reprendre controle sans mot de passe"
-set "t[29]=um_menu:Gestion utilisateurs locaux~Panneau de gestion local (Admin, Pass, Ajouts)"
-set "t[30]=---:MATERIEL"
-set "t[31]=touch_screen_manager:Gestionnaire Ecran Tactile~Activation et desactivation du pilote tactile"
-set "t[32]=sys_print_manager:Gestionnaire d'Imprimantes~Lister, vider la file d'attente et supprimer des imprimantes"
-set "t[33]=---:EXTRACTION"
-set "t[34]=sys_win_key:Cle de licence~Recuperer vos differentes cles de produit"
-set "t[35]=sys_drivers:Extraction des pilotes~Sauvegarde de tous les fichiers pilotes natifs"
-set "t[36]=sys_export_software:Export Liste des Logiciels~Exporte la liste de tous les programmes installes en CSV/TXT"
-set "t[37]=sys_export_wifi_apps:Export Wi-Fi + Logiciels (TXT)~Genere 2 fichiers TXT sur le Bureau en un seul clic"
-set "t[38]=---:PERSONNALISATION"
-set "t[39]=context_menu:Menu contextuel Windows 11~Classic/Modern"
-set "t[40]=sys_god_mode:Dossier God Mode~Creer le raccourci ultime des parametres"
+set "t[8]=sys_defender:Gestionnaire Windows Defender~Scan rapide/complet CLI, MAJ signatures, menaces detectees"
+set "t[9]=sys_full_report:Rapport Complet Tout-en-Un~Export HTML du rapport complet PC (HW, SW, Reseau, Users)"
+set "t[10]=---:REPARATION"
+set "t[11]=sys_rescue_menu:Outil Reparation Windows (Rescue)~Menu multi-outils (SFC, DISM, CHKDSK, Reset WinUpdate...)"
+set "t[12]=sys_repair_icons:Reparation Cache Icones~Corrige les icones/miniatures corrompues"
+set "t[13]=sys_winre:Mode Reparation (WinRE)~Demarrer dans l'environnement de reparation Windows (WinRE/BIOS/Boot Menu/Safe Mode...)"
+set "t[14]=---:NETTOYAGE ET OPTIMISATION"
+set "t[15]=sys_clean_unified:Nettoyage Complet Unifie~Disque, Temp, Registre, WU, DNS - tout en un menu"
+set "t[16]=sys_registry_cleanup:Nettoyage du Registre~Optimisation rapide et suppression des entrees mortes"
+set "t[17]=sys_tweaks_menu:Menu Optimisation Windows 11~Bloatwares, Telemetrie, Performances, Cortana"
+set "t[18]=sys_startup_manager:Programmes au Demarrage~Lister et desactiver les logiciels qui demarrent avec Windows"
+set "t[19]=---:RESEAU"
+set "t[20]=dns_manager:Gestionnaire DNS~Changer DNS Cloudflare/Google"
+set "t[21]=sys_network_menu:Menu de Depannage Reseau~Outils avances (DNS, ARP, TCP/IP, Autoreset)"
+set "t[22]=---:DISQUE"
+set "t[23]=disk_manager:Formatteur de Disque (DISKPART)~Formater un disque de facon securisee"
+set "t[24]=res_chkdsk:Planifier un CHKDSK (C:)~Verification disque au prochain demarrage (CHKDSK /F /R)"
+set "t[25]=---:APPLICATIONS"
+set "t[26]=winget_manager:Mises a jour d'applications~Mettre a jour vos logiciels via Winget"
+set "t[27]=app_installer:Installateur d'applications~Installer des logiciels par categorie via Winget"
+set "t[28]=---:COMPTES ET SECURITE"
+set "t[29]=sys_passwords_menu:Extracteurs de mots de passe~Outils Powershell (Credentials, Wi-Fi, Nirsoft)"
+set "t[30]=sys_unlock_notes:Recuperation de Compte bloque~Instructions pour reprendre controle sans mot de passe"
+set "t[31]=um_menu:Gestion utilisateurs locaux~Panneau de gestion local (Admin, Pass, Ajouts)"
+set "t[32]=---:MATERIEL"
+set "t[33]=touch_screen_manager:Gestionnaire Ecran Tactile~Activation et desactivation du pilote tactile"
+set "t[34]=sys_print_manager:Gestionnaire d'Imprimantes~Lister, vider la file d'attente et supprimer des imprimantes"
+set "t[35]=sys_power_plan:Gestionnaire Plan d'Alimentation~Equilibre, Performances, Ultimate Performance (mode cache Windows)"
+set "t[36]=---:EXTRACTION"
+set "t[37]=sys_win_key:Cle de licence~Recuperer vos differentes cles de produit"
+set "t[38]=sys_drivers:Extraction des pilotes~Sauvegarde de tous les fichiers pilotes natifs"
+set "t[39]=sys_export_software:Export Liste des Logiciels~Exporte la liste de tous les programmes installes en CSV/TXT"
+set "t[40]=sys_export_wifi_apps:Export Wi-Fi + Logiciels (TXT)~Genere 2 fichiers TXT sur le Bureau en un seul clic"
+set "t[41]=---:PERSONNALISATION"
+set "t[42]=context_menu:Menu contextuel Windows 11~Classic/Modern"
+set "t[43]=sys_god_mode:Dossier God Mode~Creer le raccourci ultime des parametres"
 :: Sous-items pour gestion des favoris individuels
-set "t[41]=dump_credman:Gestionnaire d'identifiants (Windows)~Extrait le Credential Manager Windows (WCMDump):HIDDEN"
-set "t[42]=dump_wifi:Extraction reseaux Wi-Fi (Powershell)~Script WWP puissant listant psw et noms:HIDDEN"
-set "t[43]=sys_nirsoft_pw:WebBrowserPassView (Classique Nirsoft)~Ancien utilitaire graphique pour les mots de passe:HIDDEN"
-set "t[44]=res_sfc:Scan RAPIDE du systeme~SFC /scannow (Verification systeme rapide):HIDDEN"
-set "t[45]=res_dism_check:Verification image base~DISM /CheckHealth et /ScanHealth (Analyse image):HIDDEN"
-set "t[46]=res_dism_restore:Reparation profonde~DISM /RestoreHealth (Reparation fichiers systeme):HIDDEN"
-set "t[47]=res_temp_clean:Nettoyage massif (Temp/Cache)~Purge des fichiers temporaires et cache Windows Update:HIDDEN"
-set "t[48]=res_wu_reset:Reset Fix Windows Update~Reinitialisation forcee des composants Windows Update:HIDDEN"
-set "total_tools=48"
+set "t[44]=dump_credman:Gestionnaire d'identifiants (Windows)~Extrait le Credential Manager Windows (WCMDump):HIDDEN"
+set "t[45]=dump_wifi:Extraction reseaux Wi-Fi (Powershell)~Script WWP puissant listant psw et noms:HIDDEN"
+set "t[46]=sys_nirsoft_pw:WebBrowserPassView (Classique Nirsoft)~Ancien utilitaire graphique pour les mots de passe:HIDDEN"
+set "t[47]=res_sfc:Scan RAPIDE du systeme~SFC /scannow (Verification systeme rapide):HIDDEN"
+set "t[48]=res_dism_check:Verification image base~DISM /CheckHealth et /ScanHealth (Analyse image):HIDDEN"
+set "t[49]=res_dism_restore:Reparation profonde~DISM /RestoreHealth (Reparation fichiers systeme):HIDDEN"
+set "t[50]=res_temp_clean:Nettoyage massif (Temp/Cache)~Purge des fichiers temporaires et cache Windows Update:HIDDEN"
+set "t[51]=res_wu_reset:Reset Fix Windows Update~Reinitialisation forcee des composants Windows Update:HIDDEN"
+set "t[52]=sys_cleanmgr:Nettoyage de disque (Classique)~Lancement classique de l'utilitaire de nettoyage Windows:HIDDEN"
+set "total_tools=52"
 
 
 
@@ -677,23 +681,34 @@ cls
 set "opts="
 set /a s_idx=0
 for /l %%I in (1,1,%total_tools%) do (
-    for /f "tokens=1,2,3 delims=:" %%A in ("!t[%%I]!") do (
-        if "%%A"=="---" (
-            set "opts=!opts!;[--- %%B ---]"
-        ) else if not "%%C"=="HIDDEN" (
+    set "_entry=!t[%%I]!"
+    if defined _entry (
+        REM Extrait le label (avant le premier :)
+        for /f "tokens=1 delims=:" %%A in ("!_entry!") do set "_lbl=%%A"
+        REM Extrait le nom (entre le premier : et le ~)
+        set "_rest=!_entry!"
+        call set "_rest=%%_rest:*!_lbl!:=%%"
+        for /f "tokens=1 delims=~" %%N in ("!_rest!") do set "_name=%%N"
+        REM Detecte HIDDEN (fin de ligne)
+        set "_hidden=0"
+        if "!_entry:~-7!"==":HIDDEN" set "_hidden=1"
+        REM Detecte separateur ---
+        if "!_lbl!"=="---" (
+            set "opts=!opts!;[--- !_name! ---]"
+        ) else if "!_hidden!"=="0" (
             set "is_fav=0"
-            for /f "usebackq tokens=*" %%F in ("%SCRIPT_DIR%\favoris.txt") do (if "%%F"=="%%A" set "is_fav=1")
-            set "m_name=%%B"
+            for /f "usebackq tokens=*" %%F in ("%SCRIPT_DIR%\favoris.txt") do (if "%%F"=="!_lbl!" set "is_fav=1")
             if "!is_fav!"=="1" (
-                set "opts=!opts!;(F) !m_name!"
+                set "opts=!opts!;(F) !_name!"
             ) else (
-                set "opts=!opts!;!m_name!"
+                set "opts=!opts!;!_name!"
             )
             set /a s_idx+=1
-            set "sys_target[!s_idx!]=%%A"
+            set "sys_target[!s_idx!]=!_lbl!"
         )
     )
 )
+
 set "opts=!opts:~1!"
 
 call :DynamicMenu "OUTILS SYSTEME AVANCES" "!opts!"
@@ -2799,7 +2814,7 @@ setlocal
 set "m_title=%~1"
 set "m_opts=%~2"
 
-set "ps_code=$o=($env:m_opts -split ';');$t=$env:m_title;$sel=@();for($i=0;$i -lt $o.Count;$i++){if($o[$i] -notmatch '^\[---'){$sel+=$i}};$sIdx=0;$oldIdx=-1;$iY=@{};clear-host;try{$bY=[console]::CursorTop}catch{$bY=0};function D{ try{[console]::SetCursorPosition(0,$bY)}catch{};write-host '                                                                                                                       ';write-host '  ========================================================================================' -f Cyan;write-host ('   ' + $t) -f White;write-host '  ========================================================================================' -f Cyan;write-host '                                                                                                                       ';$num=1;for($i=0;$i -lt $o.Count;$i++){$parts=$o[$i]-split'~';$s=$parts[0];$d='';if($parts.Count -gt 1){$d=$parts[1]};if($s -match '^\[---'){if($i -gt 0){write-host '                                                                                                                       '};try{$iY[$i]=[console]::CursorTop}catch{};write-host ('       ' + $s).PadRight(119) -f Cyan}else{try{$iY[$i]=[console]::CursorTop}catch{};$f_str='    ';if($s -match '^\(F\) '){$f_str='(F) ';$s=$s.Substring(4)};if($i -eq $sel[$sIdx]){$str='{0}>> [{1}] {2}  ' -f $f_str, $num, $s; write-host $str -NoNewline -f Black -b White; $rem=119-$str.Length; if($rem -lt 0){$rem=0}; $ds=if($d){'   - '+$d}else{''}; if($ds.Length -gt $rem){$ds=$ds.Substring(0,$rem)}; write-host $ds.PadRight($rem) -f Yellow}else{$str='{0}   [{1}] {2}  ' -f $f_str, $num, $s; write-host $str.PadRight(119) -f Gray};$num++}};write-host '                                                                                                                       ';write-host '  ----------------------------------------------------------------------------------------' -f Cyan;write-host '   [FLECHES] Naviguer | [ENTREE] Valider | [F] Favoriser | [0/ECHAP] Retour                     ' -f DarkGray;write-host '                                                                                                                       '};D;while($true){if($oldIdx -ne -1 -and $oldIdx -ne $sIdx){$i=$sel[$oldIdx];$parts=$o[$i]-split'~';$s=$parts[0];$num=$oldIdx+1;try{[console]::SetCursorPosition(0,$iY[$i])}catch{};$f_str='    ';if($s -match '^\(F\) '){$f_str='(F) ';$s=$s.Substring(4)};$str='{0}   [{1}] {2}  ' -f $f_str, $num, $s; write-host $str.PadRight(119) -f Gray;$i=$sel[$sIdx];$parts=$o[$i]-split'~';$s=$parts[0];$d='';if($parts.Count -gt 1){$d=$parts[1]};$num=$sIdx+1;try{[console]::SetCursorPosition(0,$iY[$i])}catch{};$f_str='    ';if($s -match '^\(F\) '){$f_str='(F) ';$s=$s.Substring(4)};$str='{0}>> [{1}] {2}  ' -f $f_str, $num, $s; write-host $str -NoNewline -f Black -b White; $rem=119-$str.Length; if($rem -lt 0){$rem=0}; $ds=if($d){'   - '+$d}else{''}; if($ds.Length -gt $rem){$ds=$ds.Substring(0,$rem)}; write-host $ds.PadRight($rem) -f Yellow};$oldIdx=$sIdx;try{[console]::SetCursorPosition(0,$iY[$o.Count-1]+5)}catch{};$k=$Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown');$v=$k.VirtualKeyCode;if($v -eq 38){$sIdx--;if($sIdx -lt 0){$sIdx=$sel.Count-1}}elseif($v -eq 40){$sIdx++;if($sIdx -ge $sel.Count){$sIdx=0}}elseif($v -eq 13){clear-host;exit ($sIdx+1)}elseif($v -eq 27 -or $k.Character -eq '0'){clear-host;exit 0}elseif($v -eq 70){clear-host;exit (200+$sIdx+1)}elseif([string]$k.Character -match '^[1-9]$' -and [int][string]$k.Character -le $sel.Count){clear-host;exit ([int][string]$k.Character)}}"
+set "ps_code=$o=($env:m_opts -split ';');$t=$env:m_title;$sel=@();for($i=0;$i -lt $o.Count;$i++){if($o[$i] -notmatch '^\[---'){$sel+=$i}};$sIdx=0;$pad=115;try{if([console]::WindowWidth -gt 5){$pad=[math]::Min([console]::WindowWidth-5, 115)}}catch{};$maxV=50;try{if([console]::WindowHeight -gt 0){$maxV=[math]::Max([console]::WindowHeight-10, 10)}}catch{};$topI=0;clear-host;try{$cY=[console]::WindowTop}catch{$cY=0};function D{ try{[console]::SetCursorPosition(0,$cY)}catch{};write-host '  ========================================================================================' -f Cyan;write-host ('   ' + $t) -f White;write-host '  ========================================================================================' -f Cyan;write-host (' '.PadRight($pad));$num=1;$printed=0;for($i=0;$i -lt $o.Count;$i++){$parts=$o[$i]-split'~';$s=$parts[0];$d='';if($parts.Count -gt 1){$d=$parts[1]};$isH=($s -match '^\[---');if(-not $isH){$cNum=$num;$num++};if($i -lt $topI -or $printed -ge $maxV){continue};if($isH){write-host (' '.PadRight($pad));$printed++;if($printed -lt $maxV){write-host ('       ' + $s).PadRight($pad) -f Cyan;$printed++}}else{$f_str='    ';if($s -match '^\(F\) '){$f_str='(F) ';$s=$s.Substring(4)};if($i -eq $sel[$sIdx]){$str='{0}>> [{1}] {2}  ' -f $f_str, $cNum, $s; write-host $str -NoNewline -f Black -b White; $rem=$pad-$str.Length; if($rem -lt 0){$rem=0}; $ds=if($d){'   - '+$d}else{''}; if($ds.Length -gt $rem){$ds=$ds.Substring(0,$rem)}; write-host $ds.PadRight($rem) -f Yellow}else{$str='{0}   [{1}] {2}  ' -f $f_str, $cNum, $s; write-host $str.PadRight($pad) -f Gray};$printed++}};while($printed -lt $maxV){write-host (' '.PadRight($pad));$printed++};write-host (' '.PadRight($pad));write-host '  ----------------------------------------------------------------------------------------' -f Cyan;write-host '   [FLECHES] Naviguer | [ENTREE] Valider | [F] Favoriser | [0/ECHAP] Retour                     ' -NoNewline -f DarkGray};while($true){$target=$sel[$sIdx];if($target -lt $topI){$topI=$target};$lines=0;for($i=$topI;$i -le $target;$i++){if($o[$i] -match '^\[---'){$lines+=2}else{$lines+=1}};while($lines -gt $maxV){if($o[$topI] -match '^\[---'){$lines-=2}else{$lines-=1};$topI++};D;$k=$Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown');$v=$k.VirtualKeyCode;if($v -eq 38){$sIdx--;if($sIdx -lt 0){$sIdx=$sel.Count-1}}elseif($v -eq 40){$sIdx++;if($sIdx -ge $sel.Count){$sIdx=0}}elseif($v -eq 13){clear-host;exit ($sIdx+1)}elseif($v -eq 27 -or $k.Character -eq '0'){clear-host;exit 0}elseif($v -eq 70){clear-host;exit (200+$sIdx+1)}elseif([string]$k.Character -match '^[1-9]$' -and [int][string]$k.Character -le $sel.Count){clear-host;exit ([int][string]$k.Character)}}"
 
 powershell -NoProfile -ExecutionPolicy Bypass -Command "%ps_code%"
 set "res=%errorlevel%"
@@ -2851,6 +2866,286 @@ echo.
 echo 9^) Securite:
 echo    - N'effectuer ces operations que si vous etes autorise.
 echo    - Supprimer la sauvegarde .bak et activer des protections ^(BitLocker, etc.^).
+echo.
+pause
+goto system_tools
+
+REM ===================================================================
+REM              GESTIONNAIRE WINDOWS DEFENDER
+REM ===================================================================
+:sys_defender
+cls
+set "opts=Scan Rapide~Analyse zones critiques (2-5 min);Scan Complet~Analyse tout le disque (peut durer 1h+);Mettre a jour les Signatures~Telecharger les dernieres definitions virus;Voir les Menaces Detectees~Liste des virus et malwares trouves sur ce PC;Statut Protection en Temps Reel~Affiche l etat complet de la protection Defender"
+call :DynamicMenu "GESTIONNAIRE WINDOWS DEFENDER" "%opts%"
+set "wd_c=%errorlevel%"
+if "%wd_c%"=="0" goto system_tools
+if "%wd_c%"=="1" goto wd_quick
+if "%wd_c%"=="2" goto wd_full
+if "%wd_c%"=="3" goto wd_update
+if "%wd_c%"=="4" goto wd_threats
+if "%wd_c%"=="5" goto wd_status
+goto sys_defender
+
+:wd_quick
+cls
+echo.
+echo  [DEFENDER] Lancement du scan rapide...
+echo  Appuyez sur Ctrl+C pour interrompre.
+echo.
+"%ProgramFiles%\Windows Defender\MpCmdRun.exe" -Scan -ScanType 1
+echo.
+echo  [OK] Scan rapide termine.
+pause & goto sys_defender
+
+:wd_full
+cls
+echo.
+echo  [DEFENDER] Lancement du scan COMPLET...
+echo  Cela peut prendre 30min a 2h selon le disque.
+echo  Appuyez sur Ctrl+C pour interrompre.
+echo.
+"%ProgramFiles%\Windows Defender\MpCmdRun.exe" -Scan -ScanType 2
+echo.
+echo  [OK] Scan complet termine.
+pause & goto sys_defender
+
+:wd_update
+cls
+echo.
+echo  [DEFENDER] Mise a jour des signatures en cours...
+echo.
+"%ProgramFiles%\Windows Defender\MpCmdRun.exe" -SignatureUpdate
+echo.
+echo  [OK] Signatures mises a jour.
+pause & goto sys_defender
+
+:wd_threats
+cls
+echo.
+echo  ================================================
+echo   MENACES DETECTEES (historique)
+echo  ================================================
+echo.
+powershell -NoProfile -Command "$t=Get-MpThreatDetection -EA SilentlyContinue; if(-not $t){Write-Host '  [OK] Aucune menace detectee !' -f Green}else{$t | Select-Object @{N='Date';E={$_.InitialDetectionTime.ToString('dd/MM HH:mm')}},@{N='Menace';E={(Get-MpThreat -ThreatID $_.ThreatID -EA SilentlyContinue).ThreatName}},@{N='Statut';E={if($_.ActionSuccess){'Neutralisee'}else{'ACTIVE'}}} | Format-Table -AutoSize | Out-String | Write-Host}"
+echo.
+pause & goto sys_defender
+
+:wd_status
+cls
+echo.
+echo  ================================================
+echo   STATUT WINDOWS DEFENDER
+echo  ================================================
+echo.
+powershell -NoProfile -Command "Get-MpComputerStatus -EA SilentlyContinue | Select-Object @{N='Protection TR';E={$_.RealTimeProtectionEnabled}},@{N='Antivirus';E={$_.AntivirusEnabled}},@{N='Antispyware';E={$_.AntispywareEnabled}},@{N='Version Def.';E={$_.AntispywareSignatureVersion}},@{N='Derniere MAJ';E={$_.AntispywareSignatureLastUpdated.ToString('dd/MM/yyyy HH:mm')}} | Format-List | Out-String | Write-Host"
+echo.
+pause & goto sys_defender
+
+REM ===================================================================
+REM              PLAN D'ALIMENTATION
+REM ===================================================================
+:sys_power_plan
+cls
+set "opts=Mode Equilibre (Defaut)~Recommande pour usage quotidien (batterie + perf);Mode Economies d'Energie~Reduit les performances pour maximiser l'autonomie;Mode Performances Elevees~Priorite aux performances, consommation accrue;Mode Ultimate Performance (Cache)~Mode Windows cache - eliminines les micro-latences, ideal gaming/pro;Voir le Plan Actif~Affiche quel plan d'alimentation est actuellement actif;Lister tous les Plans~Voir tous les plans disponibles sur ce PC"
+call :DynamicMenu "GESTIONNAIRE PLAN D'ALIMENTATION" "%opts%"
+set "pp_c=%errorlevel%"
+if "%pp_c%"=="0" goto system_tools
+if "%pp_c%"=="1" goto pp_balanced
+if "%pp_c%"=="2" goto pp_saver
+if "%pp_c%"=="3" goto pp_high
+if "%pp_c%"=="4" goto pp_ultimate
+if "%pp_c%"=="5" goto pp_current
+if "%pp_c%"=="6" goto pp_list
+goto sys_power_plan
+
+:pp_balanced
+powercfg /setactive 381b4222-f694-41f0-9685-ff5bb260df2e >nul 2>&1
+echo  [OK] Plan Equilibre active.
+timeout /t 2 /nobreak >nul & goto sys_power_plan
+
+:pp_saver
+powercfg /setactive a1841308-3541-4fab-bc81-f71556f20b4a >nul 2>&1
+echo  [OK] Plan Economies d'Energie active.
+timeout /t 2 /nobreak >nul & goto sys_power_plan
+
+:pp_high
+powercfg /setactive 8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c >nul 2>&1
+echo  [OK] Plan Performances Elevees active.
+timeout /t 2 /nobreak >nul & goto sys_power_plan
+
+:pp_ultimate
+cls
+echo.
+echo  ================================================
+echo   ACTIVATION ULTIMATE PERFORMANCE (mode cache)
+echo  ================================================
+echo.
+echo  Ce plan elimine les micro-latences et desactive
+echo  les mecanismes d'economie d'energie.
+echo  Ideal pour : Gaming, Creation, Workstation Pro.
+echo.
+echo  [1/2] Creation du plan (si absent)...
+powercfg -duplicatescheme e9a42b02-d5df-448d-aa00-03f14749eb61 >nul 2>&1
+echo  [2/2] Activation du plan Ultimate Performance...
+for /f "tokens=4" %%G in ('powercfg /list ^| findstr /i "ultimate\|performances optimales"') do (
+    powercfg /setactive %%G >nul 2>&1
+)
+echo.
+echo  [OK] Mode Ultimate Performance ACTIVE !
+echo  Visible dans : Parametres > Alimentation et veille > Parametres d'alimentation supplementaires
+echo.
+pause & goto sys_power_plan
+
+:pp_current
+cls
+echo.
+echo  Plan d'alimentation actif :
+powercfg /getactivescheme
+echo.
+pause & goto sys_power_plan
+
+:pp_list
+cls
+echo.
+echo  Plans d'alimentation disponibles :
+powercfg /list
+echo.
+pause & goto sys_power_plan
+
+REM ===================================================================
+REM              NETTOYAGE COMPLET UNIFIE
+REM ===================================================================
+:sys_clean_unified
+cls
+set "opts=Fichiers Temporaires et Cache~Supprime temp Windows, prefetch et cache navigateurs;Nettoyage Windows Update~Supprime les anciens fichiers WU (libere souvent 5-20 Go);Cache DNS~Vide le cache de resolution DNS local;Nettoyage Disque (cleanmgr)~Utilitaire Windows classique de nettoyage;Registre Windows~Nettoie les entrees mortes / obsoletes;[TOUT EN UN] Nettoyage Complet~Execute tous les nettoyages ci-dessus en sequence"
+call :DynamicMenu "NETTOYAGE COMPLET UNIFIE" "%opts%"
+set "cl_c=%errorlevel%"
+if "%cl_c%"=="0" goto system_tools
+if "%cl_c%"=="1" goto cl_temp
+if "%cl_c%"=="2" goto cl_wu
+if "%cl_c%"=="3" goto cl_dns
+if "%cl_c%"=="4" goto cl_disk
+if "%cl_c%"=="5" goto cl_registry
+if "%cl_c%"=="6" goto cl_all
+goto sys_clean_unified
+
+:cl_temp
+cls
+echo.
+echo  [TEMP] Suppression des fichiers temporaires...
+del /f /s /q "%temp%\*.*" >nul 2>&1
+del /f /s /q "C:\Windows\Temp\*.*" >nul 2>&1
+del /f /s /q "C:\Windows\Prefetch\*.*" >nul 2>&1
+echo  [CACHE CHROME]...
+for /d %%D in ("%LOCALAPPDATA%\Google\Chrome\User Data\*") do (
+    if exist "%%D\Cache" rd /s /q "%%D\Cache" >nul 2>&1
+)
+echo  [CACHE EDGE]...
+for /d %%D in ("%LOCALAPPDATA%\Microsoft\Edge\User Data\*") do (
+    if exist "%%D\Cache" rd /s /q "%%D\Cache" >nul 2>&1
+)
+echo  [OK] Fichiers temporaires supprimes.
+pause & goto sys_clean_unified
+
+:cl_wu
+cls
+echo.
+echo  [WU] Nettoyage Windows Update en cours...
+echo  [1/4] Arret des services...
+net stop wuauserv >nul 2>&1
+net stop bits >nul 2>&1
+echo  [2/4] Suppression du cache SoftwareDistribution...
+rd /s /q "C:\Windows\SoftwareDistribution\Download" >nul 2>&1
+mkdir "C:\Windows\SoftwareDistribution\Download" >nul 2>&1
+echo  [3/4] Nettoyage composants DISM...
+DISM /online /Cleanup-Image /StartComponentCleanup >nul 2>&1
+echo  [4/4] Redemarrage des services...
+net start wuauserv >nul 2>&1
+net start bits >nul 2>&1
+echo.
+echo  [OK] Nettoyage Windows Update termine.
+pause & goto sys_clean_unified
+
+:cl_dns
+ipconfig /flushdns
+echo  [OK] Cache DNS vide.
+timeout /t 2 /nobreak >nul & goto sys_clean_unified
+
+:cl_disk
+cleanmgr /sageset:65535
+cleanmgr /sagerun:65535
+goto sys_clean_unified
+
+:cl_registry
+cls
+echo.
+echo  [REGISTRE] Nettoyage en cours...
+reg delete "HKCU\Software\Classes\Local Settings\Software\Microsoft\Windows\Shell\BagMRU" /f >nul 2>&1
+reg delete "HKCU\Software\Classes\Local Settings\Software\Microsoft\Windows\Shell\Bags" /f >nul 2>&1
+reg delete "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\RecentDocs" /f >nul 2>&1
+reg delete "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\RunMRU" /f >nul 2>&1
+echo  [OK] Entrees de registre obsoletes supprimees.
+pause & goto sys_clean_unified
+
+:cl_all
+cls
+echo.
+echo  ================================================
+echo   NETTOYAGE COMPLET EN COURS...
+echo  ================================================
+echo.
+echo  [1/5] Fichiers temporaires et cache...
+del /f /s /q "%temp%\*.*" >nul 2>&1
+del /f /s /q "C:\Windows\Temp\*.*" >nul 2>&1
+del /f /s /q "C:\Windows\Prefetch\*.*" >nul 2>&1
+for /d %%D in ("%LOCALAPPDATA%\Google\Chrome\User Data\*") do if exist "%%D\Cache" rd /s /q "%%D\Cache" >nul 2>&1
+for /d %%D in ("%LOCALAPPDATA%\Microsoft\Edge\User Data\*") do if exist "%%D\Cache" rd /s /q "%%D\Cache" >nul 2>&1
+echo  [OK]
+echo  [2/5] Windows Update cache...
+net stop wuauserv >nul 2>&1 & net stop bits >nul 2>&1
+rd /s /q "C:\Windows\SoftwareDistribution\Download" >nul 2>&1
+mkdir "C:\Windows\SoftwareDistribution\Download" >nul 2>&1
+DISM /online /Cleanup-Image /StartComponentCleanup >nul 2>&1
+net start wuauserv >nul 2>&1 & net start bits >nul 2>&1
+echo  [OK]
+echo  [3/5] Cache DNS...
+ipconfig /flushdns >nul 2>&1
+echo  [OK]
+echo  [4/5] Registre...
+reg delete "HKCU\Software\Classes\Local Settings\Software\Microsoft\Windows\Shell\BagMRU" /f >nul 2>&1
+reg delete "HKCU\Software\Classes\Local Settings\Software\Microsoft\Windows\Shell\Bags" /f >nul 2>&1
+reg delete "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\RecentDocs" /f >nul 2>&1
+echo  [OK]
+echo  [5/5] Nettoyage Disque Windows...
+echo.
+echo  ================================================
+echo  [OK] Nettoyage complet termine !
+echo  Lancement de cleanmgr pour finaliser...
+echo  ================================================
+echo.
+start cleanmgr /sageset:65535
+timeout /t 3 /nobreak >nul
+cleanmgr /sagerun:65535
+goto sys_clean_unified
+
+REM ===================================================================
+REM              RAPPORT COMPLET TOUT-EN-UN (HTML)
+REM ===================================================================
+:sys_full_report
+cls
+echo.
+echo  ================================================
+echo   RAPPORT COMPLET TOUT-EN-UN
+echo  ================================================
+echo.
+echo  Generation du rapport HTML complet...
+echo  Collecte : Systeme, Disques, Reseau, Users, Logiciels
+echo.
+set "RPT=%USERPROFILE%\Desktop\Rapport_PC_%COMPUTERNAME%_%DATE:~6,4%-%DATE:~3,2%-%DATE:~0,2%.html"
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$f='%USERPROFILE%\Desktop\Rapport_PC_%COMPUTERNAME%.html'; $nl=[Environment]::NewLine; $now=Get-Date -Format 'dd/MM/yyyy HH:mm'; $cn=$env:COMPUTERNAME; $os=(Get-CimInstance Win32_OperatingSystem); $cpu=(Get-CimInstance Win32_Processor).Name.Trim(); $ram=[math]::Round((Get-CimInstance Win32_ComputerSystem).TotalPhysicalMemory/1GB,1); $gpu=(Get-CimInstance Win32_VideoController | Select-Object -First 1).Name; $disks=Get-PSDrive -PSProvider FileSystem | Where-Object {$_.Used -ne $null}; $diskHtml=($disks | ForEach-Object { $u=[math]::Round($_.Used/1GB,1); $f2=[math]::Round($_.Free/1GB,1); $t=[math]::Round(($_.Used+$_.Free)/1GB,1); $pct=if($t -gt 0){[math]::Round($_.Used/($_.Used+$_.Free)*100)}else{0}; $bar='#'*[math]::Round($pct/5)+'.'*(20-[math]::Round($pct/5)); \"<tr><td>$($_.Name):</td><td>${u} Go utilise / ${t} Go total</td><td><span style='color:$(if($pct -gt 90){"red"}elseif($pct -gt 70){"orange"}else{"green"})'>[$bar] $pct%</span></td></tr>\" }) -join ''; $ips=(Get-NetIPAddress -AddressFamily IPv4 -EA SilentlyContinue | Where-Object {$_.IPAddress -ne '127.0.0.1'} | ForEach-Object {\"<li>$($_.InterfaceAlias) : <b>$($_.IPAddress)</b></li>\"}) -join ''; $wifi=(netsh wlan show interfaces 2>$null | Select-String 'SSID' | Select-Object -First 1); $wifiName=if($wifi){($wifi -split ':')[1].Trim()}else{'Non connecte'}; $apps=(Get-ItemProperty 'HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*','HKLM:\Software\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*','HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*' -EA SilentlyContinue | Where-Object {$_.DisplayName} | Sort-Object DisplayName | Select-Object DisplayName,DisplayVersion -Unique); $appHtml=($apps | ForEach-Object {\"<tr><td>$($_.DisplayName)</td><td>$($_.DisplayVersion)</td></tr>\"}) -join ''; $users=(Get-LocalUser -EA SilentlyContinue | ForEach-Object {\"<tr><td>$($_.Name)</td><td>$(if($_.Enabled){'Actif'}else{'Desactive'})</td><td>$($_.LastLogon)</td></tr>\"}) -join ''; $errs=(Get-WinEvent -FilterHashtable @{LogName='System';Level=1,2;StartTime=(Get-Date).AddDays(-7)} -EA SilentlyContinue | Select-Object -First 20 | ForEach-Object {\"<tr><td>$($_.TimeCreated.ToString('dd/MM HH:mm'))</td><td>$($_.Id)</td><td>$($_.ProviderName)</td><td>$($_.Message.Split([char]10)[0].Trim().Substring(0,[math]::Min(80,$_.Message.Length)))</td></tr>\"}) -join ''; $html=\"<!DOCTYPE html><html lang='fr'><head><meta charset='UTF-8'><title>Rapport PC - $cn</title><style>body{font-family:Segoe UI,sans-serif;background:#0d1117;color:#e6edf3;margin:0;padding:20px}h1{color:#58a6ff;border-bottom:2px solid #1f6feb;padding-bottom:10px}h2{color:#79c0ff;margin-top:30px;background:#161b22;padding:10px;border-radius:6px}table{width:100%;border-collapse:collapse;margin:10px 0}th{background:#1f6feb;color:white;padding:8px;text-align:left}td{padding:6px 8px;border-bottom:1px solid #21262d}tr:hover{background:#1c2128}.badge{display:inline-block;padding:3px 8px;border-radius:12px;font-size:12px;background:#1f6feb}.info{background:#161b22;padding:15px;border-radius:8px;margin:10px 0;border-left:4px solid #1f6feb}</style></head><body><h1>Rapport PC - $cn</h1><div class='info'><b>Genere le :</b> $now &nbsp;|&nbsp; <b>OS :</b> $($os.Caption) $($os.Version) &nbsp;|&nbsp; <b>Uptime :</b> $([math]::Round((New-TimeSpan $os.LastBootUpTime (Get-Date)).TotalHours,1))h</div><h2>Materiel</h2><table><tr><th>Composant</th><th>Detail</th></tr><tr><td>CPU</td><td>$cpu</td></tr><tr><td>RAM</td><td>${ram} Go</td></tr><tr><td>GPU</td><td>$gpu</td></tr><tr><td>Wi-Fi</td><td>$wifiName</td></tr></table><h2>Disques</h2><table><tr><th>Lecteur</th><th>Utilisation</th><th>Occupation</th></tr>$diskHtml</table><h2>Reseau</h2><ul>$ips</ul><h2>Comptes Utilisateurs</h2><table><tr><th>Utilisateur</th><th>Statut</th><th>Derniere connexion</th></tr>$users</table><h2>Logiciels Installes ($($apps.Count))</h2><table><tr><th>Logiciel</th><th>Version</th></tr>$appHtml</table><h2>Erreurs Systeme (7 derniers jours)</h2><table><tr><th>Date</th><th>ID</th><th>Source</th><th>Message</th></tr>$errs</table></body></html>\"; $html | Out-File $f -Encoding UTF8; Write-Host ('  [OK] Rapport genere : '+$f) -f Green"
+echo.
+echo  [OK] Rapport HTML genere sur le Bureau !
+powershell -Command "Start-Process '%USERPROFILE%\Desktop\Rapport_PC_%COMPUTERNAME%.html'"
 echo.
 pause
 goto system_tools
