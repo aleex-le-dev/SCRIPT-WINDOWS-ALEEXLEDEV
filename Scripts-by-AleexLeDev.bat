@@ -44,59 +44,66 @@ if %errorlevel% neq 0 (
 )
 
 
-set "t[2]=sys_report:Diagnostic Systeme Complet~Affiche les specifications et l'etat de sante global"
-set "t[3]=sys_diag_network:Diagnostic Reseau~Test de connexion (Local, Box, Internet, DNS)"
-set "t[4]=sys_battery_report:Rapport de Batterie~Usure, Sante et stats en temps reel"
-set "t[5]=sys_bitlocker_check:Verificateur BitLocker~Verifiez l'etat de chiffrement de vos partitions"
-set "t[6]=sys_event_log:Journaux d'Erreurs Windows~Affiche les erreurs critiques recentes (24h / 7 jours)"
-set "t[7]=sys_hw_test:Test des Composants PC~Benchmark disque, RAM, CPU et SMART en un clic"
-set "t[8]=sys_defender:Gestionnaire Windows Defender~Scan rapide/complet CLI, MAJ signatures, menaces detectees"
-set "t[9]=sys_full_report:Rapport Complet Tout-en-Un~Export HTML du rapport complet PC (HW, SW, Reseau, Users)"
-set "t[10]=---:REPARATION"
-set "t[11]=sys_rescue_menu:Outil Reparation Windows (Rescue)~Menu multi-outils (SFC, DISM, CHKDSK, Reset WinUpdate...)"
-set "t[12]=sys_repair_icons:Reparation Cache Icones~Corrige les icones/miniatures corrompues"
-set "t[13]=sys_winre:Mode Reparation (WinRE)~Demarrer dans l'environnement de reparation Windows (WinRE/BIOS/Boot Menu/Safe Mode...)"
-set "t[14]=---:NETTOYAGE ET OPTIMISATION"
-set "t[15]=sys_clean_unified:Nettoyage Complet Unifie~Disque, Temp, Registre, WU, DNS - tout en un menu"
-set "t[16]=sys_registry_cleanup:Nettoyage du Registre~Optimisation rapide et suppression des entrees mortes"
-set "t[17]=sys_tweaks_menu:Menu Optimisation Windows 11~Bloatwares, Telemetrie, Performances, Cortana"
-set "t[18]=sys_startup_manager:Programmes au Demarrage~Lister et desactiver les logiciels qui demarrent avec Windows"
-set "t[19]=---:RESEAU"
-set "t[20]=dns_manager:Gestionnaire DNS~Changer DNS Cloudflare/Google"
-set "t[21]=sys_network_menu:Menu de Depannage Reseau~Outils avances (DNS, ARP, TCP/IP, Autoreset)"
-set "t[22]=---:DISQUE"
-set "t[23]=disk_manager:Formatteur de Disque (DISKPART)~Formater un disque de facon securisee"
-set "t[24]=res_chkdsk:Planifier un CHKDSK (C:)~Verification disque au prochain demarrage (CHKDSK /F /R)"
-set "t[25]=---:APPLICATIONS"
-set "t[26]=winget_manager:Mises a jour d'applications~Mettre a jour vos logiciels via Winget"
-set "t[27]=app_installer:Installateur d'applications~Installer des logiciels par categorie via Winget"
-set "t[28]=---:COMPTES ET SECURITE"
-set "t[29]=sys_passwords_menu:Extracteurs de mots de passe~Outils Powershell (Credentials, Wi-Fi, Nirsoft)"
-set "t[30]=sys_unlock_notes:Recuperation de Compte bloque~Instructions pour reprendre controle sans mot de passe"
-set "t[31]=um_menu:Gestion utilisateurs locaux~Panneau de gestion local (Admin, Pass, Ajouts)"
-set "t[32]=---:MATERIEL"
-set "t[33]=touch_screen_manager:Gestionnaire Ecran Tactile~Activation et desactivation du pilote tactile"
-set "t[34]=sys_print_manager:Gestionnaire d'Imprimantes~Lister, vider la file d'attente et supprimer des imprimantes"
-set "t[35]=sys_power_plan:Gestionnaire Plan d'Alimentation~Equilibre, Performances, Ultimate Performance (mode cache Windows)"
-set "t[36]=---:EXTRACTION"
-set "t[37]=sys_win_key:Cle de licence~Recuperer vos differentes cles de produit"
-set "t[38]=sys_drivers:Extraction des pilotes~Sauvegarde de tous les fichiers pilotes natifs"
-set "t[39]=sys_export_software:Export Liste des Logiciels~Exporte la liste de tous les programmes installes en CSV/TXT"
-set "t[40]=sys_export_wifi_apps:Export Wi-Fi + Logiciels (TXT)~Genere 2 fichiers TXT sur le Bureau en un seul clic"
-set "t[41]=---:PERSONNALISATION"
-set "t[42]=context_menu:Menu contextuel Windows 11~Classic/Modern"
-set "t[43]=sys_god_mode:Dossier God Mode~Creer le raccourci ultime des parametres"
+set "t[2]=---:DIAGNOSTIC"
+set "t[3]=sys_diagnostic_menu:Menu de diagnostic~Regroupe 8 outils d'analyse (Systeme, Reseau, Sante...)"
+set "t[4]=---:REPARATION"
+set "t[5]=sys_rescue_menu:Outil Reparation Windows (Rescue)~Menu multi-outils (SFC, DISM, CHKDSK, Reset WinUpdate...)"
+set "t[6]=sys_repair_icons:Reparation Cache Icones~Corrige les icones/miniatures corrompues"
+set "t[7]=sys_winre:Mode Reparation (WinRE)~Demarrer dans l'environnement de reparation Windows (WinRE/BIOS/Boot Menu/Safe Mode...)"
+set "t[8]=---:NETTOYAGE ET OPTIMISATION"
+set "t[9]=sys_opti_menu:Menu de Nettoyage et Optimisation~Regroupe le nettoyage (Cache, Registre) et l'optimisation (Tweaks, Demarrage)"
+set "t[10]=---:RESEAU"
+set "t[11]=dns_manager:Gestionnaire DNS~Changer DNS Cloudflare/Google"
+set "t[12]=sys_network_menu:Menu de Depannage Reseau~Outils avances (DNS, ARP, TCP/IP, Autoreset)"
+set "t[13]=---:DISQUE"
+set "t[14]=disk_manager:Formatteur de Disque (DISKPART)~Formater un disque de facon securisee"
+set "t[15]=res_chkdsk:Planifier un CHKDSK (C:)~Verification disque au prochain demarrage (CHKDSK /F /R)"
+set "t[16]=---:APPLICATIONS"
+set "t[17]=winget_manager:Mises a jour d'applications~Mettre a jour vos logiciels via Winget"
+set "t[18]=app_installer:Installateur d'applications~Installer des logiciels par categorie via Winget"
+set "t[19]=---:COMPTES ET SECURITE"
+set "t[20]=sys_passwords_menu:Extracteurs de mots de passe~Outils Powershell (Credentials, Wi-Fi, Nirsoft)"
+set "t[21]=sys_unlock_notes:Recuperation de Compte bloque~Instructions pour reprendre controle sans mot de passe"
+set "t[22]=um_menu:Gestion utilisateurs locaux~Panneau de gestion local (Admin, Pass, Ajouts)"
+set "t[23]=---:MATERIEL"
+set "t[24]=touch_screen_manager:Gestionnaire Ecran Tactile~Activation et desactivation du pilote tactile"
+set "t[25]=sys_print_manager:Gestionnaire d'Imprimantes~Lister, vider la file d'attente et supprimer des imprimantes"
+set "t[26]=sys_power_plan:Gestionnaire Plan d'Alimentation~Equilibre, Performances, Ultimate Performance (mode cache Windows)"
+set "t[27]=---:EXTRACTION ET SAUVEGARDE"
+set "t[28]=sys_export_menu:Menu des Extractions~Exporte les cles Windows, listes de logiciels, reseaux Wi-Fi et pilotes sur le Bureau"
+set "t[29]=---:PERSONNALISATION"
+set "t[30]=context_menu:Menu contextuel Windows 11~Classic/Modern"
+set "t[31]=sys_god_mode:Dossier God Mode~Creer le raccourci ultime des parametres"
 :: Sous-items pour gestion des favoris individuels
-set "t[44]=dump_credman:Gestionnaire d'identifiants (Windows)~Extrait le Credential Manager Windows (WCMDump):HIDDEN"
-set "t[45]=dump_wifi:Extraction reseaux Wi-Fi (Powershell)~Script WWP puissant listant psw et noms:HIDDEN"
-set "t[46]=sys_nirsoft_pw:WebBrowserPassView (Classique Nirsoft)~Ancien utilitaire graphique pour les mots de passe:HIDDEN"
-set "t[47]=res_sfc:Scan RAPIDE du systeme~SFC /scannow (Verification systeme rapide):HIDDEN"
-set "t[48]=res_dism_check:Verification image base~DISM /CheckHealth et /ScanHealth (Analyse image):HIDDEN"
-set "t[49]=res_dism_restore:Reparation profonde~DISM /RestoreHealth (Reparation fichiers systeme):HIDDEN"
-set "t[50]=res_temp_clean:Nettoyage massif (Temp/Cache)~Purge des fichiers temporaires et cache Windows Update:HIDDEN"
-set "t[51]=res_wu_reset:Reset Fix Windows Update~Reinitialisation forcee des composants Windows Update:HIDDEN"
-set "t[52]=sys_cleanmgr:Nettoyage de disque (Classique)~Lancement classique de l'utilitaire de nettoyage Windows:HIDDEN"
-set "total_tools=52"
+set "t[32]=dump_credman:Gestionnaire d'identifiants (Windows)~Extrait le Credential Manager Windows (WCMDump):HIDDEN"
+set "t[33]=dump_wifi:Extraction reseaux Wi-Fi (Powershell)~Script WWP puissant listant psw et noms:HIDDEN"
+set "t[34]=sys_nirsoft_pw:WebBrowserPassView (Classique Nirsoft)~Ancien utilitaire graphique pour les mots de passe:HIDDEN"
+set "t[35]=res_sfc:Scan RAPIDE du systeme~SFC /scannow (Verification systeme rapide):HIDDEN"
+set "t[36]=res_dism_check:Verification image base~DISM /CheckHealth et /ScanHealth (Analyse image):HIDDEN"
+set "t[37]=res_dism_restore:Reparation profonde~DISM /RestoreHealth (Reparation fichiers systeme):HIDDEN"
+set "t[38]=res_temp_clean:Nettoyage massif (Temp/Cache)~Purge des fichiers temporaires et cache Windows Update:HIDDEN"
+set "t[39]=res_wu_reset:Reset Fix Windows Update~Reinitialisation forcee des composants Windows Update:HIDDEN"
+set "t[40]=sys_cleanmgr:Nettoyage de disque (Classique)~Lancement classique de l'utilitaire de nettoyage Windows:HIDDEN"
+:: Nouveaux items (ex-principaux) transferes en DIAGNOSTIC
+set "t[41]=sys_report:Apercu de la configuration PC~Affiche les specifications et l'etat de sante materiel:HIDDEN"
+set "t[42]=sys_diag_network:Diagnostic Reseau~Test de connexion (Local, Box, Internet, DNS):HIDDEN"
+set "t[43]=sys_battery_report:Rapport de Batterie~Usure, Sante et stats en temps reel:HIDDEN"
+set "t[44]=sys_bitlocker_check:Verificateur BitLocker~Verifiez l'etat de chiffrement de vos partitions:HIDDEN"
+set "t[45]=sys_event_log:Journaux d'Erreurs Windows~Affiche les erreurs critiques recentes (24h / 7 jours):HIDDEN"
+set "t[46]=sys_hw_test:Test des Composants PC~Benchmark disque, RAM, CPU et SMART en un clic:HIDDEN"
+set "t[47]=sys_defender:Gestionnaire Windows Defender~Scan rapide/complet CLI, MAJ signatures, menaces detectees:HIDDEN"
+set "t[48]=sys_full_report:Generer Rapport HTML (Tout-en-Un)~Export HTML de l'ordinateur complet (Materiel, OS, Reseau):HIDDEN"
+:: Nouveaux items (ex-principaux) transferes en NETTOYAGE
+set "t[49]=sys_clean_unified:Nettoyage Complet Unifie~Disque, Temp, Registre, WU, DNS - tout en un menu:HIDDEN"
+set "t[50]=sys_registry_cleanup:Nettoyage du Registre~Optimisation rapide et suppression des entrees mortes:HIDDEN"
+set "t[51]=sys_tweaks_menu:Menu Optimisation Windows 11~Bloatwares, Telemetrie, Performances, Cortana:HIDDEN"
+set "t[52]=sys_startup_manager:Programmes au Demarrage~Lister et desactiver les logiciels qui demarrent avec Windows:HIDDEN"
+:: Nouveaux items (ex-principaux) transferes en EXTRACTION
+set "t[53]=sys_win_key:Cle de licence~Recuperer vos differentes cles de produit:HIDDEN"
+set "t[54]=sys_drivers:Extraction des pilotes~Sauvegarde de tous les fichiers pilotes natifs:HIDDEN"
+set "t[55]=sys_export_software:Export Liste des Logiciels~Exporte la liste de tous les programmes installes en CSV/TXT:HIDDEN"
+set "t[56]=sys_export_wifi_apps:Export Wi-Fi + Logiciels (TXT)~Genere 2 fichiers TXT sur le Bureau en un seul clic:HIDDEN"
+set "total_tools=56"
 
 
 
@@ -1384,7 +1391,7 @@ if "%tw_choice%"=="5" goto tweak_darkmode
 if "%tw_choice%"=="6" goto tweak_hibernation
 if "%tw_choice%"=="7" goto tweak_bloatware
 if "%tw_choice%"=="8" goto tweak_ads
-if "%tw_choice%"=="0" goto system_tools
+if "%tw_choice%"=="0" goto sys_opti_menu
 goto sys_tweaks_menu
 
 :tweak_telemetry
@@ -1521,23 +1528,23 @@ echo.
 set /p reg_choice=Votre choix: 
 
 for %%A in (%reg_choice%) do set reg_choice=%%A
-if /i "%reg_choice%"=="0" goto system_tools
+if /i "%reg_choice%"=="0" goto sys_opti_menu
 if /i "%reg_choice%"=="A" goto delete_safe_reg_entries
 if /i "%reg_choice%"=="B" goto review_safe_reg_entries
 if /i "%reg_choice%"=="C" goto create_reg_backup
 if /i "%reg_choice%"=="D" goto restore_reg_backup
 if /i "%reg_choice%"=="E" goto scan_registry
-if "%reg_choice%"=="" goto system_tools
+if "%reg_choice%"=="" goto sys_opti_menu
 
 echo Saisie invalide, retour au menu.
 pause
-goto system_tools
+goto sys_registry_cleanup
 
 :delete_safe_reg_entries
 if %safe_count%==0 (
     echo Aucune entree sure a supprimer.
     pause
-    goto system_tools
+    goto sys_registry_cleanup
 )
 echo Suppression de toutes les entrees sures detectees...
 for /L %%i in (1,1,%safe_count%) do (
@@ -1547,7 +1554,7 @@ for /L %%i in (1,1,%safe_count%) do (
 )
 echo Suppression terminee.
 pause
-goto system_tools
+goto sys_registry_cleanup
 
 :review_safe_reg_entries
 cls
@@ -1561,7 +1568,7 @@ if /i "%confirm_reg%"=="Y" goto delete_safe_reg_entries
 if /i "%confirm_reg%"=="O" goto delete_safe_reg_entries
 echo Operation annulee.
 pause
-goto system_tools
+goto sys_registry_cleanup
 
 :create_reg_backup
 set backupName=RegistryBackup_%date:~-4,4%-%date:~-7,2%-%date:~-10,2%_%time:~0,2%-%time:~3,2%.reg
@@ -1569,7 +1576,7 @@ echo Creation de la sauvegarde: %backupFolder%\%backupName%...
 reg export HKLM "%backupFolder%\%backupName%" /y
 echo Sauvegarde creee avec succes.
 pause
-goto system_tools
+goto sys_registry_cleanup
 
 :restore_reg_backup
 echo Sauvegardes disponibles:
@@ -1584,7 +1591,7 @@ if exist "%backupFolder%\%backupFile%" (
     echo Fichier de sauvegarde introuvable. Verifiez le nom et reessayez.
 )
 pause
-goto system_tools
+goto sys_registry_cleanup
 
 :scan_registry
 cls
@@ -1593,7 +1600,7 @@ sfc /scannow
 dism /online /cleanup-image /checkhealth
 echo Verification terminee. Si des erreurs ont ete trouvees, redemarrez votre PC.
 pause
-goto system_tools
+goto sys_registry_cleanup
 
 :sys_drivers
 cls
@@ -1603,7 +1610,45 @@ echo.
 echo Le rapport des pilotes a ete enregistre ici :
 echo %USERPROFILE%\Desktop\Pilotes_installes.txt
 pause
-goto system_tools
+goto sys_export_menu
+
+:sys_diagnostic_menu
+cls
+set "opts=[--- ANALYSE SYSTEME ET RAPPORTS ---]"
+set "opts=%opts%;Apercu de la configuration PC~Affiche les specifications et l'etat de sante materiel"
+set "opts=%opts%;Diagnostic Reseau~Test de connexion (Local, Box, Internet, DNS)"
+set "opts=%opts%;Rapport de Batterie~Usure, Sante et stats en temps reel"
+set "opts=%opts%;Verificateur BitLocker~Verifiez l'etat de chiffrement de vos partitions"
+set "opts=%opts%;Journaux d'Erreurs Windows~Affiche les erreurs critiques recentes (24h / 7 jours)"
+set "opts=%opts%;Test des Composants PC~Benchmark disque, RAM, CPU et SMART en un clic"
+set "opts=%opts%;Gestionnaire Windows Defender~Scan rapide/complet CLI, MAJ signatures, menaces detectees"
+set "opts=%opts%;Generer Rapport HTML (Tout-en-Un)~Export HTML de l'ordinateur complet (Materiel, OS, Reseau)"
+
+call :DynamicMenu "MENU DE DIAGNOSTIC SYSTEME" "%opts%"
+set "diag_choice=%errorlevel%"
+
+if "%diag_choice%"=="1" goto sys_report
+if "%diag_choice%"=="2" goto sys_diag_network
+if "%diag_choice%"=="3" goto sys_battery_report
+if "%diag_choice%"=="4" goto sys_bitlocker_check
+if "%diag_choice%"=="5" goto sys_event_log
+if "%diag_choice%"=="6" goto sys_hw_test
+if "%diag_choice%"=="7" goto sys_defender
+if "%diag_choice%"=="8" goto sys_full_report
+if "%diag_choice%"=="0" goto system_tools
+
+if %diag_choice% GEQ 200 (
+    set /a "toggle_idx=%diag_choice%-200"
+    if "!toggle_idx!"=="1" call :ToggleFav "sys_report"
+    if "!toggle_idx!"=="2" call :ToggleFav "sys_diag_network"
+    if "!toggle_idx!"=="3" call :ToggleFav "sys_battery_report"
+    if "!toggle_idx!"=="4" call :ToggleFav "sys_bitlocker_check"
+    if "!toggle_idx!"=="5" call :ToggleFav "sys_event_log"
+    if "!toggle_idx!"=="6" call :ToggleFav "sys_hw_test"
+    if "!toggle_idx!"=="7" call :ToggleFav "sys_defender"
+    if "!toggle_idx!"=="8" call :ToggleFav "sys_full_report"
+)
+goto sys_diagnostic_menu
 
 :sys_report
 cls
@@ -1633,7 +1678,37 @@ echo.
 echo [OK] Le cache des icones a ete vide !
 echo Il se reconstruira progressivement et reparera vos icones.
 pause
-goto system_tools
+goto sys_export_menu
+
+REM ===================================================================
+REM              MENU DES EXTRACTIONS ET SAUVEGARDES
+REM ===================================================================
+:sys_export_menu
+cls
+set "opts=[--- INFORMATIONS ET CLES ---]"
+set "opts=%opts%;Cle Windows et Office~Affiche ou recupere vos differentes cles de produit"
+set "opts=%opts%;Extraction des pilotes~Exporte la liste de tous les pilotes natifs installes"
+set "opts=%opts%;[--- LISTES DE LOGICIELS ET RESEAUX ---]"
+set "opts=%opts%;Export Liste des Logiciels~Exporte tous les programmes installes en fichier texte ou tableur"
+set "opts=%opts%;[BUREAU] Export Wi-Fi + Logiciels~Genere directement 2 fichiers TXT sur le Bureau (Rapide)"
+
+call :DynamicMenu "MENU EXTRACTION ET SAUVEGARDE" "%opts%"
+set "exp_choice=%errorlevel%"
+
+if "%exp_choice%"=="1" goto sys_win_key
+if "%exp_choice%"=="2" goto sys_drivers
+if "%exp_choice%"=="3" goto sys_export_software
+if "%exp_choice%"=="4" goto sys_export_wifi_apps
+if "%exp_choice%"=="0" goto system_tools
+
+if %exp_choice% GEQ 200 (
+    set /a "toggle_idx=%exp_choice%-200"
+    if "!toggle_idx!"=="1" call :ToggleFav "sys_win_key"
+    if "!toggle_idx!"=="2" call :ToggleFav "sys_drivers"
+    if "!toggle_idx!"=="3" call :ToggleFav "sys_export_software"
+    if "!toggle_idx!"=="4" call :ToggleFav "sys_export_wifi_apps"
+)
+goto sys_export_menu
 
 :sys_win_key
 set "opts=Cle Windows OEM (Incrustee au BIOS);Cle Windows Actuelle (Installee);Cle Produit Office (via CMD)"
@@ -1643,7 +1718,7 @@ set "wk_choice=%errorlevel%"
 if "%wk_choice%"=="1" goto win_key_oem
 if "%wk_choice%"=="2" goto win_key_registry
 if "%wk_choice%"=="3" goto win_key_office
-if "%wk_choice%"=="0" goto system_tools
+if "%wk_choice%"=="0" goto sys_export_menu
 goto sys_win_key
 
 :win_key_oem
@@ -2085,7 +2160,7 @@ echo.
 set "opts=Fichier TXT (lisible)~Liste simple texte sur le Bureau;Fichier CSV (Excel)~Format tableur avec colonnes separees par virgules"
 call :DynamicMenu "EXPORT LOGICIELS INSTALLES" "%opts%"
 set "sw_fmt=%errorlevel%"
-if "%sw_fmt%"=="0" goto system_tools
+if "%sw_fmt%"=="0" goto sys_export_menu
 
 cls
 echo ================================================
@@ -2110,7 +2185,7 @@ if "%sw_fmt%"=="1" (
 )
 echo.
 pause
-goto system_tools
+goto sys_export_menu
 
 REM ===================================================================
 REM              GESTIONNAIRE D'IMPRIMANTES
@@ -2224,7 +2299,7 @@ set "opts=Desactiver via le Gestionnaire des taches~Ouvre directement Ctrl+Shift
 call :DynamicMenu "ACTION SUR LES PROGRAMMES DEMARRAGE" "%opts%"
 set "su_choice=%errorlevel%"
 
-if "%su_choice%"=="0" goto system_tools
+if "%su_choice%"=="0" goto sys_opti_menu
 if "%su_choice%"=="1" (
     powershell -Command "Start-Process taskmgr"
     timeout /t 2 /nobreak >nul
@@ -2696,7 +2771,7 @@ if exist "%USERPROFILE%\Desktop\Mots_de_passe_WiFi.txt"  echo  [OK] Mots_de_pass
 echo ================================================
 echo.
 pause
-goto system_tools
+goto sys_export_menu
 
 REM ===================================================================
 REM              MODE SANS ECHEC (TOGGLE) - CORRIGE
@@ -3013,6 +3088,36 @@ echo.
 pause & goto sys_power_plan
 
 REM ===================================================================
+REM              MENU DE NETTOYAGE ET OPTIMISATION
+REM ===================================================================
+:sys_opti_menu
+cls
+set "opts=[--- NETTOYAGE ET MAINTENANCE ---]"
+set "opts=%opts%;Nettoyage Complet Unifie~Ouvre le panneau de nettoyage complet (Disque, Temp, WU, DNS...)"
+set "opts=%opts%;Nettoyage du Registre~Optimisation rapide et suppression des entrees mortes"
+set "opts=%opts%;[--- OPTIMISATION SYSTEME ---]"
+set "opts=%opts%;Menu Optimisation Windows 11~Bloatwares, Telemetrie, Performances, Cortana"
+set "opts=%opts%;Programmes au Demarrage~Lister et desactiver les logiciels qui demarrent avec Windows"
+
+call :DynamicMenu "MENU NETTOYAGE ET OPTIMISATION" "%opts%"
+set "opti_choice=%errorlevel%"
+
+if "%opti_choice%"=="1" goto sys_clean_unified
+if "%opti_choice%"=="2" goto sys_registry_cleanup
+if "%opti_choice%"=="3" goto sys_tweaks_menu
+if "%opti_choice%"=="4" goto sys_startup_manager
+if "%opti_choice%"=="0" goto system_tools
+
+if %opti_choice% GEQ 200 (
+    set /a "toggle_idx=%opti_choice%-200"
+    if "!toggle_idx!"=="1" call :ToggleFav "sys_clean_unified"
+    if "!toggle_idx!"=="2" call :ToggleFav "sys_registry_cleanup"
+    if "!toggle_idx!"=="3" call :ToggleFav "sys_tweaks_menu"
+    if "!toggle_idx!"=="4" call :ToggleFav "sys_startup_manager"
+)
+goto sys_opti_menu
+
+REM ===================================================================
 REM              NETTOYAGE COMPLET UNIFIE
 REM ===================================================================
 :sys_clean_unified
@@ -3020,7 +3125,7 @@ cls
 set "opts=Fichiers Temporaires et Cache~Supprime temp Windows, prefetch et cache navigateurs;Nettoyage Windows Update~Supprime les anciens fichiers WU (libere souvent 5-20 Go);Cache DNS~Vide le cache de resolution DNS local;Nettoyage Disque (cleanmgr)~Utilitaire Windows classique de nettoyage;Registre Windows~Nettoie les entrees mortes / obsoletes;[TOUT EN UN] Nettoyage Complet~Execute tous les nettoyages ci-dessus en sequence"
 call :DynamicMenu "NETTOYAGE COMPLET UNIFIE" "%opts%"
 set "cl_c=%errorlevel%"
-if "%cl_c%"=="0" goto system_tools
+if "%cl_c%"=="0" goto sys_opti_menu
 if "%cl_c%"=="1" goto cl_temp
 if "%cl_c%"=="2" goto cl_wu
 if "%cl_c%"=="3" goto cl_dns
