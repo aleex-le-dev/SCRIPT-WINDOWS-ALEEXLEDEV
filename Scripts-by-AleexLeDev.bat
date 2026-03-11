@@ -12,12 +12,10 @@ title Boite a Scripts Windows - By ALEEXLEDEV (v3.0)
 color 0B
 mode con: cols=120 lines=60
 
-REM === DETECTION MODE SANS ECHEC (DOIT ETRE AVANT l'elevation admin) ===
-REM === En mode sans echec, net session echoue -> boucle RunAs infinie ===
-if defined SAFEBOOT_OPTION goto sys_safemode
-
 REM === AUTO-ELEVATION EN ADMINISTRATEUR ===
-net session >nul 2>&1
+REM Note : En mode sans echec, "net session" echoue meme en admin (service Serveur arrete).
+REM On utilise donc "fsutil dirty query" qui detecte avec fiabilite les droits Admin Windows.
+fsutil dirty query %systemdrive% >nul 2>&1
 if %errorlevel% neq 0 (
     cls
     echo.
@@ -43,6 +41,9 @@ if %errorlevel% neq 0 (
     exit /b
 )
 
+REM === DETECTION MODE SANS ECHEC ===
+REM Place APRES l'elevation admin pour pouvoir executer "bcdedit" avec les bons privileges !
+if defined SAFEBOOT_OPTION goto sys_safemode
 
 set "t[2]=---:DIAGNOSTIC"
 set "t[3]=sys_diagnostic_menu:Menu de diagnostic~Regroupe 8 outils d'analyse (Systeme, Reseau, Sante...)"
