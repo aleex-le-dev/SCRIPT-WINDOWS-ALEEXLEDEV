@@ -142,6 +142,7 @@ call :DynamicMenu "BOITE A SCRIPTS WINDOWS - By ALEEXLEDEV" "!opts!"
 set "main_choice=%errorlevel%"
 
 if "!main_choice!"=="0" goto exit_script
+if "!main_choice!"=="299" goto search_tools
 
 if !main_choice! GEQ 200 (
     set /a toggle_idx=!main_choice!-200
@@ -722,6 +723,7 @@ call :DynamicMenu "OUTILS SYSTEME AVANCES" "!opts!"
 set "sys_choice=%errorlevel%"
 
 if "!sys_choice!"=="0" goto menu_principal
+if "!sys_choice!"=="299" goto search_tools
 
 if !sys_choice! GEQ 200 (
     set /a toggle_idx=!sys_choice!-200
@@ -733,6 +735,38 @@ if !sys_choice! GEQ 200 (
 set "target=!sys_target[%sys_choice%]!"
 if defined target goto !target!
 goto system_tools
+REM ===================================================================
+REM              RECHERCHE GLOBALE D'OUTILS
+REM ===================================================================
+:search_tools
+cls
+set "search_lbl="
+setlocal DisableDelayedExpansion
+set "PS_SEARCH=%TEMP%\aleex_search.ps1"
+set "TOOLS_FILE=%TEMP%\aleex_tools_idx.txt"
+set t[ > "%TOOLS_FILE%"
+call :WriteSearchPS1 "%PS_SEARCH%" "%TOOLS_FILE%"
+endlocal
+setlocal EnableDelayedExpansion
+set "search_lbl="
+for /f "usebackq tokens=*" %%L in (`powershell -NoProfile -ExecutionPolicy Bypass -File "%PS_SEARCH%" 2^>nul`) do set "search_lbl=%%L"
+del "%PS_SEARCH%" >nul 2>&1
+del "%TOOLS_FILE%" >nul 2>&1
+REM Valider que search_lbl est un label connu (lettres/chiffres/underscore seulement)
+if defined search_lbl (
+    echo !search_lbl! | findstr /R /C:"^[a-zA-Z_][a-zA-Z0-9_]*$" >nul 2>&1
+    if !errorlevel!==0 (
+        endlocal
+        goto !search_lbl!
+    )
+)
+endlocal
+goto menu_principal
+
+:WriteSearchPS1
+REM Arguments: %1=chemin PS1 de sortie, %2=chemin fichier tools
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$tf='%~2'; $ps='%~1'; $c=''; $c+='$tf = '''+$tf+'''; $all = @();'; $c+='Get-Content $tf | ForEach-Object { if($_ -match ''t\[\d+\]=''){$sp=($_ -split ''='',2);if($sp.Count -gt 1){$v=$sp[1].Trim();'; $c+='if($v -notmatch ''^---:''){$p=$v -split ''~'',2;$ls=$p[0];$d=if($p.Count -gt 1){$p[1].TrimEnd('':HIDDEN'')}else{''''};'; $c+='$c2=$ls.IndexOf('':'');if($c2 -ge 0){$lb=$ls.Substring(0,$c2).Trim();$nm=$ls.Substring($c2+1).Trim();if($lb -ne ''---''){$all+=@{N=$nm;D=$d;L=$lb}}}}}}}; '; $c+='$list=[array]($all|Sort-Object{$_[''N'']});$q='''';$s=0; '; $c+='function Dsp{param($q,$r,$s);clear-host; '; $c+='Write-Host ''  ===================================================='' -f Cyan; '; $c+='Write-Host ''   [S] RECHERCHE D OUTILS - Boite a Scripts'' -f White; '; $c+='Write-Host ''  ===================================================='' -f Cyan; '; $c+='Write-Host '''';Write-Host (''  Recherche : ''+$q+''_'') -f Yellow;Write-Host ''''; '; $c+='if($r.Count -gt 0){Write-Host (''  ''+$r.Count+'' outil(s) trouve(s)'') -f Cyan;Write-Host ''''; '; $c+='for($i=0;$i -lt [math]::Min($r.Count,30);$i++){if($i -eq $s){Write-Host (''  >> [''+($i+1)+''] ''+$r[$i][''N'']) -NoNewline -f Black -b White;Write-Host ('' - ''+$r[$i][''D'']) -f Yellow -b White}else{Write-Host (''     [''+($i+1)+''] ''+$r[$i][''N'']) -NoNewline -f Gray;Write-Host ('' - ''+$r[$i][''D'']) -f DarkGray}}}'; $c+='else{if($q.Length -gt 0){Write-Host ''  Aucun resultat.'' -f DarkGray}else{Write-Host ''  Tapez pour filtrer les outils...'' -f DarkGray}}; '; $c+='Write-Host '''';Write-Host ''  ----------------------------------------------------'' -f Cyan; '; $c+='Write-Host ''  [LETTRES]Taper [FLECHES]Naviguer [ENTREE]Lancer [BACK]Effacer [ECHAP]Retour'' -f DarkGray}; '; $c+='$r2=@();while($true){$r2=if($q.Trim()){[array]($list|Where-Object{$_[''N''] -match [regex]::Escape($q) -or $_[''D''] -match [regex]::Escape($q)})}else{@()}; '; $c+='if($s -ge $r2.Count -and $r2.Count -gt 0){$s=$r2.Count-1};Dsp $q $r2 $s; '; $c+='$k=$Host.UI.RawUI.ReadKey(''NoEcho,IncludeKeyDown'');$v=$k.VirtualKeyCode; '; $c+='if($v -eq 27){clear-host;break} '; $c+='elseif($v -eq 8 -and $q.Length -gt 0){$q=$q.Substring(0,$q.Length-1);$s=0} '; $c+='elseif($v -eq 38 -and $r2.Count -gt 0){$s--;if($s -lt 0){$s=$r2.Count-1}} '; $c+='elseif($v -eq 40 -and $r2.Count -gt 0){$s++;if($s -ge $r2.Count){$s=0}} '; $c+='elseif($v -eq 13 -and $r2.Count -gt 0){clear-host;Write-Output $r2[$s][''L''];break} '; $c+='elseif([string]$k.Character -match ''[1-9]''){$ci=[int][string]$k.Character-1;if($ci -lt $r2.Count){clear-host;Write-Output $r2[$ci][''L''];break}} '; $c+='elseif($k.Character -ge '' '' -and $k.Character -le ''~''){$q+=$k.Character;$s=0}}'; Set-Content -LiteralPath $ps -Value $c -Encoding UTF8"
+exit /b
 
 REM ===================================================================
 REM              INSTALLATEUR D'APPLICATIONS (WINGET)
@@ -2881,7 +2915,7 @@ setlocal
 set "m_title=%~1"
 set "m_opts=%~2"
 
-set "ps_code=$o=($env:m_opts -split ';');$t=$env:m_title;$sel=@();for($i=0;$i -lt $o.Count;$i++){if($o[$i] -notmatch '^\[---'){$sel+=$i}};$sIdx=0;$pad=115;try{if([console]::WindowWidth -gt 5){$pad=[math]::Min([console]::WindowWidth-5, 115)}}catch{};$maxV=50;try{if([console]::WindowHeight -gt 0){$maxV=[math]::Max([console]::WindowHeight-10, 10)}}catch{};$topI=0;clear-host;try{$cY=[console]::WindowTop}catch{$cY=0};function D{ try{[console]::SetCursorPosition(0,$cY)}catch{};write-host '  ========================================================================================' -f Cyan;write-host ('   ' + $t) -f White;write-host '  ========================================================================================' -f Cyan;write-host (' '.PadRight($pad));$num=1;$printed=0;for($i=0;$i -lt $o.Count;$i++){$parts=$o[$i]-split'~';$s=$parts[0];$d='';if($parts.Count -gt 1){$d=$parts[1]};$isH=($s -match '^\[---');if(-not $isH){$cNum=$num;$num++};if($i -lt $topI -or $printed -ge $maxV){continue};if($isH){write-host (' '.PadRight($pad));$printed++;if($printed -lt $maxV){write-host ('       ' + $s).PadRight($pad) -f Cyan;$printed++}}else{$f_str='    ';if($s -match '^\(F\) '){$f_str='(F) ';$s=$s.Substring(4)};if($i -eq $sel[$sIdx]){$str='{0}>> [{1}] {2}  ' -f $f_str, $cNum, $s; write-host $str -NoNewline -f Black -b White; $rem=$pad-$str.Length; if($rem -lt 0){$rem=0}; $ds=if($d){'   - '+$d}else{''}; if($ds.Length -gt $rem){$ds=$ds.Substring(0,$rem)}; write-host $ds.PadRight($rem) -f Yellow}else{$str='{0}   [{1}] {2}  ' -f $f_str, $cNum, $s; write-host $str.PadRight($pad) -f Gray};$printed++}};while($printed -lt $maxV){write-host (' '.PadRight($pad));$printed++};write-host (' '.PadRight($pad));write-host '  ----------------------------------------------------------------------------------------' -f Cyan;write-host '   [FLECHES] Naviguer | [ENTREE] Valider | [F] Favoriser | [0/ECHAP] Retour                     ' -NoNewline -f DarkGray};while($true){$target=$sel[$sIdx];if($target -lt $topI){$topI=$target};$lines=0;for($i=$topI;$i -le $target;$i++){if($o[$i] -match '^\[---'){$lines+=2}else{$lines+=1}};while($lines -gt $maxV){if($o[$topI] -match '^\[---'){$lines-=2}else{$lines-=1};$topI++};D;$k=$Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown');$v=$k.VirtualKeyCode;if($v -eq 38){$sIdx--;if($sIdx -lt 0){$sIdx=$sel.Count-1}}elseif($v -eq 40){$sIdx++;if($sIdx -ge $sel.Count){$sIdx=0}}elseif($v -eq 13){clear-host;exit ($sIdx+1)}elseif($v -eq 27 -or $k.Character -eq '0'){clear-host;exit 0}elseif($v -eq 70){clear-host;exit (200+$sIdx+1)}elseif([string]$k.Character -match '^[1-9]$' -and [int][string]$k.Character -le $sel.Count){clear-host;exit ([int][string]$k.Character)}}"
+set "ps_code=$o=($env:m_opts -split ';');$t=$env:m_title;$sel=@();for($i=0;$i -lt $o.Count;$i++){if($o[$i] -notmatch '^\[---'){$sel+=$i}};$sIdx=0;$pad=115;try{if([console]::WindowWidth -gt 5){$pad=[math]::Min([console]::WindowWidth-5, 115)}}catch{};$maxV=50;try{if([console]::WindowHeight -gt 0){$maxV=[math]::Max([console]::WindowHeight-10, 10)}}catch{};$topI=0;clear-host;try{$cY=[console]::WindowTop}catch{$cY=0};function D{ try{[console]::SetCursorPosition(0,$cY)}catch{};write-host '  ========================================================================================' -f Cyan;write-host ('   ' + $t) -f White;write-host '  ========================================================================================' -f Cyan;write-host (' '.PadRight($pad));$num=1;$printed=0;for($i=0;$i -lt $o.Count;$i++){$parts=$o[$i]-split'~';$s=$parts[0];$d='';if($parts.Count -gt 1){$d=$parts[1]};$isH=($s -match '^\[---');if(-not $isH){$cNum=$num;$num++};if($i -lt $topI -or $printed -ge $maxV){continue};if($isH){write-host (' '.PadRight($pad));$printed++;if($printed -lt $maxV){write-host ('       ' + $s).PadRight($pad) -f Cyan;$printed++}}else{$f_str='    ';if($s -match '^\(F\) '){$f_str='(F) ';$s=$s.Substring(4)};if($i -eq $sel[$sIdx]){$str='{0}>> [{1}] {2}  ' -f $f_str, $cNum, $s; write-host $str -NoNewline -f Black -b White; $rem=$pad-$str.Length; if($rem -lt 0){$rem=0}; $ds=if($d){'   - '+$d}else{''}; if($ds.Length -gt $rem){$ds=$ds.Substring(0,$rem)}; write-host $ds.PadRight($rem) -f Yellow}else{$str='{0}   [{1}] {2}  ' -f $f_str, $cNum, $s; write-host $str.PadRight($pad) -f Gray};$printed++}};while($printed -lt $maxV){write-host (' '.PadRight($pad));$printed++};write-host (' '.PadRight($pad));write-host '  ----------------------------------------------------------------------------------------' -f Cyan;write-host '   [FLECHES] Naviguer | [ENTREE] Valider | [F] Favoriser | [S] Rechercher | [0/ECHAP] Retour    ' -NoNewline -f DarkGray};while($true){$target=$sel[$sIdx];if($target -lt $topI){$topI=$target};$lines=0;for($i=$topI;$i -le $target;$i++){if($o[$i] -match '^\[---'){$lines+=2}else{$lines+=1}};while($lines -gt $maxV){if($o[$topI] -match '^\[---'){$lines-=2}else{$lines-=1};$topI++};D;$k=$Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown');$v=$k.VirtualKeyCode;if($v -eq 38){$sIdx--;if($sIdx -lt 0){$sIdx=$sel.Count-1}}elseif($v -eq 40){$sIdx++;if($sIdx -ge $sel.Count){$sIdx=0}}elseif($v -eq 13){clear-host;exit ($sIdx+1)}elseif($v -eq 27 -or $k.Character -eq '0'){clear-host;exit 0}elseif($v -eq 70){clear-host;exit (200+$sIdx+1)}elseif($k.Character -eq 'S' -or $k.Character -eq 's'){clear-host;exit 299}elseif([string]$k.Character -match '^[1-9]$' -and [int][string]$k.Character -le $sel.Count){clear-host;exit ([int][string]$k.Character)}}"
 
 powershell -NoProfile -ExecutionPolicy Bypass -Command "%ps_code%"
 set "res=%errorlevel%"
