@@ -1848,16 +1848,16 @@ set "dl=%drive_letter%"
 if not "%dl:~-1%"==":" set "dl=%dl%:"
 
 cls
-echo Verification du statut BitLocker pour %dl% ...
-manage-bde -status %dl%
+echo Verification du statut BitLocker pour !dl! ...
+manage-bde -status !dl! > "%TEMP%\bde_status.txt" 2>&1
+type "%TEMP%\bde_status.txt"
 
-for /f "tokens=2 delims{:} " %%A in ('manage-bde -status %dl% ^| findstr /I "Conversion Status   Percentage Encrypted   Protection Status   Verrouille   Locked   Protection"') do set bl_state=%%A
-
-rem Detection simple via findstr si le volume est non chiffre
-manage-bde -status %dl% | findstr /I "Percentage Encrypted: 0%" >nul 2>&1
-if %errorlevel%==0 (
+rem Detection fiable (compatible FR/EN) pour eviter de proposer de dechiffrer un lecteur deja clair.
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$src=Get-Content '%TEMP%\bde_status.txt' -Raw; if ($src -match 'Protection\s+On' -or $src -match 'Protection\s+activ' -or $src -match '100\.0\s*%%' -or $src -match '100\,0\s*%%') { exit 1 } else { exit 0 }"
+if !errorlevel! equ 0 (
     echo.
-    echo Ce lecteur ne semble pas chiffre. Aucune action necessaire.
+    echo Ce lecteur ne semble pas chiffre ou n'a pas termine de l'etre. 
+    echo Aucune action necessaire.
     pause
     goto system_tools
 )
