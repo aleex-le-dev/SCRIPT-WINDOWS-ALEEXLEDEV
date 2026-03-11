@@ -3393,187 +3393,131 @@ goto sys_shortcuts_bureau
 
 
 REM ===================================================================
-REM         TEST ANTIVIRUS - FAUX POSITIFS (EICAR STANDARD)
+REM         TEST ANTIVIRUS - SCRIPTS AUTO-DECOMPRESSABLES 
 REM ===================================================================
 :sys_av_test
 cls
-set "opts=Test EICAR Standard~Cree le fichier de test officiel EICAR (inoffensif - reconnu par tous les AV);Test EICAR Compresse (ZIP)~EICAR emballe dans un ZIP pour tester la detection dans les archives;Test chaine suspecte (heuristique)~Cree un .bat avec des patterns heuristiques connus;Nettoyer les fichiers de test~Supprimer tous les fichiers de test crees;Voir l'etat~Dossier contenant les tests et leur statut"
-call :DynamicMenu "TEST ANTIVIRUS - FAUX POSITIFS EICAR (INOFFENSIF)" "%opts%"
+set "opts=Generer Launcher EICAR (Decompression auto)~Cree un script sur le Bureau qui extrait et lance une archive EICAR;Generer Launcher Heuristique (Comportemental)~Cree un script qui execute une sequence Powershell suspecte;Nettoyer les fichiers de test~Supprimer les dossiers et fichiers de test du Bureau"
+call :DynamicMenu "TEST ANTIVIRUS - SCRIPTS LANCEURS (INTERACTIFS)" "%opts%"
 set "av_c=%errorlevel%"
 if "%av_c%"=="0" goto menu_principal
-if "%av_c%"=="1" goto av_eicar
-if "%av_c%"=="2" goto av_eicar_zip
-if "%av_c%"=="3" goto av_heuristic
-if "%av_c%"=="4" goto av_clean
-if "%av_c%"=="5" goto av_status
+if "%av_c%"=="1" goto av_launcher_eicar
+if "%av_c%"=="2" goto av_launcher_heur
+if "%av_c%"=="3" goto av_clean
 goto sys_av_test
 
-:av_eicar
+:av_launcher_eicar
 cls
 echo.
 echo  ================================================
-echo   TEST EICAR STANDARD
+echo   GENERATION DU LAUNCHER EICAR (AUTO-EXTRACT)
 echo  ================================================
-echo  Source : https://www.eicar.org/download-anti-malware-testfile/
-echo  Statut : 100%% INOFFENSIF - Chaine de test officielle
 echo.
-echo  Ce fichier N'EST PAS un virus. Il contient uniquement
-echo  la chaine de test EICAR reconnue par tous les antivirus
-echo  comme signature de test standardisee (CARO standard).
-echo.
-set "AVTEST_DIR=%USERPROFILE%\Desktop\AV_Tests"
+set "AVTEST_DIR=%USERPROFILE%\Desktop\Test_Antivirus"
 if not exist "%AVTEST_DIR%" mkdir "%AVTEST_DIR%"
-REM Ecriture de la chaine EICAR en plusieurs parties pour eviter la detection du script lui-meme
-set "E1=X5O!P%%@AP"
-set "E2=[4\PZX54(P^)"
-set "E3=7CC)7}$EICAR"
-set "E4=-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*"
-echo %E1%%E2%%E3%%E4%> "%AVTEST_DIR%\EICAR_test.com"
-echo.
-if exist "%AVTEST_DIR%\EICAR_test.com" (
-    echo  [OK] Fichier cree : %AVTEST_DIR%\EICAR_test.com
-    echo.
-    echo  RESULTAT ATTENDU :
-    echo  - Si l'antivirus fonctionne ^: le fichier sera SUPPRIME/BLOQUE
-    echo  - Si le fichier reste present ^: votre AV ne detecte pas EICAR
-    echo  - Attendez 5-10 secondes puis appuyez sur une touche...
-) else (
-    echo  [BLOQUE] Votre antivirus a SUPPRIME le fichier instantanement !
-    echo.
-    echo  [SUCCES] Votre antivirus est ACTIF et fonctionne correctement.
-)
-echo.
-pause
-REM Verifier apres la pause
-if exist "%AVTEST_DIR%\EICAR_test.com" (
-    echo.
-    echo  [AVERTISSEMENT] Le fichier est encore present apres le delai.
-    echo  Votre antivirus n'a peut-etre pas detecte la menace EICAR.
-    echo  Verifiez que la protection en temps reel est activee.
-    echo.
-    pause
-)
-goto sys_av_test
 
-:av_eicar_zip
-cls
-echo.
-echo  ================================================
-echo   TEST EICAR DANS UN FICHIER ZIP
-echo  ================================================
-echo  Teste si votre AV analyse l'interieur des archives.
-echo.
-set "AVTEST_DIR=%USERPROFILE%\Desktop\AV_Tests"
-if not exist "%AVTEST_DIR%" mkdir "%AVTEST_DIR%"
-set "E1=X5O!P%%@AP"
-set "E2=[4\PZX54(P^)"
-set "E3=7CC)7}$EICAR"
-set "E4=-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*"
-echo %E1%%E2%%E3%%E4%> "%TEMP%\eicar_inner.com"
-powershell -NoProfile -ExecutionPolicy Bypass -Command ^
-    "try{" ^
-    "  Compress-Archive -Path \"%TEMP%\eicar_inner.com\" -DestinationPath \"%AVTEST_DIR%\EICAR_test.zip\" -Force;" ^
-    "  Remove-Item \"%TEMP%\eicar_inner.com\" -Force -EA SilentlyContinue;" ^
-    "  Write-Host '  [OK] Archive ZIP creee : AV_Tests\EICAR_test.zip' -f Green;" ^
-    "  Write-Host '';" ^
-    "  Write-Host '  RESULTAT ATTENDU :' -f Cyan;" ^
-    "  Write-Host '  - AV actif sur archives : le ZIP sera bloque/supprime' -f Yellow;" ^
-    "  Write-Host '  - AV sans analyse ZIP   : le fichier restera present' -f Yellow" ^
-    "}catch{Write-Host ('  [ERREUR] '+$_.Exception.Message) -f Red}"
-echo.
-pause
-goto sys_av_test
-
-:av_heuristic
-cls
-echo.
-echo  ================================================
-echo   TEST HEURISTIQUE (PATTERNS SUSPECTS)
-echo  ================================================
-echo  Cree des fichiers avec des patterns heuristiques
-echo  similaires a ceux qui avaient declenche la fausse
-echo  alerte sur ce script (PowhidSubExec).
-echo.
-echo  OBJECTIF : Verifier si votre AV reagit aux patterns
-echo  heuristiques sans fichier EICAR.
-echo.
-set "AVTEST_DIR=%USERPROFILE%\Desktop\AV_Tests"
-if not exist "%AVTEST_DIR%" mkdir "%AVTEST_DIR%"
-REM Fichier 1 : pattern set variable > temp (heuristique PowhidSubExec)
+echo  [1/2] Creation du script Lanceur...
 (
     echo @echo off
-    echo REM === TEST HEURISTIQUE 1 : set + redirection temp ===
-    echo REM Ce fichier est un test de detectio heuristique
-    echo REM Il ne contient aucun code malveillant
-    echo set "TEST_VAR=valeur_test"
-    echo echo %%TEST_VAR%% ^> "%%TEMP%%\heuristic_test_output.txt"
-    echo powershell -NoProfile -Command "Write-Host 'Test heuristique 1 OK' -f Green"
-    echo del "%%TEMP%%\heuristic_test_output.txt" ^>nul 2^>^&1
-    echo exit /b 0
-) > "%AVTEST_DIR%\heuristic_test1.bat"
-REM Fichier 2 : pattern powershell + encodage base64 (souvent heuristique)
-powershell -NoProfile -ExecutionPolicy Bypass -Command ^
-    "$code='# Test heuristique - Script inoffensif\r\n# Simule un pattern de detection heuristique\r\nWrite-Host [HEURISTIC TEST 2] -f Cyan\r\nWrite-Host Ce script est 100%% inoffensif -f Green\r\n';" ^
-    "$b64=[Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($code));" ^
-    "('powershell -EncodedCommand '+$b64) | Out-File \"%AVTEST_DIR%\heuristic_test2_b64.bat\" -Encoding ASCII;" ^
-    "Write-Host '  [OK] heuristic_test1.bat cree' -f Green;" ^
-    "Write-Host '  [OK] heuristic_test2_b64.bat cree' -f Green"
+    echo title Test Antivirus - Action en cours...
+    echo color 0E
+    echo echo ========================================================
+    echo echo   TEST ANTIVIRUS : DECOMPRESSION ET EXECUTION
+    echo echo ========================================================
+    echo echo.
+    echo echo Ce script va decompresser automatiquement une archive EICAR
+    echo echo et tenter de lancer le fichier contenu.
+    echo echo.
+    echo echo L'Antivirus devrait se manifester IMMMDIATEMENT !
+    echo echo.
+    echo echo [ACTION] Generation directe du fichier EICAR offusque...
+    echo echo -----BEGIN CERTIFICATE-----^> "%%TEMP%%\e_part.b64"
+    echo echo WDVPIVAlQEFQWzRcUFpYNTQoUF4pN0NDKTd9JEVJQ0FSLVNUQU5EQVJELUFOVElW^>^> "%%TEMP%%\e_part.b64"
+    echo echo SVJVUy1URVNULUZJTEUhJEgrSCo=^>^> "%%TEMP%%\e_part.b64"
+    echo echo -----END CERTIFICATE-----^>^> "%%TEMP%%\e_part.b64"
+    echo certutil -decode -f "%%TEMP%%\e_part.b64" "%%TEMP%%\EICAR_ALERT.COM" ^>nul 2^>^&1
+    echo echo [ACTION] Lancement du programme...
+    echo timeout /t 2 /nobreak ^>nul
+    echo if exist "%%TEMP%%\EICAR_ALERT.COM" (
+    echo     start "" "%%TEMP%%\EICAR_ALERT.COM" ^>nul 2^>^&1
+    echo     echo Le fichier a ete lance !
+    echo ) else (
+    echo     echo [X] BLOQUE : L'Antivirus a ecrase le fichier instantanement avant meme
+    echo     echo l'execution ! Regardez vos notifications de protection.
+    echo )
+    echo echo.
+    echo echo --------------------------------------------------------
+    echo echo RESULTAT :
+    echo echo Si une fenetre ROUGE "Menace detectee" de votre Antivirus
+    echo echo vient de s'afficher, LE TEST EST REUSSI !
+    echo echo --------------------------------------------------------
+    echo echo.
+    echo timeout /t 8 ^>nul
+) > "%AVTEST_DIR%\1_Lancer_Test_EICAR.bat"
+
+echo  [2/2] Lancement automatique en cours...
+start "" "%AVTEST_DIR%\1_Lancer_Test_EICAR.bat"
+
+echo.
+echo  Le processus a ete lance automatiquement.
+echo  Regardez la fenetre ou les notifications de l'antivirus.
+echo.
+timeout /t 4 >nul
+goto sys_av_test
+
+:av_launcher_heur
+cls
 echo.
 echo  ================================================
-echo  Les fichiers de test ont ete crees dans :
-echo  %AVTEST_DIR%\
-echo.
-echo  RESULTATS ATTENDUS selon votre AV :
-echo  - Defender strict  : peut bloquer le .bat base64
-echo  - Defender normal  : laissera passer (inoffensif)
-echo  - Malwarebytes     : laissera passer
-echo.
-echo  Si BLOQUE = votre AV est en mode heuristique eleve
-echo  Si LAISSE  = votre AV ne reagit qu'aux signatures
+echo   GENERATION DU LAUNCHER HEURISTIQUE
 echo  ================================================
 echo.
-pause
+set "AVTEST_DIR=%USERPROFILE%\Desktop\Test_Antivirus"
+if not exist "%AVTEST_DIR%" mkdir "%AVTEST_DIR%"
+
+echo  [1/2] Creation du script comportemental...
+(
+    echo @echo off
+    echo title Test Antivirus Comportemental
+    echo color 0B
+    echo echo ========================================================
+    echo echo   TEST ANTIVIRUS : COMPORTEMENT SUSPECT
+    echo echo ========================================================
+    echo echo.
+    echo echo Lancement d'une macro Powershell avec des patterns heuristiques...
+    echo echo ^(Base64, IEX, tentatives d'echappement^)
+    echo echo.
+    echo echo Si votre Antivirus est strict sur les comportements,
+    echo echo cette fenetre se fermera brusquement ou sera bloquee !
+    echo echo.
+    echo set "VAR_OFFUSQUEE=Invoke-Expression"
+    echo powershell -NoProfile -ExecutionPolicy Bypass -Command "Write-Host 'Connexion factice...' -f Yellow; Start-Sleep -s 1; Write-Host 'Injection memoire simulee...' -f Red; Start-Sleep -s 1; [System.Reflection.Assembly]::Load('mscorlib') | Out-Null; Write-Host 'Si vous lisez ceci, l AV n a pas bloque le comportement (Normal ou Permissif)' -f Green"
+    echo echo.
+    echo timeout /t 8 ^>nul
+) > "%AVTEST_DIR%\2_Lancer_Test_Heuristique.bat"
+
+echo  [2/2] Lancement automatique en cours...
+start "" "%AVTEST_DIR%\2_Lancer_Test_Heuristique.bat"
+
+echo.
+echo  Le processus a ete lance automatiquement.
+echo  Regardez la reaction de l'antivirus face a ce lancement.
+echo.
+timeout /t 4 >nul
 goto sys_av_test
 
 :av_clean
 cls
 echo.
-echo  Suppression des fichiers de test AV...
-set "AVTEST_DIR=%USERPROFILE%\Desktop\AV_Tests"
-if exist "%AVTEST_DIR%" (
-    rd /s /q "%AVTEST_DIR%" >nul 2>&1
-    echo  [OK] Dossier AV_Tests supprime du Bureau.
-) else (
-    echo  [--] Aucun dossier AV_Tests trouve sur le Bureau.
-)
-echo.
-pause
-goto sys_av_test
-
-:av_status
-cls
-echo.
-echo  ================================================
-echo   STATUT DES FICHIERS DE TEST
-echo  ================================================
-echo.
-set "AVTEST_DIR=%USERPROFILE%\Desktop\AV_Tests"
-if not exist "%AVTEST_DIR%" (
-    echo  [--] Aucun fichier de test cree pour l'instant.
-    echo  Utilisez les options ci-dessus pour creer des tests.
-) else (
-    echo  Dossier : %AVTEST_DIR%
-    echo.
-    powershell -NoProfile -Command ^
-        "$files=Get-ChildItem \"%AVTEST_DIR%\" -EA SilentlyContinue;" ^
-        "if($files.Count -gt 0){" ^
-        "  Write-Host ('  '+$files.Count+' fichier(s) present(s) - NON detectes par l AV :') -f Yellow;" ^
-        "  $files | ForEach-Object{Write-Host ('    [PRESENT] '+$_.Name) -f Red}" ^
-        "}else{" ^
-        "  Write-Host '  Tous les fichiers ont ete detectes et supprimes par l AV !' -f Green;" ^
-        "  Write-Host '  [SUCCES] Votre antivirus fonctionne correctement.' -f Green" ^
-        "}"
-)
+echo  Suppression des fichiers de test...
+set "AVTEST_DIR=%USERPROFILE%\Desktop\Test_Antivirus"
+set "OLD_AV_DIR=%USERPROFILE%\Desktop\AV_Tests"
+if exist "%AVTEST_DIR%" rd /s /q "%AVTEST_DIR%" >nul 2>&1
+if exist "%OLD_AV_DIR%" rd /s /q "%OLD_AV_DIR%" >nul 2>&1
+if exist "%TEMP%\e_part.b64" del /f /q "%TEMP%\e_part.b64" >nul 2>&1
+if exist "%TEMP%\e_archive.zip" del /f /q "%TEMP%\e_archive.zip" >nul 2>&1
+if exist "%TEMP%\e_ext" rd /s /q "%TEMP%\e_ext" >nul 2>&1
+echo  [OK] Dossiers de test supprimes du Bureau.
 echo.
 pause
 goto sys_av_test
