@@ -1262,6 +1262,7 @@ goto sys_network_menu
 :sys_diag_network
 cls
 set "DIAG_LOG=%USERPROFILE%\Desktop\Diagnostic_Reseau.log"
+set /a "ECHEC_COUNT=0"
 echo ================================
 echo    DIAGNOSTIC RESEAU COMPLET
 echo ================================
@@ -1284,6 +1285,7 @@ if !errorlevel!==0 (
     echo   -^> [OK] La carte reseau fonctionne ^(pilote OK^).
     echo   -^> [OK] La carte reseau fonctionne ^(pilote OK^). >> "%DIAG_LOG%"
 ) else (
+    set /a "ECHEC_COUNT+=1"
     echo   -^> [ECHEC] Probleme avec la carte reseau locale ^(Pilote ou materiel^).
     echo   -^> [ECHEC] Probleme avec la carte reseau locale ^(Pilote ou materiel^). >> "%DIAG_LOG%"
 )
@@ -1296,6 +1298,7 @@ set "gateway="
 for /f "usebackq tokens=*" %%g in (`powershell -NoProfile -Command "(Get-NetRoute -DestinationPrefix '0.0.0.0/0' -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty NextHop) 2>$null"`) do set "gateway=%%g"
 
 if "!gateway!"=="" (
+    set /a "ECHEC_COUNT+=1"
     echo [INFO] Aucune IP de passerelle trouvee via l'interface reseau.
     echo [INFO] Aucune IP de passerelle trouvee via l'interface reseau. >> "%DIAG_LOG%"
     echo   -^> [ECHEC] Aucune passerelle detectee ^(Cable debranche ou probleme Wi-Fi / DHCP^).
@@ -1310,6 +1313,7 @@ if "!gateway!"=="" (
         echo   -^> [OK] Connecte a la Box/Routeur ^(!gateway!^).
         echo   -^> [OK] Connecte a la Box/Routeur ^(!gateway!^). >> "%DIAG_LOG%"
     ) else (
+        set /a "ECHEC_COUNT+=1"
         echo   -^> [ECHEC] Impossible de joindre la Box/Routeur ^(!gateway!^).
         echo   -^> [ECHEC] Impossible de joindre la Box/Routeur ^(!gateway!^). >> "%DIAG_LOG%"
     )
@@ -1326,6 +1330,7 @@ if !errorlevel!==0 (
     echo   -^> [OK] Acces Internet externe etabli.
     echo   -^> [OK] Acces Internet externe etabli. >> "%DIAG_LOG%"
 ) else (
+    set /a "ECHEC_COUNT+=1"
     echo   -^> [ECHEC] Pas d'acces Internet ^(Coupure operateur FAI ou Box non connectee^).
     echo   -^> [ECHEC] Pas d'acces Internet ^(Coupure operateur FAI ou Box non connectee^). >> "%DIAG_LOG%"
 )
@@ -1341,16 +1346,25 @@ if !errorlevel!==0 (
     echo   -^> [OK] Les serveurs DNS fonctionnent et traduisent les IP.
     echo   -^> [OK] Les serveurs DNS fonctionnent et traduisent les IP. >> "%DIAG_LOG%"
 ) else (
+    set /a "ECHEC_COUNT+=1"
     echo   -^> [ECHEC] Probleme DNS. Impossible de se rendre sur des sites par leur nom.
     echo   -^> [ECHEC] Probleme DNS. Impossible de se rendre sur des sites par leur nom. >> "%DIAG_LOG%"
 )
 
 echo.
 echo ================================
-echo Si vous rencontrez un [ECHEC], utilisez les outils de reparation
-echo reseau ou de configuration DNS presents dans ce script.
-echo.
-echo ================================
+if !ECHEC_COUNT! GTR 0 (
+    echo [ATTENTION] !ECHEC_COUNT! ECHEC^(s^) detecte^(s^) lors de l'analyse.
+    echo Voulez-vous utiliser les outils de reparation reseau de ce script ? ^(O/N^)
+    echo ================================
+    echo.
+    set /p rep_choix="Choix : "
+    if /i "!rep_choix!"=="O" goto sys_network_menu
+) else (
+    echo [SUCCES] Tous les tests reseau ont ete reussis avec succes !
+    echo ================================
+    echo.
+)
 echo Appuyez sur une touche pour afficher votre configuration IP (ipconfig /all)
 pause >nul
 cls
@@ -1623,7 +1637,6 @@ set "opts=%opts%;Verificateur BitLocker~Verifiez l'etat de chiffrement de vos pa
 set "opts=%opts%;Journaux d'Erreurs Windows~Affiche les erreurs critiques recentes (24h / 7 jours)"
 set "opts=%opts%;Test des Composants PC~Benchmark disque, RAM, CPU et SMART en un clic"
 set "opts=%opts%;Gestionnaire Windows Defender~Scan rapide/complet CLI, MAJ signatures, menaces detectees"
-set "opts=%opts%;Generer Rapport HTML (Tout-en-Un)~Export HTML de l'ordinateur complet (Materiel, OS, Reseau)"
 
 call :DynamicMenu "MENU DE DIAGNOSTIC SYSTEME" "%opts%"
 set "diag_choice=%errorlevel%"
@@ -1635,7 +1648,6 @@ if "%diag_choice%"=="4" goto sys_bitlocker_check
 if "%diag_choice%"=="5" goto sys_event_log
 if "%diag_choice%"=="6" goto sys_hw_test
 if "%diag_choice%"=="7" goto sys_defender
-if "%diag_choice%"=="8" goto sys_full_report
 if "%diag_choice%"=="0" goto system_tools
 
 if %diag_choice% GEQ 200 (
@@ -1647,7 +1659,6 @@ if %diag_choice% GEQ 200 (
     if "!toggle_idx!"=="5" call :ToggleFav "sys_event_log"
     if "!toggle_idx!"=="6" call :ToggleFav "sys_hw_test"
     if "!toggle_idx!"=="7" call :ToggleFav "sys_defender"
-    if "!toggle_idx!"=="8" call :ToggleFav "sys_full_report"
 )
 goto sys_diagnostic_menu
 
