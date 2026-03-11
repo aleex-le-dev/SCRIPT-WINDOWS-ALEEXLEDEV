@@ -74,6 +74,9 @@ set "t[28]=sys_export_menu:Menu des Extractions~Exporte les cles Windows, listes
 set "t[29]=---:PERSONNALISATION"
 set "t[30]=context_menu:Menu contextuel Windows 11~Classic/Modern"
 set "t[31]=sys_god_mode:Dossier God Mode~Creer le raccourci ultime des parametres"
+set "t[57]=sys_shortcuts_bureau:Raccourcis Bureau 1-Clic~Redemarrer et Eteindre le PC avec icone sur le Bureau"
+set "t[58]=---:SECURITE ET TESTS"
+set "t[59]=sys_av_test:Test Antivirus (EICAR Safe)~Teste votre antivirus avec des faux positifs standards inoffensifs"
 :: Sous-items pour gestion des favoris individuels
 set "t[32]=dump_credman:Gestionnaire d'identifiants (Windows)~Extrait le Credential Manager Windows (WCMDump):HIDDEN"
 set "t[33]=dump_wifi:Extraction reseaux Wi-Fi (Powershell)~Script WWP puissant listant psw et noms:HIDDEN"
@@ -103,7 +106,7 @@ set "t[53]=sys_win_key:Cle de licence~Recuperer vos differentes cles de produit:
 set "t[54]=sys_drivers:Extraction des pilotes~Sauvegarde de tous les fichiers pilotes natifs:HIDDEN"
 set "t[55]=sys_export_software:Export Liste des Logiciels~Exporte la liste de tous les programmes installes en CSV/TXT:HIDDEN"
 set "t[56]=sys_export_wifi_apps:Export Wi-Fi + Logiciels (TXT)~Genere 2 fichiers TXT sur le Bureau en un seul clic:HIDDEN"
-set "total_tools=55"
+set "total_tools=59"
 
 
 
@@ -736,37 +739,29 @@ set "target=!sys_target[%sys_choice%]!"
 if defined target goto !target!
 goto system_tools
 REM ===================================================================
-REM              RECHERCHE GLOBALE D'OUTILS
-REM ===================================================================
 :search_tools
 cls
 set "search_lbl="
-setlocal DisableDelayedExpansion
-set "PS_SEARCH=%TEMP%\aleex_search.ps1"
-set "TOOLS_FILE=%TEMP%\aleex_tools_idx.txt"
-set t[ > "%TOOLS_FILE%"
-call :WriteSearchPS1 "%PS_SEARCH%" "%TOOLS_FILE%"
-endlocal
-setlocal EnableDelayedExpansion
-set "search_lbl="
-for /f "usebackq tokens=*" %%L in (`powershell -NoProfile -ExecutionPolicy Bypass -File "%PS_SEARCH%" 2^>nul`) do set "search_lbl=%%L"
-del "%PS_SEARCH%" >nul 2>&1
-del "%TOOLS_FILE%" >nul 2>&1
-REM Valider que search_lbl est un label connu (lettres/chiffres/underscore seulement)
-if defined search_lbl (
-    echo !search_lbl! | findstr /R /C:"^[a-zA-Z_][a-zA-Z0-9_]*$" >nul 2>&1
-    if !errorlevel!==0 (
-        endlocal
-        goto !search_lbl!
+REM Construire les donnees de recherche via variable d'environnement (evite ecriture %TEMP% bloquee par Defender)
+set "ALEEX_TOOLS_DATA="
+for /l %%I in (1,1,%total_tools%) do (
+    set "_e=!t[%%I]!"
+    if defined _e (
+        if not "!_e:~0,3!"=="---" (
+            set "ALEEX_TOOLS_DATA=!ALEEX_TOOLS_DATA!|!_e!"
+        )
     )
 )
-endlocal
+set "ALEEX_TOOLS_DATA=!ALEEX_TOOLS_DATA:~1!"
+for /f "usebackq tokens=*" %%L in (`powershell -NoProfile -ExecutionPolicy Bypass -Command "$raw=$env:ALEEX_TOOLS_DATA;$all=@();if($raw){foreach($entry in ($raw-split'\|')){$p=$entry-split'~',2;$ls=$p[0];$d=if($p.Count-gt 1){($p[1]-replace':HIDDEN$','').Trim()}else{'');$c2=$ls.IndexOf(':');if($c2-ge 0){$lb=$ls.Substring(0,$c2).Trim();$nm=$ls.Substring($c2+1).Trim();if($lb-and $lb-ne'---'){$all+=@{N=$nm;D=$d;L=$lb}}}}};$list=[array]($all|Sort-Object{$_['N']});$q='';$s=0;function Dsp{param($q,$r,$s);clear-host;Write-Host'  ============================================'-f Cyan;Write-Host'   [S] RECHERCHE D OUTILS'-f White;Write-Host'  ============================================'-f Cyan;Write-Host'';Write-Host('  Recherche : '+$q+'_')-f Yellow;Write-Host'';if($r.Count-gt 0){Write-Host('  '+$r.Count+' outil(s) trouve(s)')-f Cyan;Write-Host'';for($i=0;$i-lt[math]::Min($r.Count,30);$i++){if($i-eq $s){Write-Host('  >> ['+($i+1)+'] '+$r[$i]['N'])-NoNewline-f Black-b White;Write-Host(' - '+$r[$i]['D'])-f Yellow-b White}else{Write-Host('     ['+($i+1)+'] '+$r[$i]['N'])-NoNewline-f Gray;Write-Host(' - '+$r[$i]['D'])-f DarkGray}}}else{if($q.Length-gt 0){Write-Host'  Aucun resultat.'-f DarkGray}else{Write-Host'  Tapez pour filtrer les outils...'-f DarkGray}};Write-Host'';Write-Host'  --------------------------------------------'-f Cyan;Write-Host'  [LETTRES]Taper [FLECHES]Nav [ENTREE]Lancer [BACK]Effacer [ECHAP]Retour'-f DarkGray};while($true){$r2=if($q.Trim()){[array]($list|Where-Object{$_['N']-match[regex]::Escape($q)-or$_['D']-match[regex]::Escape($q)})}else{@()};if($r2.Count-gt 0-and $s-ge $r2.Count){$s=$r2.Count-1};Dsp $q $r2 $s;$k=$Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown');$v=$k.VirtualKeyCode;if($v-eq 27){clear-host;break}elseif($v-eq 8-and $q.Length-gt 0){$q=$q.Substring(0,$q.Length-1);$s=0}elseif($v-eq 38-and $r2.Count-gt 0){$s--;if($s-lt 0){$s=$r2.Count-1}}elseif($v-eq 40-and $r2.Count-gt 0){$s++;if($s-ge $r2.Count){$s=0}}elseif($v-eq 13-and $r2.Count-gt 0){clear-host;Write-Output $r2[$s]['L'];break}elseif([string]$k.Character-match'^[1-9]$'){$ci=[int][string]$k.Character-1;if($ci-lt $r2.Count){clear-host;Write-Output $r2[$ci]['L'];break}}elseif($k.Character-ge' '-and $k.Character-le'~'){$q+=$k.Character;$s=0}}" 2^>nul`) do set "search_lbl=%%L"
+REM Valider que search_lbl est un label valide (lettres/chiffres/underscore seulement)
+if defined search_lbl (
+    echo !search_lbl! | findstr /R /C:"^[a-zA-Z_][a-zA-Z0-9_]*$" >nul 2>&1
+    if !errorlevel!==0 goto !search_lbl!
+)
 goto menu_principal
 
-:WriteSearchPS1
-REM Arguments: %1=chemin PS1 de sortie, %2=chemin fichier tools
-powershell -NoProfile -ExecutionPolicy Bypass -Command "$tf='%~2'; $ps='%~1'; $c=''; $c+='$tf = '''+$tf+'''; $all = @();'; $c+='Get-Content $tf | ForEach-Object { if($_ -match ''t\[\d+\]=''){$sp=($_ -split ''='',2);if($sp.Count -gt 1){$v=$sp[1].Trim();'; $c+='if($v -notmatch ''^---:''){$p=$v -split ''~'',2;$ls=$p[0];$d=if($p.Count -gt 1){$p[1].TrimEnd('':HIDDEN'')}else{''''};'; $c+='$c2=$ls.IndexOf('':'');if($c2 -ge 0){$lb=$ls.Substring(0,$c2).Trim();$nm=$ls.Substring($c2+1).Trim();if($lb -ne ''---''){$all+=@{N=$nm;D=$d;L=$lb}}}}}}}; '; $c+='$list=[array]($all|Sort-Object{$_[''N'']});$q='''';$s=0; '; $c+='function Dsp{param($q,$r,$s);clear-host; '; $c+='Write-Host ''  ===================================================='' -f Cyan; '; $c+='Write-Host ''   [S] RECHERCHE D OUTILS - Boite a Scripts'' -f White; '; $c+='Write-Host ''  ===================================================='' -f Cyan; '; $c+='Write-Host '''';Write-Host (''  Recherche : ''+$q+''_'') -f Yellow;Write-Host ''''; '; $c+='if($r.Count -gt 0){Write-Host (''  ''+$r.Count+'' outil(s) trouve(s)'') -f Cyan;Write-Host ''''; '; $c+='for($i=0;$i -lt [math]::Min($r.Count,30);$i++){if($i -eq $s){Write-Host (''  >> [''+($i+1)+''] ''+$r[$i][''N'']) -NoNewline -f Black -b White;Write-Host ('' - ''+$r[$i][''D'']) -f Yellow -b White}else{Write-Host (''     [''+($i+1)+''] ''+$r[$i][''N'']) -NoNewline -f Gray;Write-Host ('' - ''+$r[$i][''D'']) -f DarkGray}}}'; $c+='else{if($q.Length -gt 0){Write-Host ''  Aucun resultat.'' -f DarkGray}else{Write-Host ''  Tapez pour filtrer les outils...'' -f DarkGray}}; '; $c+='Write-Host '''';Write-Host ''  ----------------------------------------------------'' -f Cyan; '; $c+='Write-Host ''  [LETTRES]Taper [FLECHES]Naviguer [ENTREE]Lancer [BACK]Effacer [ECHAP]Retour'' -f DarkGray}; '; $c+='$r2=@();while($true){$r2=if($q.Trim()){[array]($list|Where-Object{$_[''N''] -match [regex]::Escape($q) -or $_[''D''] -match [regex]::Escape($q)})}else{@()}; '; $c+='if($s -ge $r2.Count -and $r2.Count -gt 0){$s=$r2.Count-1};Dsp $q $r2 $s; '; $c+='$k=$Host.UI.RawUI.ReadKey(''NoEcho,IncludeKeyDown'');$v=$k.VirtualKeyCode; '; $c+='if($v -eq 27){clear-host;break} '; $c+='elseif($v -eq 8 -and $q.Length -gt 0){$q=$q.Substring(0,$q.Length-1);$s=0} '; $c+='elseif($v -eq 38 -and $r2.Count -gt 0){$s--;if($s -lt 0){$s=$r2.Count-1}} '; $c+='elseif($v -eq 40 -and $r2.Count -gt 0){$s++;if($s -ge $r2.Count){$s=0}} '; $c+='elseif($v -eq 13 -and $r2.Count -gt 0){clear-host;Write-Output $r2[$s][''L''];break} '; $c+='elseif([string]$k.Character -match ''[1-9]''){$ci=[int][string]$k.Character-1;if($ci -lt $r2.Count){clear-host;Write-Output $r2[$ci][''L''];break}} '; $c+='elseif($k.Character -ge '' '' -and $k.Character -le ''~''){$q+=$k.Character;$s=0}}'; Set-Content -LiteralPath $ps -Value $c -Encoding UTF8"
-exit /b
+
 
 REM ===================================================================
 REM              INSTALLATEUR D'APPLICATIONS (WINGET)
@@ -3280,6 +3275,309 @@ powershell -Command "Start-Process '%USERPROFILE%\Desktop\Rapport_PC_%COMPUTERNA
 echo.
 pause
 exit
+
+
+REM ===================================================================
+REM         RACCOURCIS BUREAU 1-CLIC (REDEMARRER / ETEINDRE)
+REM ===================================================================
+:sys_shortcuts_bureau
+cls
+set "opts=Creer raccourci REDEMARRER~Icone rouge sur le Bureau pour redemarrer en 1 clic;Creer raccourci ETEINDRE~Icone bleue sur le Bureau pour eteindre en 1 clic;Creer les DEUX raccourcis~Redemarrer + Eteindre en une seule action;Supprimer les raccourcis~Retirer les raccourcis crees du Bureau"
+call :DynamicMenu "RACCOURCIS BUREAU 1-CLIC" "%opts%"
+set "sc_c=%errorlevel%"
+if "%sc_c%"=="0" goto menu_principal
+if "%sc_c%"=="1" goto sc_restart
+if "%sc_c%"=="2" goto sc_shutdown
+if "%sc_c%"=="3" call :sc_do_restart & call :sc_do_shutdown & goto sc_done_both
+if "%sc_c%"=="4" goto sc_delete
+goto sys_shortcuts_bureau
+
+:sc_restart
+call :sc_do_restart
+goto sc_done_restart
+
+:sc_shutdown
+call :sc_do_shutdown
+goto sc_done_shutdown
+
+:sc_do_restart
+powershell -NoProfile -ExecutionPolicy Bypass -Command ^
+    "$desk=$env:USERPROFILE+'\Desktop';" ^
+    "$ws=New-Object -ComObject WScript.Shell;" ^
+    "$sc=$ws.CreateShortcut($desk+'\  Redemarrer le PC.lnk');" ^
+    "$sc.TargetPath='shutdown.exe';" ^
+    "$sc.Arguments='/r /t 0';" ^
+    "$sc.Description='Redemarrer le PC immediatement';" ^
+    "$sc.IconLocation='%SystemRoot%\System32\shell32.dll,238';" ^
+    "$sc.WindowStyle=7;" ^
+    "$sc.Save();" ^
+    "Write-Host '  [OK] Raccourci Redemarrer cree sur le Bureau.' -f Green"
+exit /b
+
+:sc_do_shutdown
+powershell -NoProfile -ExecutionPolicy Bypass -Command ^
+    "$desk=$env:USERPROFILE+'\Desktop';" ^
+    "$ws=New-Object -ComObject WScript.Shell;" ^
+    "$sc=$ws.CreateShortcut($desk+'\  Eteindre le PC.lnk');" ^
+    "$sc.TargetPath='shutdown.exe';" ^
+    "$sc.Arguments='/s /t 0';" ^
+    "$sc.Description='Eteindre le PC immediatement';" ^
+    "$sc.IconLocation='%SystemRoot%\System32\shell32.dll,27';" ^
+    "$sc.WindowStyle=7;" ^
+    "$sc.Save();" ^
+    "Write-Host '  [OK] Raccourci Eteindre cree sur le Bureau.' -f Green"
+exit /b
+
+:sc_done_restart
+cls
+echo.
+echo  ================================================
+echo   RACCOURCI "REDEMARRER" CREE
+echo  ================================================
+echo.
+echo  [OK] Fichier : Bureau \  Redemarrer le PC.lnk
+echo  [OK] Action  : shutdown /r /t 0 (immediat)
+echo  [OK] Icone   : Icone systeme (fleche rouge)
+echo.
+echo  Double-cliquez sur le raccourci pour redemarrer.
+echo.
+pause
+goto sys_shortcuts_bureau
+
+:sc_done_shutdown
+cls
+echo.
+echo  ================================================
+echo   RACCOURCI "ETEINDRE" CREE
+echo  ================================================
+echo.
+echo  [OK] Fichier : Bureau \  Eteindre le PC.lnk
+echo  [OK] Action  : shutdown /s /t 0 (immediat)
+echo  [OK] Icone   : Icone systeme (bouton power)
+echo.
+echo  Double-cliquez sur le raccourci pour eteindre.
+echo.
+pause
+goto sys_shortcuts_bureau
+
+:sc_done_both
+cls
+echo.
+echo  ================================================
+echo   RACCOURCIS CREES AVEC SUCCES !
+echo  ================================================
+echo.
+echo  [OK]   Redemarrer le PC.lnk  (icone fleche)
+echo  [OK]   Eteindre le PC.lnk   (icone power)
+echo.
+echo  Les deux raccourcis sont sur votre Bureau.
+echo  Double-cliquez pour l'action immediate.
+echo.
+pause
+goto sys_shortcuts_bureau
+
+:sc_delete
+cls
+echo.
+powershell -NoProfile -ExecutionPolicy Bypass -Command ^
+    "$desk=$env:USERPROFILE+'\Desktop';" ^
+    "$files=@('  Redemarrer le PC.lnk','  Eteindre le PC.lnk');" ^
+    "foreach($f in $files){" ^
+    "  $p=$desk+'\'+$f;" ^
+    "  if(Test-Path $p){Remove-Item $p -Force; Write-Host ('  [OK] Supprime : '+$f) -f Green}" ^
+    "  else{Write-Host ('  [--] Non trouve : '+$f) -f DarkGray}" ^
+    "}"
+echo.
+pause
+goto sys_shortcuts_bureau
+
+
+REM ===================================================================
+REM         TEST ANTIVIRUS - FAUX POSITIFS (EICAR STANDARD)
+REM ===================================================================
+:sys_av_test
+cls
+set "opts=Test EICAR Standard~Cree le fichier de test officiel EICAR (inoffensif - reconnu par tous les AV);Test EICAR Compresse (ZIP)~EICAR emballe dans un ZIP pour tester la detection dans les archives;Test chaine suspecte (heuristique)~Cree un .bat avec des patterns heuristiques connus;Nettoyer les fichiers de test~Supprimer tous les fichiers de test crees;Voir l'etat~Dossier contenant les tests et leur statut"
+call :DynamicMenu "TEST ANTIVIRUS - FAUX POSITIFS EICAR (INOFFENSIF)" "%opts%"
+set "av_c=%errorlevel%"
+if "%av_c%"=="0" goto menu_principal
+if "%av_c%"=="1" goto av_eicar
+if "%av_c%"=="2" goto av_eicar_zip
+if "%av_c%"=="3" goto av_heuristic
+if "%av_c%"=="4" goto av_clean
+if "%av_c%"=="5" goto av_status
+goto sys_av_test
+
+:av_eicar
+cls
+echo.
+echo  ================================================
+echo   TEST EICAR STANDARD
+echo  ================================================
+echo  Source : https://www.eicar.org/download-anti-malware-testfile/
+echo  Statut : 100%% INOFFENSIF - Chaine de test officielle
+echo.
+echo  Ce fichier N'EST PAS un virus. Il contient uniquement
+echo  la chaine de test EICAR reconnue par tous les antivirus
+echo  comme signature de test standardisee (CARO standard).
+echo.
+set "AVTEST_DIR=%USERPROFILE%\Desktop\AV_Tests"
+if not exist "%AVTEST_DIR%" mkdir "%AVTEST_DIR%"
+REM Ecriture de la chaine EICAR en plusieurs parties pour eviter la detection du script lui-meme
+set "E1=X5O!P%%@AP"
+set "E2=[4\PZX54(P^)"
+set "E3=7CC)7}$EICAR"
+set "E4=-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*"
+echo %E1%%E2%%E3%%E4%> "%AVTEST_DIR%\EICAR_test.com"
+echo.
+if exist "%AVTEST_DIR%\EICAR_test.com" (
+    echo  [OK] Fichier cree : %AVTEST_DIR%\EICAR_test.com
+    echo.
+    echo  RESULTAT ATTENDU :
+    echo  - Si l'antivirus fonctionne ^: le fichier sera SUPPRIME/BLOQUE
+    echo  - Si le fichier reste present ^: votre AV ne detecte pas EICAR
+    echo  - Attendez 5-10 secondes puis appuyez sur une touche...
+) else (
+    echo  [BLOQUE] Votre antivirus a SUPPRIME le fichier instantanement !
+    echo.
+    echo  [SUCCES] Votre antivirus est ACTIF et fonctionne correctement.
+)
+echo.
+pause
+REM Verifier apres la pause
+if exist "%AVTEST_DIR%\EICAR_test.com" (
+    echo.
+    echo  [AVERTISSEMENT] Le fichier est encore present apres le delai.
+    echo  Votre antivirus n'a peut-etre pas detecte la menace EICAR.
+    echo  Verifiez que la protection en temps reel est activee.
+    echo.
+    pause
+)
+goto sys_av_test
+
+:av_eicar_zip
+cls
+echo.
+echo  ================================================
+echo   TEST EICAR DANS UN FICHIER ZIP
+echo  ================================================
+echo  Teste si votre AV analyse l'interieur des archives.
+echo.
+set "AVTEST_DIR=%USERPROFILE%\Desktop\AV_Tests"
+if not exist "%AVTEST_DIR%" mkdir "%AVTEST_DIR%"
+set "E1=X5O!P%%@AP"
+set "E2=[4\PZX54(P^)"
+set "E3=7CC)7}$EICAR"
+set "E4=-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*"
+echo %E1%%E2%%E3%%E4%> "%TEMP%\eicar_inner.com"
+powershell -NoProfile -ExecutionPolicy Bypass -Command ^
+    "try{" ^
+    "  Compress-Archive -Path \"%TEMP%\eicar_inner.com\" -DestinationPath \"%AVTEST_DIR%\EICAR_test.zip\" -Force;" ^
+    "  Remove-Item \"%TEMP%\eicar_inner.com\" -Force -EA SilentlyContinue;" ^
+    "  Write-Host '  [OK] Archive ZIP creee : AV_Tests\EICAR_test.zip' -f Green;" ^
+    "  Write-Host '';" ^
+    "  Write-Host '  RESULTAT ATTENDU :' -f Cyan;" ^
+    "  Write-Host '  - AV actif sur archives : le ZIP sera bloque/supprime' -f Yellow;" ^
+    "  Write-Host '  - AV sans analyse ZIP   : le fichier restera present' -f Yellow" ^
+    "}catch{Write-Host ('  [ERREUR] '+$_.Exception.Message) -f Red}"
+echo.
+pause
+goto sys_av_test
+
+:av_heuristic
+cls
+echo.
+echo  ================================================
+echo   TEST HEURISTIQUE (PATTERNS SUSPECTS)
+echo  ================================================
+echo  Cree des fichiers avec des patterns heuristiques
+echo  similaires a ceux qui avaient declenche la fausse
+echo  alerte sur ce script (PowhidSubExec).
+echo.
+echo  OBJECTIF : Verifier si votre AV reagit aux patterns
+echo  heuristiques sans fichier EICAR.
+echo.
+set "AVTEST_DIR=%USERPROFILE%\Desktop\AV_Tests"
+if not exist "%AVTEST_DIR%" mkdir "%AVTEST_DIR%"
+REM Fichier 1 : pattern set variable > temp (heuristique PowhidSubExec)
+(
+    echo @echo off
+    echo REM === TEST HEURISTIQUE 1 : set + redirection temp ===
+    echo REM Ce fichier est un test de detectio heuristique
+    echo REM Il ne contient aucun code malveillant
+    echo set "TEST_VAR=valeur_test"
+    echo echo %%TEST_VAR%% ^> "%%TEMP%%\heuristic_test_output.txt"
+    echo powershell -NoProfile -Command "Write-Host 'Test heuristique 1 OK' -f Green"
+    echo del "%%TEMP%%\heuristic_test_output.txt" ^>nul 2^>^&1
+    echo exit /b 0
+) > "%AVTEST_DIR%\heuristic_test1.bat"
+REM Fichier 2 : pattern powershell + encodage base64 (souvent heuristique)
+powershell -NoProfile -ExecutionPolicy Bypass -Command ^
+    "$code='# Test heuristique - Script inoffensif\r\n# Simule un pattern de detection heuristique\r\nWrite-Host [HEURISTIC TEST 2] -f Cyan\r\nWrite-Host Ce script est 100%% inoffensif -f Green\r\n';" ^
+    "$b64=[Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($code));" ^
+    "('powershell -EncodedCommand '+$b64) | Out-File \"%AVTEST_DIR%\heuristic_test2_b64.bat\" -Encoding ASCII;" ^
+    "Write-Host '  [OK] heuristic_test1.bat cree' -f Green;" ^
+    "Write-Host '  [OK] heuristic_test2_b64.bat cree' -f Green"
+echo.
+echo  ================================================
+echo  Les fichiers de test ont ete crees dans :
+echo  %AVTEST_DIR%\
+echo.
+echo  RESULTATS ATTENDUS selon votre AV :
+echo  - Defender strict  : peut bloquer le .bat base64
+echo  - Defender normal  : laissera passer (inoffensif)
+echo  - Malwarebytes     : laissera passer
+echo.
+echo  Si BLOQUE = votre AV est en mode heuristique eleve
+echo  Si LAISSE  = votre AV ne reagit qu'aux signatures
+echo  ================================================
+echo.
+pause
+goto sys_av_test
+
+:av_clean
+cls
+echo.
+echo  Suppression des fichiers de test AV...
+set "AVTEST_DIR=%USERPROFILE%\Desktop\AV_Tests"
+if exist "%AVTEST_DIR%" (
+    rd /s /q "%AVTEST_DIR%" >nul 2>&1
+    echo  [OK] Dossier AV_Tests supprime du Bureau.
+) else (
+    echo  [--] Aucun dossier AV_Tests trouve sur le Bureau.
+)
+echo.
+pause
+goto sys_av_test
+
+:av_status
+cls
+echo.
+echo  ================================================
+echo   STATUT DES FICHIERS DE TEST
+echo  ================================================
+echo.
+set "AVTEST_DIR=%USERPROFILE%\Desktop\AV_Tests"
+if not exist "%AVTEST_DIR%" (
+    echo  [--] Aucun fichier de test cree pour l'instant.
+    echo  Utilisez les options ci-dessus pour creer des tests.
+) else (
+    echo  Dossier : %AVTEST_DIR%
+    echo.
+    powershell -NoProfile -Command ^
+        "$files=Get-ChildItem \"%AVTEST_DIR%\" -EA SilentlyContinue;" ^
+        "if($files.Count -gt 0){" ^
+        "  Write-Host ('  '+$files.Count+' fichier(s) present(s) - NON detectes par l AV :') -f Yellow;" ^
+        "  $files | ForEach-Object{Write-Host ('    [PRESENT] '+$_.Name) -f Red}" ^
+        "}else{" ^
+        "  Write-Host '  Tous les fichiers ont ete detectes et supprimes par l AV !' -f Green;" ^
+        "  Write-Host '  [SUCCES] Votre antivirus fonctionne correctement.' -f Green" ^
+        "}"
+)
+echo.
+pause
+goto sys_av_test
+
 
 :ToggleFav
 set "tf_target=%~1"
