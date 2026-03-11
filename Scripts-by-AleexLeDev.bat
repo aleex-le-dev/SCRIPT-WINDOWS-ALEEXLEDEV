@@ -2504,7 +2504,7 @@ REM              JOURNAUX D'ERREURS WINDOWS FILTRES
 REM ===================================================================
 :sys_event_log
 cls
-set "opts=Erreurs critiques (24 dernieres heures)~Affiche les crashes et erreurs graves du jour;Erreurs critiques (7 derniers jours)~Vue hebdomadaire des problemes systeme;Erreurs application (24h)~Logiciels plantes ou en erreur aujourd'hui;Avertissements disque / stockage~Detecte les signes de defaillance materielle;Exporter un rapport complet (Bureau)~Genere un fichier TXT avec toutes les erreurs"
+set "opts=Erreurs critiques (24 dernieres heures)~Affiche les crashes et erreurs graves du jour;Erreurs critiques (7 derniers jours)~Vue hebdomadaire des problemes systeme;Erreurs application (24h)~Logiciels plantes ou en erreur aujourd'hui;Avertissements disque / stockage~Detecte les signes de defaillance materielle"
 call :DynamicMenu "JOURNAUX D'ERREURS WINDOWS" "%opts%"
 set "ev_choice=%errorlevel%"
 
@@ -2513,7 +2513,6 @@ if "%ev_choice%"=="1" goto ev_critical_24h
 if "%ev_choice%"=="2" goto ev_critical_7d
 if "%ev_choice%"=="3" goto ev_app_24h
 if "%ev_choice%"=="4" goto ev_disk_warn
-if "%ev_choice%"=="5" goto ev_export
 goto sys_event_log
 
 :ev_critical_24h
@@ -2522,11 +2521,7 @@ echo ================================================
 echo   ERREURS CRITIQUES - 24 DERNIERES HEURES
 echo ================================================
 echo.
-powershell -NoProfile -ExecutionPolicy Bypass -Command ^
-    "$since=(Get-Date).AddHours(-24);" ^
-    "$evts=Get-WinEvent -FilterHashtable @{LogName='System';Level=1,2;StartTime=$since} -EA SilentlyContinue | Select-Object -First 30;" ^
-    "if(-not $evts){Write-Host '  [OK] Aucune erreur critique dans les 24 dernieres heures !' -f Green}" ^
-    "else{Write-Host ('  '+$evts.Count+' evenement(s) critique(s):') -f Red; foreach($e in $evts){Write-Host ('  ['+$e.TimeCreated.ToString('HH:mm:ss')+'] '+$e.Id+' - '+$e.ProviderName) -f Yellow; Write-Host ('  '+$e.Message.Split([char]10)[0].Trim()) -f DarkGray; Write-Host ''}}"
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$since=(Get-Date).AddHours(-24); $evts=Get-WinEvent -FilterHashtable @{LogName='System';Level=1,2;StartTime=$since} -EA SilentlyContinue | Select-Object -First 30; if(-not $evts){Write-Host '  [OK] Aucune erreur critique dans les 24 dernieres heures.' -f Green} else{Write-Host ('  ' + $evts.Count + ' evenement(s) critique(s):') -f Red; Write-Host ''; foreach($e in $evts){$msg=$e.Message.Split([Environment]::NewLine)[0].Trim(); if($msg.Length -gt 90){$msg=$msg.Substring(0,90)+'...'}; Write-Host ('  [' + $e.TimeCreated.ToString('HH:mm:ss') + '] ID:' + $e.Id + ' | ' + $e.ProviderName + ' | ' + $msg) -f Yellow}}"
 echo.
 pause
 goto sys_event_log
@@ -2537,11 +2532,7 @@ echo ================================================
 echo   ERREURS CRITIQUES - 7 DERNIERS JOURS
 echo ================================================
 echo.
-powershell -NoProfile -ExecutionPolicy Bypass -Command ^
-    "$since=(Get-Date).AddDays(-7);" ^
-    "$evts=Get-WinEvent -FilterHashtable @{LogName='System';Level=1,2;StartTime=$since} -EA SilentlyContinue | Select-Object -First 50;" ^
-    "if(-not $evts){Write-Host '  [OK] Aucune erreur critique cette semaine !' -f Green}" ^
-    "else{Write-Host ('  '+$evts.Count+' evenement(s) critique(s) (50 max):') -f Red; foreach($e in $evts){Write-Host ('  ['+$e.TimeCreated.ToString('dd/MM HH:mm')+'] '+$e.Id+' - '+$e.ProviderName) -f Yellow; Write-Host ('  '+$e.Message.Split([char]10)[0].Trim()) -f DarkGray; Write-Host ''}}"
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$since=(Get-Date).AddDays(-7); $evts=Get-WinEvent -FilterHashtable @{LogName='System';Level=1,2;StartTime=$since} -EA SilentlyContinue | Select-Object -First 50; if(-not $evts){Write-Host '  [OK] Aucune erreur critique cette semaine.' -f Green} else{Write-Host ('  ' + $evts.Count + ' evenement(s) critique(s) (50 max):') -f Red; Write-Host ''; foreach($e in $evts){$msg=$e.Message.Split([Environment]::NewLine)[0].Trim(); if($msg.Length -gt 90){$msg=$msg.Substring(0,90)+'...'}; Write-Host ('  [' + $e.TimeCreated.ToString('dd/MM HH:mm') + '] ID:' + $e.Id + ' | ' + $e.ProviderName + ' | ' + $msg) -f Yellow}}"
 echo.
 pause
 goto sys_event_log
@@ -2552,11 +2543,7 @@ echo ================================================
 echo   ERREURS APPLICATIONS - 24H
 echo ================================================
 echo.
-powershell -NoProfile -ExecutionPolicy Bypass -Command ^
-    "$since=(Get-Date).AddHours(-24);" ^
-    "$evts=Get-WinEvent -FilterHashtable @{LogName='Application';Level=1,2;StartTime=$since} -EA SilentlyContinue | Select-Object -First 30;" ^
-    "if(-not $evts){Write-Host '  [OK] Aucun crash applicatif dans les 24 dernieres heures !' -f Green}" ^
-    "else{Write-Host ('  '+$evts.Count+' crash(s) applicatif(s):') -f Red; foreach($e in $evts){Write-Host ('  ['+$e.TimeCreated.ToString('HH:mm:ss')+'] '+$e.Id+' - '+$e.ProviderName) -f Yellow; Write-Host ('  '+$e.Message.Split([char]10)[0].Trim()) -f DarkGray; Write-Host ''}}"
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$since=(Get-Date).AddHours(-24); $evts=Get-WinEvent -FilterHashtable @{LogName='Application';Level=1,2;StartTime=$since} -EA SilentlyContinue | Select-Object -First 30; if(-not $evts){Write-Host '  [OK] Aucun crash applicatif dans les 24 dernieres heures.' -f Green} else{Write-Host ('  ' + $evts.Count + ' crash(s) applicatif(s):') -f Red; Write-Host ''; foreach($e in $evts){$msg=$e.Message.Split([Environment]::NewLine)[0].Trim(); if($msg.Length -gt 90){$msg=$msg.Substring(0,90)+'...'}; Write-Host ('  [' + $e.TimeCreated.ToString('HH:mm:ss') + '] ID:' + $e.Id + ' | ' + $e.ProviderName + ' | ' + $msg) -f Yellow}}"
 echo.
 pause
 goto sys_event_log
@@ -2567,36 +2554,7 @@ echo ================================================
 echo   AVERTISSEMENTS DISQUE / STOCKAGE
 echo ================================================
 echo.
-powershell -NoProfile -ExecutionPolicy Bypass -Command ^
-    "$since=(Get-Date).AddDays(-30);" ^
-    "$evts=Get-WinEvent -FilterHashtable @{LogName='System';ProviderName='disk','nvme','stornvme','iaStorAV';StartTime=$since} -EA SilentlyContinue | Where-Object {$_.Level -le 3} | Select-Object -First 20;" ^
-    "if(-not $evts){Write-Host '  [OK] Aucun avertissement disque detecte (30 derniers jours).' -f Green}" ^
-    "else{Write-Host ('  '+$evts.Count+' avertissement(s) disque:') -f Yellow; foreach($e in $evts){$lv=if($e.Level -eq 2){'ERREUR'}elseif($e.Level -eq 3){'ALERTE'}else{'CRITIQUE'}; Write-Host ('  ['+$lv+']['+$e.TimeCreated.ToString('dd/MM HH:mm')+'] '+$e.Id+' - '+$e.ProviderName) -f $(if($e.Level -eq 2){'Red'}else{'Yellow'}); Write-Host ('  '+$e.Message.Split([char]10)[0].Trim()) -f DarkGray; Write-Host ''}}"
-echo.
-pause
-goto sys_event_log
-
-:ev_export
-cls
-echo ================================================
-echo   EXPORT DES JOURNAUX (Bureau)
-echo ================================================
-echo.
-echo  Export en cours (Systeme + Application - 7 jours)...
-powershell -NoProfile -ExecutionPolicy Bypass -Command ^
-    "$out='%USERPROFILE%\Desktop\Journaux_Windows.txt';" ^
-    "$since=(Get-Date).AddDays(-7);" ^
-    "$header='RAPPORT JOURNAUX WINDOWS - '+$(Get-Date -Format 'dd/MM/yyyy HH:mm')+'`n'+'Machine: '+$env:COMPUTERNAME+'`n'+'='*60+'`n';" ^
-    "$sys=Get-WinEvent -FilterHashtable @{LogName='System';Level=1,2,3;StartTime=$since} -EA SilentlyContinue | Select-Object -First 100;" ^
-    "$app=Get-WinEvent -FilterHashtable @{LogName='Application';Level=1,2,3;StartTime=$since} -EA SilentlyContinue | Select-Object -First 100;" ^
-    "$lines=@($header,'=== JOURNAL SYSTEME ('+$sys.Count+' evenements) ===','');" ^
-    "foreach($e in $sys){$lines+='['+$e.TimeCreated.ToString('dd/MM/yyyy HH:mm:ss')+'] ID:'+$e.Id+' | '+$e.ProviderName; $lines+='  '+$e.Message.Split([char]10)[0].Trim(); $lines+=''};" ^
-    "$lines+='','=== JOURNAL APPLICATION ('+$app.Count+' evenements) ===','';" ^
-    "foreach($e in $app){$lines+='['+$e.TimeCreated.ToString('dd/MM/yyyy HH:mm:ss')+'] ID:'+$e.Id+' | '+$e.ProviderName; $lines+='  '+$e.Message.Split([char]10)[0].Trim(); $lines+=''};" ^
-    "$lines | Out-File $out -Encoding UTF8"
-echo.
-echo  Rapport enregistre sur le Bureau : Journaux_Windows.txt
-echo.
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$since=(Get-Date).AddDays(-30); $evts=Get-WinEvent -FilterHashtable @{LogName='System';ProviderName='disk','nvme','stornvme','iaStorAV';StartTime=$since} -EA SilentlyContinue | Where-Object {$_.Level -le 3} | Select-Object -First 20; if(-not $evts){Write-Host '  [OK] Aucun avertissement disque detecte (30 derniers jours).' -f Green} else{Write-Host ('  ' + $evts.Count + ' avertissement(s) disque:') -f Yellow; Write-Host ''; foreach($e in $evts){$lv=if($e.Level -eq 2){'ERR'}elseif($e.Level -eq 3){'WARN'}else{'CRIT'}; $msg=$e.Message.Split([Environment]::NewLine)[0].Trim(); if($msg.Length -gt 80){$msg=$msg.Substring(0,80)+'...'}; Write-Host ('  [' + $lv + '][' + $e.TimeCreated.ToString('dd/MM HH:mm') + '] ID:' + $e.Id + ' | ' + $e.ProviderName + ' | ' + $msg) -f $(if($e.Level -eq 2){'Red'}else{'Yellow'})}}"
 pause
 goto sys_event_log
 
