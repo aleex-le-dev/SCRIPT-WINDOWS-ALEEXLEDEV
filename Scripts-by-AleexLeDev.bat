@@ -1840,12 +1840,35 @@ echo ===============================================
 echo     Verification chiffrement BitLocker / Dechiffrage
 echo ===============================================
 echo.
-set /p drive_letter=Lettre du lecteur a verifier (ex: C): 
-if "%drive_letter%"=="" set drive_letter=C
 
-rem Normaliser en ajoutant deux-points si absent
-set "dl=%drive_letter%"
-if not "%dl:~-1%"==":" set "dl=%dl%:"
+set "vol_opts="
+set "vol_count=0"
+for /f "tokens=1,* delims=|" %%A in ('powershell -NoProfile -Command "Get-CimInstance Win32_LogicalDisk | Where-Object {($_.DriveType -eq 3 -or $_.DriveType -eq 2) -and $_.Size -gt 0} | ForEach-Object { $_.DeviceID + '|Lecteur ' + $_.DeviceID + ' ' + $_.VolumeName + ' (' + [math]::Round($_.Size/1GB,1) + ' Go)' }"') do (
+    set /a vol_count+=1
+    set "vol_letter[!vol_count!]=%%A"
+    set "single_vol=%%A"
+    if defined vol_opts (
+        set "vol_opts=!vol_opts!;%%B"
+    ) else (
+        set "vol_opts=%%B"
+    )
+)
+
+if !vol_count! equ 0 (
+    echo [ECHEC] Aucun lecteur local detecte.
+    pause
+    goto system_tools
+)
+
+if !vol_count! equ 1 (
+    set "dl=!single_vol!"
+) else (
+    call :DynamicMenu "CHOISISSEZ LE LECTEUR A VERIFIER" "!vol_opts!"
+    set "v_choice=!errorlevel!"
+    if "!v_choice!"=="0" goto system_tools
+    
+    for %%I in (!v_choice!) do set "dl=!vol_letter[%%I]!"
+)
 
 cls
 echo Verification du statut BitLocker pour !dl! ...
