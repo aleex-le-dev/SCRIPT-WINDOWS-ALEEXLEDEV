@@ -58,7 +58,6 @@ set "t[11]=dns_manager:Gestionnaire DNS~Changer DNS Cloudflare/Google"
 set "t[12]=sys_network_menu:Menu de Depannage Reseau~Outils avances (DNS, ARP, TCP/IP, Autoreset)"
 set "t[13]=---:DISQUE"
 set "t[14]=disk_manager:Formatteur de Disque (DISKPART)~Formater un disque de facon securisee"
-set "t[15]=res_chkdsk:Planifier un CHKDSK (C:)~Verification disque au prochain demarrage (CHKDSK /F /R)"
 set "t[16]=---:APPLICATIONS"
 set "t[17]=winget_manager:Mises a jour d'applications~Mettre a jour vos logiciels via Winget"
 set "t[18]=app_installer:Installateur d'applications~Installer des logiciels par categorie via Winget"
@@ -104,7 +103,7 @@ set "t[53]=sys_win_key:Cle de licence~Recuperer vos differentes cles de produit:
 set "t[54]=sys_drivers:Extraction des pilotes~Sauvegarde de tous les fichiers pilotes natifs:HIDDEN"
 set "t[55]=sys_export_software:Export Liste des Logiciels~Exporte la liste de tous les programmes installes en CSV/TXT:HIDDEN"
 set "t[56]=sys_export_wifi_apps:Export Wi-Fi + Logiciels (TXT)~Genere 2 fichiers TXT sur le Bureau en un seul clic:HIDDEN"
-set "total_tools=56"
+set "total_tools=55"
 
 
 
