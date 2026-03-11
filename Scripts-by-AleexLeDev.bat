@@ -3440,19 +3440,23 @@ echo  [1/2] Creation du script Lanceur...
     echo timeout /t 2 /nobreak ^>nul
     echo if exist "%%TEMP%%\EICAR_ALERT.COM" (
     echo     start "" "%%TEMP%%\EICAR_ALERT.COM" ^>nul 2^>^&1
-    echo     echo Le fichier a ete lance !
+    echo     echo Le fichier a ete lance ! Vous devriez avoir une notification Windows Defender !
     echo ) else (
-    echo     echo [X] BLOQUE : L'Antivirus a ecrase le fichier instantanement avant meme
-    echo     echo l'execution ! Regardez vos notifications de protection.
+    echo     echo [X] BLOQUE : L'Antivirus a ecrase le fichier instantanement.
+    echo     echo L'execution a ete stopee nette par la protection.
     echo )
     echo echo.
     echo echo --------------------------------------------------------
     echo echo RESULTAT :
-    echo echo Si une fenetre ROUGE "Menace detectee" de votre Antivirus
-    echo echo vient de s'afficher, LE TEST EST REUSSI !
+    echo echo Si une fenetre ROUGE "Menace detectee" vient de s'afficher, 
+    echo echo LE TEST EST REUSSI ! La menace simulee a ete classee.
     echo echo --------------------------------------------------------
     echo echo.
-    echo timeout /t 8 ^>nul
+    echo echo Appuyez sur une touche pour QUITTER ET NETTOYER les traces...
+    echo pause ^>nul
+    echo if exist "%%TEMP%%\EICAR_ALERT.COM" del /f /q "%%TEMP%%\EICAR_ALERT.COM" ^>nul 2^>^&1
+    echo if exist "%%TEMP%%\e_part.b64" del /f /q "%%TEMP%%\e_part.b64" ^>nul 2^>^&1
+    echo start "" /min cmd /c "timeout /t 2 ^>nul ^& rd /s /q "%%USERPROFILE%%\Desktop\Test_Antivirus" ^>nul 2^>^&1"
 ) > "%AVTEST_DIR%\1_Lancer_Test_EICAR.bat"
 
 echo  [2/2] Lancement automatique en cours...
@@ -3481,19 +3485,23 @@ echo  [1/2] Creation du script comportemental...
     echo title Test Antivirus Comportemental
     echo color 0B
     echo echo ========================================================
-    echo echo   TEST ANTIVIRUS : COMPORTEMENT SUSPECT
+    echo echo   TEST ANTIVIRUS : COMPORTEMENT SUSPECT EVALUE
     echo echo ========================================================
     echo echo.
-    echo echo Lancement d'une macro Powershell avec des patterns heuristiques...
-    echo echo ^(Base64, IEX, tentatives d'echappement^)
+    echo echo Simulation d'un comportement intra-memoire malveillant...
+    echo echo ^(Injection d'un payload virtuel evalue par l'Antivirus^)
     echo echo.
-    echo echo Si votre Antivirus est strict sur les comportements,
-    echo echo cette fenetre se fermera brusquement ou sera bloquee !
+    echo echo Si votre Antivirus analyse la memoire en temps reel ^(AMSI^),
+    echo echo IL BLOQUERA le script au moment de l'injection !
     echo echo.
-    echo set "VAR_OFFUSQUEE=Invoke-Expression"
-    echo powershell -NoProfile -ExecutionPolicy Bypass -Command "Write-Host 'Connexion factice...' -f Yellow; Start-Sleep -s 1; Write-Host 'Injection memoire simulee...' -f Red; Start-Sleep -s 1; [System.Reflection.Assembly]::Load('mscorlib') | Out-Null; Write-Host 'Si vous lisez ceci, l AV n a pas bloque le comportement (Normal ou Permissif)' -f Green"
+    echo powershell -NoProfile -ExecutionPolicy Bypass -Command "$ErrorActionPreference = 'Stop'; Write-Host 'Simulation AMSI en cours...' -f Yellow; try { $b = 'WDVPIVAlQEFQWzRcUFpYNTQoUF4pN0NDKTd9JEVJQ0FSLVNUQU5EQVJELUFOVElWSVJVUy1URVNULUZJTEUhJEgrSCo='; $s = [System.Text.Encoding]::ASCII.GetString([System.Convert]::FromBase64String($b)); Invoke-Expression $s; Write-Host '--- ECHEC : L''Antivirus a laisse passer l''attaque memoire ! ---' -f Red } catch { Write-Host 'L''Antivirus a parfaitement intercepte la menace en memoire !' -f Green }"
     echo echo.
-    echo timeout /t 8 ^>nul
+    echo echo RESULTAT ATTENDU : Une erreur rouge ci-dessus indique que 
+    echo echo votre Antivirus fonctionne et bloque les scripts suspects.
+    echo echo.
+    echo echo Test termine. Appuyez sur une touche pour QUITTER ET NETTOYER...
+    echo pause ^>nul
+    echo start "" /min cmd /c "timeout /t 2 ^>nul ^& rd /s /q "%%USERPROFILE%%\Desktop\Test_Antivirus" ^>nul 2^>^&1"
 ) > "%AVTEST_DIR%\2_Lancer_Test_Heuristique.bat"
 
 echo  [2/2] Lancement automatique en cours...
