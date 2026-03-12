@@ -3397,8 +3397,8 @@ REM         TEST ANTIVIRUS - SCRIPTS AUTO-DECOMPRESSABLES
 REM ===================================================================
 :sys_av_test
 cls
-set "opts=Generer Launcher EICAR (Decompression auto)~Cree un script sur le Bureau qui extrait et lance une archive EICAR;Generer Launcher Heuristique (Comportemental)~Cree un script qui execute une sequence Powershell suspecte;Nettoyer les fichiers de test~Supprimer les dossiers et fichiers de test du Bureau"
-call :DynamicMenu "TEST ANTIVIRUS - SCRIPTS LANCEURS (INTERACTIFS)" "%opts%"
+set "opts=Test Faux Positif (Signature EICAR)~Cree un fichier de test EICAR inoffensif signale par 100%% des Antivirus mondiaux;Generer Launcher Heuristique (Comportemental)~Cree un script qui execute une sequence Powershell suspecte;Nettoyer les fichiers de test~Supprimer les dossiers et fichiers de test du Bureau"
+call :DynamicMenu "TEST ANTIVIRUS - SCRIPTS LANCEURS (INTERACTIFS)" "%%opts%%"
 set "av_c=%errorlevel%"
 if "%av_c%"=="0" goto menu_principal
 if "%av_c%"=="1" goto av_launcher_eicar
@@ -3410,108 +3410,67 @@ goto sys_av_test
 cls
 echo.
 echo  ================================================
-echo   GENERATION DU LAUNCHER EICAR (AUTO-EXTRACT)
+echo   TEST EN DIRECT : SIGNATURE VIRALE (EICAR)
 echo  ================================================
 echo.
 set "AVTEST_DIR=%USERPROFILE%\Desktop\Test_Antivirus"
 if not exist "%AVTEST_DIR%" mkdir "%AVTEST_DIR%"
 
-echo  [1/2] Creation du script Lanceur...
-(
-    echo @echo off
-    echo title Test Antivirus - Action en cours...
-    echo color 0E
-    echo echo ========================================================
-    echo echo   TEST ANTIVIRUS : DECOMPRESSION ET EXECUTION
-    echo echo ========================================================
-    echo echo.
-    echo echo Ce script va decompresser automatiquement une archive EICAR
-    echo echo et tenter de lancer le fichier contenu.
-    echo echo.
-    echo echo L'Antivirus devrait se manifester IMMMDIATEMENT !
-    echo echo.
-    echo echo [ACTION] Generation directe du fichier EICAR offusque...
-    echo echo -----BEGIN CERTIFICATE-----^> "%%TEMP%%\e_part.b64"
-    echo echo WDVPIVAlQEFQWzRcUFpYNTQoUF4pN0NDKTd9JEVJQ0FSLVNUQU5EQVJELUFOVElW^>^> "%%TEMP%%\e_part.b64"
-    echo echo SVJVUy1URVNULUZJTEUhJEgrSCo=^>^> "%%TEMP%%\e_part.b64"
-    echo echo -----END CERTIFICATE-----^>^> "%%TEMP%%\e_part.b64"
-    echo certutil -decode -f "%%TEMP%%\e_part.b64" "%%TEMP%%\EICAR_ALERT.COM" ^>nul 2^>^&1
-    echo echo [ACTION] Lancement du programme...
-    echo timeout /t 2 /nobreak ^>nul
-    echo if exist "%%TEMP%%\EICAR_ALERT.COM" (
-    echo     start "" "%%TEMP%%\EICAR_ALERT.COM" ^>nul 2^>^&1
-    echo     echo Le fichier a ete lance ! Vous devriez avoir une notification Windows Defender !
-    echo ) else (
-    echo     echo [X] BLOQUE : L'Antivirus a ecrase le fichier instantanement.
-    echo     echo L'execution a ete stopee nette par la protection.
-    echo )
-    echo echo.
-    echo echo --------------------------------------------------------
-    echo echo RESULTAT :
-    echo echo Si une fenetre ROUGE "Menace detectee" vient de s'afficher, 
-    echo echo LE TEST EST REUSSI ! La menace simulee a ete classee.
-    echo echo --------------------------------------------------------
-    echo echo.
-    echo echo Appuyez sur une touche pour QUITTER ET NETTOYER les traces...
-    echo pause ^>nul
-    echo if exist "%%TEMP%%\EICAR_ALERT.COM" del /f /q "%%TEMP%%\EICAR_ALERT.COM" ^>nul 2^>^&1
-    echo if exist "%%TEMP%%\e_part.b64" del /f /q "%%TEMP%%\e_part.b64" ^>nul 2^>^&1
-    echo start "" /min cmd /c "timeout /t 2 ^>nul ^& rd /s /q "%%USERPROFILE%%\Desktop\Test_Antivirus" ^>nul 2^>^&1"
-) > "%AVTEST_DIR%\1_Lancer_Test_EICAR.bat"
-
-echo  [2/2] Lancement automatique en cours...
-start "" "%AVTEST_DIR%\1_Lancer_Test_EICAR.bat"
-
+echo  [ACTION] Construction de la signature virale (Fichier inoffensif)...
+echo  L'Antivirus de Windows va formellement intercepter ce fichier.
 echo.
-echo  Le processus a ete lance automatiquement.
-echo  Regardez la fenetre ou les notifications de l'antivirus.
+echo  Creation du fichier dans : Bureau\Test_Antivirus\eicar_test.txt
 echo.
-timeout /t 4 >nul
+echo 58 35 4f 21 50 25 40 41 50 5b 34 5c 50 5a 58 35 34 28 50 5e 29 37 43 43 29 37 7d 24 > "%TEMP%\hx.txt"
+echo 45 49 43 41 52 2d 53 54 41 4e 44 41 52 44 2d 41 4e 54 49 56 49 52 55 53 2d 54 45 53 54 2d 46 49 4c 45 21 24 48 2b 48 2a >> "%TEMP%\hx.txt"
+certutil.exe -decodehex "%TEMP%\hx.txt" "%AVTEST_DIR%\eicar_test.txt" >nul 2>&1
+del /f /q "%TEMP%\hx.txt" >nul 2>&1
+
+echo  Verification locale par l'Antivirus...
+ping 127.0.0.1 -n 3 >nul
+
+if exist "%AVTEST_DIR%\eicar_test.txt" (
+    echo  [!] ECHEC : L'Antivirus a laisse passer le fichier.
+    echo  Il n'y a pas de protection en temps reel activee.
+) else (
+    echo  [X] BLOQUE REUSSI : L'Antivirus a intercepte et supprime le fichier
+    echo  en quelques millisecondes ! ^(Regardez vos alertes Windows Defender^).
+)
+echo.
+echo  --------------------------------------------------------
+echo  RESULTAT :
+echo  Si le fichier a ete supprime et qu'une alerte ROUGE apparait,
+echo  LE TEST EST UN SUCCES ABSOLU !
+echo  --------------------------------------------------------
+echo.
+echo  Appuyez sur une touche pour NETTOYER LE DOSSIER DU BUREAU et revenir...
+pause >nul
+if exist "%AVTEST_DIR%\eicar_test.txt" del /f /q "%AVTEST_DIR%\eicar_test.txt" >nul 2>&1
+rd /s /q "%AVTEST_DIR%" >nul 2>&1
 goto sys_av_test
 
 :av_launcher_heur
 cls
 echo.
 echo  ================================================
-echo   GENERATION DU LAUNCHER HEURISTIQUE
+echo   TEST EN DIRECT : COMPORTEMENT HEURISTIQUE
 echo  ================================================
 echo.
-set "AVTEST_DIR=%USERPROFILE%\Desktop\Test_Antivirus"
-if not exist "%AVTEST_DIR%" mkdir "%AVTEST_DIR%"
-
-echo  [1/2] Creation du script comportemental...
-(
-    echo @echo off
-    echo title Test Antivirus Comportemental
-    echo color 0B
-    echo echo ========================================================
-    echo echo   TEST ANTIVIRUS : COMPORTEMENT SUSPECT EVALUE
-    echo echo ========================================================
-    echo echo.
-    echo echo Simulation d'un comportement intra-memoire malveillant...
-    echo echo ^(Injection d'un payload virtuel evalue par l'Antivirus^)
-    echo echo.
-    echo echo Si votre Antivirus analyse la memoire en temps reel ^(AMSI^),
-    echo echo IL BLOQUERA le script au moment de l'injection !
-    echo echo.
-    echo powershell -NoProfile -ExecutionPolicy Bypass -Command "$ErrorActionPreference = 'Stop'; Write-Host 'Simulation AMSI en cours...' -f Yellow; try { $b = 'WDVPIVAlQEFQWzRcUFpYNTQoUF4pN0NDKTd9JEVJQ0FSLVNUQU5EQVJELUFOVElWSVJVUy1URVNULUZJTEUhJEgrSCo='; $s = [System.Text.Encoding]::ASCII.GetString([System.Convert]::FromBase64String($b)); Invoke-Expression $s; Write-Host '--- ECHEC : L''Antivirus a laisse passer l''attaque memoire ! ---' -f Red } catch { Write-Host 'L''Antivirus a parfaitement intercepte la menace en memoire !' -f Green }"
-    echo echo.
-    echo echo RESULTAT ATTENDU : Une erreur rouge ci-dessus indique que 
-    echo echo votre Antivirus fonctionne et bloque les scripts suspects.
-    echo echo.
-    echo echo Test termine. Appuyez sur une touche pour QUITTER ET NETTOYER...
-    echo pause ^>nul
-    echo start "" /min cmd /c "timeout /t 2 ^>nul ^& rd /s /q "%%USERPROFILE%%\Desktop\Test_Antivirus" ^>nul 2^>^&1"
-) > "%AVTEST_DIR%\2_Lancer_Test_Heuristique.bat"
-
-echo  [2/2] Lancement automatique en cours...
-start "" "%AVTEST_DIR%\2_Lancer_Test_Heuristique.bat"
-
+echo  Lancement d'une macro Powershell avec des patterns heuristiques AMSI...
+echo  (Injection d'un payload virtuel teste par l'Antivirus en memoire)
 echo.
-echo  Le processus a ete lance automatiquement.
-echo  Regardez la reaction de l'antivirus face a ce lancement.
+echo  Si votre Antivirus analyse la memoire en temps reel (AMSI),
+echo  IL BLOQUERA le script dans cette console au moment de l'injection !
 echo.
-timeout /t 4 >nul
+powershell -NoProfile -ExecutionPolicy Bypass -Command "Write-Host 'Simulation AMSI en cours...' -f Yellow; try { $s = [String]::Join('', [char[]]@(65,77,83,73,32,84,101,115,116,32,83,97,109,112,108,101,58,32,55,101,55,50,99,51,99,101,45,56,54,49,98,45,52,51,51,57,45,56,55,52,48,45,48,97,99,49,52,56,52,99,49,51,56,54)); Invoke-Expression $s 2>$null; Write-Host '--- ECHEC : L''Antivirus a laisse passer l''attaque memoire ! ---' -f Red } catch { Write-Host '--- SUCCES : L''Antivirus a parfaitement intercepte l''attaque ! ---' -f Green }"
+echo.
+echo  --------------------------------------------------------
+echo  RESULTAT ATTENDU : Une erreur ROUGE PowerShell ci-dessus indique
+echo  que votre Antivirus fonctionne et bloque les scripts suspects.
+echo  --------------------------------------------------------
+echo.
+echo  Appuyez sur une touche pour NETTOYER et revenir au menu...
+pause >nul
 goto sys_av_test
 
 :av_clean
