@@ -1659,6 +1659,8 @@ goto sys_export_menu
 cls
 set "opts=[--- ANALYSE SYSTEME ET RAPPORTS ---]"
 set "opts=%opts%;Apercu de la configuration PC~Affiche les specifications et l'etat de sante materiel"
+set "opts=%opts%;Rapport de temperature CPU/GPU~Affiche les temperatures en temps reel"
+set "opts=%opts%;Verificateur de RAM~Slots utilises vs max supporte"
 set "opts=%opts%;Diagnostic Reseau~Test de connexion (Local, Box, Internet, DNS)"
 set "opts=%opts%;Rapport de Batterie~Usure, Sante et stats en temps reel"
 set "opts=%opts%;Verificateur BitLocker~Verifiez l'etat de chiffrement de vos partitions"
@@ -1670,23 +1672,25 @@ call :DynamicMenu "MENU DE DIAGNOSTIC SYSTEME" "%opts%"
 set "diag_choice=%errorlevel%"
 
 if "%diag_choice%"=="1" goto sys_report
-if "%diag_choice%"=="2" goto sys_diag_network
-if "%diag_choice%"=="3" goto sys_battery_report
-if "%diag_choice%"=="4" goto sys_bitlocker_check
-if "%diag_choice%"=="5" goto sys_event_log
-if "%diag_choice%"=="6" goto sys_hw_test
-if "%diag_choice%"=="7" goto sys_defender
+if "%diag_choice%"=="2" goto sys_temp_report
+if "%diag_choice%"=="3" goto sys_ram_check
+if "%diag_choice%"=="4" goto sys_diag_network
+if "%diag_choice%"=="5" goto sys_battery_report
+if "%diag_choice%"=="6" goto sys_bitlocker_check
+if "%diag_choice%"=="7" goto sys_event_log
+if "%diag_choice%"=="8" goto sys_hw_test
+if "%diag_choice%"=="9" goto sys_defender
 if "%diag_choice%"=="0" goto system_tools
 
 if %diag_choice% GEQ 200 (
     set /a "toggle_idx=%diag_choice%-200"
     if "!toggle_idx!"=="1" call :ToggleFav "sys_report"
-    if "!toggle_idx!"=="2" call :ToggleFav "sys_diag_network"
-    if "!toggle_idx!"=="3" call :ToggleFav "sys_battery_report"
-    if "!toggle_idx!"=="4" call :ToggleFav "sys_bitlocker_check"
-    if "!toggle_idx!"=="5" call :ToggleFav "sys_event_log"
-    if "!toggle_idx!"=="6" call :ToggleFav "sys_hw_test"
-    if "!toggle_idx!"=="7" call :ToggleFav "sys_defender"
+    if "!toggle_idx!"=="4" call :ToggleFav "sys_diag_network"
+    if "!toggle_idx!"=="5" call :ToggleFav "sys_battery_report"
+    if "!toggle_idx!"=="6" call :ToggleFav "sys_bitlocker_check"
+    if "!toggle_idx!"=="7" call :ToggleFav "sys_event_log"
+    if "!toggle_idx!"=="8" call :ToggleFav "sys_hw_test"
+    if "!toggle_idx!"=="9" call :ToggleFav "sys_defender"
 )
 goto sys_diagnostic_menu
 
@@ -3489,6 +3493,38 @@ echo.
 pause
 goto sys_av_test
 
+
+:sys_temp_report
+cls
+echo =============================================================
+echo               RAPPORT DE TEMPERATURE CPU/GPU
+echo =============================================================
+echo.
+echo Recherche des capteurs de temperature...
+echo.
+powershell -NoProfile -ExecutionPolicy Bypass -Command "function Get-TempStatus { param($temp) if ($temp -lt 60) { return @{ Status = 'OK'; Color = 'Green' } } elseif ($temp -lt 80) { return @{ Status = 'Acceptable'; Color = 'Yellow' } } elseif ($temp -lt 90) { return @{ Status = 'Elevee'; Color = 'DarkYellow' } } else { return @{ Status = 'Critique'; Color = 'Red' } } }; try { $ohm = Get-CimInstance -Namespace 'root/OpenHardwareMonitor' -ClassName Sensor -ErrorAction Stop; if ($ohm) { Write-Host 'Temperatures (OpenHardwareMonitor):' -f Green; $ohm | Where-Object { $_.SensorType -eq 'Temperature' } | ForEach-Object { $status = Get-TempStatus -temp $_.Value; Write-Host -NoNewline ('   ' + $_.Name + ' (' + $_.Parent + '): ' + $_.Value + ' C'); Write-Host (' - ' + $status.Status) -f $status.Color } } } catch { try { $wmi = Get-CimInstance -Namespace 'root/WMI' -ClassName MSAcpi_ThermalZoneTemperature -ErrorAction Stop; if ($wmi) { Write-Host 'Temperatures (WMI):' -f Yellow; $wmi | ForEach-Object { $temp = [math]::Round(($_.CurrentTemperature - 2732) / 10, 2); $status = Get-TempStatus -temp $temp; Write-Host -NoNewline ('   Instance: ' + $_.InstanceName + ' - ' + $temp + ' C'); Write-Host (' - ' + $status.Status) -f $status.Color } } else { Write-Host 'Aucun capteur de temperature trouve via WMI ou OpenHardwareMonitor.' -f Red } } catch { Write-Host 'Impossible d''acceder a WMI pour les temperatures.' -f Red } }"
+echo.
+echo Legende des statuts:
+powershell -Command "Write-Host '  OK (^< 60C)' -f Green; Write-Host '  Acceptable (60-80C)' -f Yellow; Write-Host '  Elevee (80-90C)' -f DarkYellow; Write-Host '  Critique (^> 90C)' -f Red"
+echo.
+echo Le rapport ci-dessus peut varier en fonction des pilotes et logiciels installes.
+echo Pour des resultats plus precis, utilisez un logiciel dedie comme HWMonitor ou Core Temp.
+echo.
+pause
+goto sys_diagnostic_menu
+
+:sys_ram_check
+cls
+echo =============================================================
+echo               VERIFICATEUR DE MEMOIRE VIVE (RAM)
+echo =============================================================
+echo.
+echo Analyse de la memoire installee et des capacites de la carte mere...
+echo.
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$mem = Get-CimInstance Win32_PhysicalMemory -ErrorAction SilentlyContinue; $mobo = Get-CimInstance Win32_PhysicalMemoryArray -ErrorAction SilentlyContinue; if ($mobo) { $maxCap = [math]::Round($mobo.MaxCapacity / 1024 / 1024, 2); Write-Host ('Capacite maximale supportee : ' + $maxCap + ' Go') -f Cyan; Write-Host ('Nombre de slots memoire    : ' + $mobo.MemoryDevices) -f Cyan } else { Write-Host 'Impossible de determiner les capacites de la carte mere.' -f Yellow }; echo ''; if ($mem) { $totalSticks = $mem.Count; Write-Host ('Barrettes de RAM installees  : ' + $totalSticks) -f Cyan; echo ''; Write-Host 'Details par barrette :' -f Green; $solderedCount = 0; $mem | ForEach-Object { $cap = [math]::Round($_.Capacity / 1GB, 0); if ($_.DeviceLocator -like '*on board*') { $solderedCount++ }; Write-Host ('  - Slot ' + $_.DeviceLocator + ': ' + $cap + ' Go - ' + $_.PartNumber) }; echo ''; if ($totalSticks -gt 0) { if ($solderedCount -eq $totalSticks) { Write-Host 'Conclusion : Toute la memoire RAM est soudee a la carte mere et ne peut pas etre remplacee.' -f Red } elseif ($solderedCount -gt 0) { Write-Host 'Conclusion : Une partie de la memoire RAM est soudee. Les autres barrettes peuvent potentiellement etre remplacees.' -f Yellow } else { Write-Host 'Conclusion : La memoire RAM est sur des barrettes remplacables (non soudee).' -f Green } } } else { Write-Host 'Impossible de lister les barrettes de RAM installees.' -f Yellow }"
+echo.
+pause
+goto sys_diagnostic_menu
 
 :ToggleFav
 set "tf_target=%~1"
