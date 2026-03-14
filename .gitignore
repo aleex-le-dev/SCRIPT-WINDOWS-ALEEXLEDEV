@@ -1,5 +1,11 @@
-# Ignore text files
+# Ignore text files (general)
 *.txt
+
+# Exclure explicitement les fichiers sensibles/locaux
+credentials.txt
+favoris.txt
+dns_backups/
+*.log
 
 # Ignore Windows executables
 *.exe

