@@ -65,19 +65,19 @@ set "t[19]=---:COMPTES ET SECURITE"
 set "t[20]=sys_passwords_menu:Extracteurs de mots de passe~Outils Powershell (Credentials, Wi-Fi, Nirsoft)"
 set "t[21]=sys_unlock_notes:Recuperation de Compte bloque~Instructions pour reprendre controle sans mot de passe"
 set "t[22]=um_menu:Gestion utilisateurs locaux~Panneau de gestion local (Admin, Pass, Ajouts)"
-set "t[23]=---:MATERIEL"
-set "t[24]=touch_screen_manager:Gestionnaire Ecran Tactile~Activation et desactivation du pilote tactile"
-set "t[25]=sys_print_manager:Gestionnaire d'Imprimantes~Lister, vider la file d'attente et supprimer des imprimantes"
-set "t[26]=sys_power_plan:Gestionnaire Plan d'Alimentation~Equilibre, Performances, Ultimate Performance (mode cache Windows)"
+set "t[23]=sys_av_test:Test Antivirus (EICAR Safe)~Teste votre antivirus avec des faux positifs standards inoffensifs"
 set "t[27]=---:EXTRACTION ET SAUVEGARDE"
 set "t[28]=sys_export_menu:Menu des Extractions~Exporte les cles Windows, listes de logiciels, reseaux Wi-Fi et pilotes sur le Bureau"
 set "t[29]=---:PERSONNALISATION"
 set "t[30]=context_menu:Menu contextuel Windows 11~Classic/Modern"
 set "t[31]=sys_god_mode:Dossier God Mode~Creer le raccourci ultime des parametres"
+set "t[56]=sys_gaming_mode:Mode Gaming~Desactiver/reactiver les services lourds pour booster les perfs jeux"
 set "t[57]=sys_shortcuts_bureau:Raccourcis Bureau 1-Clic~Redemarrer et Eteindre le PC avec icone sur le Bureau"
-set "t[58]=---:SECURITE ET TESTS"
-set "t[59]=sys_av_test:Test Antivirus (EICAR Safe)~Teste votre antivirus avec des faux positifs standards inoffensifs"
-:: Sous-items pour gestion des favoris individuels
+set "t[62]=---:MATERIEL"
+set "t[63]=touch_screen_manager:Gestionnaire Ecran Tactile~Activation et desactivation du pilote tactile"
+set "t[64]=sys_print_manager:Gestionnaire d'Imprimantes~Lister, vider la file d'attente et supprimer des imprimantes"
+set "t[65]=sys_power_plan:Gestionnaire Plan d'Alimentation~Equilibre, Performances, Ultimate Performance (mode cache Windows)"
+:: Sous-items HIDDEN pour gestion des favoris individuels
 set "t[32]=dump_credman:Gestionnaire d'identifiants (Windows)~Extrait le Credential Manager Windows (WCMDump):HIDDEN"
 set "t[33]=dump_wifi:Extraction reseaux Wi-Fi (Powershell)~Script WWP puissant listant psw et noms:HIDDEN"
 set "t[34]=sys_nirsoft_pw:WebBrowserPassView (Classique Nirsoft)~Ancien utilitaire graphique pour les mots de passe:HIDDEN"
@@ -87,7 +87,7 @@ set "t[37]=res_dism_restore:Reparation profonde~DISM /RestoreHealth (Reparation 
 set "t[38]=res_temp_clean:Nettoyage massif (Temp/Cache)~Purge des fichiers temporaires et cache Windows Update:HIDDEN"
 set "t[39]=res_wu_reset:Reset Fix Windows Update~Reinitialisation forcee des composants Windows Update:HIDDEN"
 set "t[40]=sys_cleanmgr:Nettoyage de disque (Classique)~Lancement classique de l'utilitaire de nettoyage Windows:HIDDEN"
-:: Nouveaux items (ex-principaux) transferes en DIAGNOSTIC
+:: Items DIAGNOSTIC avances
 set "t[41]=sys_report:Apercu de la configuration PC~Affiche les specifications et l'etat de sante materiel:HIDDEN"
 set "t[42]=sys_diag_network:Diagnostic Reseau~Test de connexion (Local, Box, Internet, DNS):HIDDEN"
 set "t[43]=sys_battery_report:Rapport de Batterie~Usure, Sante et stats en temps reel:HIDDEN"
@@ -96,17 +96,17 @@ set "t[45]=sys_event_log:Journaux d'Erreurs Windows~Affiche les erreurs critique
 set "t[46]=sys_hw_test:Test des Composants PC~Benchmark disque, RAM, CPU et SMART en un clic:HIDDEN"
 set "t[47]=sys_defender:Gestionnaire Windows Defender~Scan rapide/complet CLI, MAJ signatures, menaces detectees:HIDDEN"
 set "t[48]=sys_full_report:Generer Rapport HTML (Tout-en-Un)~Export HTML de l'ordinateur complet (Materiel, OS, Reseau):HIDDEN"
-:: Nouveaux items (ex-principaux) transferes en NETTOYAGE
+:: Items NETTOYAGE avances
 set "t[49]=sys_clean_unified:Nettoyage Complet Unifie~Disque, Temp, Registre, WU, DNS - tout en un menu:HIDDEN"
 set "t[50]=sys_registry_cleanup:Nettoyage du Registre~Optimisation rapide et suppression des entrees mortes:HIDDEN"
 set "t[51]=sys_tweaks_menu:Menu Optimisation Windows 11~Bloatwares, Telemetrie, Performances, Cortana:HIDDEN"
 set "t[52]=sys_startup_manager:Programmes au Demarrage~Lister et desactiver les logiciels qui demarrent avec Windows:HIDDEN"
-:: Nouveaux items (ex-principaux) transferes en EXTRACTION
+:: Items EXTRACTION avances
 set "t[53]=sys_win_key:Cle de licence~Recuperer vos differentes cles de produit:HIDDEN"
 set "t[54]=sys_drivers:Extraction des pilotes~Sauvegarde de tous les fichiers pilotes natifs:HIDDEN"
 set "t[55]=sys_export_software:Export Liste des Logiciels~Exporte la liste de tous les programmes installes en CSV/TXT:HIDDEN"
-set "t[56]=sys_export_wifi_apps:Export Wi-Fi + Logiciels (TXT)~Genere 2 fichiers TXT sur le Bureau en un seul clic:HIDDEN"
-set "total_tools=59"
+set "t[61]=sys_export_wifi_apps:Export Wi-Fi + Logiciels (TXT)~Genere 2 fichiers TXT sur le Bureau en un seul clic:HIDDEN"
+set "total_tools=65"
 
 
 
@@ -1047,7 +1047,8 @@ del /F /Q "%OUTPUT%" >nul 2>&1
 goto system_tools
 
 :sys_rescue_menu
-set "opts=Scan RAPIDE du systeme~Le classique SFC /scannow pour reparer l'OS"
+set "opts=Creer un Point de Restauration~RECOMMANDE : Sauvegarde l'etat du systeme avant toute reparation"
+set "opts=%opts%;Scan RAPIDE du systeme~Le classique SFC /scannow pour reparer l'OS"
 set "opts=%opts%;Verification image base~Examine rapidement l'integration (DISM /CheckHealth)"
 set "opts=%opts%;Reparation profonde~Telecharge les bons fichiers endommages (DISM /RestoreHealth)"
 set "opts=%opts%;Nettoyage massif (Temp/Cache)~Detruit la totalite des fichiers inutiles cachant de l'espace"
@@ -1055,17 +1056,20 @@ set "opts=%opts%;Planifier un CHKDSK (C:)~Audite et repare les secteurs defectue
 set "opts=%opts%;Reset Fix Windows Update~Redemarre brutalement le catalogue WU bloque ou corrompu"
 
 :: Mapping des targets pour gestion des favoris en sous-menu
-set "res_t[1]=res_sfc"
-set "res_t[2]=res_dism_check"
-set "res_t[3]=res_dism_restore"
-set "res_t[4]=res_temp_clean"
-set "res_t[5]=res_chkdsk"
-set "res_t[6]=res_wu_reset"
+set "res_t[1]=res_restore_point"
+set "res_t[2]=res_sfc"
+set "res_t[3]=res_dism_check"
+set "res_t[4]=res_dism_restore"
+set "res_t[5]=res_temp_clean"
+set "res_t[6]=res_chkdsk"
+set "res_t[7]=res_wu_reset"
+set "res_t[8]=res_explorer_restart"
+set "res_t[9]=res_gpu_reset"
 
 :: Marquer les favoris existants dans le sous-menu
 set "res_opts="
 set /a resi=0
-for %%O in ("Scan RAPIDE du systeme~Le classique SFC /scannow pour reparer l'OS" "Verification image base~Examine rapidement l'integration (DISM /CheckHealth)" "Reparation profonde~Telecharge les bons fichiers endommages (DISM /RestoreHealth)" "Nettoyage massif (Temp/Cache)~Detruit la totalite des fichiers inutiles cachant de l'espace" "Planifier un CHKDSK (C:)~Audite et repare les secteurs defectueux au prochain boot" "Reset Fix Windows Update~Redemarre brutalement le catalogue WU bloque ou corrompu") do (
+for %%O in ("Creer un Point de Restauration~RECOMMANDE : Sauvegarde l'etat du systeme avant toute reparation" "Scan RAPIDE du systeme~Le classique SFC /scannow pour reparer l'OS" "Verification image base~Examine rapidement l'integration (DISM /CheckHealth)" "Reparation profonde~Telecharge les bons fichiers endommages (DISM /RestoreHealth)" "Nettoyage massif (Temp/Cache)~Detruit la totalite des fichiers inutiles cachant de l'espace" "Planifier un CHKDSK (C:)~Audite et repare les secteurs defectueux au prochain boot" "Reset Fix Windows Update~Redemarre brutalement le catalogue WU bloque ou corrompu" "Redemarrer l'Explorateur Windows~Corrige les freezes visuels sans redemarrer le PC" "Reinitialiser le pilote GPU~Envoie le signal Win+Ctrl+Shift+B pour relancer l'affichage") do (
     set /a resi+=1
     set "is_f=0"
     set "curr_t=!res_t[%resi%]!"
@@ -1085,12 +1089,15 @@ if %reschoice% GEQ 200 (
     goto sys_rescue_menu
 )
 
-if "%reschoice%"=="1" goto res_sfc
-if "%reschoice%"=="2" goto res_dism_check
-if "%reschoice%"=="3" goto res_dism_restore
-if "%reschoice%"=="4" goto res_temp_clean
-if "%reschoice%"=="5" goto res_chkdsk
-if "%reschoice%"=="6" goto res_wu_reset
+if "%reschoice%"=="1" goto res_restore_point
+if "%reschoice%"=="2" goto res_sfc
+if "%reschoice%"=="3" goto res_dism_check
+if "%reschoice%"=="4" goto res_dism_restore
+if "%reschoice%"=="5" goto res_temp_clean
+if "%reschoice%"=="6" goto res_chkdsk
+if "%reschoice%"=="7" goto res_wu_reset
+if "%reschoice%"=="8" goto res_explorer_restart
+if "%reschoice%"=="9" goto res_gpu_reset
 goto sys_rescue_menu
 
 :res_sfc
@@ -1154,6 +1161,33 @@ echo Les services de mises a jour ont ete recrees de force.
 pause
 goto sys_rescue_menu
 
+:res_explorer_restart
+cls
+echo.
+echo  [EXPLORER] Redemarrage de l'Explorateur Windows...
+echo  L'ecran va clignoter brievement, c'est normal.
+echo.
+taskkill /f /im explorer.exe >nul 2>&1
+timeout /t 2 /nobreak >nul
+start explorer.exe
+echo  [OK] Explorateur Windows redemarre avec succes !
+timeout /t 2 /nobreak >nul
+goto sys_rescue_menu
+
+:res_gpu_reset
+cls
+echo.
+echo  [GPU] Reinitialisation du pilote graphique en cours...
+echo  L'ecran va peut-etre clignoter brievement (c'est normal).
+echo.
+powershell -NoProfile -Command "Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.SendKeys]::SendWait('^+%(B)')"
+timeout /t 2 /nobreak >nul
+echo  [OK] Signal de reinitialisation GPU envoye !
+echo  Si l'ecran n'a pas clignote, verifiez que votre GPU supporte
+echo  le raccourci Win+Ctrl+Shift+B (pilotes recents requis).
+echo.
+pause
+goto sys_rescue_menu
 
 :sys_network_menu
 set "opts=Vider le cache DNS~Supprime et reinitialise le cache du resolveur (ipconfig /flushdns)"
@@ -3147,7 +3181,7 @@ REM              NETTOYAGE COMPLET UNIFIE
 REM ===================================================================
 :sys_clean_unified
 cls
-set "opts=Fichiers Temporaires et Cache~Supprime temp Windows, prefetch et cache navigateurs;Nettoyage Windows Update~Supprime les anciens fichiers WU (libere souvent 5-20 Go);Cache DNS~Vide le cache de resolution DNS local;Nettoyage Disque (cleanmgr)~Utilitaire Windows classique de nettoyage;Registre Windows~Nettoie les entrees mortes / obsoletes;[TOUT EN UN] Nettoyage Complet~Execute tous les nettoyages ci-dessus en sequence"
+set "opts=Fichiers Temporaires et Cache~Supprime temp Windows, prefetch et cache navigateurs;Nettoyage Windows Update~Supprime les anciens fichiers WU (libere souvent 5-20 Go);Cache DNS~Vide le cache de resolution DNS local;Nettoyage Disque (cleanmgr)~Utilitaire Windows classique de nettoyage;Registre Windows~Nettoie les entrees mortes / obsoletes;Presse-papiers~Purge le contenu du presse-papiers (securite apres copie de mdp);[TOUT EN UN] Nettoyage Complet~Execute tous les nettoyages ci-dessus en sequence"
 call :DynamicMenu "NETTOYAGE COMPLET UNIFIE" "%opts%"
 set "cl_c=%errorlevel%"
 if "%cl_c%"=="0" goto sys_opti_menu
@@ -3156,7 +3190,8 @@ if "%cl_c%"=="2" goto cl_wu
 if "%cl_c%"=="3" goto cl_dns
 if "%cl_c%"=="4" goto cl_disk
 if "%cl_c%"=="5" goto cl_registry
-if "%cl_c%"=="6" goto cl_all
+if "%cl_c%"=="6" goto cl_clipboard
+if "%cl_c%"=="7" goto cl_all
 goto sys_clean_unified
 
 :cl_temp
@@ -3257,6 +3292,116 @@ start cleanmgr /sageset:65535
 timeout /t 3 /nobreak >nul
 cleanmgr /sagerun:65535
 goto sys_clean_unified
+
+:cl_clipboard
+cls
+echo.
+echo  [PRESSE-PAPIERS] Vidage complet en cours...
+powershell -NoProfile -Command "Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.Clipboard]::Clear()"
+echo off | clip >nul 2>&1
+reg delete "HKCU\Software\Microsoft\Windows\CurrentVersion\Experience" /v "ClipboardHistory" /f >nul 2>&1
+powershell -NoProfile -Command "Get-Process -Name 'TextInputHost' -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue"
+echo  [OK] Presse-papiers et historique entierement vides.
+timeout /t 2 /nobreak >nul & goto sys_clean_unified
+
+REM ===================================================================
+REM              POINT DE RESTAURATION SYSTEME
+REM ===================================================================
+:res_restore_point
+cls
+echo.
+echo  ================================================
+echo   CREATION D'UN POINT DE RESTAURATION SYSTEME
+echo  ================================================
+echo.
+echo  Activation de la protection systeme si desactivee...
+powershell -NoProfile -Command "Enable-ComputerRestore -Drive 'C:\' -ErrorAction SilentlyContinue" >nul 2>&1
+echo.
+echo  Creation du point de restauration en cours...
+echo  (Cela peut prendre 30 a 60 secondes)
+echo.
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$d = Get-Date -Format 'dd/MM/yyyy HH:mm'; Checkpoint-Computer -Description ('AleexScripts - ' + $d) -RestorePointType 'MODIFY_SETTINGS'; Write-Host '  [OK] Point de restauration cree avec succes !' -ForegroundColor Green"
+if %errorlevel% neq 0 (
+    echo  [ERREUR] Impossible de creer le point de restauration.
+    echo  Verifiez que la protection systeme est activee sur C: dans les
+    echo  Proprietes systeme ^> Protection du systeme.
+)
+echo.
+pause
+goto sys_rescue_menu
+
+REM ===================================================================
+REM              MODE GAMING - BOOST PERFORMANCES
+REM ===================================================================
+:sys_gaming_mode
+cls
+set "opts=ACTIVER le Mode Gaming~Desactive les services lourds pour maximiser les FPS;DESACTIVER le Mode Gaming~Reactiver tous les services normaux (retour Windows standard)"
+call :DynamicMenu "MODE GAMING - BOOST PERFORMANCES" "%opts%"
+set "gm_c=%errorlevel%"
+if "%gm_c%"=="0" goto menu_principal
+if "%gm_c%"=="1" goto gm_enable
+if "%gm_c%"=="2" goto gm_disable
+goto sys_gaming_mode
+
+:gm_enable
+cls
+echo.
+echo  ================================================
+echo   MODE GAMING - ACTIVATION
+echo  ================================================
+echo.
+echo  [1/6] Arret Windows Update (wuauserv)...
+net stop wuauserv >nul 2>&1
+echo  [2/6] Arret Indexation des fichiers (WSearch)...
+net stop WSearch >nul 2>&1
+echo  [3/6] Arret Superfetch / SysMain...
+net stop SysMain >nul 2>&1
+echo  [4/6] Arret Spooler d'impression (Spooler)...
+net stop Spooler >nul 2>&1
+echo  [5/6] Arret Connected User Experiences (DiagTrack)...
+net stop DiagTrack >nul 2>&1
+echo  [6/6] Activation du plan Performances Elevees...
+powercfg /setactive 8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c >nul 2>&1
+echo.
+echo  ================================================
+echo   [OK] MODE GAMING ACTIVE !
+echo   Tous les services lourds ont ete stoppes.
+echo   Les performances CPU/GPU sont maximisees.
+echo.
+echo   ATTENTION : Relancez ce menu pour DESACTIVER
+echo   le mode Gaming quand vous avez fini de jouer.
+echo  ================================================
+echo.
+pause
+goto sys_gaming_mode
+
+:gm_disable
+cls
+echo.
+echo  ================================================
+echo   MODE GAMING - DESACTIVATION
+echo  ================================================
+echo.
+echo  [1/6] Redemarrage Windows Update (wuauserv)...
+net start wuauserv >nul 2>&1
+echo  [2/6] Redemarrage Indexation des fichiers (WSearch)...
+net start WSearch >nul 2>&1
+echo  [3/6] Redemarrage Superfetch / SysMain...
+net start SysMain >nul 2>&1
+echo  [4/6] Redemarrage Spooler d'impression...
+net start Spooler >nul 2>&1
+echo  [5/6] Redemarrage DiagTrack...
+net start DiagTrack >nul 2>&1
+echo  [6/6] Retour au plan d'alimentation Equilibre...
+powercfg /setactive 381b4222-f694-41f0-9685-ff5bb260df2e >nul 2>&1
+echo.
+echo  ================================================
+echo   [OK] MODE GAMING DESACTIVE !
+echo   Tous les services ont ete restaures normalement.
+echo  ================================================
+echo.
+pause
+goto sys_gaming_mode
 
 REM ===================================================================
 REM              RAPPORT COMPLET TOUT-EN-UN (HTML)
