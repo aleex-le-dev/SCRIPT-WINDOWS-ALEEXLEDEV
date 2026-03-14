@@ -56,8 +56,9 @@ set "t[9]=sys_opti_menu:Menu de Nettoyage et Optimisation~Regroupe le nettoyage 
 set "t[10]=---:RESEAU"
 set "t[11]=dns_manager:Gestionnaire DNS~Changer DNS Cloudflare/Google"
 set "t[12]=sys_network_menu:Menu de Depannage Reseau~Outils avances (DNS, ARP, TCP/IP, Autoreset)"
-set "t[13]=---:DISQUE"
-set "t[14]=disk_manager:Formatteur de Disque (DISKPART)~Formater un disque de facon securisee"
+set "t[13]=net_cyber_menu:Analyse Cybersecurite Reseau~Ports ouverts, connexions suspectes, tests intrusion"
+set "t[14]=---:DISQUE"
+set "t[15]=disk_manager:Formatteur de Disque (DISKPART)~Formater un disque de facon securisee"
 set "t[16]=---:APPLICATIONS"
 set "t[17]=winget_manager:Mises a jour d'applications~Mettre a jour vos logiciels via Winget"
 set "t[18]=app_installer:Installateur d'applications~Installer des logiciels par categorie via Winget"
@@ -1321,7 +1322,158 @@ echo Reinitialisation reseau terminee avec succes !
 pause
 goto sys_network_menu
 
-:sys_diag_network
+REM ===================================================================
+REM              CYBERSECURITE RESEAU
+REM ===================================================================
+:net_cyber_menu
+cls
+set "opts=Scanner les ports ouverts (local)~Liste tous les ports TCP/UDP en ecoute sur cette machine"
+set "opts=%opts%;Connexions actives et suspectes~Affiche toutes les connexions etablies avec IP et PID associe"
+set "opts=%opts%;Processus utilisant le reseau~Mapping PID-Processus pour identifier les programmes connectes"
+set "opts=%opts%;Test de fuite DNS (DNS Leak)~Verifie que vos requetes DNS ne transitent pas par un serveur inconnu"
+set "opts=%opts%;Scan de la plage reseau locale~Ping sweep pour decouvrir tous les appareils sur votre LAN"
+set "opts=%opts%;Firewall Windows - Etat et regles~Affiche les regles actives du pare-feu Windows Defender"
+set "opts=%opts%;Detecter les ecoutes suspectes~Alerte si des ports critiques (RAT, keylogger) sont ouverts"
+set "opts=%opts%;Rapport de securite complet~Genere un rapport HTML complet de l'exposition reseau"
+call :DynamicMenu "CYBERSECURITE RESEAU" "!opts!"
+set "cyber_c=%errorlevel%"
+if "%cyber_c%"=="0" goto sys_network_menu
+if "%cyber_c%"=="1" goto cyber_open_ports
+if "%cyber_c%"=="2" goto cyber_active_conn
+if "%cyber_c%"=="3" goto cyber_proc_net
+if "%cyber_c%"=="4" goto cyber_dns_leak
+if "%cyber_c%"=="5" goto cyber_lan_scan
+if "%cyber_c%"=="6" goto cyber_firewall
+if "%cyber_c%"=="7" goto cyber_suspect_ports
+if "%cyber_c%"=="8" goto cyber_security_report
+goto net_cyber_menu
+
+:cyber_open_ports
+cls
+echo.
+echo  ================================================
+echo   SCAN DES PORTS OUVERTS (LOCAL)
+echo  ================================================
+echo.
+echo  Ports TCP en ecoute :
+echo  -----------------------------------------------
+powershell -NoProfile -Command "Get-NetTCPConnection -State Listen | Sort-Object LocalPort | Format-Table LocalPort, @{N='Processus';E={(Get-Process -Id $_.OwningProcess -EA SilentlyContinue).Name}}, OwningProcess -AutoSize"
+echo.
+echo  Ports UDP en ecoute :
+echo  -----------------------------------------------
+powershell -NoProfile -Command "Get-NetUDPEndpoint | Sort-Object LocalPort | Format-Table LocalPort, @{N='Processus';E={(Get-Process -Id $_.OwningProcess -EA SilentlyContinue).Name}}, OwningProcess -AutoSize"
+echo.
+pause
+goto net_cyber_menu
+
+:cyber_active_conn
+cls
+echo.
+echo  ================================================
+echo   CONNEXIONS ACTIVES ET SUSPECTES
+echo  ================================================
+echo.
+echo  Connexions TCP etablies (ESTABLISHED) :
+echo  -----------------------------------------------
+powershell -NoProfile -Command "Get-NetTCPConnection -State Established | Sort-Object RemoteAddress | Format-Table LocalPort, RemoteAddress, RemotePort, @{N='Processus';E={(Get-Process -Id $_.OwningProcess -EA SilentlyContinue).Name}}, OwningProcess -AutoSize"
+echo.
+echo  Connexions sortantes en attente (TIME_WAIT) :
+powershell -NoProfile -Command "Get-NetTCPConnection -State TimeWait | Measure-Object | Select-Object -ExpandProperty Count | ForEach-Object { Write-Host ('  ' + $_ + ' connexions en TIME_WAIT') }"
+echo.
+pause
+goto net_cyber_menu
+
+:cyber_proc_net
+cls
+echo.
+echo  ================================================
+echo   PROCESSUS UTILISANT LE RESEAU
+echo  ================================================
+echo.
+powershell -NoProfile -Command "$conns = Get-NetTCPConnection -State Established -EA SilentlyContinue; $result = $conns | ForEach-Object { $proc = Get-Process -Id $_.OwningProcess -EA SilentlyContinue; [PSCustomObject]@{ Processus=$proc.Name; PID=$_.OwningProcess; LocalPort=$_.LocalPort; AdresseDistante=$_.RemoteAddress; PortDistant=$_.RemotePort } }; $result | Sort-Object Processus | Format-Table -AutoSize"
+echo.
+pause
+goto net_cyber_menu
+
+:cyber_dns_leak
+cls
+echo.
+echo  ================================================
+echo   TEST DE FUITE DNS (DNS LEAK)
+echo  ================================================
+echo.
+echo  Serveurs DNS actuellement configures :
+powershell -NoProfile -Command "Get-DnsClientServerAddress | Where-Object {$_.ServerAddresses} | Format-Table InterfaceAlias, AddressFamily, ServerAddresses -AutoSize"
+echo.
+echo  Resolution de test vers un domaine public :
+powershell -NoProfile -Command "try { $r = Resolve-DnsName 'whoami.akamai.net' -EA Stop; Write-Host ('  IP resolue : ' + $r.IP4Address) -f Green } catch { Write-Host '  Impossible de resoudre le domaine de test.' -f Red }"
+echo.
+echo  Test de latence DNS (Cloudflare 1.1.1.1) :
+powershell -NoProfile -Command "$t = Measure-Command { Resolve-DnsName 'cloudflare.com' -Server '1.1.1.1' -EA SilentlyContinue }; Write-Host ('  Latence DNS : ' + [math]::Round($t.TotalMilliseconds) + ' ms') -f Cyan"
+echo.
+echo  Test de latence DNS (Google 8.8.8.8) :
+powershell -NoProfile -Command "$t = Measure-Command { Resolve-DnsName 'google.com' -Server '8.8.8.8' -EA SilentlyContinue }; Write-Host ('  Latence DNS : ' + [math]::Round($t.TotalMilliseconds) + ' ms') -f Cyan"
+echo.
+pause
+goto net_cyber_menu
+
+:cyber_lan_scan
+cls
+echo.
+echo  ================================================
+echo   SCAN DE LA PLAGE RESEAU LOCALE
+echo  ================================================
+echo.
+echo  Detection de la plage reseau en cours...
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$l=[System.Environment]::GetFolderPath('Desktop')+'\Scan_Reseau_Log.txt'; '--- SCAN RESEAU DU '+(Get-Date)+' ---'|Out-File $l; $ip=(Get-NetIPAddress -AddressFamily IPv4|Where-Object {$_.IPAddress -notmatch '^127'}|Select-Object -First 1).IPAddress; $b=($ip -split '\.')[0..2] -join '.'; 'Plage : '+$b+'.1-254'|Out-File $l -Append; Write-Host ('  Plage : '+$b+'.1 - '+$b+'.254') -f Cyan; Write-Host '  Scan en cours (Log genere sur le Bureau)...' -f Yellow; $f=@(); 1..254 | ForEach-Object { $t=$b+'.'+$_; '[*] Test de '+$t | Out-File $l -Append; $p=New-Object System.Net.NetworkInformation.Ping; try { $r=$p.Send($t, 200); if ($r.Status -eq 'Success') { try { $n=[System.Net.Dns]::GetHostEntry($t).HostName } catch { $n='Inconnu' }; $f+=$t; '[+] TROUVE : '+$t+' ('+$n+')'|Out-File $l -Append; Write-Host ('  [+] '+$t+' - '+$n) -f Green } } catch {}; if ($_ % 50 -eq 0) { Write-Host ('  Progression : '+$_+'/254...') -f Gray } }; 'Scan termine. Trouves : '+$f.Count|Out-File $l -Append; Write-Host ''; Write-Host ('  Total : '+$f.Count+' appareil(s) detecte(s)') -f Cyan; Start-Process $l"
+echo.
+pause
+goto net_cyber_menu
+
+:cyber_firewall
+cls
+echo.
+echo  ================================================
+echo   PARE-FEU WINDOWS - ETAT ET REGLES
+echo  ================================================
+echo.
+echo  Etat du Firewall Windows par profil :
+powershell -NoProfile -Command "Get-NetFirewallProfile | Format-Table Name, Enabled, DefaultInboundAction, DefaultOutboundAction -AutoSize"
+echo.
+echo  Regles autorisant les connexions ENTRANTES actives :
+powershell -NoProfile -Command "Get-NetFirewallRule | Where-Object {$_.Direction -eq 'Inbound' -and $_.Enabled -eq 'True' -and $_.Action -eq 'Allow'} | Select-Object DisplayName, Profile, Action | Sort-Object DisplayName | Format-Table -AutoSize | Select-Object -First 30"
+echo.
+echo  (Affichage limite aux 30 premieres regles)
+pause
+goto net_cyber_menu
+
+:cyber_suspect_ports
+cls
+echo.
+echo  ================================================
+echo   DETECTION DE PORTS SUSPECTS (RAT/MALWARE)
+echo  ================================================
+echo.
+echo  Verification des ports critiques connus pour les malwares...
+echo.
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$sp=@{1337='DarkComet/Leet RAT';4444='Metasploit default';5900='VNC (acces distant)';6666='IRC/Botnet';6667='IRC/Botnet';31337='Back Orifice';12345='NetBus';65535='Port suspect extreme';3389='RDP (acces distant)';23='Telnet (non chiffre)';21='FTP (non chiffre)';445='SMB (risque EternalBlue)';8080='Proxy/Tunnel suspect';9001='Tor relay'}; $open=Get-NetTCPConnection -State Listen -EA SilentlyContinue | Select-Object -ExpandProperty LocalPort; $found=$false; foreach($port in $sp.Keys){if($open -contains $port){Write-Host ('  [ALERTE] Port ' + $port + ' ouvert - ' + $sp[$port]) -ForegroundColor Red; $found=$true}}; if(-not $found){Write-Host '  [OK] Aucun port suspect detecte.' -ForegroundColor Green}"
+echo.
+pause
+goto net_cyber_menu
+
+:cyber_security_report
+cls
+echo.
+echo  ================================================
+echo   RAPPORT DE SECURITE RESEAU COMPLET
+echo  ================================================
+echo.
+echo  Generation du rapport HTML en cours...
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$f=[System.Environment]::GetFolderPath('Desktop')+'\RapportSecuriteReseau_'+(Get-Date -Format 'yyyyMMdd_HHmm')+'.html'; $css='body{font-family:Segoe UI,sans-serif;background:#0d1117;color:#e6edf3;padding:20px}h1{color:#f85149;border-bottom:2px solid #f85149;padding-bottom:8px}h2{color:#ff7b72;background:#161b22;padding:8px;border-radius:4px;margin-top:20px}table{width:100%;border-collapse:collapse;margin:8px 0}th{background:#f85149;color:white;padding:6px;text-align:left}td{padding:5px 8px;border-bottom:1px solid #21262d}tr:hover{background:#1c2128}.ok{color:#3fb950}.danger{color:#f85149}'; $pt=Get-NetTCPConnection -State Listen -EA SilentlyContinue|Sort-Object LocalPort|ForEach-Object{$p=(Get-Process -Id $_.OwningProcess -EA SilentlyContinue).Name;'<tr><td>TCP</td><td>'+$_.LocalPort+'</td><td>'+$p+'</td><td>'+$_.OwningProcess+'</td></tr>'}; $pu=Get-NetUDPEndpoint -EA SilentlyContinue|Sort-Object LocalPort|Select-Object -First 30|ForEach-Object{$p=(Get-Process -Id $_.OwningProcess -EA SilentlyContinue).Name;'<tr><td>UDP</td><td>'+$_.LocalPort+'</td><td>'+$p+'</td><td>'+$_.OwningProcess+'</td></tr>'}; $co=Get-NetTCPConnection -State Established -EA SilentlyContinue|ForEach-Object{$p=(Get-Process -Id $_.OwningProcess -EA SilentlyContinue).Name;'<tr><td>'+$p+'</td><td>'+$_.LocalPort+'</td><td>'+$_.RemoteAddress+'</td><td>'+$_.RemotePort+'</td></tr>'}; $fw=Get-NetFirewallProfile|ForEach-Object{$s=if($_.Enabled -eq 'True'){'ok'}else{'danger'};$st=if($_.Enabled -eq 'True'){'ACTIF'}else{'INACTIF'};'<tr><td>'+$_.Name+'</td><td class='+$s+'>'+$st+'</td><td>'+$_.DefaultInboundAction+'</td><td>'+$_.DefaultOutboundAction+'</td></tr>'}; $sp=@{1337='DarkComet';4444='Metasploit';5900='VNC';6666='IRC/Bot';31337='BackOrifice';12345='NetBus';3389='RDP';23='Telnet';21='FTP';445='SMB';8080='Proxy'}; $op=Get-NetTCPConnection -State Listen -EA SilentlyContinue|Select-Object -ExpandProperty LocalPort; $al=($sp.Keys|Where-Object{$op -contains $_}|ForEach-Object{"<tr><td class='danger'>ALERTE</td><td>"+$_+"</td><td>"+$sp[$_]+"</td></tr>"})-join''; if(-not $al){$al="<tr><td class='ok' colspan='3'>Aucun port suspect</td></tr>"}; $dn=Get-DnsClientServerAddress|Where-Object{$_.ServerAddresses}|ForEach-Object{"<tr><td>"+$_.InterfaceAlias+"</td><td>"+($_.ServerAddresses -join ', ')+"</td></tr>"}; $html='<!DOCTYPE html><html><head><meta charset=UTF-8><title>Securite Reseau</title><style>'+$css+'</style></head><body><h1>Rapport Securite Reseau - '+$env:COMPUTERNAME+'</h1><p>'+$(Get-Date -Format 'dd/MM/yyyy HH:mm')+'</p><h2>Alertes Ports Suspects</h2><table><tr><th>Niveau</th><th>Port</th><th>Menace</th></tr>'+$al+'</table><h2>Ports en Ecoute</h2><table><tr><th>Proto</th><th>Port</th><th>Processus</th><th>PID</th></tr>'+($pt+$pu-join'')+'</table><h2>Connexions Actives</h2><table><tr><th>Processus</th><th>Port Local</th><th>IP Distante</th><th>Port Distant</th></tr>'+($co-join'')+'</table><h2>Pare-feu</h2><table><tr><th>Profil</th><th>Statut</th><th>Entrant</th><th>Sortant</th></tr>'+($fw-join'')+'</table><h2>DNS</h2><table><tr><th>Interface</th><th>Serveurs</th></tr>'+($dn-join'')+'</table></body></html>'; $html|Out-File $f -Encoding UTF8; Write-Host ('  [OK] Rapport : '+$f) -ForegroundColor Green; Start-Process $f"
+echo.
+pause
+goto net_cyber_menu
+
 cls
 set "DIAG_LOG=%USERPROFILE%\Desktop\Diagnostic_Reseau.log"
 set /a "ECHEC_COUNT=0"
