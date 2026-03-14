@@ -67,6 +67,8 @@ set "t[20]=sys_passwords_menu:Extracteurs de mots de passe~Outils Powershell (Cr
 set "t[21]=sys_unlock_notes:Recuperation de Compte bloque~Instructions pour reprendre controle sans mot de passe"
 set "t[22]=um_menu:Gestion utilisateurs locaux~Panneau de gestion local (Admin, Pass, Ajouts)"
 set "t[23]=sys_av_test:Test Antivirus (EICAR Safe)~Teste votre antivirus avec des faux positifs standards inoffensifs"
+set "t[24]=cyber_privesc_audit:Test d'Infiltration et Audit de Privileges~Audit des Unquoted Paths, Taches SYSTEM et Banner Grabbing"
+set "t[25]=cyber_gen_htaccess:Generateur de Config Securite (.htaccess)~Cree une configuration robuste (Headers, Security) pour votre site web"
 set "t[27]=---:EXTRACTION ET SAUVEGARDE"
 set "t[28]=sys_export_menu:Menu des Extractions~Exporte les cles Windows, listes de logiciels, reseaux Wi-Fi et pilotes sur le Bureau"
 set "t[29]=---:PERSONNALISATION"
@@ -1332,20 +1334,26 @@ set "opts=%opts%;Audit des Adaptateurs et Configuration~Details techniques des c
 set "opts=%opts%;Analyse des Flux (Ports et Processus)~Cartographie des ports ouverts et des logiciels actifs"
 set "opts=%opts%;Scan Reseau et Marques (OUI/MAC)~Scan LAN ultra-rapide avec identification des constructeurs"
 set "opts=%opts%;Audit de Securite et Defense~Firewall, Ports suspects (RAT) et Partages reseau"
+set "opts=%opts%;Scanner de Vulnerabilites Web (Pentest)~Tests SQLi, XSS et Headers de securite sur une URL"
+set "opts=%opts%;Test d'Infiltration et Audit de Privileges~Audit des Unquoted Paths, Taches SYSTEM et Banner Grabbing"
+set "opts=%opts%;Generateur de Config Securite (.htaccess)~Cree une configuration robuste (Headers, Security) pour votre site web"
 set "opts=%opts%;Test de Fuite DNS (Anonymat)~Verifie si votre IP reelle ou vos DNS fuitent"
 set "opts=%opts%;Rapport de Diagnostic Pro (Audit HTML)~Genere un audit complet detaille sur votre Bureau"
 
 call :DynamicMenu "AUDIT ET CYBERSECURITE RESEAU" "!opts!"
 set "cyber_c=%errorlevel%"
 
-if "%cyber_c%"=="0" goto system_tools
+if "%cyber_c%"=="0" goto sys_network_menu
 if "%cyber_c%"=="1" goto cyber_triage
 if "%cyber_c%"=="2" goto cyber_adapter_audit
 if "%cyber_c%"=="3" goto cyber_flux_analysis
 if "%cyber_c%"=="4" goto cyber_lan_scan
 if "%cyber_c%"=="5" goto cyber_security_audit
-if "%cyber_c%"=="6" goto cyber_dns_leak
-if "%cyber_c%"=="7" goto cyber_security_report
+if "%cyber_c%"=="6" goto cyber_web_pentest
+if "%cyber_c%"=="7" goto cyber_privesc_audit
+if "%cyber_c%"=="8" goto cyber_gen_htaccess
+if "%cyber_c%"=="9" goto cyber_dns_leak
+if "%cyber_c%"=="10" goto cyber_security_report
 goto net_cyber_menu
 
 :cyber_triage
@@ -1414,6 +1422,134 @@ pause
 goto net_cyber_menu
 
 
+
+:cyber_web_pentest
+cls
+echo.
+echo  ================================================
+echo   SCANNER DE VULNERABILITES WEB (PENTEST)
+echo  ================================================
+echo.
+echo  [i] Ce module teste une URL pour SQLi, XSS et Headers de securite.
+echo.
+set /p "TARGET_URL=Entrez l'URL a tester (ex: https://example.com) : "
+if "%TARGET_URL%"=="" goto net_cyber_menu
+
+echo.
+echo  [i] Demarrage du scan asynchrone pour %TARGET_URL%...
+echo  (Appuyez sur ECHAP pour annuler)
+echo.
+
+set "WPS=%TEMP%\web_pentest.ps1"
+if exist "%WPS%" del "%WPS%"
+
+echo $url = "!TARGET_URL!" >> "%WPS%"
+echo if ($url -notmatch '^^http') { $url = 'http://' + $url } >> "%WPS%"
+echo $ua = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36" >> "%WPS%"
+echo function Print-Result($sev, $msg) { >> "%WPS%"
+echo    $c = switch($sev){ 'CRITICAL' {'Magenta'}; 'HIGH' {'Red'}; 'MEDIUM' {'Yellow'}; 'LOW' {'Cyan'}; default {'Green'} } >> "%WPS%"
+echo    Write-Host "  [$sev] " -NoNewline -f $c; Write-Host $msg >> "%WPS%"
+echo } >> "%WPS%"
+echo try { >> "%WPS%"
+echo    Write-Host "`n--- Verification des Headers et Cookies ---" -f Blue >> "%WPS%"
+echo    try { >> "%WPS%"
+echo        $resp = Invoke-WebRequest $url -UserAgent $ua -Method Get -TimeoutSec 15 -ErrorAction Stop -UseBasicParsing >> "%WPS%"
+echo        $h = $resp.Headers >> "%WPS%"
+echo        $checkH = @{'Content-Security-Policy'='MEDIUM'; 'X-Frame-Options'='MEDIUM'; 'X-Content-Type-Options'='LOW'; 'Strict-Transport-Security'='MEDIUM'; 'Permissions-Policy'='LOW'; 'Cross-Origin-Opener-Policy'='LOW'; 'Cross-Origin-Resource-Policy'='LOW'} >> "%WPS%"
+echo        foreach($k in $checkH.Keys){ if(-not $h.ContainsKey($k)){ Print-Result $checkH[$k] "Header manquant : $k" } } >> "%WPS%"
+echo        if($h.ContainsKey('Server')){ Print-Result 'LOW' ("Le header Server revele : " + $h['Server']) } >> "%WPS%"
+echo        $cookies = $resp.Headers['Set-Cookie'] >> "%WPS%"
+echo        if($cookies){ foreach($c in $cookies){ if($c -notmatch 'HttpOnly'){ Print-Result 'MEDIUM' "Cookie sans flag HttpOnly detecte" }; if($c -notmatch 'Secure'){ Print-Result 'MEDIUM' "Cookie sans flag Secure detecte" } } } >> "%WPS%"
+echo    } catch { Write-Host "  [!] Impossible d'analyser les headers (Serveur lent ou indisponible)" -f Gray } >> "%WPS%"
+echo    Write-Host "`n--- Verification SSL/TLS et Methodes ---" -f Blue >> "%WPS%"
+echo    if($url -like 'https*'){ try { $req = [Net.HttpWebRequest]::Create($url); $req.Timeout = 5000; $res = $req.GetResponse(); $res.Close(); Write-Host "  [OK] Certificat SSL valide." -f Green } catch { Print-Result 'HIGH' "Probleme de certificat SSL ou protocole faible" } } >> "%WPS%"
+echo    try { $opt = Invoke-WebRequest $url -Method OPTIONS -UserAgent $ua -TimeoutSec 5 -ErrorAction SilentlyContinue -UseBasicParsing; if($opt.Headers['Allow']){ Write-Host "  [INFO] Methodes autorisees : $($opt.Headers['Allow'])" -f Cyan } } catch {} >> "%WPS%"
+echo    Write-Host "`n--- Test SQL Injection (Injection Inteligente ^& Time-based) ---" -f Blue >> "%WPS%"
+echo    $baseParams = @('id', 'cat', 'page', 'query', 'search', 'user') >> "%WPS%"
+echo    $payloads = @([char]39, [char]34, [char]39+' OR 1=1--', 'admin'+[char]39+'--', ' order by 10--') >> "%WPS%"
+echo    $errors = @('sql syntax', 'mysql', 'sqlite', 'syntax error', 'PostgreSQL', 'Microsoft OLE DB', 'Oracle Error', 'MariaDB', 'System.Data.SqlClient') >> "%WPS%"
+echo    $uri = [uri]$url; $q = $uri.Query.TrimStart('?'); $existingParams = $q.Split('^&', [System.StringSplitOptions]::RemoveEmptyEntries) >> "%WPS%"
+echo    $targets = @(); if($existingParams.Count -gt 0){ foreach($ep in $existingParams){ $targets += $ep.Split('=')[0] } } else { $targets = $baseParams } >> "%WPS%"
+echo    foreach($ta in $targets){ >> "%WPS%"
+echo        foreach($p in $payloads){ >> "%WPS%"
+echo            if($Host.UI.RawUI.KeyAvailable -and $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown').VirtualKeyCode -eq 27){ exit } >> "%WPS%"
+echo            $encodedP = [uri]::EscapeDataString($p) >> "%WPS%"
+echo            $testUrl = if($url -like "*$ta=*"){ $url -replace "$ta=[^^&]*", "$ta=$encodedP" } else { if($url.Contains('?')) { "$url"+"^&"+"$ta=$encodedP" } else { "$url?$ta=$encodedP" } } >> "%WPS%"
+echo            try { $tr = Invoke-WebRequest $testUrl -UserAgent $ua -TimeoutSec 8 -ErrorAction Stop -UseBasicParsing >> "%WPS%"
+echo                if($tr.StatusCode -eq 403 -or $tr.StatusCode -eq 406){ Write-Host "  [INFO] WAF potentiellement detecte (Bloquage 403/406)" -f Cyan; break } >> "%WPS%"
+echo                if($tr.Content -and ($errors ^| Where-Object { $tr.Content -match $_ })){ Print-Result 'CRITICAL' "SQLi detectee (param:$ta) avec payload: $p" } >> "%WPS%"
+echo            } catch { if($_.Exception.Response.StatusCode -eq 403){ Write-Host "  [INFO] WAF detecte (403 Forbidden)" -f Cyan; break } } >> "%WPS%"
+echo        } >> "%WPS%"
+echo        Write-Host "  [i] Test Time-based sur $ta..." -f Gray >> "%WPS%"
+echo        $start = Get-Date; try { $null = Invoke-WebRequest ($url.Split('?')[0] + "?$ta=" + [uri]::EscapeDataString("1' AND SLEEP(5)--")) -TimeoutSec 10 -ErrorAction SilentlyContinue -UseBasicParsing } catch {} >> "%WPS%"
+echo        if(((Get-Date) - $start).TotalSeconds -gt 4){ Print-Result 'CRITICAL' "SQLi Time-based detectee sur param [$ta]" } >> "%WPS%"
+echo    } >> "%WPS%"
+echo    Write-Host "`n--- Test XSS Reflecte (Multi-Payloads) ---" -f Blue >> "%WPS%"
+echo    $xssP = @("^<script^>alert(1)^</script^>", [char]34+'^>^<img src=x onerror=alert(1)^^>', [char]39+'^>^<svg/onload=alert(1)^^>', "javascript:alert(1)") >> "%WPS%"
+echo    foreach($ta in $targets){ >> "%WPS%"
+echo        foreach($xp in $xssP){ >> "%WPS%"
+echo            $testUrlXSS = if($url -like "*$ta=*"){ $url -replace "$ta=[^^&]*", "$ta="+[uri]::EscapeDataString($xp) } else { if($url.Contains('?')) { "$url"+"^&"+"$ta="+[uri]::EscapeDataString($xp) } else { "$url?$ta="+[uri]::EscapeDataString($xp) } } >> "%WPS%"
+echo            try { $trX = Invoke-WebRequest $testUrlXSS -UserAgent $ua -TimeoutSec 8 -ErrorAction SilentlyContinue -UseBasicParsing >> "%WPS%"
+echo                if($trX.Content -match [regex]::Escape($xp)){ Print-Result 'HIGH' "XSS Reflecte detecte sur [$ta] avec payload : $xp" } >> "%WPS%"
+echo            } catch {} >> "%WPS%"
+echo        } >> "%WPS%"
+echo    } >> "%WPS%"
+echo    Write-Host "`n--- Tests CORS ^& Open Redirect ---" -f Blue >> "%WPS%"
+echo    try { $cors = Invoke-WebRequest $url -Headers @{Origin='https://evil.com'} -UserAgent $ua -TimeoutSec 5 -ErrorAction SilentlyContinue -UseBasicParsing; if($cors.Headers['Access-Control-Allow-Origin'] -eq '*'){ Print-Result 'MEDIUM' "CORS permissif (*) detecte" } } catch {} >> "%WPS%"
+echo    $redPayload = "https://google.com" >> "%WPS%"
+echo    foreach($ta in @('redirect', 'url', 'next', 'dest')){ $testRed = if($url.Contains('?')) { "$url"+"^&"+"$ta=$redPayload" } else { "$url?$ta=$redPayload" }; try { $trR = Invoke-WebRequest $testRed -UserAgent $ua -MaximumRedirection 0 -ErrorAction SilentlyContinue -UseBasicParsing; if($trR.Headers['Location'] -match 'google.com'){ Print-Result 'MEDIUM' "Open Redirect potentiel sur param [$ta]" } } catch { if($_.Exception.Response.Headers['Location'] -match 'google.com'){ Print-Result 'MEDIUM' "Open Redirect potentiel sur param [$ta]" } } } >> "%WPS%"
+echo    Write-Host "`nScan termine !" -f Green >> "%WPS%"
+echo } catch { Write-Host ("`n[ERREUR FATALE] " + $_.Exception.Message) -f Red } >> "%WPS%"
+
+powershell -NoProfile -ExecutionPolicy Bypass -File "%WPS%"
+if exist "%WPS%" del "%WPS%"
+echo.
+pause
+goto net_cyber_menu
+
+:cyber_privesc_audit
+cls
+echo.
+echo  ===========================================================
+echo   TEST D'INFILTRATION ET AUDIT DE PRIVILEGES
+echo  ===========================================================
+echo.
+echo  [!] Ce module cherche les failles reelles que les pirates
+echo      utilisent pour prendre le controle d'un PC Windows.
+echo.
+echo  Nouveaux tests d'infiltration ajoutes :
+echo  - Audit des "Unquoted Service Paths" : Faille permettant de
+echo    remplacer un service par un virus (manque de guillemets).
+echo  - Verification des Taches Planifiees "SYSTEM" : Taches tournant
+echo    avec les privileges maximum (cibles potentielles).
+echo  - Identification des Services (Banner Grabbing) : Tente de lire
+echo    la "carte d'identite" des services pour trouver leurs versions.
+echo.
+echo  -----------------------------------------------------------
+echo.
+echo  1. Analyse des "Unquoted Service Paths" (Elevation) :
+powershell -NoProfile -Command "$s = Get-WmiObject -Class Win32_Service | Where-Object {$_.PathName -notlike '\"*\"*' -and $_.PathName -like '* *' -and $_.PathName -notlike 'C:\Windows*'}; if($s){ $s | ForEach-Object { Write-Host '   [FAIL] Vulnerable : ' -NoNewline -f Red; Write-Host ($_.Name + ' -> ' + $_.PathName) -f Yellow } } else { Write-Host '   [OK] Aucun service vulnerable aux chemins non-guillemetes.' -f Green }"
+echo.
+echo  2. Audit des Taches Planifiees "SYSTEM" :
+powershell -NoProfile -Command "$t = Get-ScheduledTask | Where-Object {$_.Principal.UserId -eq 'SYSTEM' -and $_.State -ne 'Disabled' -and $_.TaskPath -notlike '\Microsoft\Windows*'}; if($t){ Write-Host ('   [INFO] Taches SYSTEM hors Windows detectees :') -f Cyan; $t | ForEach-Object { Write-Host ('     - ' + $_.TaskName) } } else { Write-Host '   [OK] Aucune tache SYSTEM suspecte.' -f Green }"
+echo.
+echo  3. Verification "AlwaysInstallElevated" (Critique) :
+powershell -NoProfile -Command "$v1 = (Get-ItemProperty 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\Installer' -EA SilentlyContinue).AlwaysInstallElevated; $v2 = (Get-ItemProperty 'HKCU:\SOFTWARE\Policies\Microsoft\Windows\Installer' -EA SilentlyContinue).AlwaysInstallElevated; if ($v1 -eq 1 -and $v2 -eq 1) { Write-Host '   [ALERTE] AlwaysInstallElevated est ACTIVE ! (Elevation SYSTEM immediate via MSI)' -f Red } else { Write-Host '   [OK] AlwaysInstallElevated est desactive.' -f Green }"
+echo.
+echo  4. Dossiers du PATH systeme inscriptibles (DLL Hijacking) :
+powershell -NoProfile -Command "$env:PATH.Split(';') | Where-Object { $_ -and (Test-Path $_) -and (Get-Acl $_ -EA SilentlyContinue).Access | Where-Object { $_.IdentityReference -match 'Users|Everyone' -and $_.FileSystemRights -match 'Write' } } | ForEach-Object { Write-Host ('   [FAIL] Dossier PATH inscriptible : ' + $_) -f Yellow }"
+echo.
+echo  5. Permissions sur les executables de services :
+powershell -NoProfile -Command "Get-WmiObject Win32_Service | ForEach-Object { $path = $_.PathName -replace '\"','' -split ' ' | Select-Object -First 1; if ($path -and (Test-Path $path)) { $acl = Get-Acl $path -EA SilentlyContinue; if($acl.Access | Where-Object { $_.IdentityReference -match 'Users|Everyone' -and $_.FileSystemRights -match 'Write|FullControl' }){ Write-Host ('   [FAIL] Service inscriptible : ' + $_.Name + ' (' + $path + ')') -f Red } } }"
+echo.
+echo  6. Identification des Services (Banner Grabbing) :
+powershell -NoProfile -Command "$p = Get-NetTCPConnection -State Listen -EA SilentlyContinue | Select-Object -ExpandProperty LocalPort -Unique | Sort-Object; foreach($port in $p){ try { $socket = New-Object System.Net.Sockets.TcpClient('127.0.0.1', $port); $stream = $socket.GetStream(); $stream.ReadTimeout = 800; $buffer = New-Object byte[] 1024; $read = $stream.Read($buffer, 0, $buffer.Length); if($read -gt 0){ $banner = [System.Text.Encoding]::ASCII.GetString($buffer, 0, $read).Trim(); if($banner){ Write-Host ('   [+] Port ' + $port + ' : ' + $banner) -f Green } else { Write-Host ('   [ ] Port ' + $port + ' : Actif (Pas de banniere)') -f Gray } } else { Write-Host ('   [ ] Port ' + $port + ' : Actif (Vide)') -f Gray }; $socket.Close() } catch { Write-Host ('   [ ] Port ' + $port + ' : Actif (Protege)') -f Gray } }"
+echo.
+echo  [i] CONSEIL : Pour corriger un "Unquoted Path", utilisez la commande :
+echo      reg add "HKLM\SYSTEM\CurrentControlSet\Services\NOM_DU_SERVICE" /v ImagePath /t REG_EXPAND_SZ /d "\"C:\Chemin\Vers\App.exe\"" /f
+echo.
+pause
+goto net_cyber_menu
 
 :cyber_dns_leak
 cls
@@ -1491,6 +1627,15 @@ echo        Write-Host "  [+] $($t.IP) " -NoNewline -f Green >> "%SCPS%"
 echo        Write-Host "- $n " -NoNewline -f Gray >> "%SCPS%"
 echo        Write-Host "($brand)" -f Yellow >> "%SCPS%"
 echo        if ($mac -ne 'Inconnue') { Write-Host "      MAC: $mac" -f DarkGray } >> "%SCPS%"
+echo        $ports = @(22, 80, 443, 445, 3389, 8080) >> "%SCPS%"
+echo        $openPorts = @() >> "%SCPS%"
+echo        foreach ($port in $ports) { >> "%SCPS%"
+echo            $tcp = New-Object System.Net.Sockets.TcpClient >> "%SCPS%"
+echo            $async = $tcp.BeginConnect($t.IP, $port, $null, $null) >> "%SCPS%"
+echo            if ($async.AsyncWaitHandle.WaitOne(100, $false) -and $tcp.Connected) { $openPorts += $port } >> "%SCPS%"
+echo            $tcp.Close() >> "%SCPS%"
+echo        } >> "%SCPS%"
+echo        if($openPorts){ Write-Host "      Ports ouverts: $($openPorts -join ', ')" -f Cyan } >> "%SCPS%"
 echo        $found++ >> "%SCPS%"
 echo    } >> "%SCPS%"
 echo } >> "%SCPS%"
@@ -1499,6 +1644,49 @@ echo Write-Host "`n  Scan termine ! $found appareil(s) detecte(s)" -f Cyan >> "%
 powershell -NoProfile -ExecutionPolicy Bypass -File "%SCPS%"
 if exist "%SCPS%" del "%SCPS%"
 echo.
+pause
+goto net_cyber_menu
+
+
+:cyber_gen_htaccess
+cls
+echo.
+echo  ===========================================================
+echo   GENERATEUR DE CONFIGURATION SECURITE (.HTACCESS)
+echo  ===========================================================
+echo.
+echo  [i] Copiez ce bloc de code dans le fichier .htaccess a la
+echo      racine de votre site pour securiser les headers.
+echo.
+echo  -----------------------------------------------------------
+echo  # SECURISATION DES HEADERS (ALEEXLEDEV)
+echo  Header set X-Frame-Options "SAMEORIGIN"
+echo  Header set X-XSS-Protection "1; mode=block"
+echo  Header set X-Content-Type-Options "nosniff"
+echo  Header set Content-Security-Policy "upgrade-insecure-requests"
+echo  Header set Referrer-Policy "strict-origin-when-cross-origin"
+echo  Header set Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+echo  ServerSignature Off
+echo  -----------------------------------------------------------
+echo.
+echo  [?] Voulez-vous enregistrer ce code dans un fichier sur
+echo      votre Bureau ? (O/N)
+set /p "save_choice=Choix : "
+if /i "%save_choice%"=="O" (
+    set "OUT_HT=%USERPROFILE%\Desktop\security_htaccess.txt"
+    (
+        echo # SECURISATION DES HEADERS (ALEEXLEDEV)
+        echo Header set X-Frame-Options "SAMEORIGIN"
+        echo Header set X-XSS-Protection "1; mode=block"
+        echo Header set X-Content-Type-Options "nosniff"
+        echo Header set Content-Security-Policy "upgrade-insecure-requests"
+        echo Header set Referrer-Policy "strict-origin-when-cross-origin"
+        echo Header set Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+        echo ServerSignature Off
+    ) > "%USERPROFILE%\Desktop\security_htaccess.txt"
+    echo.
+    echo  [OK] Fichier enregistre sur le Bureau : security_htaccess.txt
+)
 pause
 goto net_cyber_menu
 
@@ -1512,23 +1700,35 @@ echo  ================================================
 echo.
 echo  [i] Appuyez sur ECHAP pour annuler la generation.
 echo.
-echo  Generation du rapport HTML en cours...
-echo  (Veuillez patienter quelques secondes...)
+echo  Initialisation de l'audit...
 set "RPS=%TEMP%\cyber_report.ps1"
 if exist "%RPS%" del "%RPS%"
 
+echo Write-Host "  [1/7] Initialisation du fichier..." -f Cyan >> "%RPS%"
 echo $f = [System.Environment]::GetFolderPath('Desktop') + '\RapportSecuriteReseau_' + (Get-Date -Format 'yyyyMMdd_HHmm') + '.html' >> "%RPS%"
 echo $css = 'body{font-family:Segoe UI,sans-serif;background:#0d1117;color:#e6edf3;padding:20px}h1{color:#f85149;border-bottom:2px solid #f85149;padding-bottom:8px}h2{color:#ff7b72;background:#161b22;padding:8px;border-radius:4px;margin-top:20px}table{width:100%%;border-collapse:collapse;margin:8px 0}th{background:#f85149;color:white;padding:6px;text-align:left}td{padding:5px 8px;border-bottom:1px solid #21262d}tr:hover{background:#1c2128}.ok{color:#3fb950}.danger{color:#f85149}' >> "%RPS%"
 echo if ($Host.UI.RawUI.KeyAvailable) { $k = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown'); if ($k.VirtualKeyCode -eq 27) { exit } } >> "%RPS%"
+
+echo Write-Host "  [2/7] Analyse des ports TCP en ecoute..." -f Yellow >> "%RPS%"
 echo $pt = Get-NetTCPConnection -State Listen -EA SilentlyContinue ^| Sort-Object LocalPort ^| ForEach-Object { $p=(Get-Process -Id $_.OwningProcess -EA SilentlyContinue).Name; "<tr><td>TCP</td><td>$($_.LocalPort)</td><td>$p</td><td>$($_.OwningProcess)</td></tr>" } >> "%RPS%"
+
+echo Write-Host "  [3/7] Analyse des points de terminaison UDP..." -f Yellow >> "%RPS%"
 echo $pu = Get-NetUDPEndpoint -EA SilentlyContinue ^| Sort-Object LocalPort ^| Select-Object -First 30 ^| ForEach-Object { $p=(Get-Process -Id $_.OwningProcess -EA SilentlyContinue).Name; "<tr><td>UDP</td><td>$($_.LocalPort)</td><td>$p</td><td>$($_.OwningProcess)</td></tr>" } >> "%RPS%"
+
+echo Write-Host "  [4/7] Cartographie des connexions actives..." -f Yellow >> "%RPS%"
 echo $co = Get-NetTCPConnection -State Established -EA SilentlyContinue ^| ForEach-Object { $p=(Get-Process -Id $_.OwningProcess -EA SilentlyContinue).Name; "<tr><td>$p</td><td>$($_.LocalPort)</td><td>$($_.RemoteAddress)</td><td>$($_.RemotePort)</td></tr>" } >> "%RPS%"
+
+echo Write-Host "  [5/7] Audit des profils du Pare-feu..." -f Yellow >> "%RPS%"
 echo $fw = Get-NetFirewallProfile ^| ForEach-Object { $s=if($_.Enabled -eq 'True'){'ok'}else{'danger'};$st=if($_.Enabled -eq 'True'){'ACTIF'}else{'INACTIF'}; "<tr><td>$($_.Name)</td><td class='$s'>$st</td><td>$($_.DefaultInboundAction)</td><td>$($_.DefaultOutboundAction)</td></tr>" } >> "%RPS%"
-echo $sp = @{1337='DarkComet';4444='Metasploit';5900='VNC';6666='IRC/Bot';31337='BackOrifice';12345='NetBus';3389='RDP';23='Telnet';21='FTP';445='SMB';8080='Proxy'} >> "%RPS%"
+
+echo Write-Host "  [6/7] Verification de securite (Ports Suspects/DNS)..." -f Yellow >> "%RPS%"
+echo $sp = @{1337='DarkComet';4444='Metasploit';5900='VNC';6666='IRC/Bot';31337='BackOrifice';12345='NetBus';3389='RDP';23='Telnet';21='FTP';8080='Proxy'} >> "%RPS%"
 echo $op = Get-NetTCPConnection -State Listen -EA SilentlyContinue ^| Select-Object -ExpandProperty LocalPort >> "%RPS%"
 echo $al = ($sp.Keys ^| Where-Object { $op -contains $_ } ^| ForEach-Object { "<tr><td class='danger'>ALERTE</td><td>$_</td><td>$($sp[$_])</td></tr>" }) -join '' >> "%RPS%"
 echo if (-not $al) { $al = "<tr><td class='ok' colspan='3'>Aucun port suspect detecte</td></tr>" } >> "%RPS%"
 echo $dn = Get-DnsClientServerAddress ^| Where-Object { $_.ServerAddresses } ^| ForEach-Object { "<tr><td>$($_.InterfaceAlias)</td><td>$($_.ServerAddresses -join ', ')</td></tr>" } >> "%RPS%"
+
+echo Write-Host "  [7/7] Generation du rapport final..." -f Green >> "%RPS%"
 echo $html = "<!DOCTYPE html><html><head><meta charset='UTF-8'><title>Securite Reseau</title><style>$css</style></head><body><h1>Rapport Securite Reseau - $env:COMPUTERNAME</h1><p>Genere le $(Get-Date -Format 'dd/MM/yyyy HH:mm')</p><h2>Alertes Ports Suspects</h2><table><tr><th>Niveau</th><th>Port</th><th>Menace</th></tr>$al</table><h2>Ports en Ecoute</h2><table><tr><th>Proto</th><th>Port</th><th>Processus</th><th>PID</th></tr>$(($pt+$pu) -join '')</table><h2>Connexions Actives</h2><table><tr><th>Processus</th><th>Port Local</th><th>IP Distante</th><th>Port Distant</th></tr>$(($co) -join '')</table><h2>Pare-feu</h2><table><tr><th>Profil</th><th>Statut</th><th>Entrant</th><th>Sortant</th></tr>$(($fw) -join '')</table><h2>DNS</h2><table><tr><th>Interface</th><th>Serveurs</th></tr>$(($dn) -join '')</table></body></html>" >> "%RPS%"
 echo $html ^| Out-File $f -Encoding UTF8 >> "%RPS%"
 echo Start-Process $f >> "%RPS%"

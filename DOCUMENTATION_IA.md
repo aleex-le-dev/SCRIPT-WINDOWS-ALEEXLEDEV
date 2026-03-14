@@ -81,6 +81,8 @@ La liste complète des outils est indexée dans les variables `t[1]` à `t[TOTAL
 *   **Extraction reseaux Wi-Fi** (`dump_wifi`) : Passwords en clair via PS *(Outil avancé/Caché)*
 *   **WebBrowserPassView** (`sys_nirsoft_pw`) : Utilitaire Nirsoft graphique *(Outil avancé/Caché)*
 *   **Test Antivirus (EICAR Safe)** (`sys_av_test`) : Simulation eicar pour validation AV.
+*   **Test d'Infiltration et Audit de Privileges** (`cyber_privesc_audit`) : Module avancé cherchant les failles d'élévation de privilèges (Unquoted Paths, Tâches SYSTEM, Banner Grabbing).
+*   **Generateur de Config Securite (.htaccess)** (`cyber_gen_htaccess`) : Crée une configuration robuste (Headers, Security) pour votre site web.
 
 ### 📤 EXTRACTION ET PERSONNALISATION
 *   **Menu des Extractions** (`sys_export_menu`) : Export clés, WIFI, Drivers
