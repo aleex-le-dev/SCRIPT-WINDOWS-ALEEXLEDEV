@@ -8,35 +8,36 @@ Bienvenue dans la **Boîte à Scripts Windows**, un outil multifonction ultime c
 
 Le script est organisé en **5 catégories majeures** pour une navigation fluide :
 
-### 1. 🔍 RECONNAISSANCE
-Collectez des informations sur des cibles web ou réseau :
-*   **WHOIS & ASN** lookup.
-*   Énumération de sous-domaines via **crt.sh**.
-*   Vérification des fichiers sensibles (`robots.txt`, `sitemap.xml`).
-*   Bruteforce DNS pour découvrir des services cachés.
+### 1. 🔍 CYBERSÉCURITÉ & PENTEST
+Regroupe les 5 sous-catégories offensives et défensives :
+*   **Reconnaissance** : WHOIS, énumération de sous-domaines, fichiers sensibles.
+*   **Analyse Réseau** : Scan LAN avec OUI lookup, détection de fuites DNS.
+*   **Web Offensif** : SSRF, Subdomain Takeover, SQLi, XSS, Path Traversal.
+*   **Audit Défensif** : Privesc audit, Sécurité Windows, Générateur .htaccess.
+*   **Rapports** : Génération de rapports HTML professionnels.
 
-### 2. 🌐 ANALYSE RÉSEAU
-Cartographiez et sécurisez votre infrastructure :
-*   **Scan LAN Avancé** : Détection des appareils, résolution des marques par adresse MAC (OUI) et scan de ports ouverts.
-*   **Test de Fuite DNS** : Vérifiez si votre anonymat (VPN) est respecté.
-*   **Flux Réseau** : Analyse des connexions actives liées aux processus Windows.
-*   **Gestionnaire DNS** : Basculez rapidement sur Cloudflare (1.1.1.1) ou Google (8.8.8.8).
+### 2. 🩺 DIAGNOSTIC & RÉPARATION
+Maintenez la santé de votre système :
+*   **Menu Diagnostic** : Analyse complète du PC, état de la batterie, rapports BitLocker.
+*   **Menu Rescue** : Outils de réparation profonde (SFC, DISM, CHKDSK, Reset Windows Update).
+*   **Mode WinRE** : Accès direct au menu de réparation Windows et au BIOS.
 
-### 3. ⚔️ WEB OFFENSIF
-Outils de test d'intrusion (Pentest) avancés :
-*   **SSRF (14 Payloads)** : Testez les requêtes côté serveur (Cloud IMDS, DB internes, LFI).
-*   **Subdomain Takeover (19 Services)** : Détectez les CNAME "dangling" (Vercel, GitHub, AWS...).
-*   **Audit d'Auth & Web Pentest** : Scanners de vulnérabilités (SQLi, XSS, Path Traversal, Headers).
+### 3. ⚡ NETTOYAGE & OPTIMISATION
+Boostez les performances de votre ordinateur :
+*   **Menu Opti** : Purge massive des fichiers temporaires, cache et registre.
+*   **Mode Gaming** : Désactivation des services lourds pour maximiser les FPS.
+*   **Gestionnaire Winget** : Installation et mise à jour massive d'applications via Microsoft Winget.
 
-### 4. 🛡️ AUDIT DÉFENSIF
-Vérifiez la solidité de votre propre système :
-*   **Audit de Privilèges** : Détection des Unquoted Service Paths et tâches SYSTEM suspectes.
-*   **Audit de Sécurité** : Vérification Firewall, SMB et ports RAT classiques.
-*   **Générateur .htaccess** : Créez des configurations de headers sécurisés en un clic.
-*   **Test Antivirus** : Vérifiez si votre protection réagit bien aux signatures EICAR.
+### 4. 🗄️ GESTION DU SYSTÈME
+Maîtrisez votre environnement Windows :
+*   **Comptes Utilisateurs** : Gestionnaire local (Admin, Mots de passe, Déblocage de compte).
+*   **Disques & Alimentation** : Formatage sécurisé (DISKPART), Plans d'alimentation "Ultimate Performance".
+*   **Matériel** : Gestionnaire d'écran tactile et des imprimantes.
 
-### 5. 📊 RAPPORTS
-Générez des rapports professionnels au format **HTML** pour vos audits système ou vos tests de vulnérabilités web.
+### 5. 🛠️ PERSONNALISATION & EXPORT
+Adaptez Windows à vos besoins :
+*   **Tweaks UI** : Menu contextuel classique Win11, God Mode.
+*   **Extractions** : Sauvegarde des clés Windows, pilotes, et réseaux Wi-Fi.
 
 ---
 
