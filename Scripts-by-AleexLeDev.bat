@@ -989,6 +989,7 @@ goto dump_wifi
 
 :sys_nirsoft_pw
 cls
+setlocal
 color 0A
 echo ===============================================
 echo   Export mots de passe navigateurs (Nirsoft)
@@ -999,12 +1000,18 @@ echo      Chrome, Firefox, Edge et autres navigateurs.
 echo  [!] A utiliser UNIQUEMENT sur votre propre PC.
 echo.
 
-set "WBPV=%~dp0WebBrowserPassView.exe"
+set "WBPV=%SCRIPT_DIR%\WebBrowserPassView.exe"
 set "DOWNLOAD_URL=https://script.salutalex.fr/scripts/nirsoft/batch/WebBrowserPassView.exe"
-if not defined SMTP_USER (
-    echo  [!] Aucun credentials configure (credentials.txt absent).
-    echo  Le mode mail est indisponible. Seule la sauvegarde locale est possible.
-    set "NIRSOFT_KEEP=1"
+
+rem Nettoyage des flags precedents
+set "NIR_MAIL_OK=1"
+if not defined SMTP_USER set "NIR_MAIL_OK=0"
+if not defined SMTP_PASS set "NIR_MAIL_OK=0"
+
+if "%NIR_MAIL_OK%"=="0" (
+    echo  [!] Credentials SMTP non detectes (credentials.txt manquant ou incomplet).
+    echo      Le mode mail est desactive. Seule la sauvegarde locale est disponible.
+    echo.
 )
 
 rem Telecharger si necessaire
@@ -1012,21 +1019,27 @@ if not exist "%WBPV%" (
   echo Telechargement de WebBrowserPassView.exe...
   curl.exe -fL --retry 3 --retry-delay 2 -o "%WBPV%" "%DOWNLOAD_URL%" 2>nul || certutil -urlcache -split -f "%DOWNLOAD_URL%" "%WBPV%" >nul 2>&1
   if not exist "%WBPV%" (
-    echo Erreur: Telechargement echoue.
+    echo [!] Erreur: Telechargement echoue. Verifiez votre connexion.
     pause
+    endlocal
     goto system_tools
   )
   timeout /t 1 /nobreak >nul
 )
 
-rem Choix du mode
-set "opts=Sauvegarde locale~Fichier .txt conserve dans le dossier du script;Envoi par mail~Export envoye par email, aucun fichier conserve"
+rem Choix du mode dynamique
+set "opts=Sauvegarde locale~Fichier .txt conserve dans le dossier du script"
+if "%NIR_MAIL_OK%"=="1" (
+    set "opts=%opts%;Envoi par mail~Export envoye par email, aucun fichier conserve"
+)
+
 call :DynamicMenu "MODE D'EXPORT - WebBrowserPassView" "%opts%"
 set "nirsoft_mode=%errorlevel%"
 
-if "%nirsoft_mode%"=="0" goto system_tools
+if "%nirsoft_mode%"=="0" endlocal & goto system_tools
 if "%nirsoft_mode%"=="1" set "NIRSOFT_KEEP=1"
 if "%nirsoft_mode%"=="2" set "NIRSOFT_KEEP=0"
+
 if not defined NIRSOFT_KEEP goto sys_nirsoft_pw
 
 rem Saisie du nom de fichier
@@ -1041,9 +1054,8 @@ rem Nettoyage cfg precedent
 if exist "%~dp0WebBrowserPassView.cfg" del /F /Q "%~dp0WebBrowserPassView.cfg" >nul 2>&1
 cd /d "%~dp0"
 
-rem Ouvrir le logiciel puis minimiser la fenetre CMD immediatement
+rem Ouvrir le logiciel
 start "" "%WBPV%"
-powershell -NoProfile -Command "Add-Type -TypeDefinition 'using System;using System.Runtime.InteropServices;public class W{[DllImport(\"user32.dll\")]public static extern bool ShowWindow(IntPtr h,int n);[DllImport(\"kernel32.dll\")]public static extern IntPtr GetConsoleWindow();}';[W]::ShowWindow([W]::GetConsoleWindow(),6)" >nul 2>&1
 
 rem Attendre chargement + automatiser Ctrl+A / Ctrl+S / coller chemin / Entree
 timeout /t 4 /nobreak >nul
@@ -1065,14 +1077,27 @@ if exist "%WBPV%" powershell -Command "Remove-Item -Path '%WBPV%' -Force" >nul 2
 if exist "%~dp0WebBrowserPassView.cfg" del /F /Q "%~dp0WebBrowserPassView.cfg" >nul 2>&1
 
 rem Mode local : fichier conserve, terminer
-if "%NIRSOFT_KEEP%"=="1" goto system_tools
+if "%NIRSOFT_KEEP%"=="1" (
+    echo [OK] Export termine : %OUTPUT%
+    pause
+    endlocal
+    goto system_tools
+)
 
 rem Mode mail : envoyer si fichier present puis supprimer
-if not exist "%OUTPUT%" goto system_tools
+if not exist "%OUTPUT%" (
+    echo [!] Erreur : Le fichier d'export n'a pas pu etre genere.
+    pause
+    endlocal
+    goto system_tools
+)
 
 powershell -ExecutionPolicy Bypass -Command "[Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12; $u='%SMTP_USER%'; $p='%SMTP_PASS%'; $to='%EMAIL_TO%'; $sub='Export WebBrowserPassView - '+(Get-Date -Format 'dd/MM/yyyy HH:mm'); $body='Export automatique des mots de passe navigateurs.'; $att='%OUTPUT%'; $sec=ConvertTo-SecureString $p -AsPlainText -Force; $cred=New-Object System.Management.Automation.PSCredential($u,$sec); Send-MailMessage -SmtpServer 'smtp.gmail.com' -Port 587 -UseSsl -Credential $cred -From $u -To $to -Subject $sub -Body $body -Attachments $att" >nul 2>&1
 
 del /F /Q "%OUTPUT%" >nul 2>&1
+echo [OK] Export mail envoye avec succes.
+pause
+endlocal
 goto system_tools
 
 :sys_rescue_menu
