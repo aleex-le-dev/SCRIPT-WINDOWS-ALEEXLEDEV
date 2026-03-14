@@ -1406,7 +1406,7 @@ if "%cyber_cat%"=="2" goto cat_network
 if "%cyber_cat%"=="3" goto cat_web
 if "%cyber_cat%"=="4" goto cat_defense
 if "%cyber_cat%"=="5" goto cat_reports
-if "%cyber_cat%"=="0" goto sys_network_menu
+if "%cyber_cat%"=="0" goto menu_principal
 goto net_cyber_menu
 
 :cat_recon
