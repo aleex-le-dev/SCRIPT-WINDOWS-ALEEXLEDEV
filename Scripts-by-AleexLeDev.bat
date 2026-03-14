@@ -1532,6 +1532,8 @@ echo.
 echo  ================================================
 echo   TRIAGE DE CONNECTIVITE (FLASH)
 echo  ================================================
+echo   Effectue un diagnostic rapide de votre
+echo   connectivite locale et Internet.
 echo.
 echo  [i] Appuyez sur ECHAP pour annuler le triage.
 echo.
@@ -1548,6 +1550,8 @@ echo.
 echo  ================================================
 echo   AUDIT DES ADAPTATEURS RESEAU
 echo  ================================================
+echo   Analyse l'etat, la vitesse et les adresses
+echo   MAC de vos cartes reseau.
 echo.
 powershell -NoProfile -Command "Get-NetAdapter | Select-Object Name, Status, LinkSpeed, InterfaceDescription | Format-Table -AutoSize; Write-Host '--- DETAILS PHY (MAC/MTU) ---' -f Cyan; Get-NetAdapter | Select-Object Name, MacAddress, MtuSize | Format-Table -AutoSize"
 echo.
@@ -1563,6 +1567,8 @@ echo.
 echo  ================================================
 echo   ANALYSE DES FLUX (PORTS ET PROCESSUS)
 echo  ================================================
+echo   Identifie les logiciels qui utilisent vos
+echo   ports et maintiennent des connexions.
 echo.
 powershell -NoProfile -Command "$conns = Get-NetTCPConnection -State Established,Listen -EA SilentlyContinue; if($conns){ $conns | Select-Object LocalPort, RemoteAddress, State, @{N='Processus';E={(Get-Process -Id $_.OwningProcess -EA SilentlyContinue).Name}} | Sort-Object State | Format-Table -AutoSize } else { Write-Host '   Aucune connexion active detectee.' -f Yellow }"
 echo.
@@ -1575,6 +1581,8 @@ echo.
 echo  ================================================
 echo   AUDIT DE SECURITE ET DEFENSE
 echo  ================================================
+echo   Audite le pare-feu, les partages SMB et
+echo   detecte les ports pirates.
 echo.
 echo  1. Etat du Pare-feu :
 powershell -NoProfile -Command "$f = Get-NetFirewallProfile; foreach($p in $f){ $c = if($p.Enabled -eq 'True'){'Green'}else{'Red'}; Write-Host ('   [' + $p.Name + '] : ' + $p.Enabled) -f $c }"
@@ -1599,6 +1607,8 @@ echo.
 echo  ================================================
 echo   SCANNER DE VULNERABILITES WEB (PENTEST)
 echo  ================================================
+echo   Scan automatise des failles courantes : 
+echo   Headers, SSL, SQLi, XSS, SSTI et plus.
 echo.
 echo  [i] Ce module teste : Headers, SSL, SQLi, XSS, SSTI,
 echo      CORS, Rate Limit, Clickjacking, Prototype Pollution.
@@ -1920,6 +1930,8 @@ echo.
 echo  ===========================================================
 echo   TEST D'INFILTRATION ET AUDIT DE PRIVILEGES
 echo  ===========================================================
+echo   Cherche les vecteurs d'elevation de privileges
+echo   SYSTEM sur la machine locale.
 echo.
 echo  [!] Ce module cherche les failles reelles que les pirates
 echo      utilisent pour prendre le controle d'un PC Windows.
@@ -1964,6 +1976,8 @@ echo.
 echo  ================================================
 echo   TEST DE FUITE DNS (DNS LEAK)
 echo  ================================================
+echo   Verifie si vos requetes DNS sont bien
+echo   anonymisees via votre VPN.
 echo.
 echo  Serveurs DNS actuellement configures :
 powershell -NoProfile -Command "Get-DnsClientServerAddress | Where-Object {$_.ServerAddresses} | Format-Table InterfaceAlias, AddressFamily, ServerAddresses -AutoSize"
@@ -1983,6 +1997,8 @@ echo.
 echo  ================================================
 echo   SCAN RESEAU AVANCE (MARQUES ET MODELES)
 echo  ================================================
+echo   Scan ultra-rapide du reseau local pour
+echo   identifier marques et services.
 echo.
 echo  [i] Appuyez sur ECHAP pour annuler le scan.
 echo.
@@ -2104,6 +2120,8 @@ echo.
 echo  ===========================================================
 echo   SCAN FICHIERS SENSIBLES EXPOSES
 echo  ===========================================================
+echo   Detecte les fichiers critiques (.env, .git)
+echo   laisses par erreur sur un serveur web.
 echo.
 echo  Entrez l'URL cible (ex: https://monsite.com)
 set "ALEEX_EXPOSED_URL="
@@ -2523,6 +2541,8 @@ echo.
 echo  ===========================================================
 echo   SCAN SOUS-DOMAINES ET ENDPOINTS CACHES
 echo  ===========================================================
+echo   Identifie la surface d'attaque en trouvant
+echo   les sous-domaines et API du site cible.
 echo.
 echo  Entrez le domaine cible (ex: monsite.com)
 set "ALEEX_SUBDOM_DOMAIN="
@@ -2625,6 +2645,8 @@ echo.
 echo  ===========================================================
 echo   TEST AUTHENTIFICATION ET GESTION DES SESSIONS
 echo  ===========================================================
+echo   Audit du systeme d'entree : mots de passe
+echo   par defaut et protections anti-brute.
 echo.
 echo  Entrez l'URL de la page de login (ex: https://site.com/login)
 set "ALEEX_AUTH_URL="
@@ -2759,6 +2781,8 @@ echo.
 echo  ===========================================================
 echo   RAPPORT PENTEST HTML UNIFIE
 echo  ===========================================================
+echo   Genere un rapport HTML professionnel avec
+echo   score et liste des vulnerabilites.
 echo.
 set /p "TARGET_URL=URL cible principale : "
 set /p "TARGET_DOMAIN=Domaine (sans https) : "
@@ -2896,53 +2920,199 @@ goto cat_recon
 :recon_whois
 cls
 echo.
-echo  [WHOIS] Information de domaine...
+echo  ================================================
+echo   [WHOIS] INFORMATION DE DOMAINE ET ASN
+echo  ================================================
+echo   Analyse le proprietaire, le bureau
+echo   d'enregistrement et l'ASN de l'herbergeur.
+echo.
+set "WH_DOM="
 set /p "WH_DOM=Domaine ou IP : "
-if "%WH_DOM%"=="" goto cat_recon
-powershell -NoProfile -Command "$d='!WH_DOM!'; Write-Host '--- WHOIS Info ---' -f Cyan; try { $ip = [System.Net.Dns]::GetHostAddresses($d)[0].IPAddressToString; Write-Host \"Resolv IP: $ip\" -f Gray; $info = Invoke-RestMethod \"https://ipinfo.io/$ip/json\"; $info | Format-List } catch { whois $d 2>$null }"
+if not defined WH_DOM goto cat_recon
+
+set "WPS=%TEMP%\recon_whois_%RANDOM%.ps1"
+if exist "%WPS%" del /f /q "%WPS%"
+
+echo $d = $env:WH_DOM >> "%WPS%"
+echo Write-Host "--- WHOIS-IP Info ($d) ---" -f Cyan >> "%WPS%"
+echo try { >> "%WPS%"
+echo     $ip = [System.Net.Dns]::GetHostAddresses($d)[0].IPAddressToString >> "%WPS%"
+echo     Write-Host "  Ressource resolue : $ip" -f Gray >> "%WPS%"
+echo     [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12 >> "%WPS%"
+echo     $ua = "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" >> "%WPS%"
+echo     $api_url = "http://ip-api.com/json/$($ip)?lang=fr" >> "%WPS%"
+echo     $info = Invoke-RestMethod -Uri $api_url -UserAgent $ua -TimeoutSec 10 >> "%WPS%"
+echo     function NoAcc($s) { >> "%WPS%"
+echo         if ($null -eq $s) { return "" } >> "%WPS%"
+echo         $s = $s.ToString() >> "%WPS%"
+echo         $s = $s -replace [char]244,'o' -replace [char]233,'e' -replace [char]232,'e' >> "%WPS%"
+echo         $s = $s -replace [char]224,'a' -replace [char]231,'c' -replace [char]234,'e' >> "%WPS%"
+echo         $s = $s -replace [char]251,'u' -replace [char]238,'i' >> "%WPS%"
+echo         return $s >> "%WPS%"
+echo     } >> "%WPS%"
+echo     Write-Host "" >> "%WPS%"
+echo     Write-Host ("  Adresse IP   : " + $info.query) -f Cyan >> "%WPS%"
+echo     Write-Host ("  Ville        : " + (NoAcc $info.city)) -f Gray >> "%WPS%"
+echo     Write-Host ("  Region       : " + (NoAcc $info.regionName)) -f Gray >> "%WPS%"
+echo     Write-Host ("  Pays         : " + (NoAcc $info.country)) -f Gray >> "%WPS%"
+echo     Write-Host ("  Organisation : " + (NoAcc $info.org)) -f Gray >> "%WPS%"
+echo     Write-Host ("  FAI          : " + (NoAcc $info.isp)) -f Gray >> "%WPS%"
+echo     Write-Host ("  Fuseau       : " + $info.timezone) -f Gray >> "%WPS%"
+echo } catch { >> "%WPS%"
+echo     Write-Host "  [!] Erreur de connexion ou domaine introuvable." -f Yellow >> "%WPS%"
+echo } >> "%WPS%"
+
+powershell -NoProfile -ExecutionPolicy Bypass -File "%WPS%"
+if exist "%WPS%" del /f /q "%WPS%"
 pause & goto cat_recon
 
 :recon_crtsh
 cls
 echo.
-echo  [crt.sh] Recherche de sous-domaines via certificats SSL...
+echo  ================================================
+echo   [crt.sh] RECHERCHE VIA CERTIFICATS SSL
+echo  ================================================
+echo   Trouve les sous-domaines enregistres
+echo   dans les logs publics (methode 100%% passive).
+echo.
+set "CRT_DOM="
 set /p "CRT_DOM=Domaine cible (ex: google.com) : "
-if "%CRT_DOM%"=="" goto cat_recon
+if not defined CRT_DOM goto cat_recon
 set "CRT_DOM=%CRT_DOM: =%"
-powershell -NoProfile -ExecutionPolicy Bypass -Command "$d=$env:CRT_DOM; $url='https://crt.sh/?q=%%.'+$d+'^&output=json'; Write-Host 'Interrogation de crt.sh...' -f Gray; try { [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; $r=Invoke-WebRequest $url -TimeoutSec 15 -UseBasicParsing; $json=$r.Content | ConvertFrom-Json; $json | Select-Object -ExpandProperty common_name -Unique | Sort-Object | ForEach-Object { Write-Host ('  [+] '+$_) -f Green } } catch { Write-Host 'Erreur de connexion a crt.sh' -f Red }"
+
+set "WPS=%TEMP%\recon_crtsh_%RANDOM%.ps1"
+if exist "%WPS%" del /f /q "%WPS%"
+echo $d = $env:CRT_DOM >> "%WPS%"
+echo $url = "https://crt.sh/?q=%%.$d&output=json" >> "%WPS%"
+echo Write-Host "  Interrogation de crt.sh pour $d ..." -f Cyan >> "%WPS%"
+echo try { >> "%WPS%"
+echo     [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12 >> "%WPS%"
+echo     $r = Invoke-WebRequest $url -TimeoutSec 20 -UseBasicParsing -EA Stop >> "%WPS%"
+echo     $json = $r.Content ^| ConvertFrom-Json >> "%WPS%"
+echo     if ($json.Count -eq 0) { Write-Host "  [i] Aucun sous-domaine trouve." -f Yellow; exit } >> "%WPS%"
+echo     $names = $json ^| Select-Object -ExpandProperty common_name -Unique ^| Sort-Object >> "%WPS%"
+echo     Write-Host "  [+] $($names.Count) sous-domaines trouves :" -f Green >> "%WPS%"
+echo     foreach ($n in $names) { Write-Host "    - $n" -f Gray } >> "%WPS%"
+echo } catch { >> "%WPS%"
+echo     Write-Host "  [ERREUR] Impossible de joindre crt.sh (Timeout ou blocage)." -f Red >> "%WPS%"
+echo     Write-Host "  Details : $($_.Exception.Message)" -f Gray >> "%WPS%"
+echo } >> "%WPS%"
+
+powershell -NoProfile -ExecutionPolicy Bypass -File "%WPS%"
+if exist "%WPS%" del /f /q "%WPS%"
 pause & goto cat_recon
 
 :recon_axfr
 cls
 echo.
-echo  [AXFR] Tentative de transfert de zone...
+echo  ================================================
+echo   [AXFR] TENTATIVE DE TRANSFERT DE ZONE DNS
+echo  ================================================
+echo   Tente de dumper tous les records DNS
+echo   si le serveur de noms est mal securise.
+echo.
+set "AX_DOM="
 set /p "AX_DOM=Domaine (ex: zonetransfer.me) : "
-if "%AX_DOM%"=="" goto cat_recon
+if not defined AX_DOM goto cat_recon
 set "AX_DOM=%AX_DOM: =%"
-powershell -NoProfile -ExecutionPolicy Bypass -Command "$d=$env:AX_DOM; Write-Host ('Recherche de serveurs NS pour '+$d+'...') -f Gray; try { $ns=Resolve-DnsName $d -Type NS -ErrorAction SilentlyContinue; if(-not $ns){ Write-Host 'Aucun serveur NS trouve.' -f Red; exit }; foreach($srv in $ns.NameHost){ Write-Host ('  Test sur '+$srv+'...') -f Yellow; nslookup -type=any -timeout=5 $d $srv | Select-String $d | ForEach-Object { Write-Host $_.Line -f Green } } } catch { Write-Host 'Erreur lors de la resolution DNS.' -f Red }"
+
+set "WPS=%TEMP%\recon_axfr_%RANDOM%.ps1"
+if exist "%WPS%" del /f /q "%WPS%"
+echo $d = $env:AX_DOM >> "%WPS%"
+echo Write-Host "  Recherche des serveurs NameServer (NS) pour $d..." -f Cyan >> "%WPS%"
+echo try { >> "%WPS%"
+echo     $nsList = Resolve-DnsName $d -Type NS -ErrorAction SilentlyContinue >> "%WPS%"
+echo     if (-not $nsList) { Write-Host "  [!] Aucun serveur NS trouve pour ce domaine." -f Red; exit } >> "%WPS%"
+echo     foreach ($ns in $nsList.NameHost) { >> "%WPS%"
+echo         Write-Host "  --- Test sur $ns ---" -f Yellow >> "%WPS%"
+echo         nslookup -type=any -timeout=5 $d $ns ^| Select-String $d ^| ForEach-Object { Write-Host ("    " + $_.Line) -f Green } >> "%WPS%"
+echo     } >> "%WPS%"
+echo } catch { >> "%WPS%"
+echo     Write-Host "  [ERREUR] Echec de la resolution DNS." -f Red >> "%WPS%"
+echo } >> "%WPS%"
+
+powershell -NoProfile -ExecutionPolicy Bypass -File "%WPS%"
+if exist "%WPS%" del /f /q "%WPS%"
 pause & goto cat_recon
 
 :recon_robots
 cls
 echo.
-echo  [ROBOTS] Scraping de robots.txt et sitemap.xml...
+echo  ================================================
+echo   [ROBOTS] ANALYSE DES CHEMINS CACHES
+echo  ================================================
+echo   Verifie Robots.txt, Sitemap et Security.txt
+echo   pour trouver des panels admin caches.
+echo.
+set "RB_URL="
 set /p "RB_URL=URL (ex: https://site.com) : "
-if "%RB_URL%"=="" goto cat_recon
+if not defined RB_URL goto cat_recon
 set "RB_URL=%RB_URL: =%"
-powershell -NoProfile -ExecutionPolicy Bypass -Command "$u=$env:RB_URL; if($u -notmatch '://'){$u='https://'+$u}; $u=$u.TrimEnd('/'); foreach($p in @('/robots.txt', '/sitemap.xml', '/.well-known/security.txt')){ try { [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; $r=Invoke-WebRequest ($u+$p) -TimeoutSec 5 -UseBasicParsing; if($r.StatusCode -eq 200){ Write-Host ('`n--- '+$p+' --- ') -f Blue; $r.Content; Write-Host '----------------' -f Blue } } catch {} }"
+
+set "WPS=%TEMP%\recon_robots_%RANDOM%.ps1"
+if exist "%WPS%" del /f /q "%WPS%"
+echo $u = $env:RB_URL >> "%WPS%"
+echo if ($u -notmatch '^^http') { $u = 'https://' + $u } >> "%WPS%"
+echo $u = $u.TrimEnd('/') >> "%WPS%"
+echo $paths = @('/robots.txt', '/sitemap.xml', '/.well-known/security.txt') >> "%WPS%"
+echo foreach ($p in $paths) { >> "%WPS%"
+echo     Write-Host "  [?] Verification de : $p ..." -f Gray >> "%WPS%"
+echo     try { >> "%WPS%"
+echo         [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12 >> "%WPS%"
+echo         $r = Invoke-WebRequest ($u + $p) -TimeoutSec 8 -UseBasicParsing -EA Stop >> "%WPS%"
+echo         if ($r.StatusCode -eq 200) { >> "%WPS%"
+echo             Write-Host "  [OK] Contenu trouve ! ($p)" -f Green >> "%WPS%"
+echo             Write-Host "------------------------------------------------" -f Blue >> "%WPS%"
+echo             $r.Content >> "%WPS%"
+echo             Write-Host "------------------------------------------------" -f Blue >> "%WPS%"
+echo         } >> "%WPS%"
+echo     } catch { Write-Host "  [ ] Non trouve ou inaccessible" -f DarkGray } >> "%WPS%"
+echo } >> "%WPS%"
+
+powershell -NoProfile -ExecutionPolicy Bypass -File "%WPS%"
+if exist "%WPS%" del /f /q "%WPS%"
 pause & goto cat_recon
 
 :recon_subdomain_brute
 cls
 echo.
-echo  ===========================================================
-echo   BRUTEFORCE DE SOUS-DOMAINES DNS
-echo  ===========================================================
+echo  ================================================
+echo   BRUTEFORCE DE SOUS-DOMAINES (DNS)
+echo  ================================================
+echo   Teste 50+ noms courants (api, dev...)
+echo   pour detecter des services actifs.
 echo.
+set "SD_DOM="
 set /p "SD_DOM=Domaine racine (ex: michelin.com) : "
-if "%SD_DOM%"=="" goto cat_recon
+if not defined SD_DOM goto cat_recon
 set "SD_DOM=%SD_DOM: =%"
-powershell -NoProfile -ExecutionPolicy Bypass -Command "$d=$env:SD_DOM; $subs=@('www','dev','api','test','staging','beta','mail','vpn','smtp','pop','imap','ns1','ns2','webmail','blog','shop','admin','portal','secure','git','devops','jenkins','docker','kube','aws','azure','cloud','db','mysql','sql','internal','intra','private','corp','support','help','download','app','m','mobile','static','assets','cdn','srv','host'); Write-Host ('Debut du bruteforce sur '+$subs.Count+' mots...') -f Cyan; foreach($s in $subs){ $fqdn=$s+'.'+$d; try { $ip=Resolve-DnsName $fqdn -Type A -ErrorAction Stop | Select-Object -ExpandProperty IPAddress -First 1; Write-Host ('  [+] '+$fqdn+' -> '+$ip) -f Green; try { $r=Invoke-WebRequest ('http://'+$fqdn) -Method Head -TimeoutSec 2 -ErrorAction Stop -UseBasicParsing; Write-Host ('      HTTP 200 ('+$r.Headers['Server']+')') -f Gray } catch {} } catch {} }"
+
+set "WPS=%TEMP%\recon_sub_%RANDOM%.ps1"
+if exist "%WPS%" del /f /q "%WPS%"
+echo $d = $env:SD_DOM >> "%WPS%"
+echo $subs = @('www','dev','api','test','staging','beta','mail','vpn','smtp','pop','imap','ns1','ns2','webmail','blog','shop','admin','portal','secure','git','devops','jenkins','docker','kube','aws','azure','cloud','db','mysql','sql','internal','intra','private','corp','support','help','download','app','m','mobile','static','assets','cdn','srv','host') >> "%WPS%"
+echo Write-Host "  Demarrage du bruteforce sur $($subs.Count) mots pour $d" -f Cyan >> "%WPS%"
+echo Write-Host "" >> "%WPS%"
+echo $count = 0 >> "%WPS%"
+echo foreach ($s in $subs) { >> "%WPS%"
+echo     $count++ >> "%WPS%"
+echo     $fqdn = $s + '.' + $d >> "%WPS%"
+echo     $percent = [math]::Round(($count / $subs.Count) * 100) >> "%WPS%"
+echo     Write-Progress -Activity "Bruteforce DNS" -Status "$fqdn ($count/$($subs.Count))" -PercentComplete $percent >> "%WPS%"
+echo     try { >> "%WPS%"
+echo         $dns = Resolve-DnsName $fqdn -Type A -ErrorAction Stop -Timeout 2 ^| Select-Object -ExpandProperty IPAddress -First 1 >> "%WPS%"
+echo         Write-Host "  [+] $fqdn " -NoNewline -f Green; Write-Host "-> $dns" -f White >> "%WPS%"
+echo         try { >> "%WPS%"
+echo             $r = Invoke-WebRequest ("http://" + $fqdn) -Method Head -TimeoutSec 2 -EA Stop -UseBasicParsing >> "%WPS%"
+echo             Write-Host "      HTTP 200 ($($r.Headers['Server']))" -f Gray >> "%WPS%"
+echo         } catch {} >> "%WPS%"
+echo     } catch {} >> "%WPS%"
+echo } >> "%WPS%"
+echo Write-Progress -Activity "Bruteforce DNS" -Completed >> "%WPS%"
+echo Write-Host "`n  Scan termine." -f Cyan >> "%WPS%"
+
+powershell -NoProfile -ExecutionPolicy Bypass -File "%WPS%"
+if exist "%WPS%" del /f /q "%WPS%"
 pause & goto cat_recon
 
 :cyber_ssrf
@@ -2951,12 +3121,8 @@ echo.
 echo  ===========================================================
 echo   SSRF - Server-Side Request Forgery
 echo  ===========================================================
-echo   Niveau : Avance    Impact : CRITIQUE
-echo   Ce que ca fait : Force le serveur a faire des requetes HTTP
-echo   pour vous, vers des adresses internes inaccessibles depuis
-echo   l'exterieur (metadonnees cloud, services internes, fichiers).
-echo   Fonctionnement : On injecte une URL dans un parametre
-echo   (url=, fetch=, redirect=, img=...) et on mesure la reponse.
+echo   Force le serveur a faire des requetes internes
+echo   pour extraire des donnees (Cloud/Intranet).
 echo  ===========================================================
 echo.
 set /p "SSRF_URL=URL avec parametre (ex: https://site.com/fetch?url=) : "
@@ -3060,13 +3226,8 @@ echo.
 echo  ===========================================================
 echo   SUBDOMAIN TAKEOVER - Detection
 echo  ===========================================================
-echo   Niveau : Intermediaire    Impact : CRITIQUE
-echo   Ce que ca fait : Certains sous-domaines pointent via CNAME
-echo   vers des services externes (GitHub Pages, S3, Heroku...) qui
-echo   ont ete supprimes. N'importe qui peut reclamer ce service et
-echo   servir du contenu malveillant sous le domaine officiel.
-echo   Exemple : dev.monsite.com pointe vers un GitHub Pages efface
-echo   -> un attaquant cree ce repo GitHub et prend le controle.
+echo   Verifie si des sous-domaines pointent vers
+echo   des services externes abandonnes.
 echo  ===========================================================
 echo.
 set /p "TKO_DOM=Domaine racine cible (ex: monsite.com) : "
@@ -3197,6 +3358,8 @@ echo.
 echo  ================================================
 echo   RAPPORT DE SECURITE RESEAU COMPLET
 echo  ================================================
+echo   Effectue un audit global du PC : ports,
+echo   processus, firewall et alertes DNS.
 echo.
 echo  [i] Appuyez sur ECHAP pour annuler la generation.
 echo.
@@ -3249,9 +3412,8 @@ echo.
 echo  ===========================================================
 echo   SCAN TLS/SSL AVANCE - Detection protocoles faibles
 echo  ===========================================================
-echo   Niveau : Intermediaire    Impact : CRITIQUE
-echo   Teste : SSLv3, TLS 1.0, TLS 1.1, RC4, NULL ciphers,
-echo   certificat expire, HSTS manquant, downgrade possible.
+echo   Analyse la version TLS et la solidite du
+echo   certificat pour prevenir les interceptions.
 echo  ===========================================================
 echo.
 echo  Entrez l'hote cible (ex: monsite.com ou IP)
@@ -3403,10 +3565,8 @@ echo.
 echo  ===========================================================
 echo   LFI / PATH TRAVERSAL - Detection automatisee
 echo  ===========================================================
-echo   Niveau : Avance    Impact : CRITIQUE
-echo   Tente de lire des fichiers systeme via des parametres URL.
-echo   Detecte : ../etc/passwd, ....//windows/win.ini,
-echo   PHP wrappers (php://filter), null byte injection.
+echo   Tente de lire des fichiers systeme distants
+echo   via des failles de chemins de fichiers.
 echo  ===========================================================
 echo.
 echo  Entrez l'URL avec parametre (ex: https://site.com/page?file=)
@@ -3506,9 +3666,8 @@ echo.
 echo  ===========================================================
 echo   EXPORT JSON UNIFIE - Centralisateur de findings
 echo  ===========================================================
-echo   Consolide les resultats de tous les scans en un fichier
-echo   JSON structure, importable dans Burp, Metasploit, ou
-echo   tout outil d'analyse.
+echo   Consolide tous les resultats de scans en un
+echo   fichier JSON structure et portable.
 echo  ===========================================================
 echo.
 
@@ -3604,9 +3763,8 @@ echo.
 echo  ===========================================================
 echo   OPEN REDIRECT - Detection avancee
 echo  ===========================================================
-echo   Impact : ELEVE - Phishing, vol de tokens OAuth, bypass CSP
-echo   Teste 40+ parametres classiques avec payloads varies :
-echo   Protocoles, double-slash, redirection chainee...
+echo   Teste 40+ vecteurs de redirection pour
+echo   prevenir les attaques de phishing.
 echo  ===========================================================
 echo.
 echo  Entrez l'URL cible (ex: https://site.com/redirect)
