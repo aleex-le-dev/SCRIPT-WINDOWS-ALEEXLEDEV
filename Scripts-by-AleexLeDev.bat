@@ -59,7 +59,13 @@ if exist "%CRED_FILE%" (
     )
     echo [OK] Credentials charges depuis credentials.txt
 ) else (
-    echo [INFO] Aucun fichier credentials.txt trouve - mode mail desactive
+    (
+        echo SMTP_USER=
+        echo SMTP_PASS=
+        echo EMAIL_TO=
+    ) > "%CRED_FILE%"
+    echo [!] Aucun fichier credentials.txt trouve.
+    echo     Le fichier vient d'etre cree. Veuillez le remplir pour activer l'envoi par mail.
 )
 
 set "t[2]=---:DIAGNOSTIC"
