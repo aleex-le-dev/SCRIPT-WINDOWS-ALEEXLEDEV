@@ -79,7 +79,7 @@ set "t[9]=sys_opti_menu:Menu de Nettoyage et Optimisation~Regroupe le nettoyage 
 set "t[10]=---:RESEAU"
 set "t[11]=dns_manager:Gestionnaire DNS~Changer DNS Cloudflare/Google"
 set "t[12]=sys_network_menu:Menu de Depannage Reseau~Outils avances (DNS, ARP, TCP/IP, Autoreset)"
-set "t[13]=net_cyber_menu:Analyse Cybersecurite Reseau~Ports ouverts, connexions suspectes, tests intrusion"
+set "t[13]=net_cyber_menu:Scanner de failles et Pentest~Recherche de vulnerabilites Web, Reseau et rapports d'audit"
 set "t[14]=---:DISQUE"
 set "t[15]=disk_manager:Formatteur de Disque (DISKPART)~Formater un disque de facon securisee"
 set "t[16]=---:APPLICATIONS"
@@ -90,8 +90,8 @@ set "t[20]=sys_passwords_menu:Extracteurs de mots de passe~Outils Powershell (Cr
 set "t[21]=sys_unlock_notes:Recuperation de Compte bloque~Instructions pour reprendre controle sans mot de passe"
 set "t[22]=um_menu:Gestion utilisateurs locaux~Panneau de gestion local (Admin, Pass, Ajouts)"
 set "t[23]=sys_av_test:Test Antivirus (EICAR Safe)~Teste votre antivirus avec des faux positifs standards inoffensifs"
-set "t[24]=cyber_privesc_audit:Test d'Infiltration et Audit de Privileges~Audit des Unquoted Paths, Taches SYSTEM et Banner Grabbing"
-set "t[25]=cyber_gen_htaccess:Generateur de Config Securite (.htaccess)~Cree une configuration robuste (Headers, Security) pour votre site web"
+set "t[24]=cyber_privesc_audit:Audit de piratage local (PrivEsc)~Verifie si un intrus peut devenir Administrateur SYSTEM"
+set "t[25]=cyber_gen_htaccess:Protection de serveur Web (.htaccess)~Genere un fichier de securite blinde pour votre site Apache"
 set "t[27]=---:EXTRACTION ET SAUVEGARDE"
 set "t[28]=sys_export_menu:Menu des Extractions~Exporte les cles Windows, listes de logiciels, reseaux Wi-Fi et pilotes sur le Bureau"
 set "t[29]=---:PERSONNALISATION"
@@ -1409,7 +1409,7 @@ REM              CYBERSECURITE RESEAU
 REM ===================================================================
 :net_cyber_menu
 cls
-set "opts=RECONNAISSANCE - Collecter des infos avant d'agir;ANALYSE RESEAU - Scanner et cartographier le reseau;WEB OFFENSIF - Tester les vulnerabilites d'un site;AUDIT DEFENSIF - Verifier la securite de votre systeme;RAPPORTS - Generer des rapports complets HTML"
+set "opts=RECONT - Trouver des infos sur une cible;RESEAU - Cartographier son reseau local;WEB - Tester les failles d'un site web;DEFENSE - Auditer la securite de son PC;RAPPORTS - Generer des audits HTML/JSON"
 call :DynamicMenu "CYBERSECURITE - CHOISISSEZ UNE CATEGORIE" "%opts%" "NONUMS"
 set "cyber_choice=%errorlevel%"
 
@@ -1423,12 +1423,12 @@ goto net_cyber_menu
 
 :cat_recon
 cls
-set "opts=[--- RECONNAISSANCE (Collecte d'informations) ---]"
-set "opts=%opts%;WHOIS et ASN Lookup~QUI possede ce domaine/IP ? Registrar, dates, organisation, ASN"
-set "opts=%opts%;Certificate Transparency (crt.sh)~Trouve TOUS les sous-domaines via les certificats SSL publics - sans envoyer une seule requete au site"
-set "opts=%opts%;Zone Transfer DNS (AXFR)~Tente d'obtenir toute la liste DNS du domaine (fonctionne si le serveur NS est mal configure)"
-set "opts=%opts%;Robots.txt et Sitemap~Lit les chemins que le site veut cacher aux moteurs de recherche - souvent des panels admin"
-set "opts=%opts%;Sous-domaines actifs (Bruteforce DNS)~Teste 50+ sous-domaines courants (dev, staging, api...) et affiche ceux qui repondent"
+set "opts=[--- RECONNAISSANCE ET INFOS ---]"
+set "opts=%opts%;WHOIS - Verifier proprietaire et herbergeur~Identifie a qui appartient un domaine ou une IP (Whois, ASN, FAI)"
+set "opts=%opts%;Liste des sous-domaines (crt.sh)~Recherche passive de tous les serveurs lies a un domaine (Certificats SSL)"
+set "opts=%opts%;Dump des records DNS (AXFR)~Tente de recuperer toute la configuration DNS du serveur (Si mal securise)"
+set "opts=%opts%;Exploration Robots.txt/Sitemap~Trouve les dossiers caches et les panels d'administration du site"
+set "opts=%opts%;Bruteforce de sous-domaines (DNS)~Teste les noms courants (dev, api...) pour trouver des services caches"
 
 call :DynamicMenu "RECONNAISSANCE - Collecte passive et active" "%opts%" "NONUMS"
 set "recon_c=%errorlevel%"
@@ -1442,13 +1442,13 @@ goto cat_recon
 
 :cat_network
 cls
-set "opts=[--- ANALYSE RESEAU ---]"
-set "opts=%opts%;Triage Connectivite (Flash)~Verifie en 10s : IP locale, passerelle, DNS et acces internet"
-set "opts=%opts%;Audit Adaptateurs (MAC, MTU, Vitesse)~Detaille les cartes reseau : nom, statut, adresse MAC, MTU, vitesse de liaison"
-set "opts=%opts%;Scan LAN + Marques OUI~Scan tout le sous-reseau, identifie les fabricants via l'adresse MAC et les ports ouverts"
-set "opts=%opts%;Cartographie Flux (Ports et Processus)~Liste toutes les connexions TCP actives avec le nom du processus associe"
-set "opts=%opts%;Test Fuite DNS~Verifie si votre VPN laisse fuiter vos vraies requetes DNS"
-set "opts=%opts%;Gestionnaire DNS (Cloudflare / Google)~Change les DNS de votre PC : Cloudflare 1.1.1.1 ou Google 8.8.8.8"
+set "opts=[--- ANALYSE ET CARTOGRAPHIE RESEAU ---]"
+set "opts=%opts%;Bilan rapide de connexion (Flash)~Verifie l'acces internet, la passerelle et le DNS en 1s"
+set "opts=%opts%;Details des cartes reseau (MAC/MTU)~Affiche les infos physiques et techniques des adaptateurs"
+set "opts=%opts%;Scan du reseau local (LAN)~Decouvre les appareils connectes, leurs marques et services"
+set "opts=%opts%;Ports ouverts et Logiciels actifs~Identifie quel programme utilise quel port sur votre PC"
+set "opts=%opts%;Detection de fuites DNS~Verifie si votre navigation est bien anonymisee (VPN)"
+set "opts=%opts%;Changement de serveurs DNS~Passe sur Cloudflare ou Google pour plus de rapidite"
 
 call :DynamicMenu "ANALYSE RESEAU - Scanner et cartographier" "%opts%" "NONUMS"
 set "net_c=%errorlevel%"
@@ -1463,19 +1463,19 @@ goto cat_network
 
 :cat_web
 cls
-set "opts=[--- TESTS WEB OFFENSIFS (autorisation requise) ---]"
-set "opts=%opts%;Scanner General (Headers, XSS, SQLi, CORS)~Scan complet en une passe : headers manquants, cookies, SQLi basique, XSS, redirections"
-set "opts=%opts%;SQLi Avancee (Blind, Time-based, UNION)~Detection des injections SQL invisibles par comparaison de reponses et delais"
-set "opts=%opts%;Fichiers Sensibles Exposes~Teste 60+ chemins : .env, config.php, /.git/config, phpinfo, backups..."
-set "opts=%opts%;SSTI (Template Injection)~Injecte 7*7 dans les parametres pour detecter Jinja2, Twig, EL, ERB, Freemarker..."
-set "opts=%opts%;XXE (XML External Entity)~Envoie des payloads XML malformes pour lire /etc/passwd ou atteindre des services internes"
-set "opts=%opts%;JWT (JSON Web Token) - Decode et Attaque~Decode un JWT, teste alg:none et bruteforce le secret HMAC sur 15 mots de passe courants"
-set "opts=%opts%;SSRF (Server-Side Request Forgery)~Tente de faire appeler le serveur lui-meme ou des metadonnees cloud (AWS/GCP/Azure)"
-set "opts=%opts%;Subdomain Takeover~Verifie si des sous-domaines pointent vers des services abandonndes (GitHub Pages, S3, Heroku...)"
-set "opts=%opts%;Audit Authentification et Sessions~Teste les mots de passe par defaut, le timing utilisateurs, CSRF, bruteforce, path traversal"
-set "opts=%opts%;Scan TLS/SSL Avance~Protocoles faibles, ciphers, certificat"
-set "opts=%opts%;LFI / Path Traversal~Lecture de fichiers systeme via URL"
-set "opts=%opts%;Open Redirect Avance~40 parametres x 13 payloads"
+set "opts=[--- TESTS D'INTRUSION WEB ---]"
+set "opts=%opts%;Scan de failles automatique (Global)~Teste headers, XSS, SQLi et securite de base en une fois"
+set "opts=%opts%;Injections SQL manuelles (SQLi)~Detection avancee de failles de base de donnees"
+set "opts=%opts%;Recherche de fichiers critiques exposes~Cherche les .env, backups et dossiers de config (.git)"
+set "opts=%opts%;Injection de templates (SSTI)~Teste si un moteur de template est vulnerable a l'execution de code"
+set "opts=%opts%;Lecture via fichiers XML (XXE)~Exploite le parseur XML pour lire des fichiers internes"
+set "opts=%opts%;Analyse et attaque de tokens JWT~Decode les tokens de session et tente de les forger"
+set "opts=%opts%;Detournement de requetes (SSRF)~Force le serveur a attaquer son propre reseau interne"
+set "opts=%opts%;Detection de prise de controle DNS (Takeover)~Cherche les sous-domaines pointant vers des services morts"
+set "opts=%opts%;Audit des Comptes et Sessions~Teste le brute-force, CSRF et la robustesse des logins"
+set "opts=%opts%;Controle du chiffrement SSL/TLS~Audite la solidite du HTTPS et du certificat"
+set "opts=%opts%;Acces aux fichiers systeme (LFI)~Exploite les chemins de fichiers mal proteges"
+set "opts=%opts%;Vulnerabilite de Redirection (Open Redirect)~Teste les liens qui peuvent rediriger vers des sites pirates"
 
 call :DynamicMenu "WEB OFFENSIF - Tests de vulnerabilites (autorisation ecrite obligatoire)" "%opts%" "NONUMS"
 set "web_c=%errorlevel%"
@@ -1496,11 +1496,11 @@ goto cat_web
 
 :cat_defense
 cls
-set "opts=[--- AUDIT DEFENSIF (votre propre systeme) ---]"
-set "opts=%opts%;Audit Privileges Windows~Cherche les failles d'elevation : Unquoted Paths, AlwaysInstallElevated, DLL Hijack, services inscriptibles"
-set "opts=%opts%;Audit Pare-feu et Ports Suspects~Verifie l'etat du firewall et detecte les ports associes aux RAT/backdoors connus"
-set "opts=%opts%;Generateur .htaccess Securise~Cree la configuration Apache optimale : HSTS, CSP, X-Frame, SameSite, Referrer-Policy"
-set "opts=%opts%;Test Antivirus (EICAR)~Teste si votre antivirus detecte une signature virale inoffensive standard"
+set "opts=[--- AUDIT ET PROTECTION DU PC ---]"
+set "opts=%opts%;Audit d'elevation de privileges (SYSTEM)~Cherche comment un malware pourrait devenir Administrateur"
+set "opts=%opts%;Scan de ports et Firewall~Verifie les portes ouvertes et l'efficacite du pare-feu"
+set "opts=%opts%;Securisation de site (.htaccess)~Cree une configuration Apache blindee contre les attaques"
+set "opts=%opts%;Test de l'antivirus (Fichier EICAR)~Simule un virus inoffensif pour voir si votre protection reagit"
 
 call :DynamicMenu "AUDIT DEFENSIF - Verifier votre propre securite" "%opts%" "NONUMS"
 set "def_c=%errorlevel%"
@@ -1513,10 +1513,10 @@ goto cat_defense
 
 :cat_reports
 cls
-set "opts=[--- GENERATION DE RAPPORTS HTML ---]"
-set "opts=%opts%;Rapport Pentest Web Complet~Scan automatise : headers, SSL, CORS, SQLi, SSTI, fichiers - Score /100 et recommandations"
-set "opts=%opts%;Rapport Securite Reseau Local~Audit de votre PC : ports ouverts, connexions actives, etat pare-feu, alertes DNS"
-set "opts=%opts%;Export JSON Unifie~Consolide tous les findings en JSON importable"
+set "opts=[--- GENERATION DE RAPPORTS ---]"
+set "opts=%opts%;Rapport Audit Web complet (HTML)~Genere un dossier de preuve professionnel sur un site web"
+set "opts=%opts%;Rapport Audit Reseau Local (HTML)~Diagnostique la securite globale du PC et du LAN"
+set "opts=%opts%;Exporter les donnees en JSON~Format structure pour analyse dans des outils tiers"
 
 call :DynamicMenu "RAPPORTS - Exporter les resultats" "%opts%" "NONUMS"
 set "rpt_c=%errorlevel%"
@@ -1537,12 +1537,15 @@ echo   connectivite locale et Internet.
 echo.
 echo  [i] Appuyez sur ECHAP pour annuler le triage.
 echo.
-powershell -NoProfile -ExecutionPolicy Bypass -Command "$checks = @{ 'Config IP' = { Get-NetIPAddress -AddressFamily IPv4 | Where-Object {$_.IPAddress -notmatch '127.0.0.1'} | Select-Object InterfaceAlias, IPAddress | Format-Table -HideTableHeaders }; 'Router/Passerelle' = { Get-NetRoute -DestinationPrefix '0.0.0.0/0' | Select-Object -ExpandProperty NextHop -First 1 }; 'DNS' = { (Get-DnsClientServerAddress).ServerAddresses | Select-Object -Unique }; 'Internet' = { if (Test-NetConnection google.com -InformationLevel Quiet) { Write-Host '    [OK] INTERNET ACCESSIBLE' -f Green } else { Write-Host '    [ECHEC] PAS D ACCES INTERNET' -f Red } } }; foreach($name in $checks.Keys){ if($Host.UI.RawUI.KeyAvailable){ $k = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown'); if($k.VirtualKeyCode -eq 27){ Write-Host '   [!] Annule (ECHAP)' -f Red; exit } }; Write-Host ('--- ' + $name + ' ---') -f Cyan; & $checks[$name] | Out-Host }"
+powershell -NoProfile -ExecutionPolicy Bypass -Command "Write-Host '--- CONFIGURATION IP ---' -f Cyan; Get-NetIPAddress -AddressFamily IPv4 | Where-Object {$_.IPAddress -notmatch '127.0.0.1'} | Select-Object InterfaceAlias, IPAddress | Format-Table -HideTableHeaders; Write-Host '--- PASSERELLE ---' -f Cyan; (Get-NetRoute -DestinationPrefix '0.0.0.0/0' -EA SilentlyContinue | Select-Object -ExpandProperty NextHop -First 1); Write-Host '--- DNS ---' -f Cyan; (Get-DnsClientServerAddress).ServerAddresses | Select-Object -Unique; Write-Host '--- TEST INTERNET ---' -f Cyan; if (Test-Connection 8.8.8.8 -Count 1 -Quiet) { Write-Host '    [OK] INTERNET ACCESSIBLE' -f Green } else { Write-Host '    [ECHEC] PAS D ACCES INTERNET' -f Red }"
 echo.
-echo  [i] CONSEIL : Si l'IP ne s'affiche pas, verifiez votre cable ou Wi-Fi.
+echo  [!] ANALYSE DES RISQUES (Reconn.) :
+echo  1. Exposition : Votre IP locale est visible par tous les sites.
+echo  2. DNS : Si vos serveurs sont lents, votre navigation le sera aussi.
+echo  3. Securite : Sans VPN, votre FAI voit tout votre trafic clair.
 echo.
 pause
-goto net_cyber_menu
+goto cat_network
 
 :cyber_adapter_audit
 cls
@@ -1553,7 +1556,7 @@ echo  ================================================
 echo   Analyse l'etat, la vitesse et les adresses
 echo   MAC de vos cartes reseau.
 echo.
-powershell -NoProfile -Command "Get-NetAdapter | Select-Object Name, Status, LinkSpeed, InterfaceDescription | Format-Table -AutoSize; Write-Host '--- DETAILS PHY (MAC/MTU) ---' -f Cyan; Get-NetAdapter | Select-Object Name, MacAddress, MtuSize | Format-Table -AutoSize"
+powershell -NoProfile -Command "Get-NetAdapter | Select-Object @{N='Nom';E={$_.Name}}, @{N='Statut';E={switch($_.Status){'Up' {'Actif'}; 'Down' {'Inactif'}; 'Disconnected' {'Deconnecte'}; 'Not Present' {'Absent'}; default {$_.Status}}}}, @{N='Vitesse';E={$_.LinkSpeed}}, @{N='Description';E={$_.InterfaceDescription}} | Format-Table -AutoSize; Write-Host '--- DETAILS PHYSIQUES (MAC / VITESSE) ---' -f Cyan; Get-NetAdapter | Select-Object @{N='Nom';E={$_.Name}}, @{N='Adresse_MAC';E={$_.MacAddress}}, @{N='Vitesse_Liaison';E={$_.LinkSpeed}} | Format-Table -AutoSize"
 echo.
 echo  [i] CONSEIL : Une vitesse de 100 Mbps sur un cable Gigabit (1000)
 echo      indique souvent un cable endommage.
@@ -1570,10 +1573,10 @@ echo  ================================================
 echo   Identifie les logiciels qui utilisent vos
 echo   ports et maintiennent des connexions.
 echo.
-powershell -NoProfile -Command "$conns = Get-NetTCPConnection -State Established,Listen -EA SilentlyContinue; if($conns){ $conns | Select-Object LocalPort, RemoteAddress, State, @{N='Processus';E={(Get-Process -Id $_.OwningProcess -EA SilentlyContinue).Name}} | Sort-Object State | Format-Table -AutoSize } else { Write-Host '   Aucune connexion active detectee.' -f Yellow }"
+powershell -NoProfile -Command "$conns = Get-NetTCPConnection -State Established,Listen -EA SilentlyContinue; if($conns){ $conns | Select-Object @{N='Port_Local';E={$_.LocalPort}}, @{N='Adresse_Distante';E={$_.RemoteAddress}}, @{N='Etat';E={$_.State}}, @{N='Processus';E={(Get-Process -Id $_.OwningProcess -EA SilentlyContinue).Name}} | Sort-Object Etat | Format-Table -AutoSize } else { Write-Host '   Aucune connexion active detectee.' -f Yellow }"
 echo.
 pause
-goto net_cyber_menu
+goto cat_network
 
 :cyber_security_audit
 cls
@@ -1591,15 +1594,16 @@ echo  2. Detection de Ports Suspects (RAT/Backdoors) :
 powershell -NoProfile -Command "$sp=@{1337='DarkComet';4444='Metasploit';31337='BackOrifice';3389='RDP (Acces Distant)'}; $open=Get-NetTCPConnection -State Listen -EA SilentlyContinue | Select-Object -ExpandProperty LocalPort; $found=$false; foreach($p in $sp.Keys){ if($open -contains $p){ Write-Host ('   [ALERTE] Port ' + $p + ' ouvert - ' + $sp[$p]) -f Red; $found=$true } }; if(-not $found){ Write-Host '   [OK] Aucun port pirate suspect.' -f Green }"
 echo.
 echo  3. Partages Reseau Ouverts (SMB) :
-powershell -NoProfile -Command "$s = Get-SmbShare | Where-Object {$_.Name -notmatch '\$'}; if($s){ $s | Format-Table Name, Path, Description -AutoSize } else { Write-Host '   [OK] Aucun dossier partage visible sur le reseau.' -f Green }"
+powershell -NoProfile -Command "$s = Get-SmbShare | Where-Object {$_.Name -notmatch '\$'}; if($s){ $s | Select-Object @{N='Nom';E={$_.Name}}, @{N='Chemin';E={$_.Path}}, @{N='Description';E={$_.Description}} | Format-Table -AutoSize } else { Write-Host '   [OK] Aucun dossier partage visible sur le reseau.' -f Green }"
 echo.
-echo  [i] CONSEIL : Les partages (SMB) sont souvent utilises par les
-echo      Ransomwares pour se propager sur les autres PC.
+echo  [i] ANALYSE DES RISQUES (Defense) :
+echo  1. Firewall : S'il est desactive, n'importe qui peut scanner vos ports.
+echo  2. Backdoors : Les ports 4444 ou 1337 indiquent souvent une infection active.
+echo  3. Partages : SMB est le vecteur prefere des ransomwares (WannaCry).
+echo  CONSEIL : Activez toujours votre pare-feu et desactivez SMBv1.
 echo.
 pause
-goto net_cyber_menu
-
-
+goto cat_defense
 
 :cyber_web_pentest
 cls
@@ -1616,7 +1620,7 @@ echo.
 echo  Entrez l'URL a tester (ex: https://example.com ou https://site.com?id=1)
 set "ALEEX_PENTEST_URL="
 set /p "ALEEX_PENTEST_URL=URL : "
-if not defined ALEEX_PENTEST_URL goto net_cyber_menu
+if not defined ALEEX_PENTEST_URL goto cat_web
 
 echo.
 echo  [i] Demarrage du scan pour !ALEEX_PENTEST_URL!...
@@ -1897,15 +1901,13 @@ echo Write-Host "  Score securite : $script:score / 100" -f $gc >> "%WPS%"
 echo Write-Host "  Grade          : $grade" -f $gc >> "%WPS%"
 echo Write-Host "  Findings       : $($script:findings.Count) vulnerabilite(s)" -f White >> "%WPS%"
 echo if ($script:findings.Count -gt 0) { >> "%WPS%"
-echo     Write-Host "" >> "%WPS%"
-echo     $crit  = ($script:findings ^| Where-Object {$_.Sev -eq 'CRITICAL'}).Count >> "%WPS%"
-echo     $high  = ($script:findings ^| Where-Object {$_.Sev -eq 'HIGH'}).Count >> "%WPS%"
-echo     $med   = ($script:findings ^| Where-Object {$_.Sev -eq 'MEDIUM'}).Count >> "%WPS%"
-echo     $low   = ($script:findings ^| Where-Object {$_.Sev -eq 'LOW'}).Count >> "%WPS%"
-echo     if ($crit -gt 0) { Write-Host "    CRITICAL : $crit" -f Magenta } >> "%WPS%"
-echo     if ($high -gt 0) { Write-Host "    HIGH     : $high" -f Red } >> "%WPS%"
-echo     if ($med  -gt 0) { Write-Host "    MEDIUM   : $med"  -f Yellow } >> "%WPS%"
 echo     if ($low  -gt 0) { Write-Host "    LOW      : $low"  -f Cyan } >> "%WPS%"
+echo     Write-Host "" >> "%WPS%"
+echo     Write-Host "  [!] ANALYSE RAPIDE DES RISQUES :" -f Red >> "%WPS%"
+echo     if ($crit -gt 0) { Write-Host "  - CRITIQUE : Prise de controle totale (RCE) ou vol de base de donnees." -f Magenta } >> "%WPS%"
+echo     if ($high -gt 0) { Write-Host "  - ELEVE : Piratage de comptes utilisateurs (cookies/XSS) ou vol de sessions." -f Red } >> "%WPS%"
+echo     if ($med  -gt 0) { Write-Host "  - MOYEN : Fuite d'infos techniques ou redirection vers des sites malveillants." -f Yellow } >> "%WPS%"
+echo     Write-Host "  CONSEIL : Corrigez les failles dans l'ordre de leur priorite (Critique d'abord)." -f Cyan >> "%WPS%"
 echo } >> "%WPS%"
 echo Write-Host "  ================================================" -f Cyan >> "%WPS%"
 echo Write-Host "" >> "%WPS%"
@@ -1920,7 +1922,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "%WPS%"
 if exist "%WPS%" del /f /q "%WPS%"
 echo.
 pause
-goto net_cyber_menu
+goto cat_web
 
 
 
@@ -1980,7 +1982,7 @@ echo   Verifie si vos requetes DNS sont bien
 echo   anonymisees via votre VPN.
 echo.
 echo  Serveurs DNS actuellement configures :
-powershell -NoProfile -Command "Get-DnsClientServerAddress | Where-Object {$_.ServerAddresses} | Format-Table InterfaceAlias, AddressFamily, ServerAddresses -AutoSize"
+powershell -NoProfile -Command "Get-DnsClientServerAddress | Where-Object {$_.ServerAddresses} | Select-Object @{N='Interface';E={$_.InterfaceAlias}}, @{N='Protocole';E={$_.AddressFamily}}, @{N='Serveurs_DNS';E={$_.ServerAddresses}} | Format-Table -AutoSize"
 echo.
 echo  Resolution de test vers un domaine public :
 powershell -NoProfile -Command "try { $r = Resolve-DnsName 'whoami.akamai.net' -EA Stop; Write-Host ('  IP resolue : ' + $r.IP4Address) -f Green } catch { Write-Host '  Impossible de resoudre le domaine de test.' -f Red }"
@@ -2062,7 +2064,17 @@ echo        if($openPorts){ Write-Host "      Ports ouverts: $($openPorts -join 
 echo        $found++ >> "%SCPS%"
 echo    } >> "%SCPS%"
 echo } >> "%SCPS%"
-echo Write-Host "`n  Scan termine ! $found appareil(s) detecte(s)" -f Cyan >> "%SCPS%"
+echo if ($found -gt 0) { >> "%SCPS%"
+echo     Write-Host "`n  Scan termine ! $found appareil(s) detecte(s)" -f Cyan >> "%SCPS%"
+echo     Write-Host "" >> "%SCPS%"
+echo     Write-Host "  [!] ANALYSE DES RISQUES (RESEAU LOCAL) :" -f Red >> "%SCPS%"
+echo     Write-Host "  1. Visibilite : Un intrus voit desormais vos PC, NAS, et objets connectes." -f Yellow >> "%SCPS%"
+echo     Write-Host "  2. Ports ouverts : Chaque port (80, 445, 3389) est une porte potentielle." -f Yellow >> "%SCPS%"
+echo     Write-Host "  3. Empreinte : Connaitre la marque (Samsung, Apple) facilite le choix des exploits." -f Yellow >> "%SCPS%"
+echo     Write-Host "  CONSEIL : Fermez les ports inutiles et isolez vos objets connectes (VLAN)." -f Cyan >> "%SCPS%"
+echo } else { >> "%SCPS%"
+echo     Write-Host "`n  Fin du scan. Aucun appareil trouve sur cette plage." -f DarkGray >> "%SCPS%"
+echo } >> "%SCPS%"
 
 powershell -NoProfile -ExecutionPolicy Bypass -File "%SCPS%"
 if exist "%SCPS%" del "%SCPS%"
@@ -2111,7 +2123,7 @@ if /i "%save_choice%"=="O" (
     echo  [OK] Fichier enregistre sur le Bureau : security_htaccess.txt
 )
 pause
-goto net_cyber_menu
+goto cat_defense
 
 
 :cyber_exposed_files
@@ -2126,7 +2138,7 @@ echo.
 echo  Entrez l'URL cible (ex: https://monsite.com)
 set "ALEEX_EXPOSED_URL="
 set /p "ALEEX_EXPOSED_URL=URL : "
-if not defined ALEEX_EXPOSED_URL goto net_cyber_menu
+if not defined ALEEX_EXPOSED_URL goto cat_web
 
 set "EFS=%TEMP%\exposed_files.ps1"
 if exist "%EFS%" del /f /q "%EFS%"
@@ -2200,12 +2212,20 @@ echo    } catch {} >> "%EFS%"
 echo } >> "%EFS%"
 echo Write-Host "" >> "%EFS%"
 echo Write-Host "  Scan termine. $found ressource(s) exposee(s) trouvee(s)." -f Cyan >> "%EFS%"
+echo if ($found -gt 0) { >> "%EFS%"
+echo    Write-Host "" >> "%EFS%"
+echo    Write-Host "  [!] ANALYSE DES RISQUES (Sensible) :" -f Red >> "%EFS%"
+echo    Write-Host "  1. Secrets : Les fichiers .env ou wp-config revelent vos passwords DB/API." -f Yellow >> "%EFS%"
+echo    Write-Host "  2. Source : Le dossier .git permet de reconstruire TOUT votre code source." -f Yellow >> "%EFS%"
+echo    Write-Host "  3. Backups : Les fichiers .sql ou .zip permettent de voler toute votre base." -f Yellow >> "%EFS%"
+echo    Write-Host "  CONSEIL : Utilisez un fichier .htaccess ou nginx.conf pour bloquer ces acces." -f Cyan >> "%EFS%"
+echo } >> "%EFS%"
 
 powershell -NoProfile -ExecutionPolicy Bypass -File "%EFS%"
 if exist "%EFS%" del "%EFS%"
 echo.
 pause
-goto net_cyber_menu
+goto cat_web
 
 
 :cyber_sqli_blind
@@ -2222,7 +2242,7 @@ echo.
 echo  Entrez l'URL cible avec parametre (ex: https://site.com/page?id=1)
 set "ALEEX_SQLI_URL="
 set /p "ALEEX_SQLI_URL=URL : "
-if not defined ALEEX_SQLI_URL goto net_cyber_menu
+if not defined ALEEX_SQLI_URL goto cat_web
 
 set "SBS=%TEMP%\sqli_blind.ps1"
 if exist "%SBS%" del /f /q "%SBS%"
@@ -2504,27 +2524,26 @@ echo        } >> "%SBS%"
 echo    } >> "%SBS%"
 echo. >> "%SBS%"
 echo } >> "%SBS%"
-echo. >> "%SBS%"
 echo Write-Host "" >> "%SBS%"
 echo Write-Host "  ================================================" -f Cyan >> "%SBS%"
 echo if ($vulns -gt 0) { >> "%SBS%"
 echo    Write-Host "  [!!!] $vulns vulnerabilite(s) SQLi detectee(s) !" -f Red >> "%SBS%"
-echo    Write-Host "  Impact potentiel :" -f Red >> "%SBS%"
-echo    Write-Host "    - Extraction de toutes les donnees de la base" -f Yellow >> "%SBS%"
-echo    Write-Host "    - Bypass d'authentification" -f Yellow >> "%SBS%"
-echo    Write-Host "    - Lecture de fichiers systeme (LOAD_FILE)" -f Yellow >> "%SBS%"
-echo    Write-Host "    - Dans certains cas : execution de commandes OS" -f Yellow >> "%SBS%"
+echo    Write-Host "" >> "%SBS%"
+echo    Write-Host "  [!] ANALYSE DES RISQUES (SQLi) :" -f Red >> "%SBS%"
+echo    Write-Host "  1. Vol de donnees : Acces complet a la base (users, passwords, CB)." -f Yellow >> "%SBS%"
+echo    Write-Host "  2. Prise de controle : Possibilite de modifier les admins ou bypass le login." -f Yellow >> "%SBS%"
+echo    Write-Host "  3. RCE (Execute OS) : Risque de prise de controle du serveur via la DB." -f Yellow >> "%SBS%"
 echo    Write-Host "" >> "%SBS%"
 echo    Write-Host "  Recommandations :" -f Cyan >> "%SBS%"
 echo    Write-Host "    1. Utilisez des requetes preparees (Prepared Statements)" -f Green >> "%SBS%"
 echo    Write-Host "    2. Validez et echappez toutes les entrees utilisateur" -f Green >> "%SBS%"
 echo    Write-Host "    3. Appliquez le principe du moindre privilege sur la DB" -f Green >> "%SBS%"
 echo    Write-Host "    4. Activez un WAF (ModSecurity, Cloudflare...)" -f Green >> "%SBS%"
-echo    Write-Host "    5. Auditez votre code avec un SAST (SonarQube, Semgrep)" -f Green >> "%SBS%"
 echo } else { >> "%SBS%"
 echo    Write-Host "  [OK] Aucune SQLi detectee sur les parametres testes." -f Green >> "%SBS%"
-echo    Write-Host "  Note : Un WAF peut masquer des vulnerabilites existantes." -f DarkGray >> "%SBS%"
-echo    Write-Host "         Testez aussi avec sqlmap pour une analyse complete." -f DarkGray >> "%SBS%"
+echo    Write-Host "" >> "%SBS%"
+echo    Write-Host "  [i] NOTE : Cela ne garantit pas l'absence totale de faille." -f DarkGray >> "%SBS%"
+echo    Write-Host "      Utilisez sqlmap pour une analyse en profondeur." -f DarkGray >> "%SBS%"
 echo } >> "%SBS%"
 echo Write-Host "  ================================================" -f Cyan >> "%SBS%"
 
@@ -2532,7 +2551,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "%SBS%"
 if exist "%SBS%" del "%SBS%"
 echo.
 pause
-goto net_cyber_menu
+goto cat_web
 
 
 :cyber_subdomain_scan
@@ -2547,7 +2566,7 @@ echo.
 echo  Entrez le domaine cible (ex: monsite.com)
 set "ALEEX_SUBDOM_DOMAIN="
 set /p "ALEEX_SUBDOM_DOMAIN=Domaine : "
-if not defined ALEEX_SUBDOM_DOMAIN goto net_cyber_menu
+if not defined ALEEX_SUBDOM_DOMAIN goto cat_web
 
 set "SSS=%TEMP%\subdomain_scan.ps1"
 if exist "%SSS%" del /f /q "%SSS%"
@@ -2631,12 +2650,20 @@ echo } >> "%SSS%"
 echo. >> "%SSS%"
 echo Write-Host "" >> "%SSS%"
 echo Write-Host "  Scan termine. $found element(s) trouve(s)." -f Cyan >> "%SSS%"
+echo if ($found -gt 0) { >> "%SSS%"
+echo    Write-Host "" >> "%SSS%"
+echo    Write-Host "  [!] ANALYSE DES RISQUES (Surface d'attaque) :" -f Red >> "%SSS%"
+echo    Write-Host "  1. Shadow IT : Des APIs ou tests oublies sont souvent des portes ouvertes." -f Yellow >> "%SSS%"
+echo    Write-Host "  2. Empreinte : Revele les versions PHP/Apache, SQL, Cloud, SSH." -f Yellow >> "%SSS%"
+echo    Write-Host "  3. Information leakage : Les endpoints JSON revelent souvent des IDs/Usernames." -f Yellow >> "%SSS%"
+echo    Write-Host "  CONSEIL : Limitez l'exposition publique et utilisez de l'authentification." -f Cyan >> "%SSS%"
+echo } >> "%SSS%"
 
 powershell -NoProfile -ExecutionPolicy Bypass -File "%SSS%"
 if exist "%SSS%" del "%SSS%"
 echo.
 pause
-goto net_cyber_menu
+goto cat_web
 
 
 :cyber_auth_test
@@ -2651,7 +2678,7 @@ echo.
 echo  Entrez l'URL de la page de login (ex: https://site.com/login)
 set "ALEEX_AUTH_URL="
 set /p "ALEEX_AUTH_URL=URL : "
-if not defined ALEEX_AUTH_URL goto net_cyber_menu
+if not defined ALEEX_AUTH_URL goto cat_web
 
 echo  Nom du champ utilisateur (ex: username, email, login)
 set "ALEEX_AUTH_USER_FIELD="
@@ -2768,12 +2795,18 @@ echo    } catch {} >> "%ATS%"
 echo } >> "%ATS%"
 echo. >> "%ATS%"
 echo Write-Host "  Audit authentification termine." -f Cyan >> "%ATS%"
+echo Write-Host "" >> "%ATS%"
+echo Write-Host "  [!] ANALYSE DES RISQUES (Comptes) :" -f Red >> "%ATS%"
+echo Write-Host "  1. Brute-force : Si aucune protection n'est active, tous les comptes sont a risque." -f Yellow >> "%ATS%"
+echo Write-Host "  2. Session : Des cookies sans flags facilitent le piratage de compte (XSS/MITM)." -f Yellow >> "%ATS%"
+echo Write-Host "  3. Default Creds : Un admin/admin permet le controle TOTAL du site." -f Yellow >> "%ATS%"
+echo Write-Host "  CONSEIL : Activez la MFA et configurez correctement vos cookies de session." -f Cyan >> "%ATS%"
 
 powershell -NoProfile -ExecutionPolicy Bypass -File "%ATS%"
 if exist "%ATS%" del "%ATS%"
 echo.
 pause
-goto net_cyber_menu
+goto cat_web
 
 :cyber_pentest_report
 cls
@@ -2786,7 +2819,7 @@ echo   score et liste des vulnerabilites.
 echo.
 set /p "TARGET_URL=URL cible principale : "
 set /p "TARGET_DOMAIN=Domaine (sans https) : "
-if "%TARGET_URL%"=="" goto net_cyber_menu
+if "%TARGET_URL%"=="" goto cat_web
 
 set "RPT_PS=%TEMP%\pentest_report.ps1"
 if exist "%RPT_PS%" del "%RPT_PS%"
@@ -2869,7 +2902,7 @@ echo Start-Process $reportFile >> "%RPT_PS%"
 powershell -NoProfile -ExecutionPolicy Bypass -File "%RPT_PS%"
 if exist "%RPT_PS%" del "%RPT_PS%"
 pause
-goto net_cyber_menu
+goto cat_web
 
 :cyber_advanced_inject
 cls
@@ -2881,7 +2914,7 @@ echo.
 set "opts=SSTI (Server-Side Template Injection)~Injection de moteurs de templates (Jinja2, Twig, EL...);XXE (XML External Entity)~Vulnerabilite de parsing XML (File read, SSRF);JWT Attack (JSON Web Token)~Analyse, Brute-force secret et Alg:None"
 call :DynamicMenu "CHOIX DU VECTEUR D'INJECTION" "%opts%"
 set "inject_c=%errorlevel%"
-if "%inject_c%"=="0" goto net_cyber_menu
+if "%inject_c%"=="0" goto cat_web
 if "%inject_c%"=="1" goto adv_ssti
 if "%inject_c%"=="2" goto adv_xxe
 if "%inject_c%"=="3" goto adv_jwt
@@ -2958,6 +2991,11 @@ echo     Write-Host ("  Pays         : " + (NoAcc $info.country)) -f Gray >> "%W
 echo     Write-Host ("  Organisation : " + (NoAcc $info.org)) -f Gray >> "%WPS%"
 echo     Write-Host ("  FAI          : " + (NoAcc $info.isp)) -f Gray >> "%WPS%"
 echo     Write-Host ("  Fuseau       : " + $info.timezone) -f Gray >> "%WPS%"
+echo     Write-Host "" >> "%WPS%"
+echo     Write-Host "  [!] RISQUES ET CONSEQUENCES :" -f Red >> "%WPS%"
+echo     Write-Host "  1. Geolocation : Permet de cibler physiquement l'infrastructure." -f Yellow >> "%WPS%"
+echo     Write-Host "  2. Attribution : Identifie l'herbergeur (ex: AWS, OVH) et ses failles connues." -f Yellow >> "%WPS%"
+echo     Write-Host "  3. Social Engineering : Les infos WHOIS facilitent l'usurpation d'identite." -f Yellow >> "%WPS%"
 echo } catch { >> "%WPS%"
 echo     Write-Host "  [!] Erreur de connexion ou domaine introuvable." -f Yellow >> "%WPS%"
 echo } >> "%WPS%"
@@ -2993,6 +3031,11 @@ echo     if ($json.Count -eq 0) { Write-Host "  [i] Aucun sous-domaine trouve." 
 echo     $names = $json ^| Select-Object -ExpandProperty common_name -Unique ^| Sort-Object >> "%WPS%"
 echo     Write-Host "  [+] $($names.Count) sous-domaines trouves :" -f Green >> "%WPS%"
 echo     foreach ($n in $names) { Write-Host "    - $n" -f Gray } >> "%WPS%"
+echo     Write-Host "" >> "%WPS%"
+echo     Write-Host "  [!] ANALYSE DES RISQUES (crt.sh) :" -f Red >> "%WPS%"
+echo     Write-Host "  1. Reconnaissance passive : L'attaquant voit tout sans jamais toucher le serveur." -f Yellow >> "%WPS%"
+echo     Write-Host "  2. Services oublies : Revele des instances de dev ou d'anciennes versions." -f Yellow >> "%WPS%"
+echo     Write-Host "  3. Evolution : Permet de deduire la structure interne de l'equipe technique." -f Yellow >> "%WPS%"
 echo } catch { >> "%WPS%"
 echo     Write-Host "  [ERREUR] Impossible de joindre crt.sh (Timeout ou blocage)." -f Red >> "%WPS%"
 echo     Write-Host "  Details : $($_.Exception.Message)" -f Gray >> "%WPS%"
@@ -3006,9 +3049,9 @@ pause & goto cat_recon
 cls
 echo.
 echo  ================================================
-echo   [AXFR] TENTATIVE DE TRANSFERT DE ZONE DNS
+echo   [AXFR] DUMP DES RECORDS DNS (ZONE TRANSFER)
 echo  ================================================
-echo   Tente de dumper tous les records DNS
+echo   Tente de recuperer toute la configuration DNS
 echo   si le serveur de noms est mal securise.
 echo.
 set "AX_DOM="
@@ -3023,9 +3066,24 @@ echo Write-Host "  Recherche des serveurs NameServer (NS) pour $d..." -f Cyan >>
 echo try { >> "%WPS%"
 echo     $nsList = Resolve-DnsName $d -Type NS -ErrorAction SilentlyContinue >> "%WPS%"
 echo     if (-not $nsList) { Write-Host "  [!] Aucun serveur NS trouve pour ce domaine." -f Red; exit } >> "%WPS%"
+echo     $foundAny = $false >> "%WPS%"
 echo     foreach ($ns in $nsList.NameHost) { >> "%WPS%"
 echo         Write-Host "  --- Test sur $ns ---" -f Yellow >> "%WPS%"
-echo         nslookup -type=any -timeout=5 $d $ns ^| Select-String $d ^| ForEach-Object { Write-Host ("    " + $_.Line) -f Green } >> "%WPS%"
+echo         $res = nslookup -type=any -timeout=5 $d $ns ^| Select-String $d >> "%WPS%"
+echo         if ($res) { >> "%WPS%"
+echo             $foundAny = $true >> "%WPS%"
+echo             $res ^| ForEach-Object { Write-Host ("    " + $_.Line) -f Green } >> "%WPS%"
+echo         } else { >> "%WPS%"
+echo             Write-Host "    [-] Transfert refuse ou aucun record trouve sur ce serveur." -f DarkGray >> "%WPS%"
+echo         } >> "%WPS%"
+echo     } >> "%WPS%"
+echo     if ($foundAny) { >> "%WPS%"
+echo         Write-Host "" >> "%WPS%"
+echo         Write-Host "  [!] ANALYSE DES RISQUES (DONNEES EXPOSEES) :" -f Red >> "%WPS%"
+echo         Write-Host "  1. Fuite d'annuaire : Votre infrastructure est cartographiee." -f Yellow >> "%WPS%"
+echo         Write-Host "  2. Services cachés : Des sous-domaines (dev, admin, vpn) sont visibles." -f Yellow >> "%WPS%"
+echo         Write-Host "  3. En-tetes Mail/Web : Les IPs des serveurs critiques sont identifiees." -f Yellow >> "%WPS%"
+echo         Write-Host "  CONSEIL : Desactivez AXFR ou restreignez-le aux IPs de confiance." -f Cyan >> "%WPS%"
 echo     } >> "%WPS%"
 echo } catch { >> "%WPS%"
 echo     Write-Host "  [ERREUR] Echec de la resolution DNS." -f Red >> "%WPS%"
@@ -3094,6 +3152,7 @@ echo $subs = @('www','dev','api','test','staging','beta','mail','vpn','smtp','po
 echo Write-Host "  Demarrage du bruteforce sur $($subs.Count) mots pour $d" -f Cyan >> "%WPS%"
 echo Write-Host "" >> "%WPS%"
 echo $count = 0 >> "%WPS%"
+echo $foundCount = 0 >> "%WPS%"
 echo foreach ($s in $subs) { >> "%WPS%"
 echo     $count++ >> "%WPS%"
 echo     $fqdn = $s + '.' + $d >> "%WPS%"
@@ -3102,6 +3161,7 @@ echo     Write-Progress -Activity "Bruteforce DNS" -Status "$fqdn ($count/$($sub
 echo     try { >> "%WPS%"
 echo         $dns = Resolve-DnsName $fqdn -Type A -ErrorAction Stop -Timeout 2 ^| Select-Object -ExpandProperty IPAddress -First 1 >> "%WPS%"
 echo         Write-Host "  [+] $fqdn " -NoNewline -f Green; Write-Host "-> $dns" -f White >> "%WPS%"
+echo         $foundCount++ >> "%WPS%"
 echo         try { >> "%WPS%"
 echo             $r = Invoke-WebRequest ("http://" + $fqdn) -Method Head -TimeoutSec 2 -EA Stop -UseBasicParsing >> "%WPS%"
 echo             Write-Host "      HTTP 200 ($($r.Headers['Server']))" -f Gray >> "%WPS%"
@@ -3109,7 +3169,16 @@ echo         } catch {} >> "%WPS%"
 echo     } catch {} >> "%WPS%"
 echo } >> "%WPS%"
 echo Write-Progress -Activity "Bruteforce DNS" -Completed >> "%WPS%"
-echo Write-Host "`n  Scan termine." -f Cyan >> "%WPS%"
+echo if ($foundCount -gt 0) { >> "%WPS%"
+echo     Write-Host "" >> "%WPS%"
+echo     Write-Host "  [!] ANALYSE DES RISQUES (SOUS-DOMAINES) :" -f Red >> "%WPS%"
+echo     Write-Host "  1. Surface d'attaque : Chaque sous-domaine est une porte d'entree potentielle." -f Yellow >> "%WPS%"
+echo     Write-Host "  2. Shadow IT : Des serveurs de tests (dev, staging) oublies sont souvent mal patchés." -f Yellow >> "%WPS%"
+echo     Write-Host "  3. Fuite d'infrastructure : Revele les technos utilisees (api, git, vpn)." -f Yellow >> "%WPS%"
+echo     Write-Host "  CONSEIL : Supprimez les enregistrements DNS inutilises et protegez vos accès." -f Cyan >> "%WPS%"
+echo } else { >> "%WPS%"
+echo     Write-Host "`n  Scan termine. Aucun sous-domaine supplementaire detecte." -f Cyan >> "%WPS%"
+echo } >> "%WPS%"
 
 powershell -NoProfile -ExecutionPolicy Bypass -File "%WPS%"
 if exist "%WPS%" del /f /q "%WPS%"
@@ -3202,8 +3271,11 @@ echo    Write-Host "  [!!!] $vulns SSRF confirme(s) !" -f Red >> "%SSRF_PS%"
 echo    Write-Host "  Impact possible :" -f Red >> "%SSRF_PS%"
 echo    Write-Host "    - Lecture des metadonnees cloud (cles IAM AWS, tokens GCP/Azure)" -f Yellow >> "%SSRF_PS%"
 echo    Write-Host "    - Acces aux services internes (Redis, MongoDB, Elasticsearch)" -f Yellow >> "%SSRF_PS%"
-echo    Write-Host "    - Lecture de fichiers systeme via file://" -f Yellow >> "%SSRF_PS%"
+echo    Write-Host "    - Lectre de fichiers systeme via file://" -f Yellow >> "%SSRF_PS%"
 echo    Write-Host "    - Pivoting vers le reseau interne du serveur" -f Yellow >> "%SSRF_PS%"
+echo    Write-Host "" >> "%SSRF_PS%"
+echo    Write-Host "  [!] DANGER CRITIQUE : L'attaquant utilise votre serveur comme un rebond" -f Red >> "%SSRF_PS%"
+echo    Write-Host "  pour attaquer votre infrastructure interne (Azure, AWS, DB)." -f Red >> "%SSRF_PS%"
 echo } elseif ($suspicious -gt 0) { >> "%SSRF_PS%"
 echo    Write-Host "  [~] $suspicious reponse(s) suspecte(s) - Verifiez manuellement" -f Yellow >> "%SSRF_PS%"
 echo    Write-Host "  Testez avec Burp Suite ou curl pour confirmer." -f DarkGray >> "%SSRF_PS%"
@@ -3401,7 +3473,7 @@ if exist "%RPS%" del "%RPS%"
 echo.
 echo  [OK] Rapport genere sur le Bureau.
 pause
-goto net_cyber_menu
+goto cat_web
 
 REM ===================================================================
 REM         SCAN TLS / SSL AVANCE (Protocoles et Ciphers faibles)
@@ -3419,7 +3491,7 @@ echo.
 echo  Entrez l'hote cible (ex: monsite.com ou IP)
 set "ALEEX_TLS_HOST="
 set /p "ALEEX_TLS_HOST=Hote : "
-if not defined ALEEX_TLS_HOST goto net_cyber_menu
+if not defined ALEEX_TLS_HOST goto cat_web
 
 echo  Port (defaut 443, Entree pour valider)
 set "ALEEX_TLS_PORT="
@@ -3536,6 +3608,11 @@ echo $grade = if($script:score -ge 90){'A+'}elseif($script:score -ge 75){'B'}els
 echo $gc    = if($script:score -ge 75){'Green'}elseif($script:score -ge 50){'Yellow'}else{'Red'} >> "%TLS_PS%"
 echo Write-Host "  Score TLS : $script:score/100  Grade : $grade" -f $gc >> "%TLS_PS%"
 echo if ($script:findings.Count -eq 0) { Write-Host "  [OK] Aucun probleme TLS detecte !" -f Green } >> "%TLS_PS%"
+echo Write-Host "" >> "%TLS_PS%"
+echo Write-Host "  [!] RISQUES TLS :" -f Red >> "%TLS_PS%"
+echo Write-Host "  1. Interception : Des protocoles faibles (SSLv3) permettent le MITM." -f Yellow >> "%TLS_PS%"
+echo Write-Host "  2. Phishing : Un certificat expire ou mal nomme detruit la confiance." -f Yellow >> "%TLS_PS%"
+echo Write-Host "  3. Downgrade : L'absence de HSTS permet de forcer le passage en HTTP." -f Yellow >> "%TLS_PS%"
 echo Write-Host "  ================================================" -f Cyan >> "%TLS_PS%"
 echo. >> "%TLS_PS%"
 echo $exportChoice = Read-Host "  Exporter les resultats en JSON ? (O/N)" >> "%TLS_PS%"
@@ -3572,7 +3649,7 @@ echo.
 echo  Entrez l'URL avec parametre (ex: https://site.com/page?file=)
 set "ALEEX_LFI_URL="
 set /p "ALEEX_LFI_URL=URL : "
-if not defined ALEEX_LFI_URL goto net_cyber_menu
+if not defined ALEEX_LFI_URL goto cat_web
 
 set "LFI_PS=%TEMP%\lfi_scan_%RANDOM%.ps1"
 if exist "%LFI_PS%" del /f /q "%LFI_PS%"
@@ -3770,7 +3847,7 @@ echo.
 echo  Entrez l'URL cible (ex: https://site.com/redirect)
 set "ALEEX_OR_URL="
 set /p "ALEEX_OR_URL=URL : "
-if not defined ALEEX_OR_URL goto net_cyber_menu
+if not defined ALEEX_OR_URL goto cat_web
 
 set "OR_PS=%TEMP%\openredirect_%RANDOM%.ps1"
 if exist "%OR_PS%" del /f /q "%OR_PS%"
@@ -3833,8 +3910,16 @@ echo    } >> "%OR_PS%"
 echo } >> "%OR_PS%"
 echo. >> "%OR_PS%"
 echo Write-Host "" >> "%OR_PS%"
-echo if ($vulns -gt 0) { Write-Host "  [!!!] $vulns Open Redirect(s) detecte(s) !" -f Red } >> "%OR_PS%"
-echo else              { Write-Host "  [OK] Aucun Open Redirect detecte." -f Green } >> "%OR_PS%"
+echo if ($vulns -gt 0) { >> "%OR_PS%"
+echo    Write-Host "  [!!!] $vulns Open Redirect(s) detecte(s) !" -f Red >> "%OR_PS%"
+echo    Write-Host "" >> "%OR_PS%"
+echo    Write-Host "  [!] ANALYSE DES RISQUES (Open Redirect) :" -f Red >> "%OR_PS%"
+echo    Write-Host "  1. Phishing : Un pirate utilise votre domaine de confiance pour pieger vos clients." -f Yellow >> "%OR_PS%"
+echo    Write-Host "  2. Malware : Redirige automatiquement l'utilisateur vers le telechargement d'un virus." -f Yellow >> "%OR_PS%"
+echo    Write-Host "  3. Reputation : Votre domaine peut etre blacklisté par les navigateurs et mails." -f Yellow >> "%OR_PS%"
+echo    Write-Host "  CONSEIL : N'utilisez que des chemins relatifs ou une liste blanche (whitelist)." -f Cyan >> "%OR_PS%"
+echo } >> "%OR_PS%"
+echo else { Write-Host "  [OK] Aucun Open Redirect detecte." -f Green } >> "%OR_PS%"
 
 powershell -NoProfile -ExecutionPolicy Bypass -File "%OR_PS%"
 if exist "%OR_PS%" del /f /q "%OR_PS%"
