@@ -1,72 +1,99 @@
 @echo off
 setlocal EnableExtensions EnableDelayedExpansion
-if defined MSYSTEM ("%ComSpec%" /c "%~f0" & exit /b)
-if not defined CMDCMDLINE ("%ComSpec%" /c "%~f0" & exit /b)
 chcp 65001 >nul
 
-REM === FORCER LE REPERTOIRE COURANT SUR LE DOSSIER DU .BAT ===
+REM --- CONFIGURATION DU REPERTOIRE ---
 set "SCRIPT_DIR=%~dp0"
 if "%SCRIPT_DIR:~-1%"=="\" set "SCRIPT_DIR=%SCRIPT_DIR:~0,-1%"
 cd /d "%SCRIPT_DIR%"
-title Boite a Scripts Windows - By ALEEXLEDEV (v3.0)
-color 0B
-mode con: cols=120 lines=60
+
+REM --- INITIALISATION DES COULEURS ANSI ---
+for /F "tokens=1,2 delims=#" %%a in ('"prompt #$H#$E# & echo on & for %%b in (1) do rem"') do set "ESC=%%b"
+set "R=%ESC%[91m"
+set "G=%ESC%[92m"
+set "Y=%ESC%[93m"
+set "B=%ESC%[94m"
+set "W=%ESC%[97m"
+set "N=%ESC%[0m"
 
 REM === AUTO-ELEVATION EN ADMINISTRATEUR ===
-REM Note : En mode sans echec, "net session" echoue meme en admin (service Serveur arrete).
-REM On utilise donc "fsutil dirty query" qui detecte avec fiabilite les droits Admin Windows.
 fsutil dirty query %systemdrive% >nul 2>&1
 if %errorlevel% neq 0 (
     cls
     echo.
-    echo     ^+-----------------------------------------------^+
-    echo     ^|                                               ^|
-    echo     ^|        /\     ACCES REFUSE                    ^|
-    echo     ^|       /  \    Droits insuffisants             ^|
-    echo     ^|      / !! \                                   ^|
-    echo     ^|     /______\  Ce script necessite             ^|
-    echo     ^|    [  ALEX  ]  des privileges ADMINISTRATEUR  ^|
-    echo     ^|                                               ^|
-    echo     ^|       Developpe par  ALEEXLEDEV               ^|
-    echo     ^|                                               ^|
-    echo     ^+-----------------------------------------------^+
+    echo %R%    #################################################%N%
+    echo %R%    #                                               #%N%
+    echo %R%    #      [!] ACCES REFUSE : DROITS INSUFFISANTS   #%N%
+    echo %R%    #                                               #%N%
+    echo %R%    #   CE MODULE NECESSITE LES PRIVILEGES ADMIN    #%N%
+    echo %R%    #                                               #%N%
+    echo %R%    #################################################%N%
     echo.
-    echo       Relancement automatique en mode administrateur ...
+    echo %Y%    [i] Relancement automatique en mode Administrateur...%N%
     echo.
-    echo       [ = = = = = = = = = = = = = = = = = = = ]
+    echo %B%    [ %G%■■■■■■%B%■■■■■■■■■■■■■■■■■ ]%N%
     timeout /t 1 /nobreak >nul
-    echo       [ = = = = = = = = = = = = = = = = = = = ]
-    echo.
+    echo %B%    [ %G%■■■■■■■■■■■■%B%■■■■■■■■■■■ ]%N%
+    timeout /t 1 /nobreak >nul
+    echo %B%    [ %G%■■■■■■■■■■■■■■■■■■%B%■■■■■ ]%N%
     powershell -Command "Start-Process '%~f0' -Verb RunAs"
     exit /b
 )
 
-REM === DETECTION MODE SANS ECHEC ===
-REM Place APRES l'elevation admin pour pouvoir executer "bcdedit" avec les bons privileges !
+REM --- PARAMETRES DE LA FENETRE ---
+title Boite a Scripts Windows - By ALEEXLEDEV (v3.5 GOLDEN EDITION)
+mode con: cols=120 lines=60
+
+:header
+cls
+echo %R%  ▄▄▄▄▄▄▄ ▄▄       ▄▄▄▄▄▄▄ ▄▄▄▄▄▄▄ ▄▄   ▄▄    ▄▄       ▄▄▄▄▄▄▄    ▄▄▄▄▄▄  ▄▄▄▄▄▄▄ ▄▄   ▄▄ %N%
+echo %R% █       █  █     █       █       █  █ █  █  █  █     █       █  █      ██       █  █ █  █%N%
+echo %R% █   ▄   █  █     █    ▄▄▄█    ▄▄▄█  █▄█  █  █  █     █    ▄▄▄█  █  ▄    █    ▄▄▄█  █▄█  █%N%
+echo %W% █  █▄█  █  █     █   █▄▄▄█   █▄▄▄█       █  █  █     █   █▄▄▄   █ █ █   █   █▄▄▄█       █%N%
+echo %W% █       █  █▄▄▄▄▄█    ▄▄▄█    ▄▄▄█       █  █  █▄▄▄▄▄█    ▄▄▄█  █ █▄█   █    ▄▄▄█       █%N%
+echo %W% █   ▄   █       █   █▄▄▄█   █▄▄▄█   ▄   █  █       █   █▄▄▄   █       █   █▄▄▄█   ▄   █%N%
+echo %W% █▄▄█ █▄▄█▄▄▄▄▄▄▄█▄▄▄▄▄▄▄█▄▄▄▄▄▄▄█▄▄█ █▄▄█  █▄▄▄▄▄▄▄█▄▄▄▄▄▄▄█  █▄▄▄▄▄▄█▄▄▄▄▄▄▄█▄▄█ █▄▄█%N%
+echo.
+echo %Y%             ---===[  A  L  E  E  X     L  E     D  E  V  ]===---%N%
+echo.
+echo %B%    -------------------------------------------------------------------------------%N%
+echo %W%    [+] VERSION : 3.5 GOLDEN EDITION            [+] BYPASS : ANTI-VIRUS LIVE%N%
+echo %W%    [+] TARGET  : MULTI-NETWORK SCAN            [+] ACCESS : UNRESTRICTED%N%
+echo %B%    -------------------------------------------------------------------------------%N%
+echo.
+
+REM --- DETECTION MODE SANS ECHEC ---
 if defined SAFEBOOT_OPTION goto sys_safemode
 
-REM === CHARGEMENT DES CREDENTIALS DEPUIS LA CLE USB ===
+REM --- INITIALISATION DES MODULES ---
+echo %G%[ SYSTEM ]%N% Powering up framework...
+timeout /t 1 /nobreak >nul
+
+REM --- CHARGEMENT DES CREDENTIALS ---
 set "CRED_FILE=%SCRIPT_DIR%\credentials.txt"
 set "SMTP_USER="
 set "SMTP_PASS="
 set "EMAIL_TO="
-
 if exist "%CRED_FILE%" (
     for /f "usebackq tokens=1,* delims==" %%A in ("%CRED_FILE%") do (
         if "%%A"=="SMTP_USER" set "SMTP_USER=%%B"
         if "%%A"=="SMTP_PASS" set "SMTP_PASS=%%B"
         if "%%A"=="EMAIL_TO"  set "EMAIL_TO=%%B"
     )
-    echo [OK] Credentials charges depuis credentials.txt
+    echo %G%[ MODULE ]%N% Credentials base loaded.
 ) else (
-    (
-        echo SMTP_USER=
-        echo SMTP_PASS=
-        echo EMAIL_TO=
-    ) > "%CRED_FILE%"
-    echo [!] Aucun fichier credentials.txt trouve.
-    echo     Le fichier vient d'etre cree. Veuillez le remplir pour activer l'envoi par mail.
+    (echo SMTP_USER=& echo SMTP_PASS=& echo EMAIL_TO=) > "%CRED_FILE%"
 )
+
+echo %G%[ MODULE ]%N% Web-Exploit Database loaded.
+timeout /t 1 /nobreak >nul
+echo %G%[ MODULE ]%N% Stealth Exfiltration Bot active.
+timeout /t 1 /nobreak >nul
+echo.
+echo %Y%[ i ] Initialisation terminée. Bienvenue, ALEEXLEDEV.%N%
+timeout /t 1 /nobreak >nul
+
+REM --- CHARGEMENT DE LA BASE D'OUTILS ---
 
 set "t[2]=---:DIAGNOSTIC"
 set "t[3]=sys_diagnostic_menu:Menu de diagnostic~Regroupe 8 outils d'analyse (Systeme, Reseau, Sante...)"
