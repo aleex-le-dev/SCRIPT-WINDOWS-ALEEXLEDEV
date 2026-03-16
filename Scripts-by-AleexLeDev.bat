@@ -1407,10 +1407,11 @@ REM              MENU CYBERSECURITE RESEAU - PAR ALEEXLEDEV
 REM ===================================================================
 :net_cyber_menu
 cls
-set "opts=TRIAGE - Diagnostic rapide de connexion;ADAPTATEURS - Infos MAC et vitesse;LAN SCAN - Scan turbo (Marques/Ports/BruteForce);FLUX - Analyse des ports et processus locaux;DNS LEAK - Verifier la fuite DNS (VPN);AUDIT Wi-Fi;IP GRABBER - Obtenir l'IP d'une box distante (Ecoute directe);RETOUR"
+set "opts=TRIAGE - Diagnostic rapide de connexion;ADAPTATEURS - Infos MAC et vitesse;LAN SCAN - Scan turbo (Marques/Ports/BruteForce);FLUX - Analyse des ports et processus locaux;DNS LEAK - Verifier la fuite DNS (VPN);AUDIT Wi-Fi;IP GRABBER - Obtenir l'IP d'une box distante (Ecoute directe)"
 call :DynamicMenu "CYBERSECURITE RESEAU" "%opts%" "NONUMS"
 set "cyber_choice=%errorlevel%"
 
+    if "%cyber_choice%"=="0" goto menu_principal
     if "%cyber_choice%"=="1" goto cyber_triage
     if "%cyber_choice%"=="2" goto cyber_adapter_audit
     if "%cyber_choice%"=="3" goto cyber_lan_scan
@@ -1418,7 +1419,6 @@ set "cyber_choice=%errorlevel%"
     if "%cyber_choice%"=="5" goto cyber_dns_leak
     if "%cyber_choice%"=="6" goto cyber_wifi_audit
     if "%cyber_choice%"=="7" goto cyber_ip_grabber
-    if "%cyber_choice%"=="8" goto menu_principal
     goto net_cyber_menu
 
 :cyber_ip_grabber
