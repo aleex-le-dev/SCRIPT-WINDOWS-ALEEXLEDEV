@@ -1407,14 +1407,13 @@ REM              MENU CYBERSECURITE RESEAU - PAR ALEEXLEDEV
 REM ===================================================================
 :net_cyber_menu
 cls
-set "opts=TRIAGE - Diagnostic rapide de connexion;ADAPTATEURS - Infos MAC et vitesse;LAN SCAN - Scan turbo (Marques/Ports/BruteForce);FLUX - Analyse des ports et processus locaux;DNS LEAK - Verifier la fuite DNS (VPN);AUDIT Wi-Fi;IP GRABBER - Obtenir l'IP d'une box distante (Ecoute directe);RETOUR"
+set "opts=TRIAGE - Diagnostic rapide de connexion;ADAPTATEURS - Infos MAC et vitesse;LAN SCAN - Scan turbo (Marques/Ports/BruteForce);FLUX - Analyse des ports et processus locaux;DNS LEAK - Verifier la fuite DNS (VPN);AUDIT Wi-Fi;IP GRABBER - Obtenir l'IP d'une box distante (Ecoute directe)"
 call :DynamicMenu "CYBERSECURITE RESEAU" "%opts%" "NONUMS"
 set "cyber_choice=%errorlevel%"
 
 if "%cyber_choice%"=="5" goto cyber_dns_leak
 if "%cyber_choice%"=="6" goto cyber_wifi_audit
 if "%cyber_choice%"=="7" goto cyber_ip_grabber
-if "%cyber_choice%"=="8" goto menu_principal
 goto net_cyber_menu
 
 :cyber_ip_grabber
@@ -2140,26 +2139,12 @@ set "opts=Scanner profondement les failles (Vuln, SMB, RDP, Ports);Ouvrir une se
 call :DynamicMenu "!remote_info_title!" "%opts%" "NONUMS"
 set "rc_opt=%errorlevel%"
 
-if "%rc_opt%"=="1" (
-    cls
-    echo.
-    echo  ================================================
-    echo   AUDIT DE VULNERABILITES : !remote_ip!
-    if defined remote_pc echo   CIBLE                   : !remote_pc!
-    echo  ================================================
-    echo.
-    echo [i] Lancement du scan de ports et services...
-    powershell -NoProfile -Command "$ip='!remote_ip!'; $ports=@(21,22,23,80,135,139,443,445,3389,5985,8080); foreach($p in $ports){ $t=New-Object Net.Sockets.TcpClient; try { $c=$t.BeginConnect($ip,$p,$null,$null); if($c -and $c.AsyncWaitHandle.WaitOne(400,$false) -and $t.Connected){ Write-Host ('[!] Port Ouvert : '+$p) -f Cyan; if($p -eq 445){ Write-Host '  -> Faille potentielle critique : SMB (WannaCry, EternalBlue, relay)' -f Red }; if($p -eq 135){ Write-Host '  -> Faille potentielle RPC (Enumeration possible)' -f Yellow }; if($p -eq 3389){ Write-Host '  -> RDP ouvert (Risque Bruteforce / BlueKeep)' -f Yellow }; if($p -eq 5985){ Write-Host '  -> WinRM actif (Coerced Auth possible)' -f Yellow }; if($p -eq 21 -or $p -eq 23){ Write-Host '  -> Protocole historique clair ! (Sniffing facile)' -f Red } } } catch {} finally { $t.Close() } }"
-    echo.
-    goto cyber_remote_menu
-)
+if "%rc_opt%"=="1" goto ig_remote_scan_process
 if "%rc_opt%"=="2" (
     cls
     echo.
-    echo [i] Tentative de connexion WinRM Remote PowerShell sur %remote_ip%...
-    echo (Un popup d'identification peut s'afficher, requiere authentification d'admin distant)
-    echo.
-    powershell -NoProfile -Command "Enter-PSSession -ComputerName %remote_ip% -Credential (Get-Credential)"
+    echo [i] Tentative de connexion WinRM Remote PowerShell sur !remote_ip!...
+    powershell -NoProfile -Command "Enter-PSSession -ComputerName !remote_ip! -Credential (Get-Credential)"
     pause
     goto cyber_remote_menu
 )
@@ -2169,10 +2154,9 @@ if "%rc_opt%"=="3" (
     echo [i] Connexion distante SSH...
     set /p "ssh_user=Utilisateur cible : "
     if "!remote_port!"=="NONE" (
-        ssh !ssh_user!@%remote_ip%
+        ssh !ssh_user!@!remote_ip!
     ) else (
-        echo [i] Utilisation du port specifie : !remote_port!
-        ssh -p !remote_port! !ssh_user!@%remote_ip%
+        ssh -p !remote_port! !ssh_user!@!remote_ip!
     )
     pause
     goto cyber_remote_menu
@@ -2180,16 +2164,60 @@ if "%rc_opt%"=="3" (
 if "%rc_opt%"=="4" (
     cls
     echo.
-    echo [i] Listage des partages distants accessibles sur %remote_ip% :
-    net view \\%remote_ip% /all
+    echo [i] Listage des partages distants accessibles sur !remote_ip! :
+    net view \\!remote_ip! /all
     echo.
-    echo [?] Explorer le disque distant virtuellement (C$, Admin$) dans l'Explorateur ?
+    echo [?] Explorer le disque distant virtuellement (C$, Admin$) ?
     set /p "open_exp=(O/N) : "
-    if /i "!open_exp!"=="O" start \\%remote_ip%\C$
+    if /i "!open_exp!"=="O" start \\!remote_ip!\C$
     pause
     goto cyber_remote_menu
 )
-if "%rc_opt%"=="0" goto cyber_lan_scan
+goto cyber_remote_menu
+
+:ig_remote_scan_process
+cls
+echo.
+echo  ================================================
+echo   AUDIT DE VULNERABILITES : !remote_ip!
+if defined remote_pc echo   CIBLE                   : !remote_pc!
+echo  ================================================
+echo.
+echo [i] Initialisation du moteur de scan...
+
+set "SC_FILE=%TEMP%\vuln_scan.ps1"
+(
+echo $ip = '!remote_ip!'.Split('%%')[0]
+echo $ports = @(21,22,23,25,53,80,110,135,139,143,443,445,465,587,993,995,1433,1521,2049,3306,3389,5432,5900,5985,8080,8443^)
+echo Write-Host "[*] Analyse de la cible : $ip" -f Gray
+echo if (Test-Connection $ip -Count 1 -Quiet^) { Write-Host " [OK] Cible en ligne (Ping actif)" -f Green }
+echo $found = 0
+echo foreach ($p in $ports^) {
+echo   [Console]::Write("`r [*] Scan du port : $p    "^)
+echo   $t = New-Object Net.Sockets.TcpClient
+echo   try {
+echo     $c = $t.BeginConnect($ip, $p, $null, $null^)
+echo     if ($c.AsyncWaitHandle.WaitOne(300, $false^) -and $t.Connected^) {
+echo       Write-Host "`r [!] PORT $p OUVERT" -f Cyan -NoNewline
+echo       $found++
+echo       if ($p -eq 445^) { Write-Host " -> SMB (Vulnerable EternalBlue/WannaCry ?)" -f Red }
+echo       elseif ($p -eq 3389^) { Write-Host " -> RDP (Bureau a distance actif)" -f Yellow }
+echo       elseif ($p -eq 22^) { Write-Host " -> SSH detecte" -f Cyan }
+echo       elseif ($p -eq 21^) { Write-Host " -> FTP detecte (Risque de sniffing)" -f Yellow }
+echo       elseif ($p -eq 80 -or $p -eq 443^) { Write-Host " -> Serveur Web detecte" -f Gray }
+echo       else { Write-Host "" }
+echo     }
+echo   } catch {} finally { $t.Close(^) }
+echo }
+echo Write-Host "`r[*] Scan termine. $found port(s) identifie(s).           " -f Gray
+echo if ($found -eq 0^) { Write-Host " [i] Aucun service critique expose n'a ete trouve." -f Yellow }
+) > "%SC_FILE%"
+
+powershell -NoProfile -ExecutionPolicy Bypass -File "%SC_FILE%"
+if exist "%SC_FILE%" del /f /q "%SC_FILE%"
+echo.
+echo  --- Scan termine. Appuyez sur une touche pour retourner au menu ---
+pause >nul
 goto cyber_remote_menu
 
 :start_lan_scan
