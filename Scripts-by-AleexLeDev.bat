@@ -1479,7 +1479,7 @@ if exist "%PS_GRAB_FILE%" del /f /q "%PS_GRAB_FILE%"
 >> "%PS_GRAB_FILE%" echo       Write-Host ('   Machine : ' + $pc_val)  -f White
 >> "%PS_GRAB_FILE%" echo       Write-Host ('   Session : ' + $usr_val) -f White
 >> "%PS_GRAB_FILE%" echo       Write-Host '  =================================================' -f Red
->> "%PS_GRAB_FILE%" echo       Set-Content "$env:TEMP\captured_ip.txt" -Value "$ip_val|$pc_val|$usr_val" -Encoding ASCII
+>> "%PS_GRAB_FILE%" echo       Set-Content "$env:TEMP\captured_ip.txt" -Value "$ip_val;$pc_val;$usr_val" -Encoding ASCII
 >> "%PS_GRAB_FILE%" echo     }
 >> "%PS_GRAB_FILE%" echo   } catch {}
 >> "%PS_GRAB_FILE%" echo   if (-not $found) {
@@ -1495,11 +1495,9 @@ if exist "%PS_GRAB_FILE%" del /f /q "%PS_GRAB_FILE%"
 >> "%PS_GRAB_FILE%" echo   }
 >> "%PS_GRAB_FILE%" echo }
 >> "%PS_GRAB_FILE%" echo if (Test-Path $desk) { Remove-Item $desk -Force -EA SilentlyContinue }
->> "%PS_GRAB_FILE%" echo if ($found) { Write-Host ''; Write-Host '  [i] Retour automatique dans 4s...' -f DarkGray; Start-Sleep -s 4 }
+>> "%PS_GRAB_FILE%" echo if ($found) { Write-Host '  [OK] Transfert termine.' -f Green }
 >> "%PS_GRAB_FILE%" echo } catch {
 >> "%PS_GRAB_FILE%" echo     Write-Host "  [ERREUR] $($_.Exception.Message)" -f Red
->> "%PS_GRAB_FILE%" echo     Write-Host '  Retour dans 4s...' -f DarkGray
->> "%PS_GRAB_FILE%" echo     Start-Sleep -s 4
 >> "%PS_GRAB_FILE%" echo }
 
 powershell -NoProfile -ExecutionPolicy Bypass -File "%PS_GRAB_FILE%"
@@ -1507,26 +1505,26 @@ if exist "%PS_GRAB_FILE%" del /f /q "%PS_GRAB_FILE%"
 
 if exist "%TEMP%\captured_ip.txt" (
     set /p capture_data=<"%TEMP%\captured_ip.txt"
-    for /f "tokens=1-3 delims=|" %%a in ("!capture_data!") do (
+    for /f "tokens=1-3 delims=;" %%a in ("!capture_data!") do (
         set "remote_ip=%%a"
         set "remote_pc=%%b"
         set "remote_user=%%c"
     )
     del /f /q "%TEMP%\captured_ip.txt"
 
-    echo [%date% %time%] IP: !remote_ip! ^| PC: !remote_pc! ^| User: !remote_user! >> "ip distant.txt"
+    if not exist "ip distant.txt" type nul > "ip distant.txt"
+    findstr /C:"IP: !remote_ip!" "ip distant.txt" >nul
+    if errorlevel 1 (
+        echo [%date% %time%] IP: !remote_ip! -- PC: !remote_pc! -- User: !remote_user! >> "ip distant.txt"
+    )
 
     echo.
     echo  [!] CIBLE DETECTEE : !remote_ip! (!remote_pc!\!remote_user!)
     echo  [i] Informations enregistrees dans 'ip distant.txt'
-    echo.
-    set "opts=Passer a l'Audit de penetration ^& Brute-Force;Retour au menu"
-    call :DynamicMenu "SUITE LOGIQUE" "!opts!" "NONUMS NOCLS"
-    if errorlevel 2 goto net_cyber_menu
-    if errorlevel 1 (
-        set "remote_port=NONE"
-        goto cyber_remote_menu
-    )
+    echo  [i] Passage immédiat à l'Audit de penetration...
+    
+    set "remote_port=NONE"
+    goto cyber_remote_menu
 )
 
 goto net_cyber_menu
@@ -2132,26 +2130,31 @@ echo      (Ex: 2222 si votre box redirige le port 2222 vers le 22 d'un PC)
 call :InputWithEsc "Port (Optionnel) : " remote_port
 if errorlevel 1 goto cyber_lan_scan
 if not defined remote_port set "remote_port=NONE"
+goto cyber_remote_menu
 
 
 :cyber_remote_menu
-cls
-echo.
-echo  Cible : %remote_ip%
-echo  ------------------------------------------------
+set "remote_info_title=ACTIONS DISTANTES - [ !remote_ip! ]"
+if defined remote_pc set "remote_info_title=ACTIONS DISTANTES - [ !remote_pc! @ !remote_ip! ]"
 set "opts=Scanner profondement les failles (Vuln, SMB, RDP, Ports);Ouvrir une session PowerShell (WinRM);Se connecter via SSH;Explorer les partages secrets SMB (C$, Admin$)"
-call :DynamicMenu "ACTIONS DISTANTES" "%opts%" "NONUMS NOCLS"
+call :DynamicMenu "!remote_info_title!" "%opts%" "NONUMS"
 set "rc_opt=%errorlevel%"
 
 if "%rc_opt%"=="1" (
+    cls
     echo.
-    echo [i] Lancement du scan de vulnerabilite pour %remote_ip%...
-    powershell -NoProfile -Command "$ip='%remote_ip%'; $ports=@(21,22,23,80,135,139,443,445,3389,5985,8080); foreach($p in $ports){ $t=New-Object Net.Sockets.TcpClient; try { $c=$t.BeginConnect($ip,$p,$null,$null); if($c -and $c.AsyncWaitHandle.WaitOne(400,$false) -and $t.Connected){ Write-Host ('[!] Port Ouvert : '+$p) -f Cyan; if($p -eq 445){ Write-Host '  -> Faille potentielle critique : SMB (WannaCry, EternalBlue, relay)' -f Red }; if($p -eq 135){ Write-Host '  -> Faille potentielle RPC (Enumeration possible)' -f Yellow }; if($p -eq 3389){ Write-Host '  -> RDP ouvert (Risque Bruteforce / BlueKeep)' -f Yellow }; if($p -eq 5985){ Write-Host '  -> WinRM actif (Coerced Auth possible)' -f Yellow }; if($p -eq 21 -or $p -eq 23){ Write-Host '  -> Protocole historique clair ! (Sniffing facile)' -f Red } } } catch {} finally { $t.Close() } }"
+    echo  ================================================
+    echo   AUDIT DE VULNERABILITES : !remote_ip!
+    if defined remote_pc echo   CIBLE                   : !remote_pc!
+    echo  ================================================
     echo.
-    pause
+    echo [i] Lancement du scan de ports et services...
+    powershell -NoProfile -Command "$ip='!remote_ip!'; $ports=@(21,22,23,80,135,139,443,445,3389,5985,8080); foreach($p in $ports){ $t=New-Object Net.Sockets.TcpClient; try { $c=$t.BeginConnect($ip,$p,$null,$null); if($c -and $c.AsyncWaitHandle.WaitOne(400,$false) -and $t.Connected){ Write-Host ('[!] Port Ouvert : '+$p) -f Cyan; if($p -eq 445){ Write-Host '  -> Faille potentielle critique : SMB (WannaCry, EternalBlue, relay)' -f Red }; if($p -eq 135){ Write-Host '  -> Faille potentielle RPC (Enumeration possible)' -f Yellow }; if($p -eq 3389){ Write-Host '  -> RDP ouvert (Risque Bruteforce / BlueKeep)' -f Yellow }; if($p -eq 5985){ Write-Host '  -> WinRM actif (Coerced Auth possible)' -f Yellow }; if($p -eq 21 -or $p -eq 23){ Write-Host '  -> Protocole historique clair ! (Sniffing facile)' -f Red } } } catch {} finally { $t.Close() } }"
+    echo.
     goto cyber_remote_menu
 )
 if "%rc_opt%"=="2" (
+    cls
     echo.
     echo [i] Tentative de connexion WinRM Remote PowerShell sur %remote_ip%...
     echo (Un popup d'identification peut s'afficher, requiere authentification d'admin distant)
@@ -2161,6 +2164,7 @@ if "%rc_opt%"=="2" (
     goto cyber_remote_menu
 )
 if "%rc_opt%"=="3" (
+    cls
     echo.
     echo [i] Connexion distante SSH...
     set /p "ssh_user=Utilisateur cible : "
@@ -6977,8 +6981,7 @@ echo %R%  ================================================%N%
 echo.
 echo  [1] Supprimer uniquement les logs de succès et d'audit
 echo  [2] Nettoyage complet (Logs + Dossiers temporaires + Corbeille)
-echo  [3] AUTO-DESTRUCTION (Supprime tout + ce script .bat)
-echo  [4] Retour
+echo  [3] Retour
 echo.
 set /p "clean_choice=Action : "
 
@@ -6998,13 +7001,6 @@ if "%clean_choice%"=="2" (
     powershell -Command "Clear-RecycleBin -Confirm:$false" 2>nul
     echo %G%[ OK ] Nettoyage système effectué.%N%
     pause & goto menu_principal
-)
-
-if "%clean_choice%"=="3" (
-    cls
-    echo %R%  [!!!] ALERTE : AUTO-DESTRUCTION EN COURS [!!!] %N%
-    timeout /t 3 /nobreak
-    (goto) 2>nul & del "%~f0" & exit
 )
 
 goto menu_principal
