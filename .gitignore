@@ -4,6 +4,7 @@
 # Exclure explicitement les fichiers sensibles/locaux
 credentials.txt
 favoris.txt
+ip distant.txt
 dns_backups/
 *.log
 

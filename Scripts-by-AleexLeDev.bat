@@ -2146,7 +2146,7 @@ set "rc_opt=%errorlevel%"
 if "%rc_opt%"=="1" (
     echo.
     echo [i] Lancement du scan de vulnerabilite pour %remote_ip%...
-    powershell -NoProfile -Command "$ip='%remote_ip%'; $ports=@(21,22,23,80,135,139,443,445,3389,5985,8080); foreach($p in $ports){ $t=New-Object Net.Sockets.TcpClient; $c=$t.BeginConnect($ip,$p,$null,$null); if($c.AsyncWaitHandle.WaitOne(400,$false)){ Write-Host ('[!] Port Ouvert : '+$p) -f Cyan; if($p -eq 445){ Write-Host '  -^> Faille potentielle critique : SMB (WannaCry, EternalBlue, relay)' -f Red }; if($p -eq 135){ Write-Host '  -^> Faille potentielle RPC (Enumeration possible)' -f Yellow }; if($p -eq 3389){ Write-Host '  -^> RDP ouvert (Risque Bruteforce / BlueKeep)' -f Yellow }; if($p -eq 5985){ Write-Host '  -^> WinRM actif (Coerced Auth possible)' -f Yellow }; if($p -eq 21 -or $p -eq 23){ Write-Host '  -^> Protocole historique clair ! (Sniffing facile)' -f Red }; $t.Close()} }"
+    powershell -NoProfile -Command "$ip='%remote_ip%'; $ports=@(21,22,23,80,135,139,443,445,3389,5985,8080); foreach($p in $ports){ $t=New-Object Net.Sockets.TcpClient; try { $c=$t.BeginConnect($ip,$p,$null,$null); if($c -and $c.AsyncWaitHandle.WaitOne(400,$false) -and $t.Connected){ Write-Host ('[!] Port Ouvert : '+$p) -f Cyan; if($p -eq 445){ Write-Host '  -> Faille potentielle critique : SMB (WannaCry, EternalBlue, relay)' -f Red }; if($p -eq 135){ Write-Host '  -> Faille potentielle RPC (Enumeration possible)' -f Yellow }; if($p -eq 3389){ Write-Host '  -> RDP ouvert (Risque Bruteforce / BlueKeep)' -f Yellow }; if($p -eq 5985){ Write-Host '  -> WinRM actif (Coerced Auth possible)' -f Yellow }; if($p -eq 21 -or $p -eq 23){ Write-Host '  -> Protocole historique clair ! (Sniffing facile)' -f Red } } } catch {} finally { $t.Close() } }"
     echo.
     pause
     goto cyber_remote_menu
@@ -2230,9 +2230,10 @@ if exist "%SCPS%" del "%SCPS%"
 >> "%SCPS%" echo                 $testPorts = @(21, 22, 23, 80, 443, 445, 3389, 8080)
 >> "%SCPS%" echo                 foreach ($pt in $testPorts) {
 >> "%SCPS%" echo                     $tcp = New-Object System.Net.Sockets.TcpClient
->> "%SCPS%" echo                     $connect = $tcp.BeginConnect($ip, $pt, $null, $null)
->> "%SCPS%" echo                     if ($connect.AsyncWaitHandle.WaitOne(70, $false) -and $tcp.Connected) { $res.Ports += $pt }
->> "%SCPS%" echo                     $tcp.Close()
+>> "%SCPS%" echo                     try {
+>> "%SCPS%" echo                         $connect = $tcp.BeginConnect($ip, $pt, $null, $null)
+>> "%SCPS%" echo                         if ($connect -and $connect.AsyncWaitHandle.WaitOne(70, $false) -and $tcp.Connected) { $res.Ports += $pt }
+>> "%SCPS%" echo                     } catch {} finally { $tcp.Close() }
 >> "%SCPS%" echo                 }
 >> "%SCPS%" echo             }
 >> "%SCPS%" echo         } catch {}
