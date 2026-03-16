@@ -1407,13 +1407,14 @@ REM              MENU CYBERSECURITE RESEAU - PAR ALEEXLEDEV
 REM ===================================================================
 :net_cyber_menu
 cls
-set "opts=TRIAGE - Diagnostic rapide de connexion;ADAPTATEURS - Infos MAC et vitesse;LAN SCAN - Scan turbo (Marques/Ports/BruteForce);FLUX - Analyse des ports et processus locaux;DNS LEAK - Verifier la fuite DNS (VPN);AUDIT Wi-Fi;IP GRABBER - Obtenir l'IP d'une box distante (Ecoute directe)"
+set "opts=TRIAGE - Diagnostic rapide de connexion;ADAPTATEURS - Infos MAC et vitesse;LAN SCAN - Scan turbo (Marques/Ports/BruteForce);FLUX - Analyse des ports et processus locaux;DNS LEAK - Verifier la fuite DNS (VPN);AUDIT Wi-Fi;IP GRABBER - Obtenir l'IP d'une box distante (Ecoute directe);RETOUR"
 call :DynamicMenu "CYBERSECURITE RESEAU" "%opts%" "NONUMS"
 set "cyber_choice=%errorlevel%"
 
 if "%cyber_choice%"=="5" goto cyber_dns_leak
 if "%cyber_choice%"=="6" goto cyber_wifi_audit
 if "%cyber_choice%"=="7" goto cyber_ip_grabber
+if "%cyber_choice%"=="8" goto menu_principal
 goto net_cyber_menu
 
 :cyber_ip_grabber
@@ -2135,7 +2136,7 @@ goto cyber_remote_menu
 :cyber_remote_menu
 set "remote_info_title=ACTIONS DISTANTES - [ !remote_ip! ]"
 if defined remote_pc set "remote_info_title=ACTIONS DISTANTES - [ !remote_pc! @ !remote_ip! ]"
-set "opts=Scanner profondement les failles (Vuln, SMB, RDP, Ports);Ouvrir une session PowerShell (WinRM);Se connecter via SSH;Explorer les partages secrets SMB (C$, Admin$)"
+set "opts=Scanner profondement les failles (Vuln, SMB, RDP, Ports);Ouvrir une session PowerShell (WinRM);Se connecter via SSH;Explorer les partages secrets SMB (C$, Admin$);RETOUR"
 call :DynamicMenu "!remote_info_title!" "%opts%" "NONUMS"
 set "rc_opt=%errorlevel%"
 
@@ -2173,6 +2174,7 @@ if "%rc_opt%"=="4" (
     pause
     goto cyber_remote_menu
 )
+if "%rc_opt%"=="5" goto cyber_lan_scan
 goto cyber_remote_menu
 
 :ig_remote_scan_process
