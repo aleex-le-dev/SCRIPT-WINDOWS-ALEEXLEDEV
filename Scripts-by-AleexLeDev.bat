@@ -127,9 +127,88 @@ set "t[67]=cyber_recon_advanced:Reconnaissance Avancee~AXFR, crt.sh, WHOIS"
 set "t[68]=cyber_pentest_report:Rapport Pentest HTML Unifie~Scan exhaustif"
 set "t[73]=cyber_exposure_audit:Audit d'Exposition des Donnees~Recherche fichiers sensibles:HIDDEN"
 set "t[74]=cyber_wifi_audit:Analyseur de Securite Wi-Fi~Detection Evil Twin:HIDDEN"
-set "t[75]=cyber_cleanup_local:[!] PANIC MODE : Auto-Destruction~Nettoyage total:HIDDEN"
-set "total_tools=75"
 
+REM --- AJOUT DES SOUS-MENUS POUR LES FAVORIS (HIDDEN) ---
+set "t[75]=dump_credman:Gestionnaire d'identifiants (Windows)~Extrait le Credential Manager Windows:HIDDEN"
+set "t[76]=dump_wifi:Extraction reseaux Wi-Fi (Powershell)~Script puissant listant psw et noms:HIDDEN"
+set "t[77]=sys_nirsoft_pw:WebBrowserPassView (Classique Nirsoft)~Ancien utilitaire graphique:HIDDEN"
+set "t[78]=res_restore_point:Creer un Point de Restauration~Sauvegarde l'etat du systeme:HIDDEN"
+set "t[79]=res_sfc:Scan RAPIDE du systeme~SFC /scannow pour reparer l'OS:HIDDEN"
+set "t[80]=res_dism_check:Verification image base~Examine l'integration (DISM /CheckHealth):HIDDEN"
+set "t[81]=res_dism_restore:Reparation profonde~Telecharge les fichiers endommages (DISM /RestoreHealth):HIDDEN"
+set "t[82]=res_temp_clean:Nettoyage massif (Temp/Cache)~Detruit les fichiers inutiles:HIDDEN"
+set "t[83]=res_chkdsk:Planifier un CHKDSK (C:)~Audite les secteurs defectueux:HIDDEN"
+set "t[84]=res_wu_reset:Reset Fix Windows Update~Redemarre le catalogue WU:HIDDEN"
+set "t[85]=res_explorer_restart:Redemarrer l'Explorateur Windows~Corrige les freezes visuels:HIDDEN"
+set "t[86]=res_gpu_reset:Reinitialiser le pilote GPU~Envoie le signal Win+Ctrl+Shift+B:HIDDEN"
+set "t[87]=sys_report:Apercu de la configuration PC~Affiche les specifications materielles:HIDDEN"
+set "t[88]=sys_temp_report:Rapport de temperature CPU/GPU~Affiche les temperatures en temps reel:HIDDEN"
+set "t[89]=sys_ram_check:Verificateur de RAM~Slots utilises vs max supporte:HIDDEN"
+set "t[90]=sys_diag_network:Diagnostic Reseau~Test de connexion (Local, Box, Internet, DNS):HIDDEN"
+set "t[91]=sys_battery_report:Rapport de Batterie~Usure, Sante et stats en temps reel:HIDDEN"
+set "t[92]=sys_bitlocker_check:Verificateur BitLocker~Etat de chiffrement des partitions:HIDDEN"
+set "t[93]=sys_event_log:Journaux d'Erreurs Windows~Affiche les erreurs critiques:HIDDEN"
+set "t[94]=sys_hw_test:Test des Composants PC~Benchmark disque, RAM, CPU et SMART:HIDDEN"
+set "t[95]=sys_defender:Gestionnaire Windows Defender~Scan rapide/complet, MAJ signatures:HIDDEN"
+set "t[96]=sys_win_key:Cle Windows et Office~Affiche ou recupere vos cles de produit:HIDDEN"
+set "t[97]=sys_drivers:Extraction des pilotes~Exporte la liste des pilotes installes:HIDDEN"
+set "t[98]=sys_export_software:Export Liste des Logiciels~Programmes installes:HIDDEN"
+set "t[99]=sys_export_wifi_apps:[BUREAU] Export Wi-Fi + Logiciels~Genere les fichiers TXT:HIDDEN"
+set "t[100]=sys_clean_unified:Nettoyage Complet Unifie~Panneau de nettoyage:HIDDEN"
+set "t[101]=sys_registry_cleanup:Nettoyage du Registre~Optimisation rapide:HIDDEN"
+set "t[102]=sys_tweaks_menu:Menu Optimisation Windows 11~Bloatwares, Telemetrie:HIDDEN"
+set "t[103]=sys_startup_manager:Programmes au Demarrage~Logiciels qui demarrent avec Windows:HIDDEN"
+set "t[104]=activate_classic:Activer le menu contextuel classique~Classic:HIDDEN"
+set "t[105]=restore_modern:Restaurer le menu contextuel moderne~Modern:HIDDEN"
+set "t[106]=gm_enable:ACTIVER le Mode Gaming~Desactive les services lourds:HIDDEN"
+set "t[107]=gm_disable:DESACTIVER le Mode Gaming~Reactiver les services:HIDDEN"
+set "t[108]=sc_restart:Creer raccourci REDEMARRER~Icone rouge sur le Bureau:HIDDEN"
+set "t[109]=sc_shutdown:Creer raccourci ETEINDRE~Icone bleue sur le Bureau:HIDDEN"
+set "t[110]=sc_done_both:Creer les DEUX raccourcis~Redemarrer + Eteindre:HIDDEN"
+set "t[111]=sc_delete:Supprimer les raccourcis~Retirer les raccourcis crees:HIDDEN"
+set "t[112]=touch_restart:Redemarrer le pilote tactile~Redemarre le service:HIDDEN"
+set "t[113]=touch_disable:Desactiver le pilote tactile~Coupe le peripherique:HIDDEN"
+set "t[114]=touch_enable:Activer le pilote tactile~Active le peripherique:HIDDEN"
+set "t[115]=print_list:Lister les imprimantes installees~Affiche toutes les imprimantes:HIDDEN"
+set "t[116]=print_clear_queue:Vider la file d'attente~Supprime les travaux bloques:HIDDEN"
+set "t[117]=print_remove:Supprimer une imprimante~Retire completement:HIDDEN"
+set "t[118]=print_restart_spooler:Redemarrer le service Spooler~Relance le gestionnaire:HIDDEN"
+set "t[119]=pp_balanced:Mode Equilibre (Defaut)~Recommande pour usage quotidien:HIDDEN"
+set "t[120]=pp_saver:Mode Economies d'Energie~Reduit les performances:HIDDEN"
+set "t[121]=pp_high:Mode Performances Elevees~Priorite aux performances:HIDDEN"
+set "t[122]=pp_ultimate:Mode Ultimate Performance (Cache)~Mode Windows cache:HIDDEN"
+set "t[123]=pp_current:Voir le Plan Actif~Affiche quel plan est actif:HIDDEN"
+set "t[124]=pp_list:Lister tous les Plans~Voir tous les plans:HIDDEN"
+set "t[125]=adv_ssti:SSTI (Server-Side Template Injection)~Injection de moteurs:HIDDEN"
+set "t[126]=adv_xxe:XXE (XML External Entity)~Vulnerabilite de parsing XML:HIDDEN"
+set "t[127]=adv_jwt:JWT Attack (JSON Web Token)~Analyse et Brute-force:HIDDEN"
+set "t[128]=recon_whois:Recherche WHOIS et ASN~Analyse le proprietaire et l'herbergeur:HIDDEN"
+set "t[129]=recon_crtsh:Recherche crt.sh (Certificats SSL)~Trouve les sous-domaines via les logs:HIDDEN"
+set "t[130]=recon_axfr:Zone Transfer (AXFR)~Tente de dumper les serveurs DNS:HIDDEN"
+set "t[131]=recon_robots:Analyse Robots.txt et Chemins caches~Verifie la presence de sitemap:HIDDEN"
+set "t[132]=recon_subdomain_brute:Bruteforce de sous-domaines~Teste les noms courants:HIDDEN"
+set "t[133]=show_dns_config:Affichage config DNS~Voir la configuration actuelle:HIDDEN"
+set "t[134]=install_cloudflare_full:DNS Cloudflare~1.1.1.1 et 1.0.0.1:HIDDEN"
+set "t[135]=install_google_full:DNS Google~8.8.8.8 et 8.8.4.4:HIDDEN"
+set "t[136]=restore_dns:Restauration DNS DHCP~Par defaut:HIDDEN"
+set "t[137]=net_flush_dns:Vider le cache DNS~ipconfig /flushdns:HIDDEN"
+set "t[138]=net_display_dns:Afficher le cache DNS~ipconfig /displaydns:HIDDEN"
+set "t[139]=net_clear_arp:Vider le cache ARP~arp -d *:HIDDEN"
+set "t[140]=net_display_arp:Afficher la table ARP~arp -a:HIDDEN"
+set "t[141]=net_renew_ip:Liberer et Renouveler l'IP~release / renew:HIDDEN"
+set "t[142]=net_reset_tcpip:Reset TCP/IP Stack~netsh int ip reset:HIDDEN"
+set "t[143]=net_reset_winsock:Reset Sockets Windows~netsh winsock reset:HIDDEN"
+set "t[144]=net_reset_all:Reset Reseau Automatique~Flush DNS, Winsock, TCP/IP:HIDDEN"
+set "t[145]=net_restart_adapters:Redemarrer les cartes reseau~Ethernet et Wi-Fi:HIDDEN"
+set "t[146]=net_fast_reset:Script d'Urgence Reseau~7 commandes de depannage:HIDDEN"
+set "t[147]=cyber_triage:TRIAGE Reseau~Diagnostic rapide de connexion:HIDDEN"
+set "t[148]=cyber_adapter_audit:ADAPTATEURS Reseau~Infos MAC et vitesse:HIDDEN"
+set "t[149]=cyber_lan_scan:LAN SCAN~Scan turbo (Marques/Ports/BruteForce):HIDDEN"
+set "t[150]=cyber_flux_analysis:FLUX Reseau~Analyse des ports et processus locaux:HIDDEN"
+set "t[151]=cyber_dns_leak:DNS LEAK~Verifier la fuite DNS (VPN):HIDDEN"
+set "t[152]=cyber_wifi_audit:AUDIT Wi-Fi~Analyse des ondes:HIDDEN"
+set "t[153]=cyber_ip_grabber:IP GRABBER~Obtenir l'IP d'une box distante:HIDDEN"
+set "total_tools=153"
 
 
 if not exist "%SCRIPT_DIR%\favoris.txt" type nul > "%SCRIPT_DIR%\favoris.txt"
@@ -196,17 +275,51 @@ REM ===================================================================
 REM                    GESTIONNAIRE DNS CLOUDFLARE
 REM ===================================================================
 :dns_manager
-set "opts=Affichage de la configuration actuelle;[--- CLOUDFLARE ---];DNS Cloudflare (1.1.1.1);[--- GOOGLE ---];DNS Google (8.8.8.8);[--- REINITIALISATION ---];Restauration des DNS par defaut (DHCP)"
-call :DynamicMenu "GESTIONNAIRE DNS" "%opts%"
+cls
+set "dns_t[1]=show_dns_config"
+set "dns_t[2]=install_cloudflare_full"
+set "dns_t[3]=install_google_full"
+set "dns_t[4]=restore_dns"
+
+set "dns_opts="
+set /a dnsi=0
+for %%O in (
+    "Affichage de la configuration actuelle"
+    "[--- CLOUDFLARE ---]"
+    "DNS Cloudflare (1.1.1.1)"
+    "[--- GOOGLE ---]"
+    "DNS Google (8.8.8.8)"
+    "[--- REINITIALISATION ---]"
+    "Restauration des DNS par defaut (DHCP)"
+) do (
+    set "opt_str=%%~O"
+    if "!opt_str:~0,4!"=="[---" (
+        set "dns_opts=!dns_opts!;!opt_str!"
+    ) else (
+        set /a dnsi+=1
+        set "is_f=0"
+        for %%X in (!dnsi!) do set "curr_t=!dns_t[%%X]!"
+        if exist "%SCRIPT_DIR%\favoris.txt" (for /f "usebackq tokens=*" %%F in ("%SCRIPT_DIR%\favoris.txt") do (if "%%F"=="!curr_t!" set "is_f=1"))
+        if "!is_f!"=="1" (set "dns_opts=!dns_opts!;(F) !opt_str!") else (set "dns_opts=!dns_opts!;!opt_str!")
+    )
+)
+set "dns_opts=!dns_opts:~1!"
+
+call :DynamicMenu "GESTIONNAIRE DNS" "!dns_opts!"
 set "dns_choice=%errorlevel%"
+
+if "%dns_choice%"=="0" goto system_tools
+if %dns_choice% GEQ 200 (
+    set /a t_idx=%dns_choice%-200
+    for %%X in (!t_idx!) do call :ToggleFav "!dns_t[%%X]!"
+    goto dns_manager
+)
 
 if "%dns_choice%"=="1" goto show_dns_config
 if "%dns_choice%"=="2" goto install_cloudflare_full
 if "%dns_choice%"=="3" goto install_google_full
 if "%dns_choice%"=="4" goto restore_dns
-if "%dns_choice%"=="0" goto menu_principal
 goto dns_manager
-
 :install_cloudflare_full
 cls
 echo ================================================
@@ -883,43 +996,40 @@ goto app_installer
 :: Menu d'extraction de mots de passe
 :: ===============================================
 :sys_passwords_menu
-set "opts=Gestionnaire d'identifiants (Windows)~Extrait le Credential Manager Windows (WCMDump)"
-set "opts=%opts%;Extraction reseaux Wi-Fi (Powershell)~Script WWP puissant listant psw et noms"
-set "opts=%opts%;WebBrowserPassView (Classique Nirsoft)~Ancien utilitaire graphique pour les mots de passe"
-
-:: Mapping des targets pour gestion des favoris en sous-menu
+cls
 set "pw_t[1]=dump_credman"
 set "pw_t[2]=dump_wifi"
 set "pw_t[3]=sys_nirsoft_pw"
 
-:: Marquer les favoris existants dans le sous-menu
 set "pw_opts="
 set /a pwi=0
-for %%O in ("Gestionnaire d'identifiants (Windows)~Extrait le Credential Manager Windows (WCMDump)" "Extraction reseaux Wi-Fi (Powershell)~Script WWP puissant listant psw et noms" "WebBrowserPassView (Classique Nirsoft)~Ancien utilitaire graphique pour les mots de passe") do (
+for %%O in (
+    "Gestionnaire d'identifiants (Credman)~Exfiltration via powershell"
+    "Mots de passe Wi-Fi~Recupere toutes les cles SSID enregistrees"
+    "Logiciel Expert (Nirsoft)~Ouvre l'utilitaire de recuperation de mots de passe"
+) do (
     set /a pwi+=1
     set "is_f=0"
     for %%X in (!pwi!) do set "curr_t=!pw_t[%%X]!"
-    for /f "usebackq tokens=*" %%F in ("%SCRIPT_DIR%\favoris.txt") do (if "%%F"=="!curr_t!" set "is_f=1")
+    if exist "%SCRIPT_DIR%\favoris.txt" (for /f "usebackq tokens=*" %%F in ("%SCRIPT_DIR%\favoris.txt") do (if "%%F"=="!curr_t!" set "is_f=1"))
     if "!is_f!"=="1" (set "pw_opts=!pw_opts!;(F) %%~O") else (set "pw_opts=!pw_opts!;%%~O")
 )
 set "pw_opts=!pw_opts:~1!"
 
-call :DynamicMenu "PIRATAGE / EXTRACTION DE MOTS DE PASSE" "%pw_opts%" "NONUMS"
+call :DynamicMenu "EXTRACTION DE MOTS DE PASSE" "!pw_opts!"
 set "pw_choice=%errorlevel%"
 
-if "!pw_choice!"=="0" goto system_tools
-
-if !pw_choice! GEQ 200 (
-    set /a t_idx=!pw_choice!-200
+if "%pw_choice%"=="0" goto system_tools
+if %pw_choice% GEQ 200 (
+    set /a t_idx=%pw_choice%-200
     for %%X in (!t_idx!) do call :ToggleFav "!pw_t[%%X]!"
     goto sys_passwords_menu
 )
 
-if "!pw_choice!"=="1" goto dump_credman
-if "!pw_choice!"=="2" goto dump_wifi
-if "!pw_choice!"=="3" goto sys_nirsoft_pw
+if "%pw_choice%"=="1" goto dump_credman
+if "%pw_choice%"=="2" goto dump_wifi
+if "%pw_choice%"=="3" goto sys_nirsoft_pw
 goto sys_passwords_menu
-
 :dump_credman
 cls
 echo [OPERATION] Extraction du Credential Manager Windows...
@@ -1271,33 +1381,61 @@ pause
 goto sys_rescue_menu
 
 :sys_network_menu
-set "opts=Vider le cache DNS~Supprime et reinitialise le cache du resolveur (ipconfig /flushdns)"
-set "opts=%opts%;Afficher le cache DNS~Liste toutes les entrees DNS stockees en memoire locale (ipconfig /displaydns)"
-set "opts=%opts%;Vider le cache ARP~Nettoie instantanement la table de correspondance des IP/MAC (arp -d *)"
-set "opts=%opts%;Afficher la table ARP~Affiche les appareils de votre reseau recemment contactes (arp -a)"
-set "opts=%opts%;Liberer et Renouveler l'IP~Demande une nouvelle adresse IP au serveur DHCP / Box (release / renew)"
-set "opts=%opts%;Reset TCP/IP Stack IPv4/IPv6~Repare la pile reseau vitale de Windows (netsh int ip reset)"
-set "opts=%opts%;Reset des Sockets Windows~Reinitialise le catalogue Winsock corrompu (netsh winsock reset)"
-set "opts=%opts%;Reset Reseau Automatique~Enchaine silencieusement le Flush DNS, Winsock, et TCP/IP"
-set "opts=%opts%;Redemarrer les cartes reseau~Vos pilotes Ethernet et Wi-Fi sont mis hors puis sous tension"
-set "opts=%opts%;Executer le Script d'Urgence~Sequence immediate de 7 commandes de depannage massif (Fast Reset)"
+cls
+set "net_t[1]=net_flush_dns"
+set "net_t[2]=net_display_dns"
+set "net_t[3]=net_clear_arp"
+set "net_t[4]=net_display_arp"
+set "net_t[5]=net_renew_ip"
+set "net_t[6]=net_reset_tcpip"
+set "net_t[7]=net_reset_winsock"
+set "net_t[8]=net_reset_all"
+set "net_t[9]=net_restart_adapters"
+set "net_t[10]=net_fast_reset"
 
-call :DynamicMenu "MENU DE DEPANNAGE RESEAU" "%opts%"
-set "netchoice=%errorlevel%"
+set "net_opts="
+set /a neti=0
+for %%O in (
+    "Vider le cache DNS~Supprime et reinitialise le cache du resolveur (ipconfig /flushdns)"
+    "Afficher le cache DNS~Liste toutes les entrees DNS stockees en memoire locale (ipconfig /displaydns)"
+    "Vider le cache ARP~Nettoie instantanement la table de correspondance des IP/MAC (arp -d *)"
+    "Afficher la table ARP~Affiche les appareils de votre reseau recemment contactes (arp -a)"
+    "Liberer et Renouveler l'IP~Demande une nouvelle adresse IP au serveur DHCP / Box (release / renew)"
+    "Reset TCP/IP Stack IPv4/IPv6~Repare la pile reseau vitale de Windows (netsh int ip reset)"
+    "Reset des Sockets Windows~Reinitialise le catalogue Winsock corrompu (netsh winsock reset)"
+    "Reset Reseau Automatique~Enchaine silencieusement le Flush DNS, Winsock, et TCP/IP"
+    "Redemarrer les cartes reseau~Vos pilotes Ethernet et Wi-Fi sont mis hors puis sous tension"
+    "Executer le Script d'Urgence~Sequence immediate de 7 commandes de depannage massif (Fast Reset)"
+) do (
+    set /a neti+=1
+    set "is_f=0"
+    for %%X in (!neti!) do set "curr_t=!net_t[%%X]!"
+    if exist "%SCRIPT_DIR%\favoris.txt" (for /f "usebackq tokens=*" %%F in ("%SCRIPT_DIR%\favoris.txt") do (if "%%F"=="!curr_t!" set "is_f=1"))
+    if "!is_f!"=="1" (set "net_opts=!net_opts!;(F) %%~O") else (set "net_opts=!net_opts!;%%~O")
+)
+set "net_opts=!net_opts:~1!"
 
-if "%netchoice%"=="1" goto net_flush_dns
-if "%netchoice%"=="2" goto net_display_dns
-if "%netchoice%"=="3" goto net_clear_arp
-if "%netchoice%"=="4" goto net_display_arp
-if "%netchoice%"=="5" goto net_renew_ip
-if "%netchoice%"=="6" goto net_reset_tcpip
-if "%netchoice%"=="7" goto net_reset_winsock
-if "%netchoice%"=="8" goto net_reset_all
-if "%netchoice%"=="9" goto net_restart_adapters
-if "%netchoice%"=="10" goto net_fast_reset
-if "%netchoice%"=="0" goto system_tools
+call :DynamicMenu "MENU DE DEPANNAGE RESEAU" "!net_opts!"
+set "net_choice=%errorlevel%"
+
+if "%net_choice%"=="0" goto system_tools
+if %net_choice% GEQ 200 (
+    set /a t_idx=%net_choice%-200
+    for %%X in (!t_idx!) do call :ToggleFav "!net_t[%%X]!"
+    goto sys_network_menu
+)
+
+if "%net_choice%"=="1" goto net_flush_dns
+if "%net_choice%"=="2" goto net_display_dns
+if "%net_choice%"=="3" goto net_clear_arp
+if "%net_choice%"=="4" goto net_display_arp
+if "%net_choice%"=="5" goto net_renew_ip
+if "%net_choice%"=="6" goto net_reset_tcpip
+if "%net_choice%"=="7" goto net_reset_winsock
+if "%net_choice%"=="8" goto net_reset_all
+if "%net_choice%"=="9" goto net_restart_adapters
+if "%net_choice%"=="10" goto net_fast_reset
 goto sys_network_menu
-
 :net_flush_dns
 cls
 echo Vidage du cache DNS...
@@ -1407,20 +1545,52 @@ REM              MENU CYBERSECURITE RESEAU - PAR ALEEXLEDEV
 REM ===================================================================
 :net_cyber_menu
 cls
-set "opts=TRIAGE - Diagnostic rapide de connexion;ADAPTATEURS - Infos MAC et vitesse;LAN SCAN - Scan turbo (Marques/Ports/BruteForce);FLUX - Analyse des ports et processus locaux;DNS LEAK - Verifier la fuite DNS (VPN);AUDIT Wi-Fi;IP GRABBER - Obtenir l'IP d'une box distante (Ecoute directe)"
-call :DynamicMenu "CYBERSECURITE RESEAU" "%opts%" "NONUMS"
+set "cyb_t[1]=cyber_triage"
+set "cyb_t[2]=cyber_adapter_audit"
+set "cyb_t[3]=cyber_lan_scan"
+set "cyb_t[4]=cyber_flux_analysis"
+set "cyb_t[5]=cyber_dns_leak"
+set "cyb_t[6]=cyber_wifi_audit"
+set "cyb_t[7]=cyber_ip_grabber"
+
+set "cyb_opts="
+set /a cybi=0
+for %%O in (
+    "TRIAGE - Diagnostic rapide de connexion"
+    "ADAPTATEURS - Infos MAC et vitesse"
+    "LAN SCAN - Scan turbo (Marques/Ports/BruteForce)"
+    "FLUX - Analyse des ports et processus locaux"
+    "DNS LEAK - Verifier la fuite DNS (VPN)"
+    "AUDIT Wi-Fi"
+    "IP GRABBER - Obtenir l'IP d'une box distante (Ecoute directe)"
+) do (
+    set /a cybi+=1
+    set "is_f=0"
+    for %%X in (!cybi!) do set "curr_t=!cyb_t[%%X]!"
+    if exist "%SCRIPT_DIR%\favoris.txt" (for /f "usebackq tokens=*" %%F in ("%SCRIPT_DIR%\favoris.txt") do (if "%%F"=="!curr_t!" set "is_f=1"))
+    if "!is_f!"=="1" (set "cyb_opts=!cyb_opts!;(F) %%~O") else (set "cyb_opts=!cyb_opts!;%%~O")
+)
+set "cyb_opts=!cyb_opts:~1!"
+
+REM -> On retire le "NONUMS" ici pour que la touche F fonctionne !
+call :DynamicMenu "CYBERSECURITE RESEAU" "!cyb_opts!"
 set "cyber_choice=%errorlevel%"
 
-    if "%cyber_choice%"=="0" goto menu_principal
-    if "%cyber_choice%"=="1" goto cyber_triage
-    if "%cyber_choice%"=="2" goto cyber_adapter_audit
-    if "%cyber_choice%"=="3" goto cyber_lan_scan
-    if "%cyber_choice%"=="4" goto cyber_flux_analysis
-    if "%cyber_choice%"=="5" goto cyber_dns_leak
-    if "%cyber_choice%"=="6" goto cyber_wifi_audit
-    if "%cyber_choice%"=="7" goto cyber_ip_grabber
+if "%cyber_choice%"=="0" goto system_tools
+if %cyber_choice% GEQ 200 (
+    set /a t_idx=%cyber_choice%-200
+    for %%X in (!t_idx!) do call :ToggleFav "!cyb_t[%%X]!"
     goto net_cyber_menu
+)
 
+if "%cyber_choice%"=="1" goto cyber_triage
+if "%cyber_choice%"=="2" goto cyber_adapter_audit
+if "%cyber_choice%"=="3" goto cyber_lan_scan
+if "%cyber_choice%"=="4" goto cyber_flux_analysis
+if "%cyber_choice%"=="5" goto cyber_dns_leak
+if "%cyber_choice%"=="6" goto cyber_wifi_audit
+if "%cyber_choice%"=="7" goto cyber_ip_grabber
+goto net_cyber_menu
 :cyber_ip_grabber
 cls
 echo.
