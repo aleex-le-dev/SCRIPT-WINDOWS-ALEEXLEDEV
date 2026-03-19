@@ -174,7 +174,118 @@ REM --- SOUS-OUTILS DU MENU MOT DE PASSE ---
 set "t[165]=dump_credman:Credential Manager~Extraire les identifiants Windows:HIDDEN"
 set "t[166]=dump_wifi:Mots de passe Wi-Fi~Afficher ou exporter les SSID:HIDDEN"
 set "t[167]=sys_nirsoft_pw:Extracteur Navigateurs (Nirsoft)~Chrome, Edge, Firefox:HIDDEN"
-set "total_tools=167"
+REM --- SOUS-OUTILS EXTRACTION ET SAUVEGARDE ---
+set "t[168]=sys_win_key:Cle Windows~Retrouver la cle de licence Windows:HIDDEN"
+set "t[169]=sys_drivers:Export des Pilotes~Sauvegarde de tous les pilotes:HIDDEN"
+set "t[170]=sys_export_software:Liste des Logiciels~Exporter via Winget:HIDDEN"
+set "t[171]=sys_export_wifi_apps:Export Wi-Fi et Apps~Profils reseau et logiciels:HIDDEN"
+REM --- SOUS-OUTILS TEST MATERIEL (hw_test) ---
+set "t[172]=hw_smart:Test SMART des Disques~Sante et duree de vie:HIDDEN"
+set "t[173]=hw_winsat:Score WinSAT~Indice de performance Windows:HIDDEN"
+set "t[174]=hw_ram_test:Test RAM (Windows)~Outil de diagnostic memoire:HIDDEN"
+set "t[175]=hw_full_report:Rapport Materiel Complet~Tous les composants:HIDDEN"
+set "t[176]=hw_all:Tous les Tests~Lancer tous les tests materiels:HIDDEN"
+REM --- SOUS-OUTILS JOURNAL ERREURS (event_log) ---
+set "t[177]=ev_critical_24h:Erreurs Critiques 24h~Evenements systeme recents:HIDDEN"
+set "t[178]=ev_critical_7d:Erreurs Critiques 7 jours~Historique des pannes:HIDDEN"
+set "t[179]=ev_app_24h:Erreurs Applications 24h~Crash et exceptions:HIDDEN"
+set "t[180]=ev_disk_warn:Alertes Disque~Avertissements SMART et disque:HIDDEN"
+REM --- SOUS-OUTILS WINRE / MODE DEMARRAGE ---
+set "t[181]=winre_boot:Redemarrer sur WinRE~Environnement de reparation:HIDDEN"
+set "t[182]=winre_bios:Redemarrer vers le BIOS~Acces au firmware UEFI:HIDDEN"
+set "t[183]=winre_bootmenu:Menu de demarrage~Choisir le peripherique:HIDDEN"
+set "t[184]=winre_safe_minimal:Mode sans echec Minimal~Sans reseau ni ligne de cmd:HIDDEN"
+set "t[185]=winre_safe_network:Mode sans echec Reseau~Avec pilotes reseau:HIDDEN"
+set "t[186]=winre_safe_cmd:Mode sans echec Invite~Avec invite de commandes:HIDDEN"
+set "t[187]=winre_nosign:Sans verification signatures~Pilotes non signes:HIDDEN"
+set "t[188]=winre_status:Statut BCD actuel~Voir la configuration de demarrage:HIDDEN"
+set "t[189]=winre_reset:Reinitialiser BCD~Restaurer le demarrage normal:HIDDEN"
+REM --- SOUS-OUTILS WINDOWS DEFENDER ---
+set "t[190]=wd_quick:Scan Rapide Defender~Analyse de securite rapide:HIDDEN"
+set "t[191]=wd_full:Scan Complet Defender~Analyse totale du systeme:HIDDEN"
+set "t[192]=wd_update:Mettre a jour Defender~Signatures de virus:HIDDEN"
+set "t[193]=wd_threats:Voir les Menaces~Historique des virus detectes:HIDDEN"
+set "t[194]=wd_status:Statut Defender~Protection active ou non:HIDDEN"
+REM --- SOUS-OUTILS NETTOYAGE ET OPTIMISATION ---
+set "t[195]=sys_clean_unified:Nettoyage Complet Unifie~Temp, WU, DNS, disque...:HIDDEN"
+set "t[196]=sys_registry_cleanup:Nettoyage du Registre~Cles orphelines:HIDDEN"
+set "t[197]=sys_tweaks_menu:Optimisations Avancees~Telemetrie, Cortana, performance:HIDDEN"
+set "t[198]=sys_startup_manager:Gestionnaire Demarrage~Programmes au boot Windows:HIDDEN"
+REM --- SOUS-OUTILS NETTOYAGE GRANULAIRE (cl_*) ---
+set "t[199]=cl_temp:Vider les Temporaires~Fichiers temp utilisateur et systeme:HIDDEN"
+set "t[200]=cl_wu:Purger Windows Update~Cache SoftwareDistribution:HIDDEN"
+set "t[201]=cl_dns:Vider le cache DNS~ipconfig /flushdns:HIDDEN"
+set "t[202]=cl_disk:Nettoyage Disque~cleanmgr compression:HIDDEN"
+set "t[203]=cl_registry:Nettoyer le Registre~Cles orphelines:HIDDEN"
+set "t[204]=cl_clipboard:Vider le Presse-papiers~Nettoyer les donnees copiees:HIDDEN"
+set "t[205]=cl_all:Tout Nettoyer d'un coup~Nettoyage automatique complet:HIDDEN"
+REM --- SOUS-OUTILS TEST ANTIVIRUS (av_test) ---
+set "t[206]=av_launcher_eicar:Test EICAR Standard~Fichier de test antivirus officiel:HIDDEN"
+set "t[207]=av_launcher_heur:Test Heuristique~Detection comportementale:HIDDEN"
+set "t[208]=av_clean:Nettoyer les Fichiers Test~Supprimer les tests EICAR:HIDDEN"
+REM --- SOUS-OUTILS ECRAN TACTILE (Materiel) ---
+set "t[209]=touch_restart:Redemarrer le pilote tactile~Reset du service et peripherique:HIDDEN"
+set "t[210]=touch_disable:Desactiver l'ecran tactile~Desactive le pilote HID tactile:HIDDEN"
+set "t[211]=touch_enable:Activer l'ecran tactile~Reactive le pilote HID tactile:HIDDEN"
+REM --- SOUS-OUTILS IMPRIMANTE (Materiel) ---
+set "t[212]=print_list:Lister les imprimantes~Affiche toutes les imprimantes:HIDDEN"
+set "t[213]=print_clear_queue:Vider la file d'attente~Supprime les jobs bloques:HIDDEN"
+set "t[214]=print_remove:Supprimer une imprimante~Retirer une imprimante installee:HIDDEN"
+set "t[215]=print_restart_spooler:Redemarrer le Spooler~Relance le service d'impression:HIDDEN"
+REM --- SOUS-OUTILS PLAN D'ALIMENTATION (Materiel) ---
+set "t[216]=pp_balanced:Plan Equilibre~Usage quotidien (batterie + perf):HIDDEN"
+set "t[217]=pp_saver:Plan Economies d'Energie~Autonomie maximale:HIDDEN"
+set "t[218]=pp_high:Plan Hautes Performances~Maximum de puissance:HIDDEN"
+set "t[219]=pp_ultimate:Plan Performances Ultimes~Plan secret Windows:HIDDEN"
+set "t[220]=pp_current:Voir le Plan Actuel~Afficher le plan d'alimentation:HIDDEN"
+set "t[221]=pp_list:Lister tous les Plans~Tous les plans disponibles:HIDDEN"
+REM --- SOUS-OUTILS MENU CONTEXTUEL (Personnalisation) ---
+set "t[222]=activate_classic:Menu Contextuel Classique~Activer le menu classique Win10:HIDDEN"
+set "t[223]=restore_modern:Menu Contextuel Moderne~Restaurer le menu Win11:HIDDEN"
+REM --- SOUS-OUTILS WINGET (Applications) ---
+set "t[224]=update_single:Mettre a jour une application~Choisir l'app via Winget:HIDDEN"
+set "t[225]=update_all:Mettre a jour toutes les apps~winget upgrade --all:HIDDEN"
+REM --- SOUS-OUTILS INSTALLATEUR APPS ---
+set "t[226]=app_install_chrome:Google Chrome~Navigateur web Google:HIDDEN"
+set "t[227]=app_install_vlc:VLC Media Player~Lecteur multimedia:HIDDEN"
+set "t[228]=app_install_pdf:Sumatra PDF~Lecteur PDF ultra-leger:HIDDEN"
+set "t[229]=app_install_winrar:WinRAR~Gestionnaire d'archives:HIDDEN"
+REM --- SOUS-OUTILS GESTION UTILISATEURS ---
+set "t[230]=um_list:Lister les utilisateurs~Afficher tous les comptes locaux:HIDDEN"
+set "t[231]=um_add:Ajouter un utilisateur~Creer un nouveau compte local:HIDDEN"
+set "t[232]=um_del:Supprimer un utilisateur~Effacer compte et donnees:HIDDEN"
+set "t[233]=um_admin:Gerer les droits~Passer standard ou administrateur:HIDDEN"
+set "t[234]=um_reset:Ajouter/Modifier MDP~Changer mot de passe utilisateur:HIDDEN"
+set "t[235]=um_remove_pwd:Supprimer le MDP (Auto-login)~Enlever le mot de passe:HIDDEN"
+set "total_tools=235"
+REM --- NOMS D'AFFICHAGE POUR AutoMenu (map_label) ---
+set "map_touch_restart=Redemarrer le pilote tactile"
+set "map_touch_disable=Desactiver l'ecran tactile"
+set "map_touch_enable=Activer l'ecran tactile"
+set "map_print_list=Lister les imprimantes"
+set "map_print_clear_queue=Vider la file d'attente"
+set "map_print_remove=Supprimer une imprimante"
+set "map_print_restart_spooler=Redemarrer le Spooler"
+set "map_pp_balanced=Plan Equilibre (Defaut)"
+set "map_pp_saver=Plan Economies d'Energie"
+set "map_pp_high=Plan Hautes Performances"
+set "map_pp_ultimate=Plan Performances Ultimes"
+set "map_pp_current=Voir le Plan Actuel"
+set "map_pp_list=Lister tous les Plans"
+set "map_activate_classic=Menu Contextuel Classique (Win10)"
+set "map_restore_modern=Menu Contextuel Moderne (Win11)"
+set "map_update_single=Mettre a jour une application"
+set "map_update_all=Mettre a jour TOUTES les applications"
+set "map_app_install_chrome=Installer Google Chrome"
+set "map_app_install_vlc=Installer VLC Media Player"
+set "map_app_install_pdf=Installer Sumatra PDF"
+set "map_app_install_winrar=Installer WinRAR"
+set "map_um_list=Lister les utilisateurs"
+set "map_um_add=Ajouter un utilisateur"
+set "map_um_del=Supprimer un utilisateur"
+set "map_um_admin=Gerer les droits (Standard/Admin)"
+set "map_um_reset=Ajouter/Modifier un mot de passe"
+set "map_um_remove_pwd=Supprimer le mot de passe (Auto-login)"
 
 if not exist "%SCRIPT_DIR%\favoris.txt" type nul > "%SCRIPT_DIR%\favoris.txt"
 
@@ -420,14 +531,9 @@ REM ===================================================================
 REM                   WINGET - Mises a jour des applications windows
 REM ===================================================================
 :winget_manager
-set "opts=Mettre a jour une application (liste et choix);Mettre a jour toutes les applications"
-call :DynamicMenu "WINGET - MISES A JOUR APPLICATIONS" "%opts%"
-set "winget_choice=%errorlevel%"
-
-if "%winget_choice%"=="1" goto update_single
-if "%winget_choice%"=="2" goto update_all
-if "%winget_choice%"=="0" goto menu_principal
-goto winget_manager
+call :AutoMenu "WINGET - MISES A JOUR APPLICATIONS" "update_single;update_all"
+if "%errorlevel%"=="0" goto menu_principal
+goto !AutoMenu_Target!
 
 :update_single
 cls
@@ -471,14 +577,9 @@ REM ===================================================================
 REM                    MENU CONTEXTUEL WINDOWS 11
 REM ===================================================================
 :context_menu
-set "opts=Activer le menu contextuel classique;Restaurer le menu contextuel moderne"
-call :DynamicMenu "MENU CONTEXTUEL WINDOWS 11" "%opts%"
-set "ctx_choice=%errorlevel%"
-
-if "%ctx_choice%"=="1" goto activate_classic
-if "%ctx_choice%"=="2" goto restore_modern
-if "%ctx_choice%"=="0" goto menu_principal
-goto context_menu
+call :AutoMenu "MENU CONTEXTUEL WINDOWS 11" "activate_classic;restore_modern"
+if "%errorlevel%"=="0" goto menu_principal
+goto !AutoMenu_Target!
 
 :activate_classic
 cls
@@ -657,15 +758,9 @@ REM ===================================================================
 REM                    GESTIONNAIRE D'ECRAN TACTILE
 REM ===================================================================
 :touch_screen_manager
-set "opts=Redemarrer le pilote tactile;Desactiver le pilote tactile;Activer le pilote tactile"
-call :DynamicMenu "GESTION ECRAN TACTILE" "%opts%"
-set "touch_choice=%errorlevel%"
-
-if "%touch_choice%"=="1" goto touch_restart
-if "%touch_choice%"=="2" goto touch_disable
-if "%touch_choice%"=="3" goto touch_enable
-if "%touch_choice%"=="0" goto system_tools
-goto touch_screen_manager
+call :AutoMenu "GESTION ECRAN TACTILE" "touch_restart;touch_disable;touch_enable"
+if "%errorlevel%"=="0" goto system_tools
+goto !AutoMenu_Target!
 
 :touch_restart
 cls
@@ -843,14 +938,27 @@ REM ===================================================================
 set "wg_id="
 set "wg_label="
 cls
-set "opts=[--- NAVIGATEURS ---];Google Chrome~Navigateur web Google"
-set "opts=%opts%;[--- MULTIMEDIA ---];VLC Media Player~Lecteur multimedia universel"
-set "opts=%opts%;[--- PDF ---];Sumatra PDF~Lecteur PDF ultra-leger et rapide"
-set "opts=%opts%;[--- ARCHIVAGE ---];WinRAR~Gestionnaire d'archives RAR/ZIP"
+call :AutoMenu "INSTALLATEUR D'APPLICATIONS" "[--- NAVIGATEURS ---];app_install_chrome;[--- MULTIMEDIA ---];app_install_vlc;[--- PDF ---];app_install_pdf;[--- ARCHIVAGE ---];app_install_winrar"
+if "!errorlevel!"=="0" goto system_tools
+goto !AutoMenu_Target!
 
-call :DynamicMenu "INSTALLATEUR D'APPLICATIONS - Choisissez une application" "!opts!"
-set "app_choice=%errorlevel%"
-if "!app_choice!"=="0" goto system_tools
+:app_install_chrome
+set "app_choice=1"
+goto app_installer_exec
+
+:app_install_vlc
+set "app_choice=2"
+goto app_installer_exec
+
+:app_install_pdf
+set "app_choice=3"
+goto app_installer_exec
+
+:app_install_winrar
+set "app_choice=4"
+goto app_installer_exec
+
+:app_installer_exec
 
 REM Mapping : index selectionnable -> ID Winget + Nom registre
 set "wg[1]=Google.Chrome"
@@ -4981,18 +5089,9 @@ net localgroup "%UM_ADMIN_GROUP%" >nul 2>&1 || set "UM_ADMIN_GROUP=Administrateu
 set "UM_STR_PWD_REQ_EN=Password required"
 set "UM_STR_PWD_REQ_FR=Mot de passe requis"
 
-set "opts=Lister les utilisateurs;Ajouter un utilisateur;Supprimer un utilisateur;Gerer les droits (Standard/Admin);Ajouter/Modifier un mot de passe;Supprimer le mot de passe (Auto-login)"
-call :DynamicMenu "GESTION UTILISATEURS LOCAUX" "%opts%"
-set "um_choice=%errorlevel%"
-
-if "%um_choice%"=="1" goto um_list
-if "%um_choice%"=="2" goto um_add
-if "%um_choice%"=="3" goto um_del
-if "%um_choice%"=="4" goto um_admin
-if "%um_choice%"=="5" goto um_reset
-if "%um_choice%"=="6" goto um_remove_pwd
-if "%um_choice%"=="0" goto um_exit
-goto um_menu
+call :AutoMenu "GESTION UTILISATEURS LOCAUX" "um_list;um_add;um_del;um_admin;um_reset;um_remove_pwd"
+if "%errorlevel%"=="0" goto system_tools
+goto !AutoMenu_Target!
 
 :um_list
 cls
@@ -5296,6 +5395,11 @@ REM ===================================================================
 REM              GESTIONNAIRE D'IMPRIMANTES
 REM ===================================================================
 :sys_print_manager
+call :AutoMenu "GESTIONNAIRE D'IMPRIMANTES" "print_list;print_clear_queue;print_remove;print_restart_spooler"
+if "%errorlevel%"=="0" goto system_tools
+goto !AutoMenu_Target!
+
+:sys_print_manager_old_unused
 cls
 set "opts=Lister les imprimantes installees~Affiche toutes les imprimantes et leur statut;Vider la file d'attente~Supprime tous les travaux d'impression bloques (SPOOLER);Supprimer une imprimante~Retire completement une imprimante du systeme;Redemarrer le service Spooler~Relance le gestionnaire d'impression Windows"
 call :DynamicMenu "GESTIONNAIRE D'IMPRIMANTES" "%opts%"
@@ -6055,18 +6159,9 @@ REM ===================================================================
 REM              PLAN D'ALIMENTATION
 REM ===================================================================
 :sys_power_plan
-cls
-set "opts=Mode Equilibre (Defaut)~Recommande pour usage quotidien (batterie + perf);Mode Economies d'Energie~Reduit les performances pour maximiser l'autonomie;Mode Performances Elevees~Priorite aux performances, consommation accrue;Mode Ultimate Performance (Cache)~Mode Windows cache - eliminines les micro-latences, ideal gaming/pro;Voir le Plan Actif~Affiche quel plan d'alimentation est actuellement actif;Lister tous les Plans~Voir tous les plans disponibles sur ce PC"
-call :DynamicMenu "GESTIONNAIRE PLAN D'ALIMENTATION" "%opts%"
-set "pp_c=%errorlevel%"
-if "%pp_c%"=="0" goto system_tools
-if "%pp_c%"=="1" goto pp_balanced
-if "%pp_c%"=="2" goto pp_saver
-if "%pp_c%"=="3" goto pp_high
-if "%pp_c%"=="4" goto pp_ultimate
-if "%pp_c%"=="5" goto pp_current
-if "%pp_c%"=="6" goto pp_list
-goto sys_power_plan
+call :AutoMenu "GESTIONNAIRE PLAN D'ALIMENTATION" "pp_balanced;pp_saver;pp_high;pp_ultimate;pp_current;pp_list"
+if "%errorlevel%"=="0" goto system_tools
+goto !AutoMenu_Target!
 
 :pp_balanced
 powercfg /setactive 381b4222-f694-41f0-9685-ff5bb260df2e >nul 2>&1
