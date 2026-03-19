@@ -89,13 +89,13 @@ echo %Y%[ i ] Initialisation terminée. Bienvenue, ALEEXLEDEV.%N%
 REM --- CHARGEMENT DE LA BASE D'OUTILS ---
 
 set "t[2]=---:DIAGNOSTIC"
-set "t[3]=sys_diagnostic_menu:Menu de diagnostic~Regroupe 8 outils d'analyse (Systeme, Reseau, Sante...)"
+set "t[3]=sys_diagnostic_menu:Analyse et Diagnostic Systeme~Regroupe 8 outils d'analyse (Systeme, Reseau...)"
 set "t[4]=---:REPARATION"
 set "t[5]=sys_rescue_menu:Outil Reparation Windows (Rescue)~Menu multi-outils (SFC, DISM, CHKDSK, Reset WinUpdate...)"
 set "t[6]=sys_repair_icons:Reparation Cache Icones~Corrige les icones/miniatures corrompues"
 set "t[7]=sys_winre:Mode Reparation (WinRE)~Demarrer dans l'environnement de reparation Windows"
 set "t[8]=---:NETTOYAGE ET OPTIMISATION"
-set "t[9]=sys_opti_menu:Menu de Nettoyage et Optimisation~Regroupe le nettoyage et l'optimisation"
+set "t[9]=sys_opti_menu:Nettoyeur et Optimiseur Systeme~Vider le cache, logs, et gagner en vitesse"
 set "t[10]=---:RESEAU"
 set "t[11]=dns_manager:Gestionnaire DNS~Changer DNS Cloudflare/Google"
 set "t[12]=sys_network_menu:Menu de Depannage Reseau~Outils avances (DNS, ARP, TCP/IP)"
@@ -114,7 +114,7 @@ set "t[24]=cyber_privesc_audit:Audit de piratage local (PrivEsc)~Verifie l'eleva
 set "t[25]=cyber_gen_htaccess:Protection de serveur Web (.htaccess)~Genere un fichier blinde"
 set "t[26]=res_restore_point:Creer un Point de Restauration~Recommande avant toute reparation:HIDDEN"
 set "t[27]=---:EXTRACTION ET SAUVEGARDE"
-set "t[28]=sys_export_menu:Menu des Extractions~Exporte cles, Wi-Fi et pilotes"
+set "t[28]=sys_export_menu:Extracteur et Sauvegarde de Donnees~Exporter les cles, mots de passe Wi-Fi et pilotes"
 set "t[29]=---:PERSONNALISATION"
 set "t[30]=context_menu:Menu contextuel Windows 11~Classic/Modern"
 set "t[31]=sys_god_mode:Dossier God Mode~Raccourci ultime des parametres"
@@ -4929,7 +4929,7 @@ pause
 goto sys_export_menu
 
 :sys_diagnostic_menu
-call :AutoMenu "MENU DE DIAGNOSTIC SYSTEME" "[--- ANALYSE SYSTEME ET RAPPORTS ---];sys_report;sys_temp_report;sys_ram_check;sys_diag_network;sys_battery_report;sys_bitlocker_check;sys_event_log;sys_hw_test;sys_defender"
+call :AutoMenu "ANALYSE ET DIAGNOSTIC SYSTEME" "[--- ANALYSE SYSTEME ET RAPPORTS ---];sys_report;sys_temp_report;sys_ram_check;sys_diag_network;sys_battery_report;sys_bitlocker_check;sys_event_log;sys_hw_test;sys_defender"
 if "%errorlevel%"=="0" goto system_tools
 goto !AutoMenu_Target!
 
@@ -6289,7 +6289,7 @@ REM ===================================================================
 REM              MENU DE NETTOYAGE ET OPTIMISATION
 REM ===================================================================
 :sys_opti_menu
-call :AutoMenu "MENU NETTOYAGE ET OPTIMISATION" "[--- NETTOYAGE ET MAINTENANCE ---];sys_clean_unified;sys_registry_cleanup;[--- OPTIMISATION SYSTEME ---];sys_tweaks_menu;sys_startup_manager"
+call :AutoMenu "NETTOYEUR ET OPTIMISEUR SYSTEME" "[--- NETTOYAGE ET MAINTENANCE ---];sys_clean_unified;sys_registry_cleanup;[--- OPTIMISATION SYSTEME ---];sys_tweaks_menu;sys_startup_manager"
 if "%errorlevel%"=="0" goto system_tools
 goto !AutoMenu_Target!
 
