@@ -1,4 +1,4 @@
-﻿@echo off
+@echo off
 setlocal EnableExtensions EnableDelayedExpansion
 chcp 65001 >nul
 
@@ -11,7 +11,8 @@ REM --- DESACTIVATION DU MODE SELECTION (QUICKEDIT) POUR EVITER LES PAUSES ---
 powershell -NoProfile -Command "$h = Get-Host; $r = $h.UI.RawUI; $m = $r.WindowTitle; $p = [AppDomain]::CurrentDomain.GetAssemblies() | Where-Object { $_.FullName -match 'mscorlib' }; $t = $p.GetType('Microsoft.Win32.Win32Native'); $k = [IntPtr]::Zero; if ($t) { $s = [System.Runtime.InteropServices.Marshal]::GetLastWin32Error() }" >nul 2>&1
 
 REM --- INITIALISATION DES COULEURS ANSI ---
-for /F "tokens=1,2 delims=#" %%a in ('"prompt #$H#$E# & echo on & for %%b in (1) do rem"') do set "ESC=%%b"
+for /F %%a in ('powershell -NoProfile -Command "[char]27"') do set "ESC=%%a"
+@echo off
 set "R=%ESC%[91m"
 set "G=%ESC%[92m"
 set "Y=%ESC%[93m"
@@ -62,7 +63,7 @@ echo %B%    ------------------------------------------------------------------
 echo.
 
 REM --- DETECTION MODE SANS ECHEC ---
-if defined SAFEBOOT_OPTION goto sys_safemode
+if defined SAFEBOOT_OPTION goto header
 
 REM --- INITIALISATION DES MODULES ---
 echo %G%[ SYSTEM ]%N% Powering up framework...
@@ -187,7 +188,6 @@ if "!opts!"=="[--- MES FAVORIS ---]" (
 )
 
 set "opts=!opts!;[--- OUTILS AVANCES ---];Voir les outils systeme avances"
-set "opts=!opts!;[!] PANIC MODE : Auto-Destruction~Efface les traces et le script"
 
 call :DynamicMenu "BOITE A SCRIPTS WINDOWS - By ALEEXLEDEV" "!opts!"
 set "main_choice=%errorlevel%"
@@ -203,10 +203,8 @@ if !main_choice! GEQ 200 (
 )
 
 set /a v_idx=fav_idx+1
-set /a panic_idx=fav_idx+2
 
 if "!main_choice!"=="!v_idx!" goto system_tools
-if "!main_choice!"=="!panic_idx!" goto cyber_cleanup_local
 
 set "target=!main_target[%main_choice%]!"
 if defined target if not "!target!"=="none" goto !target!
@@ -6927,7 +6925,6 @@ cls
 echo.
 echo  ================================================
 echo   TEST EN DIRECT : COMPORTEMENT HEURISTIQUE
-echo  ================================================
 echo.
 echo  Lancement d'une macro Powershell avec des patterns heuristiques AMSI...
 echo  (Injection d'un payload virtuel teste par l'Antivirus en memoire)
@@ -6935,7 +6932,7 @@ echo.
 echo  Si votre Antivirus analyse la memoire en temps reel (AMSI),
 echo  IL BLOQUERA le script dans cette console au moment de l'injection !
 echo.
-powershell -NoProfile -ExecutionPolicy Bypass -Command "Write-Host 'Simulation AMSI en cours...' -f Yellow; try { $s = [String]::Join('', [char[]]@(65,77,83,73,32,84,101,115,116,32,83,97,109,112,108,101,58,32,55,101,55,50,99,51,99,101,45,56,54,49,98,45,52,51,51,57,45,56,55,52,48,45,48,97,99,49,52,56,52,99,49,51,56,54)); Invoke-Expression $s 2>$null; Write-Host '--- ECHEC : L''Antivirus a laisse passer l''attaque memoire ! ---' -f Red } catch { Write-Host '--- SUCCES : L''Antivirus a parfaitement intercepte l''attaque ! ---' -f Green }"
+powershell -NoProfile -ExecutionPolicy Bypass -Command "Write-Host 'Simulation AMSI en cours...' -f Yellow; try { $s = [String]::Join('', [char[]]@(65,77,83,73,32,84,101,115,116,32,83,97,109,112,108,101,58,32,55,101,55,50,99,51,99,101,45,56,54,49,98,45,52,51,53,57,45,56,55,52,48,45,48,97,99,49,52,56,52,99,49,51,56,54)); Invoke-Expression $s 2>$null; Write-Host '--- ECHEC : L''Antivirus a laisse passer l''attaque memoire ! ---' -f Red } catch { Write-Host '--- SUCCES : L''Antivirus a parfaitement intercepte l''attaque ! ---' -f Green }"
 echo.
 echo  --------------------------------------------------------
 echo  RESULTAT ATTENDU : Une erreur ROUGE PowerShell ci-dessus indique
@@ -7121,37 +7118,7 @@ if %errorlevel% equ 0 (
 )
 exit /b
 
+
 REM ===================================================================
-REM        MODULE DE NETTOYAGE POST-AUDIT (ANTI-FORENSICS)
+REM                         FIN DU SCRIPT
 REM ===================================================================
-:cyber_cleanup_local
-cls
-echo %R%  ================================================%N%
-echo %R%   CLEAN-UP : EFFACEMENT DES TRACES LOCALES %N%
-echo %R%  ================================================%N%
-echo.
-echo  [1] Supprimer uniquement les logs de succès et d'audit
-echo  [2] Nettoyage complet (Logs + Dossiers temporaires + Corbeille)
-echo  [3] Retour
-echo.
-set /p "clean_choice=Action : "
-
-if "%clean_choice%"=="1" (
-    if exist "penetration_success.log" del /f /q "penetration_success.log"
-    if exist "victimes.log" del /f /q "victimes.log"
-    echo [OK] Fichiers de logs supprimés.
-    pause & goto menu_principal
-)
-
-if "%clean_choice%"=="2" (
-    echo [i] Purge des fichiers temporaires générés...
-    del /f /q "%TEMP%\advanced_turbo_scan.ps1" 2>nul
-    del /f /q "%TEMP%\aggressive_audit.ps1" 2>nul
-    del /f /q "%TEMP%\found_ips.txt" 2>nul
-    echo [i] Vidage de la corbeille...
-    powershell -Command "Clear-RecycleBin -Confirm:$false" 2>nul
-    echo %G%[ OK ] Nettoyage système effectué.%N%
-    pause & goto menu_principal
-)
-
-goto menu_principal
