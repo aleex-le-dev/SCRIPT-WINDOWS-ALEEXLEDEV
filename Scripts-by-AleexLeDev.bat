@@ -112,6 +112,7 @@ set "t[22]=um_menu:Gestion utilisateurs locaux~Panneau de gestion local (Admin, 
 set "t[23]=sys_av_test:Test Antivirus (EICAR Safe)~Tester votre antivirus"
 set "t[24]=cyber_privesc_audit:Audit de piratage local (PrivEsc)~Verifie l'elevation de privileges"
 set "t[25]=cyber_gen_htaccess:Protection de serveur Web (.htaccess)~Genere un fichier blinde"
+set "t[26]=res_restore_point:Creer un Point de Restauration~Recommande avant toute reparation:HIDDEN"
 set "t[27]=---:EXTRACTION ET SAUVEGARDE"
 set "t[28]=sys_export_menu:Menu des Extractions~Exporte cles, Wi-Fi et pilotes"
 set "t[29]=---:PERSONNALISATION"
@@ -128,7 +129,7 @@ set "t[67]=cyber_recon_advanced:Reconnaissance Avancee~AXFR, crt.sh, WHOIS"
 set "t[68]=cyber_pentest_report:Rapport Pentest HTML Unifie~Scan exhaustif"
 set "t[73]=cyber_exposure_audit:Audit d'Exposition des Donnees~Recherche fichiers sensibles:HIDDEN"
 set "t[74]=cyber_wifi_audit:Analyseur de Securite Wi-Fi~Detection Evil Twin:HIDDEN"
-set "t[75]=cyber_ip_grabber:IP GRABBER~Obtenir l'IP d'une box distante:HIDDEN"
+REM t[75] supprime car doublon exact de t[147] (IP GRABBER)
 REM --- SUITE DES SOUS-MENUS RESEAU ET CYBER (HIDDEN) ---
 set "t[128]=show_dns_config:Affichage config DNS~Voir la configuration actuelle:HIDDEN"
 set "t[129]=install_cloudflare_full:DNS Cloudflare~1.1.1.1 et 1.0.0.1:HIDDEN"
@@ -216,46 +217,19 @@ REM                    GESTIONNAIRE DNS CLOUDFLARE
 REM ===================================================================
 :dns_manager
 cls
-set "dns_t[1]=show_dns_config"
-set "dns_t[2]=install_cloudflare_full"
-set "dns_t[3]=install_google_full"
-set "dns_t[4]=restore_dns"
+set "dns_labels=show_dns_config;---;install_cloudflare_full;---;install_google_full;---;restore_dns"
+set "dns_titles=Affichage de la configuration actuelle~Voir IP des DNS en cours;[--- CLOUDFLARE ---];DNS Cloudflare (1.1.1.1)~Rapide et Securise;[--- GOOGLE ---];DNS Google (8.8.8.8)~Le plus populaire;[--- REINITIALISATION ---];Restauration des DNS par defaut (DHCP)~Remettre a zero"
 
-set "dns_opts="
-set /a dnsi=0
-for %%O in (
-    "Affichage de la configuration actuelle"
-    "[--- CLOUDFLARE ---]"
-    "DNS Cloudflare (1.1.1.1)"
-    "[--- GOOGLE ---]"
-    "DNS Google (8.8.8.8)"
-    "[--- REINITIALISATION ---]"
-    "Restauration des DNS par defaut (DHCP)"
-) do (
-    if "%%~O"=="[--- CLOUDFLARE ---]" (
-        set "dns_opts=!dns_opts!;%%~O"
-    ) else if "%%~O"=="[--- GOOGLE ---]" (
-        set "dns_opts=!dns_opts!;%%~O"
-    ) else if "%%~O"=="[--- REINITIALISATION ---]" (
-        set "dns_opts=!dns_opts!;%%~O"
-    ) else (
-        set /a dnsi+=1
-        set "is_f=0"
-        for %%X in (!dnsi!) do set "curr_t=!dns_t[%%X]!"
-        if exist "%SCRIPT_DIR%\favoris.txt" (for /f "usebackq tokens=*" %%F in ("%SCRIPT_DIR%\favoris.txt") do (if "%%F"=="!curr_t!" set "is_f=1"))
-        if "!is_f!"=="1" (set "dns_opts=!dns_opts!;(F) %%~O") else (set "dns_opts=!dns_opts!;%%~O")
-    )
-)
-set "dns_opts=!dns_opts:~1!"
-
-call :DynamicMenu "GESTIONNAIRE DNS" "!dns_opts!"
+call :BuildFavMenu "!dns_labels!" "!dns_titles!"
+call :DynamicMenu "GESTIONNAIRE DNS" "!FAV_BUILT_OPTS!"
 set "dns_choice=%errorlevel%"
 
 if "%dns_choice%"=="0" goto system_tools
 if %dns_choice% GEQ 200 (
-    set /a t_idx=%dns_choice%-200
-    for %%X in (!t_idx!) do call :ToggleFav "!dns_t[%%X]!"
-    goto dns_manager
+    set /a "t_idx=%dns_choice%-200"
+    call :_bfm_get_token "!dns_labels!" !t_idx! d_target
+    if "!d_target!" NEQ "---" call :ToggleFav "!d_target!"
+    goto dns_manager
 )
 
 if "%dns_choice%"=="1" goto show_dns_config
@@ -720,7 +694,16 @@ net start HidServ >nul 2>&1
 
 echo.
 echo Desactivation/Reactivation du peripherique tactile via PowerShell...
-powershell -Command "& { $touchDevices = Get-PnpDevice | Where-Object { ($_.FriendlyName -like '*HID*' -and ($_.FriendlyName -like '*tactile*' -or $_.FriendlyName -like '*touch*')) -or ($_.Class -eq 'HIDClass' -and $_.FriendlyName -like '*ecran*') }; if ($touchDevices) { foreach ($device in $touchDevices) { Write-Host 'Desactivation:' $device.FriendlyName; Disable-PnpDevice -InstanceId $device.InstanceId -Confirm:$false }; Start-Sleep -Seconds 2; foreach ($device in $touchDevices) { Write-Host 'Reactivation:' $device.FriendlyName; Enable-PnpDevice -InstanceId $device.InstanceId -Confirm:$false } } else { Write-Host 'Aucun peripherique tactile trouve' } }"
+set "T_PS=%TEMP%\touch_restart.ps1"
+if exist "%T_PS%" del "%T_PS%"
+>  "%T_PS%" echo $touchDevices = Get-PnpDevice ^| Where-Object { ($_.FriendlyName -like '*HID*' -and ($_.FriendlyName -like '*tactile*' -or $_.FriendlyName -like '*touch*')) -or ($_.Class -eq 'HIDClass' -and $_.FriendlyName -like '*ecran*') }
+>> "%T_PS%" echo if ($touchDevices) {
+>> "%T_PS%" echo     foreach ($device in $touchDevices) { Write-Host 'Desactivation:' $device.FriendlyName; Disable-PnpDevice -InstanceId $device.InstanceId -Confirm:$false }
+>> "%T_PS%" echo     Start-Sleep -Seconds 2
+>> "%T_PS%" echo     foreach ($device in $touchDevices) { Write-Host 'Reactivation:' $device.FriendlyName; Enable-PnpDevice -InstanceId $device.InstanceId -Confirm:$false }
+>> "%T_PS%" echo } else { Write-Host 'Aucun peripherique tactile trouve' }
+powershell -ExecutionPolicy Bypass -File "%T_PS%"
+if exist "%T_PS%" del "%T_PS%" >nul 2>&1
 
 echo.
 echo Redemarrage du processus dwm.exe (Desktop Window Manager)...
@@ -744,7 +727,14 @@ echo Arret du service TabletInputService...
 net stop TabletInputService >nul 2>&1
 
 echo Desactivation du peripherique tactile...
-powershell -Command "& { $touchDevices = Get-PnpDevice | Where-Object { ($_.FriendlyName -like '*HID*' -and ($_.FriendlyName -like '*tactile*' -or $_.FriendlyName -like '*touch*')) -or ($_.Class -eq 'HIDClass' -and $_.FriendlyName -like '*ecran*') }; if ($touchDevices) { foreach ($device in $touchDevices) { Write-Host 'Desactivation:' $device.FriendlyName; Disable-PnpDevice -InstanceId $device.InstanceId -Confirm:$false } } else { Write-Host 'Aucun peripherique tactile trouve' } }"
+set "T_PS=%TEMP%\touch_disable.ps1"
+if exist "%T_PS%" del "%T_PS%"
+>  "%T_PS%" echo $touchDevices = Get-PnpDevice ^| Where-Object { ($_.FriendlyName -like '*HID*' -and ($_.FriendlyName -like '*tactile*' -or $_.FriendlyName -like '*touch*')) -or ($_.Class -eq 'HIDClass' -and $_.FriendlyName -like '*ecran*') }
+>> "%T_PS%" echo if ($touchDevices) {
+>> "%T_PS%" echo     foreach ($device in $touchDevices) { Write-Host 'Desactivation:' $device.FriendlyName; Disable-PnpDevice -InstanceId $device.InstanceId -Confirm:$false }
+>> "%T_PS%" echo } else { Write-Host 'Aucun peripherique tactile trouve' }
+powershell -ExecutionPolicy Bypass -File "%T_PS%"
+if exist "%T_PS%" del "%T_PS%" >nul 2>&1
 
 echo.
 echo === Pilote tactile desactive ===
@@ -760,7 +750,14 @@ echo === Activation du pilote tactile ===
 echo.
 
 echo Activation du peripherique tactile...
-powershell -Command "& { $touchDevices = Get-PnpDevice | Where-Object { ($_.FriendlyName -like '*HID*' -and ($_.FriendlyName -like '*tactile*' -or $_.FriendlyName -like '*touch*')) -or ($_.Class -eq 'HIDClass' -and $_.FriendlyName -like '*ecran*') }; if ($touchDevices) { foreach ($device in $touchDevices) { Write-Host 'Activation:' $device.FriendlyName; Enable-PnpDevice -InstanceId $device.InstanceId -Confirm:$false } } else { Write-Host 'Aucun peripherique tactile trouve' } }"
+set "T_PS=%TEMP%\touch_enable.ps1"
+if exist "%T_PS%" del "%T_PS%"
+>  "%T_PS%" echo $touchDevices = Get-PnpDevice ^| Where-Object { ($_.FriendlyName -like '*HID*' -and ($_.FriendlyName -like '*tactile*' -or $_.FriendlyName -like '*touch*')) -or ($_.Class -eq 'HIDClass' -and $_.FriendlyName -like '*ecran*') }
+>> "%T_PS%" echo if ($touchDevices) {
+>> "%T_PS%" echo     foreach ($device in $touchDevices) { Write-Host 'Activation:' $device.FriendlyName; Enable-PnpDevice -InstanceId $device.InstanceId -Confirm:$false }
+>> "%T_PS%" echo } else { Write-Host 'Aucun peripherique tactile trouve' }
+powershell -ExecutionPolicy Bypass -File "%T_PS%"
+if exist "%T_PS%" del "%T_PS%" >nul 2>&1
 
 echo Demarrage du service TabletInputService...
 net start TabletInputService >nul 2>&1
@@ -939,35 +936,19 @@ goto app_installer
 :: Menu d'extraction de mots de passe
 :: ===============================================
 :sys_passwords_menu
-set "opts=Gestionnaire d'identifiants (Windows)~Extrait le Credential Manager Windows (WCMDump)"
-set "opts=%opts%;Extraction reseaux Wi-Fi (Powershell)~Script WWP puissant listant psw et noms"
-set "opts=%opts%;WebBrowserPassView (Classique Nirsoft)~Ancien utilitaire graphique pour les mots de passe"
+set "pw_labels=dump_credman;dump_wifi;sys_nirsoft_pw"
+set "pw_titles=Gestionnaire d'identifiants (Windows)~Extrait le Credential Manager Windows (WCMDump);Extraction reseaux Wi-Fi (Powershell)~Script WWP puissant listant psw et noms;WebBrowserPassView (Classique Nirsoft)~Ancien utilitaire graphique pour les mots de passe"
 
-:: Mapping des targets pour gestion des favoris en sous-menu
-set "pw_t[1]=dump_credman"
-set "pw_t[2]=dump_wifi"
-set "pw_t[3]=sys_nirsoft_pw"
-
-:: Marquer les favoris existants dans le sous-menu
-set "pw_opts="
-set /a pwi=0
-for %%O in ("Gestionnaire d'identifiants (Windows)~Extrait le Credential Manager Windows (WCMDump)" "Extraction reseaux Wi-Fi (Powershell)~Script WWP puissant listant psw et noms" "WebBrowserPassView (Classique Nirsoft)~Ancien utilitaire graphique pour les mots de passe") do (
-    set /a pwi+=1
-    set "is_f=0"
-    for %%X in (!pwi!) do set "curr_t=!pw_t[%%X]!"
-    for /f "usebackq tokens=*" %%F in ("%SCRIPT_DIR%\favoris.txt") do (if "%%F"=="!curr_t!" set "is_f=1")
-    if "!is_f!"=="1" (set "pw_opts=!pw_opts!;(F) %%~O") else (set "pw_opts=!pw_opts!;%%~O")
-)
-set "pw_opts=!pw_opts:~1!"
-
-call :DynamicMenu "PIRATAGE / EXTRACTION DE MOTS DE PASSE" "%pw_opts%" "NONUMS"
+call :BuildFavMenu "!pw_labels!" "!pw_titles!"
+call :DynamicMenu "PIRATAGE / EXTRACTION DE MOTS DE PASSE" "!FAV_BUILT_OPTS!" "NONUMS"
 set "pw_choice=%errorlevel%"
 
 if "!pw_choice!"=="0" goto system_tools
 
 if !pw_choice! GEQ 200 (
-    set /a t_idx=!pw_choice!-200
-    for %%X in (!t_idx!) do call :ToggleFav "!pw_t[%%X]!"
+    set /a "t_idx=!pw_choice!-200"
+    call :_bfm_get_token "!pw_labels!" !t_idx! pw_target
+    if "!pw_target!" NEQ "---" call :ToggleFav "!pw_target!"
     goto sys_passwords_menu
 )
 
@@ -1203,17 +1184,12 @@ set "res_t[7]=res_wu_reset"
 set "res_t[8]=res_explorer_restart"
 set "res_t[9]=res_gpu_reset"
 
-:: Marquer les favoris existants dans le sous-menu
-set "res_opts="
-set /a resi=0
-for %%O in ("Creer un Point de Restauration~RECOMMANDE : Sauvegarde l'etat du systeme avant toute reparation" "Scan RAPIDE du systeme~Le classique SFC /scannow pour reparer l'OS" "Verification image base~Examine rapidement l'integration (DISM /CheckHealth)" "Reparation profonde~Telecharge les bons fichiers endommages (DISM /RestoreHealth)" "Nettoyage massif (Temp/Cache)~Detruit la totalite des fichiers inutiles cachant de l'espace" "Planifier un CHKDSK (C:)~Audite et repare les secteurs defectueux au prochain boot" "Reset Fix Windows Update~Redemarre brutalement le catalogue WU bloque ou corrompu" "Redemarrer l'Explorateur Windows~Corrige les freezes visuels sans redemarrer le PC" "Reinitialiser le pilote GPU~Envoie le signal Win+Ctrl+Shift+B pour relancer l'affichage") do (
-    set /a resi+=1
-    set "is_f=0"
-    set "curr_t=!res_t[%resi%]!"
-    for /f "usebackq tokens=*" %%F in ("favoris.txt") do (if "%%F"=="!curr_t!" set "is_f=1")
-    if "!is_f!"=="1" (set "res_opts=!res_opts!;(F) %%~O") else (set "res_opts=!res_opts!;%%~O")
-)
-set "res_opts=!res_opts:~1!"
+:: Utilisation du nouveau moteur DRY :BuildFavMenu
+set "res_labels=res_restore_point;res_sfc;res_dism_check;res_dism_restore;res_temp_clean;res_chkdsk;res_wu_reset;res_explorer_restart;res_gpu_reset"
+set "res_titles=Creer un Point de Restauration~RECOMMANDE : Sauvegarde l'etat du systeme avant toute reparation;Scan RAPIDE du systeme~Le classique SFC /scannow pour reparer l'OS;Verification image base~Examine rapidement l'integration (DISM /CheckHealth);Reparation profonde~Telecharge les bons fichiers endommages (DISM /RestoreHealth);Nettoyage massif (Temp/Cache)~Detruit la totalite des fichiers inutiles cachant de l'espace;Planifier un CHKDSK (C:)~Audite et repare les secteurs defectueux au prochain boot;Reset Fix Windows Update~Redemarre brutalement le catalogue WU bloque ou corrompu;Redemarrer l'Explorateur Windows~Corrige les freezes visuels sans redemarrer le PC;Reinitialiser le pilote GPU~Envoie le signal Win+Ctrl+Shift+B pour relancer l'affichage"
+
+call :BuildFavMenu "!res_labels!" "!res_titles!"
+set "res_opts=!FAV_BUILT_OPTS!"
 
 call :DynamicMenu "OUTIL DE REPARATION WINDOWS (Rescue)" "!res_opts!"
 set "reschoice=%errorlevel%"
@@ -1328,47 +1304,19 @@ goto sys_rescue_menu
 
 :sys_network_menu
 cls
-set "net_t[1]=net_flush_dns"
-set "net_t[2]=net_display_dns"
-set "net_t[3]=net_clear_arp"
-set "net_t[4]=net_display_arp"
-set "net_t[5]=net_renew_ip"
-set "net_t[6]=net_reset_tcpip"
-set "net_t[7]=net_reset_winsock"
-set "net_t[8]=net_reset_all"
-set "net_t[9]=net_restart_adapters"
-set "net_t[10]=net_fast_reset"
+set "net_labels=net_flush_dns;net_display_dns;net_clear_arp;net_display_arp;net_renew_ip;net_reset_tcpip;net_reset_winsock;net_reset_all;net_restart_adapters;net_fast_reset"
+set "net_titles=Vider le cache DNS~Supprime et reinitialise le cache du resolveur (ipconfig /flushdns);Afficher le cache DNS~Liste toutes les entrees DNS stockees en memoire locale (ipconfig /displaydns);Vider le cache ARP~Nettoie instantanement la table de correspondance des IP/MAC (arp -d *);Afficher la table ARP~Affiche les appareils de votre reseau recemment contactes (arp -a);Liberer et Renouveler l'IP~Demande une nouvelle adresse IP au serveur DHCP / Box (release / renew);Reset TCP/IP Stack IPv4/IPv6~Repare la pile reseau vitale de Windows (netsh int ip reset);Reset des Sockets Windows~Reinitialise le catalogue Winsock corrompu (netsh winsock reset);Reset Reseau Automatique~Enchaine silencieusement le Flush DNS, Winsock, et TCP/IP;Redemarrer les cartes reseau~Vos pilotes Ethernet et Wi-Fi sont mis hors puis sous tension;Executer le Script d'Urgence~Sequence immediate de 7 commandes de depannage massif (Fast Reset)"
 
-set "net_opts="
-set /a neti=0
-for %%O in (
-    "Vider le cache DNS~Supprime et reinitialise le cache du resolveur (ipconfig /flushdns)"
-    "Afficher le cache DNS~Liste toutes les entrees DNS stockees en memoire locale (ipconfig /displaydns)"
-    "Vider le cache ARP~Nettoie instantanement la table de correspondance des IP/MAC (arp -d *)"
-    "Afficher la table ARP~Affiche les appareils de votre reseau recemment contactes (arp -a)"
-    "Liberer et Renouveler l'IP~Demande une nouvelle adresse IP au serveur DHCP / Box (release / renew)"
-    "Reset TCP/IP Stack IPv4/IPv6~Repare la pile reseau vitale de Windows (netsh int ip reset)"
-    "Reset des Sockets Windows~Reinitialise le catalogue Winsock corrompu (netsh winsock reset)"
-    "Reset Reseau Automatique~Enchaine silencieusement le Flush DNS, Winsock, et TCP/IP"
-    "Redemarrer les cartes reseau~Vos pilotes Ethernet et Wi-Fi sont mis hors puis sous tension"
-    "Executer le Script d'Urgence~Sequence immediate de 7 commandes de depannage massif (Fast Reset)"
-) do (
-    set /a neti+=1
-    set "is_f=0"
-    for %%X in (!neti!) do set "curr_t=!net_t[%%X]!"
-    if exist "%SCRIPT_DIR%\favoris.txt" (for /f "usebackq tokens=*" %%F in ("%SCRIPT_DIR%\favoris.txt") do (if "%%F"=="!curr_t!" set "is_f=1"))
-    if "!is_f!"=="1" (set "net_opts=!net_opts!;(F) %%~O") else (set "net_opts=!net_opts!;%%~O")
-)
-set "net_opts=!net_opts:~1!"
-
-call :DynamicMenu "MENU DE DEPANNAGE RESEAU" "!net_opts!"
+call :BuildFavMenu "!net_labels!" "!net_titles!"
+call :DynamicMenu "MENU DE DEPANNAGE RESEAU" "!FAV_BUILT_OPTS!"
 set "net_choice=%errorlevel%"
 
 if "%net_choice%"=="0" goto system_tools
 if %net_choice% GEQ 200 (
-    set /a t_idx=%net_choice%-200
-    for %%X in (!t_idx!) do call :ToggleFav "!net_t[%%X]!"
-    goto sys_network_menu
+    set /a "t_idx=%net_choice%-200"
+    call :_bfm_get_token "!net_labels!" !t_idx! n_target
+    if "!n_target!" NEQ "---" call :ToggleFav "!n_target!"
+    goto sys_network_menu
 )
 
 if "%net_choice%"=="1" goto net_flush_dns
@@ -1491,41 +1439,19 @@ REM              MENU CYBERSECURITE RESEAU - PAR ALEEXLEDEV
 REM ===================================================================
 :net_cyber_menu
 cls
-set "cyb_t[1]=cyber_triage"
-set "cyb_t[2]=cyber_adapter_audit"
-set "cyb_t[3]=cyber_lan_scan"
-set "cyb_t[4]=cyber_flux_analysis"
-set "cyb_t[5]=cyber_dns_leak"
-set "cyb_t[6]=cyber_wifi_audit"
-set "cyb_t[7]=cyber_ip_grabber"
+set "cyb_labels=cyber_triage;cyber_adapter_audit;cyber_lan_scan;cyber_flux_analysis;cyber_dns_leak;cyber_wifi_audit;cyber_ip_grabber"
+set "cyb_titles=TRIAGE - Diagnostic rapide de connexion;ADAPTATEURS - Infos MAC et vitesse;LAN SCAN - Scan turbo (Marques/Ports/BruteForce);FLUX - Analyse des ports et processus locaux;DNS LEAK - Verifier la fuite DNS (VPN);AUDIT Wi-Fi;IP GRABBER - Obtenir l'IP d'une box distante (Ecoute directe)"
 
-set "cyb_opts="
-set /a cybi=0
-for %%O in (
-    "TRIAGE - Diagnostic rapide de connexion"
-    "ADAPTATEURS - Infos MAC et vitesse"
-    "LAN SCAN - Scan turbo (Marques/Ports/BruteForce)"
-    "FLUX - Analyse des ports et processus locaux"
-    "DNS LEAK - Verifier la fuite DNS (VPN)"
-    "AUDIT Wi-Fi"
-    "IP GRABBER - Obtenir l'IP d'une box distante (Ecoute directe)"
-) do (
-    set /a cybi+=1
-    set "is_f=0"
-    for %%X in (!cybi!) do set "curr_t=!cyb_t[%%X]!"
-    if exist "%SCRIPT_DIR%\favoris.txt" (for /f "usebackq tokens=*" %%F in ("%SCRIPT_DIR%\favoris.txt") do (if "%%F"=="!curr_t!" set "is_f=1"))
-    if "!is_f!"=="1" (set "cyb_opts=!cyb_opts!;(F) %%~O") else (set "cyb_opts=!cyb_opts!;%%~O")
-)
-set "cyb_opts=!cyb_opts:~1!"
-
-call :DynamicMenu "CYBERSECURITE RESEAU" "!cyb_opts!" "NONUMS"
+call :BuildFavMenu "!cyb_labels!" "!cyb_titles!"
+call :DynamicMenu "CYBERSECURITE RESEAU" "!FAV_BUILT_OPTS!" "NONUMS"
 set "cyber_choice=%errorlevel%"
 
 if "%cyber_choice%"=="0" goto system_tools
 if %cyber_choice% GEQ 200 (
-    set /a t_idx=%cyber_choice%-200
-    for %%X in (!t_idx!) do call :ToggleFav "!cyb_t[%%X]!"
-    goto net_cyber_menu
+    set /a "t_idx=%cyber_choice%-200"
+    call :_bfm_get_token "!cyb_labels!" !t_idx! c_target
+    if "!c_target!" NEQ "---" call :ToggleFav "!c_target!"
+    goto net_cyber_menu
 )
 
 if "%cyber_choice%"=="1" goto cyber_triage
@@ -2740,42 +2666,6 @@ set "SMBPS=%TEMP%\smb_audit.ps1"
 >> "%SMBPS%" echo     if ($test -match 'reussie^|completed') { Write-Host "  [!!!] SESSION ANONYME OUVERTE" -f Red; net use "\\$ip\IPC$" /d /y ^>$null }
 >> "%SMBPS%" echo     Write-Host "------------------------------------" -f DarkGray
 >> "%SMBPS%" echo }
-powershell -NoProfile -ExecutionPolicy Bypass -File "%SMBPS%"
-if exist "%SMBPS%" del "%SMBPS%"
-pause
-goto net_cyber_menu
-    Write-Host "  [1/3] Liste des ressources :" -f Yellow
->> "%SMBPS%" echo     $shares = net view "\\$ip" /all 2^>$null
->> "%SMBPS%" echo     if ($shares) { 
->> "%SMBPS%" echo         $shares ^| ForEach-Object { Write-Host "      $_" -f Gray } 
->> "%SMBPS%" echo     } else { Write-Host "      [!] Aucun partage visible ou acces refuse." -f DarkGray }
->> "%SMBPS%" echo     Write-Host "  [2/3] Tentative d'enumeration via IPC$ :" -f Yellow
->> "%SMBPS%" echo     try {
->> "%SMBPS%" echo         $null = net use "\\$ip\IPC$" "" /u:"" 2^>$null
->> "%SMBPS%" echo         $users = Get-WmiObject -Class Win32_UserAccount -ComputerName $ip -ErrorAction SilentlyContinue
->> "%SMBPS%" echo         if ($users) {
->> "%SMBPS%" echo             Write-Host "      [OK] Utilisateurs detectes :" -f Green
->> "%SMBPS%" echo             $users ^| ForEach-Object { Write-Host "      - $($_.Name) (Admin: $($_.LocalAccount))" -f White }
->> "%SMBPS%" echo         } else {
->> "%SMBPS%" echo             Write-Host "      [-] Enumeration RPC/WMI bloquee." -f DarkGray
->> "%SMBPS%" echo         }
->> "%SMBPS%" echo     } catch { Write-Host "      [-] Erreur de connexion IPC." -f DarkGray }
->> "%SMBPS%" echo     Write-Host "  [3/3] Test d'ecriture sur partages communs :" -f Yellow
->> "%SMBPS%" echo     $commonShares = @('C$', 'ADMIN$', 'Users', 'Public', 'Temp')
->> "%SMBPS%" echo     foreach ($s in $commonShares) {
->> "%SMBPS%" echo         $testPath = "\\$ip\$s\aleex_test.txt"
->> "%SMBPS%" echo         try {
->> "%SMBPS%" echo             "Test" ^| Out-File $testPath -ErrorAction Stop
->> "%SMBPS%" echo             Write-Host "      [!!!] ALERTE : Acces en ECRITURE trouve sur \\$ip\$s" -f Red -b White
->> "%SMBPS%" echo             Remove-Item $testPath -Force -ErrorAction SilentlyContinue
->> "%SMBPS%" echo         } catch {
->> "%SMBPS%" echo             Write-Host "      [-] $s : Lecture seule ou Protege." -f DarkGray
->> "%SMBPS%" echo         }
->> "%SMBPS%" echo     }
->> "%SMBPS%" echo     net use "\\$ip\IPC$" /d /y ^>$null 2^>^&1
->> "%SMBPS%" echo     Write-Host "------------------------------------------------" -f DarkGray
->> "%SMBPS%" echo }
-
 powershell -NoProfile -ExecutionPolicy Bypass -File "%SMBPS%"
 if exist "%SMBPS%" del "%SMBPS%"
 
@@ -6473,30 +6363,25 @@ REM              MENU DE NETTOYAGE ET OPTIMISATION
 REM ===================================================================
 :sys_opti_menu
 cls
-set "opts=[--- NETTOYAGE ET MAINTENANCE ---]"
-set "opts=%opts%;Nettoyage Complet Unifie~Ouvre le panneau de nettoyage complet (Disque, Temp, WU, DNS...)"
-set "opts=%opts%;Nettoyage du Registre~Optimisation rapide et suppression des entrees mortes"
-set "opts=%opts%;[--- OPTIMISATION SYSTEME ---]"
-set "opts=%opts%;Menu Optimisation Windows 11~Bloatwares, Telemetrie, Performances, Cortana"
-set "opts=%opts%;Programmes au Demarrage~Lister et desactiver les logiciels qui demarrent avec Windows"
+set "opti_labels=---;sys_clean_unified;sys_registry_cleanup;---;sys_tweaks_menu;sys_startup_manager"
+set "opti_titles=[--- NETTOYAGE ET MAINTENANCE ---];Nettoyage Complet Unifie~Ouvre le panneau;Nettoyage du Registre~Optimisation rapide et suppression des entrees mortes;[--- OPTIMISATION SYSTEME ---];Menu Optimisation Windows 11~Bloatwares, Telemetrie, Performances, Cortana;Programmes au Demarrage~Lister et desactiver logiciels"
 
-call :DynamicMenu "MENU NETTOYAGE ET OPTIMISATION" "%opts%"
+call :BuildFavMenu "!opti_labels!" "!opti_titles!"
+call :DynamicMenu "MENU NETTOYAGE ET OPTIMISATION" "!FAV_BUILT_OPTS!"
 set "opti_choice=%errorlevel%"
 
-if "%opti_choice%"=="1" goto sys_clean_unified
-if "%opti_choice%"=="2" goto sys_registry_cleanup
-if "%opti_choice%"=="3" goto sys_tweaks_menu
-if "%opti_choice%"=="4" goto sys_startup_manager
+if "%opti_choice%"=="2" goto sys_clean_unified
+if "%opti_choice%"=="3" goto sys_registry_cleanup
+if "%opti_choice%"=="5" goto sys_tweaks_menu
+if "%opti_choice%"=="6" goto sys_startup_manager
 if "%opti_choice%"=="0" goto system_tools
 
 if %opti_choice% GEQ 200 (
-    set /a "toggle_idx=%opti_choice%-200"
-    if "!toggle_idx!"=="1" call :ToggleFav "sys_clean_unified"
-    if "!toggle_idx!"=="2" call :ToggleFav "sys_registry_cleanup"
-    if "!toggle_idx!"=="3" call :ToggleFav "sys_tweaks_menu"
-    if "!toggle_idx!"=="4" call :ToggleFav "sys_startup_manager"
+    set /a "t_idx=%opti_choice%-200"
+    call :_bfm_get_token "!opti_labels!" !t_idx! t_target
+    if "!t_target!" NEQ "---" call :ToggleFav "!t_target!"
+    goto sys_opti_menu
 )
-goto sys_opti_menu
 
 REM ===================================================================
 REM              NETTOYAGE COMPLET UNIFIE
@@ -6739,7 +6624,30 @@ echo  Generation du rapport HTML complet...
 echo  Collecte : Systeme, Disques, Reseau, Users, Logiciels
 echo.
 set "RPT=%USERPROFILE%\Desktop\Rapport_PC_%COMPUTERNAME%_%DATE:~6,4%-%DATE:~3,2%-%DATE:~0,2%.html"
-powershell -NoProfile -ExecutionPolicy Bypass -Command "$f='%USERPROFILE%\Desktop\Rapport_PC_%COMPUTERNAME%.html'; $nl=[Environment]::NewLine; $now=Get-Date -Format 'dd/MM/yyyy HH:mm'; $cn=$env:COMPUTERNAME; $os=(Get-CimInstance Win32_OperatingSystem); $cpu=(Get-CimInstance Win32_Processor).Name.Trim(); $ram=[math]::Round((Get-CimInstance Win32_ComputerSystem).TotalPhysicalMemory/1GB,1); $gpu=(Get-CimInstance Win32_VideoController | Select-Object -First 1).Name; $disks=Get-PSDrive -PSProvider FileSystem | Where-Object {$_.Used -ne $null}; $diskHtml=($disks | ForEach-Object { $u=[math]::Round($_.Used/1GB,1); $f2=[math]::Round($_.Free/1GB,1); $t=[math]::Round(($_.Used+$_.Free)/1GB,1); $pct=if($t -gt 0){[math]::Round($_.Used/($_.Used+$_.Free)*100)}else{0}; $bar='#'*[math]::Round($pct/5)+'.'*(20-[math]::Round($pct/5)); '<tr><td>' + $_.Name + ':</td><td>' + $u + ' Go utilise / ' + $t + ' Go total</td><td><span style=''color:' + (if($pct -gt 90){'red'}elseif($pct -gt 70){'orange'}else{'green'}) + '''>[' + $bar + '] ' + $pct + [char]37 + '</span></td></tr>' }) -join ''; $ips=(Get-NetIPAddress -AddressFamily IPv4 -EA SilentlyContinue | Where-Object {$_.IPAddress -ne '127.0.0.1'} | ForEach-Object {'<li>' + $_.InterfaceAlias + ' : <b>' + $_.IPAddress + '</b></li>'}) -join ''; $wifi=(netsh wlan show interfaces 2>$null | Select-String 'SSID' | Select-Object -First 1); $wifiName=if($wifi){($wifi -split ':')[1].Trim()}else{'Non connecte'}; $apps=(Get-ItemProperty 'HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*','HKLM:\Software\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*','HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*' -EA SilentlyContinue | Where-Object {$_.DisplayName} | Sort-Object DisplayName | Select-Object DisplayName,DisplayVersion -Unique); $appHtml=($apps | ForEach-Object {'<tr><td>' + $_.DisplayName + '</td><td>' + $_.DisplayVersion + '</td></tr>'}) -join ''; $users=(Get-LocalUser -EA SilentlyContinue | ForEach-Object {'<tr><td>' + $_.Name + '</td><td>' + (if($_.Enabled){'Actif'}else{'Desactive'}) + '</td><td>' + $_.LastLogon + '</td></tr>'}) -join ''; $errs=(Get-WinEvent -FilterHashtable @{LogName='System';Level=1,2;StartTime=(Get-Date).AddDays(-7)} -EA SilentlyContinue | Select-Object -First 20 | ForEach-Object {'<tr><td>' + $_.TimeCreated.ToString('dd/MM HH:mm') + '</td><td>' + $_.Id + '</td><td>' + $_.ProviderName + '</td><td>' + $_.Message.Split([char]10)[0].Trim().Substring(0,[math]::Min(80,$_.Message.Length)) + '</td></tr>'}) -join ''; $html='<!DOCTYPE html><html lang=''fr''><head><meta charset=''UTF-8''><title>Rapport PC - ' + $cn + '</title><style>body{font-family:Segoe UI,sans-serif;background:#0d1117;color:#e6edf3;margin:0;padding:20px}h1{color:#58a6ff;border-bottom:2px solid #1f6feb;padding-bottom:10px}h2{color:#79c0ff;margin-top:30px;background:#161b22;padding:10px;border-radius:6px}table{width:100%;border-collapse:collapse;margin:10px 0}th{background:#1f6feb;color:white;padding:8px;text-align:left}td{padding:6px 8px;border-bottom:1px solid #21262d}tr:hover{background:#1c2128}.badge{display:inline-block;padding:3px 8px;border-radius:12px;font-size:12px;background:#1f6feb}.info{background:#161b22;padding:15px;border-radius:8px;margin:10px 0;border-left:4px solid #1f6feb}</style></head><body><h1>Rapport PC - ' + $cn + '</h1><div class=''info''><b>Genere le :</b> ' + $now + ' &nbsp;|&nbsp; <b>OS :</b> ' + $os.Caption + ' ' + $os.Version + ' &nbsp;|&nbsp; <b>Uptime :</b> ' + ([math]::Round((New-TimeSpan $os.LastBootUpTime (Get-Date)).TotalHours,1)) + 'h</div><h2>Materiel</h2><table><tr><th>Composant</th><th>Detail</th></tr><tr><td>CPU</td><td>' + $cpu + '</td></tr><tr><td>RAM</td><td>' + $ram + ' Go</td></tr><tr><td>GPU</td><td>' + $gpu + '</td></tr><tr><td>Wi-Fi</td><td>' + $wifiName + '</td></tr></table><h2>Disques</h2><table><tr><th>Lecteur</th><th>Utilisation</th><th>Occupation</th></tr>' + $diskHtml + '</table><h2>Reseau</h2><ul>' + $ips + '</ul><h2>Comptes Utilisateurs</h2><table><tr><th>Utilisateur</th><th>Statut</th><th>Derniere connexion</th></tr>' + $users + '</table><h2>Logiciels Installes (' + $apps.Count + ')</h2><table><tr><th>Logiciel</th><th>Version</th></tr>' + $appHtml + '</table><h2>Erreurs Systeme (7 derniers jours)</h2><table><tr><th>Date</th><th>ID</th><th>Source</th><th>Message</th></tr>' + $errs + '</table></body></html>'; $html | Out-File $f -Encoding UTF8; Write-Host ('  [OK] Rapport genere : ' + $f) -f Green"
+set "RPT_PS=%TEMP%\full_report.ps1"
+if exist "%RPT_PS%" del "%RPT_PS%"
+>  "%RPT_PS%" echo $f='%USERPROFILE%\Desktop\Rapport_PC_%COMPUTERNAME%.html'
+>> "%RPT_PS%" echo $nl=[Environment]::NewLine
+>> "%RPT_PS%" echo $now=Get-Date -Format 'dd/MM/yyyy HH:mm'
+>> "%RPT_PS%" echo $cn=$env:COMPUTERNAME
+>> "%RPT_PS%" echo $os=(Get-CimInstance Win32_OperatingSystem)
+>> "%RPT_PS%" echo $cpu=(Get-CimInstance Win32_Processor).Name.Trim()
+>> "%RPT_PS%" echo $ram=[math]::Round((Get-CimInstance Win32_ComputerSystem).TotalPhysicalMemory/1GB,1)
+>> "%RPT_PS%" echo $gpu=(Get-CimInstance Win32_VideoController ^| Select-Object -First 1).Name
+>> "%RPT_PS%" echo $disks=Get-PSDrive -PSProvider FileSystem ^| Where-Object {$_.Used -ne $null}
+>> "%RPT_PS%" echo $diskHtml=($disks ^| ForEach-Object { $u=[math]::Round($_.Used/1GB,1); $f2=[math]::Round($_.Free/1GB,1); $t=[math]::Round(($_.Used+$_.Free)/1GB,1); $pct=if($t -gt 0){[math]::Round($_.Used/($_.Used+$_.Free)*100)}else{0}; $bar='#'*[math]::Round($pct/5)+'.'*(20-[math]::Round($pct/5)); '^<tr^>^<td^>' + $_.Name + ':^</td^>^<td^>' + $u + ' Go utilise / ' + $t + ' Go total^</td^>^<td^>^<span style=''color:' + (if($pct -gt 90){'red'}elseif($pct -gt 70){'orange'}else{'green'}) + '''^>^[' + $bar + '] ' + $pct + '%%^</span^>^</td^>^</tr^>' }) -join ''
+>> "%RPT_PS%" echo $ips=(Get-NetIPAddress -AddressFamily IPv4 -EA SilentlyContinue ^| Where-Object {$_.IPAddress -ne '127.0.0.1'} ^| ForEach-Object {'^<li^>' + $_.InterfaceAlias + ' : ^<b^>' + $_.IPAddress + '^</b^>^</li^>'}) -join ''
+>> "%RPT_PS%" echo $wifi=(netsh wlan show interfaces 2^>$null ^| Select-String 'SSID' ^| Select-Object -First 1)
+>> "%RPT_PS%" echo $wifiName=if($wifi){($wifi -split ':')[1].Trim()}else{'Non connecte'}
+>> "%RPT_PS%" echo $apps=(Get-ItemProperty 'HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*','HKLM:\Software\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*','HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*' -EA SilentlyContinue ^| Where-Object {$_.DisplayName} ^| Sort-Object DisplayName ^| Select-Object DisplayName,DisplayVersion -Unique)
+>> "%RPT_PS%" echo $appHtml=($apps ^| ForEach-Object {'^<tr^>^<td^>' + $_.DisplayName + '^</td^>^<td^>' + $_.DisplayVersion + '^</td^>^</tr^>'}) -join ''
+>> "%RPT_PS%" echo $users=(Get-LocalUser -EA SilentlyContinue ^| ForEach-Object {'^<tr^>^<td^>' + $_.Name + '^</td^>^<td^>' + (if($_.Enabled){'Actif'}else{'Desactive'}) + '^</td^>^<td^>' + $_.LastLogon + '^</td^>^</tr^>'}) -join ''
+>> "%RPT_PS%" echo $errs=(Get-WinEvent -FilterHashtable @{LogName='System';Level=1,2;StartTime=(Get-Date).AddDays(-7)} -EA SilentlyContinue ^| Select-Object -First 20 ^| ForEach-Object {'^<tr^>^<td^>' + $_.TimeCreated.ToString('dd/MM HH:mm') + '^</td^>^<td^>' + $_.Id + '^</td^>^<td^>' + $_.ProviderName + '^</td^>^<td^>' + $_.Message.Split([char]10)[0].Trim().Substring(0,[math]::Min(80,$_.Message.Length)) + '^</td^>^</tr^>'}) -join ''
+>> "%RPT_PS%" echo $html='^<!DOCTYPE html^>^<html lang=''fr''^>^<head^>^<meta charset=''UTF-8''^>^<title^>Rapport PC - ' + $cn + '^</title^>^<style^>body{font-family:Segoe UI,sans-serif;background:#0d1117;color:#e6edf3;margin:0;padding:20px}h1{color:#58a6ff;border-bottom:2px solid #1f6feb;padding-bottom:10px}h2{color:#79c0ff;margin-top:30px;background:#161b22;padding:10px;border-radius:6px}table{width:100%%;border-collapse:collapse;margin:10px 0}th{background:#1f6feb;color:white;padding:8px;text-align:left}td{padding:6px 8px;border-bottom:1px solid #21262d}tr:hover{background:#1c2128}.badge{display:inline-block;padding:3px 8px;border-radius:12px;font-size:12px;background:#1f6feb}.info{background:#161b22;padding:15px;border-radius:8px;margin:10px 0;border-left:4px solid #1f6feb}^</style^>^</head^>^<body^>^<h1^>Rapport PC - ' + $cn + '^</h1^>^<div class=''info''^>^<b^>Genere le :^</b^> ' + $now + ' ^&nbsp;^|^&nbsp; ^<b^>OS :^</b^> ' + $os.Caption + ' ' + $os.Version + ' ^&nbsp;^|^&nbsp; ^<b^>Uptime :^</b^> ' + ([math]::Round((New-TimeSpan $os.LastBootUpTime (Get-Date)).TotalHours,1)) + 'h^</div^>^<h2^>Materiel^</h2^>^<table^>^<tr^>^<th^>Composant^</th^>^<th^>Detail^</th^>^</tr^>^<tr^>^<td^>CPU^</td^>^<td^>' + $cpu + '^</td^>^</tr^>^<tr^>^<td^>RAM^</td^>^<td^>' + $ram + ' Go^</td^>^</tr^>^<tr^>^<td^>GPU^</td^>^<td^>' + $gpu + '^</td^>^</tr^>^<tr^>^<td^>Wi-Fi^</td^>^<td^>' + $wifiName + '^</td^>^</tr^>^</table^>^<h2^>Disques^</h2^>^<table^>^<tr^>^<th^>Lecteur^</th^>^<th^>Utilisation^</th^>^<th^>Occupation^</th^>^</tr^>' + $diskHtml + '^</table^>^<h2^>Reseau^</h2^>^<ul^>' + $ips + '^</ul^>^<h2^>Comptes Utilisateurs^</h2^>^<table^>^<tr^>^<th^>Utilisateur^</th^>^<th^>Statut^</th^>^<th^>Derniere connexion^</th^>^</tr^>' + $users + '^</table^>^<h2^>Logiciels Installes (' + $apps.Count + ')^</h2^>^<table^>^<tr^>^<th^>Logiciel^</th^>^<th^>Version^</th^>^</tr^>' + $appHtml + '^</table^>^<h2^>Erreurs Systeme (7 derniers jours)^</h2^>^<table^>^<tr^>^<th^>Date^</th^>^<th^>ID^</th^>^<th^>Source^</th^>^<th^>Message^</th^>^</tr^>' + $errs + '^</table^>^</body^>^</html^>'
+>> "%RPT_PS%" echo $html ^| Out-File $f -Encoding UTF8
+>> "%RPT_PS%" echo Write-Host ('  [OK] Rapport genere : ' + $f) -f Green
+powershell -NoProfile -ExecutionPolicy Bypass -File "%RPT_PS%"
+if exist "%RPT_PS%" del "%RPT_PS%" >nul 2>&1
 echo.
 echo  [OK] Rapport HTML genere sur le Bureau !
 powershell -Command "Start-Process '%USERPROFILE%\Desktop\Rapport_PC_%COMPUTERNAME%.html'"
@@ -6968,7 +6876,39 @@ echo =============================================================
 echo.
 echo Recherche des capteurs de temperature...
 echo.
-powershell -NoProfile -ExecutionPolicy Bypass -Command "function Get-TempStatus { param($temp) if ($temp -lt 60) { return @{ Status = 'OK'; Color = 'Green' } } elseif ($temp -lt 80) { return @{ Status = 'Acceptable'; Color = 'Yellow' } } elseif ($temp -lt 90) { return @{ Status = 'Elevee'; Color = 'DarkYellow' } } else { return @{ Status = 'Critique'; Color = 'Red' } } }; try { $ohm = Get-CimInstance -Namespace 'root/OpenHardwareMonitor' -ClassName Sensor -ErrorAction Stop; if ($ohm) { Write-Host 'Temperatures (OpenHardwareMonitor):' -f Green; $ohm | Where-Object { $_.SensorType -eq 'Temperature' } | ForEach-Object { $status = Get-TempStatus -temp $_.Value; Write-Host -NoNewline ('   ' + $_.Name + ' (' + $_.Parent + '): ' + $_.Value + ' C'); Write-Host (' - ' + $status.Status) -f $status.Color } } } catch { try { $wmi = Get-CimInstance -Namespace 'root/WMI' -ClassName MSAcpi_ThermalZoneTemperature -ErrorAction Stop; if ($wmi) { Write-Host 'Temperatures (WMI):' -f Yellow; $wmi | ForEach-Object { $temp = [math]::Round(($_.CurrentTemperature - 2732) / 10, 2); $status = Get-TempStatus -temp $temp; Write-Host -NoNewline ('   Instance: ' + $_.InstanceName + ' - ' + $temp + ' C'); Write-Host (' - ' + $status.Status) -f $status.Color } } else { Write-Host 'Aucun capteur de temperature trouve via WMI ou OpenHardwareMonitor.' -f Red } } catch { Write-Host 'Impossible d''acceder a WMI pour les temperatures.' -f Red } }"
+set "TPR_PS=%TEMP%\sys_temp_report.ps1"
+if exist "%TPR_PS%" del "%TPR_PS%"
+>  "%TPR_PS%" echo function Get-TempStatus { param($temp) if ($temp -lt 60) { return @{ Status = 'OK'; Color = 'Green' } } elseif ($temp -lt 80) { return @{ Status = 'Acceptable'; Color = 'Yellow' } } elseif ($temp -lt 90) { return @{ Status = 'Elevee'; Color = 'DarkYellow' } } else { return @{ Status = 'Critique'; Color = 'Red' } } }
+>> "%TPR_PS%" echo try {
+>> "%TPR_PS%" echo     $ohm = Get-CimInstance -Namespace 'root/OpenHardwareMonitor' -ClassName Sensor -ErrorAction Stop
+>> "%TPR_PS%" echo     if ($ohm) {
+>> "%TPR_PS%" echo         Write-Host 'Temperatures (OpenHardwareMonitor):' -f Green
+>> "%TPR_PS%" echo         $ohm ^| Where-Object { $_.SensorType -eq 'Temperature' } ^| ForEach-Object {
+>> "%TPR_PS%" echo             $status = Get-TempStatus -temp $_.Value
+>> "%TPR_PS%" echo             Write-Host -NoNewline ('   ' + $_.Name + ' (' + $_.Parent + '): ' + $_.Value + ' C')
+>> "%TPR_PS%" echo             Write-Host (' - ' + $status.Status) -f $status.Color
+>> "%TPR_PS%" echo         }
+>> "%TPR_PS%" echo     }
+>> "%TPR_PS%" echo } catch {
+>> "%TPR_PS%" echo     try {
+>> "%TPR_PS%" echo         $wmi = Get-CimInstance -Namespace 'root/WMI' -ClassName MSAcpi_ThermalZoneTemperature -ErrorAction Stop
+>> "%TPR_PS%" echo         if ($wmi) {
+>> "%TPR_PS%" echo             Write-Host 'Temperatures (WMI):' -f Yellow
+>> "%TPR_PS%" echo             $wmi ^| ForEach-Object {
+>> "%TPR_PS%" echo                 $temp = [math]::Round(($_.CurrentTemperature - 2732) / 10, 2)
+>> "%TPR_PS%" echo                 $status = Get-TempStatus -temp $temp
+>> "%TPR_PS%" echo                 Write-Host -NoNewline ('   Instance: ' + $_.InstanceName + ' - ' + $temp + ' C')
+>> "%TPR_PS%" echo                 Write-Host (' - ' + $status.Status) -f $status.Color
+>> "%TPR_PS%" echo             }
+>> "%TPR_PS%" echo         } else {
+>> "%TPR_PS%" echo             Write-Host 'Aucun capteur de temperature trouve via WMI ou OpenHardwareMonitor.' -f Red
+>> "%TPR_PS%" echo         }
+>> "%TPR_PS%" echo     } catch {
+>> "%TPR_PS%" echo         Write-Host 'Impossible d''acceder a WMI pour les temperatures.' -f Red
+>> "%TPR_PS%" echo     }
+>> "%TPR_PS%" echo }
+powershell -NoProfile -ExecutionPolicy Bypass -File "%TPR_PS%"
+if exist "%TPR_PS%" del "%TPR_PS%" >nul 2>&1
 echo.
 echo Legende des statuts:
 powershell -Command "Write-Host '  OK (^< 60C)' -f Green; Write-Host '  Acceptable (60-80C)' -f Yellow; Write-Host '  Elevee (80-90C)' -f DarkYellow; Write-Host '  Critique (^> 90C)' -f Red"
@@ -6987,7 +6927,44 @@ echo =============================================================
 echo.
 echo Analyse de la memoire installee et des capacites de la carte mere...
 echo.
-powershell -NoProfile -ExecutionPolicy Bypass -Command "$mem = Get-CimInstance Win32_PhysicalMemory -ErrorAction SilentlyContinue; $mobo = Get-CimInstance Win32_PhysicalMemoryArray -ErrorAction SilentlyContinue; if ($mobo) { $maxCap = [math]::Round($mobo.MaxCapacity / 1024 / 1024, 2); Write-Host ('Capacite maximale supportee : ' + $maxCap + ' Go') -f Cyan; Write-Host ('Nombre de slots memoire    : ' + $mobo.MemoryDevices) -f Cyan } else { Write-Host 'Impossible de determiner les capacites de la carte mere.' -f Yellow }; echo ''; if ($mem) { $totalSticks = $mem.Count; Write-Host ('Barrettes de RAM installees  : ' + $totalSticks) -f Cyan; echo ''; Write-Host 'Details par barrette :' -f Green; $solderedCount = 0; $mem | ForEach-Object { $cap = [math]::Round($_.Capacity / 1GB, 0); if ($_.DeviceLocator -like '*on board*') { $solderedCount++ }; Write-Host ('  - Slot ' + $_.DeviceLocator + ': ' + $cap + ' Go - ' + $_.PartNumber) }; echo ''; if ($totalSticks -gt 0) { if ($solderedCount -eq $totalSticks) { Write-Host 'Conclusion : Toute la memoire RAM est soudee a la carte mere et ne peut pas etre remplacee.' -f Red } elseif ($solderedCount -gt 0) { Write-Host 'Conclusion : Une partie de la memoire RAM est soudee. Les autres barrettes peuvent potentiellement etre remplacees.' -f Yellow } else { Write-Host 'Conclusion : La memoire RAM est sur des barrettes remplacables (non soudee).' -f Green } } } else { Write-Host 'Impossible de lister les barrettes de RAM installees.' -f Yellow }"
+set "RAM_PS=%TEMP%\sys_ram_check.ps1"
+if exist "%RAM_PS%" del "%RAM_PS%"
+>  "%RAM_PS%" echo $mem = Get-CimInstance Win32_PhysicalMemory -ErrorAction SilentlyContinue
+>> "%RAM_PS%" echo $mobo = Get-CimInstance Win32_PhysicalMemoryArray -ErrorAction SilentlyContinue
+>> "%RAM_PS%" echo if ($mobo) {
+>> "%RAM_PS%" echo     $maxCap = [math]::Round($mobo.MaxCapacity / 1024 / 1024, 2)
+>> "%RAM_PS%" echo     Write-Host ('Capacite maximale supportee : ' + $maxCap + ' Go') -f Cyan
+>> "%RAM_PS%" echo     Write-Host ('Nombre de slots memoire    : ' + $mobo.MemoryDevices) -f Cyan
+>> "%RAM_PS%" echo } else {
+>> "%RAM_PS%" echo     Write-Host 'Impossible de determiner les capacites de la carte mere.' -f Yellow
+>> "%RAM_PS%" echo }
+>> "%RAM_PS%" echo Write-Host ''
+>> "%RAM_PS%" echo if ($mem) {
+>> "%RAM_PS%" echo     $totalSticks = $mem.Count
+>> "%RAM_PS%" echo     Write-Host ('Barrettes de RAM installees  : ' + $totalSticks) -f Cyan
+>> "%RAM_PS%" echo     Write-Host ''
+>> "%RAM_PS%" echo     Write-Host 'Details par barrette :' -f Green
+>> "%RAM_PS%" echo     $solderedCount = 0
+>> "%RAM_PS%" echo     $mem ^| ForEach-Object {
+>> "%RAM_PS%" echo         $cap = [math]::Round($_.Capacity / 1GB, 0)
+>> "%RAM_PS%" echo         if ($_.DeviceLocator -like '*on board*') { $solderedCount++ }
+>> "%RAM_PS%" echo         Write-Host ('  - Slot ' + $_.DeviceLocator + ': ' + $cap + ' Go - ' + $_.PartNumber)
+>> "%RAM_PS%" echo     }
+>> "%RAM_PS%" echo     Write-Host ''
+>> "%RAM_PS%" echo     if ($totalSticks -gt 0) {
+>> "%RAM_PS%" echo         if ($solderedCount -eq $totalSticks) {
+>> "%RAM_PS%" echo             Write-Host 'Conclusion : Toute la memoire RAM est soudee a la carte mere et ne peut pas etre remplacee.' -f Red
+>> "%RAM_PS%" echo         } elseif ($solderedCount -gt 0) {
+>> "%RAM_PS%" echo             Write-Host 'Conclusion : Une partie de la memoire RAM est soudee. Les autres barrettes peuvent potentiellement etre remplacees.' -f Yellow
+>> "%RAM_PS%" echo         } else {
+>> "%RAM_PS%" echo             Write-Host 'Conclusion : La memoire RAM est sur des barrettes remplacables (non soudee).' -f Green
+>> "%RAM_PS%" echo         }
+>> "%RAM_PS%" echo     }
+>> "%RAM_PS%" echo } else {
+>> "%RAM_PS%" echo     Write-Host 'Impossible de lister les barrettes de RAM installees.' -f Yellow
+>> "%RAM_PS%" echo }
+powershell -NoProfile -ExecutionPolicy Bypass -File "%RAM_PS%"
+if exist "%RAM_PS%" del "%RAM_PS%" >nul 2>&1
 echo.
 pause
 goto sys_diagnostic_menu
@@ -7116,6 +7093,51 @@ if %errorlevel% equ 0 (
 ) else (
     echo %R%[ ERR ] Echec de l envoi (Verifiez mot de passe application Gmail)%N%
 )
+exit /b
+
+
+REM ===================================================================
+REM  :BuildFavMenu - Construit une liste d'options avec marquage (F)
+REM  Usage : call :BuildFavMenu "label1;label2" "Titre1;Titre2"
+REM  Resultat lu dans %FAV_BUILT_OPTS%
+REM ===================================================================
+:BuildFavMenu
+setlocal EnableDelayedExpansion
+set "_labels=%~1"
+set "_titles=%~2"
+set "_out="
+set /a "_i=0"
+
+:_bfm_loop
+set /a "_i+=1"
+call :_bfm_get_token "!_labels!" %_i% _lbl
+call :_bfm_get_token "!_titles!" %_i% _ttl
+if not defined _lbl goto _bfm_end
+
+set "_is_f=0"
+for /f "usebackq tokens=*" %%F in ("%SCRIPT_DIR%\favoris.txt") do (
+    if "%%F"=="!_lbl!" set "_is_f=1"
+)
+
+if "!_is_f!"=="1" (
+    set "_out=!_out!;(F) !_ttl!"
+) else (
+    set "_out=!_out!;!_ttl!"
+)
+goto _bfm_loop
+
+:_bfm_get_token
+setlocal EnableDelayedExpansion
+set "str=%~1"
+set "idx=%~2"
+set "rtn="
+for /f "tokens=%idx% delims=;" %%a in ("!str!") do set "rtn=%%a"
+endlocal & set "%~3=%rtn%"
+exit /b
+
+:_bfm_end
+set "_out=!_out:~1!"
+endlocal & set "FAV_BUILT_OPTS=%_out%"
 exit /b
 
 
