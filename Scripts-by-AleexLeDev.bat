@@ -969,6 +969,7 @@ set /p "search_term=Entrez le mot-cle (ex: DNS, Wifi) ou validation a vide pour 
 if not defined search_term goto menu_principal
 
 :search_loop
+setlocal EnableDelayedExpansion
 set "count=0"
 set "dyn_opts="
 set "current_cat="
@@ -1017,6 +1018,7 @@ if "%count%"=="0" (
     echo   Aucun resultat trouve.
     echo.
     pause
+    endlocal
     goto search_tools
 )
 
@@ -1024,17 +1026,30 @@ set "dyn_opts=!dyn_opts:~1!"
 call :DynamicMenu "RESULTATS: %search_term%" "!dyn_opts!" "NOCLS"
 set "s_choice=!errorlevel!"
 
-if "!s_choice!"=="0" goto search_tools
-if "!s_choice!"=="299" goto search_tools
-
-if !s_choice! GEQ 200 (
-    set /a t_idx=!s_choice!-200
-    for %%X in (!t_idx!) do call :ToggleFav "!search_res[%%X]!"
-    goto search_loop
+if "!s_choice!"=="0" (
+    endlocal
+    goto search_tools
+)
+if "!s_choice!"=="299" (
+    endlocal
+    goto search_tools
 )
 
-set "target=!search_res[%s_choice%]!"
-goto !target!
+if !s_choice! GEQ 200 (
+    set /a t_idx=!s_choice!-200
+    for %%X in (!t_idx!) do call :ToggleFav "!search_res[%%X]!"
+    endlocal
+    goto search_loop
+)
+
+if defined search_res[%s_choice%] (
+    set "local_target=!search_res[%s_choice%]!"
+) else (
+    set "local_target="
+)
+endlocal & set "target=%local_target%"
+if defined target goto %target%
+goto search_tools
 
 REM ===================================================================
 REM              INSTALLATEUR D'APPLICATIONS (WINGET)
