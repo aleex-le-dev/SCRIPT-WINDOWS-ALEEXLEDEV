@@ -1,10 +1,13 @@
 {
   "permissions": {
     "allow": [
-      "Bash(/tmp/remove_adv_jwt.ps1:*)",
-      "Bash(powershell -NoProfile -ExecutionPolicy Bypass -File /tmp/remove_adv_jwt.ps1)",
-      "Bash(/tmp/debug2.ps1:*)",
-      "Bash(powershell -NoProfile -ExecutionPolicy Bypass -File /tmp/debug2.ps1)"
+      "Bash(powershell -NoProfile -ExecutionPolicy Bypass -File *)",
+      "Bash(powershell -Command *)",
+      "Bash(cmd /c *)",
+      "Write(*.ps1)",
+      "Write(*.bat)",
+      "Read(AI_CONTEXT.md)",
+      "Read(Scripts-by-AleexLeDev.bat)"
     ]
   }
 }
