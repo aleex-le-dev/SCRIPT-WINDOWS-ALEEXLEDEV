@@ -88,176 +88,156 @@ echo %Y%[ i ] Initialisation terminée. Bienvenue, ALEEXLEDEV.%N%
 
 REM --- CHARGEMENT DE LA BASE D'OUTILS ---
 
-set "t[2]=---:DIAGNOSTIC"
-set "t[3]=sys_diagnostic_menu:Analyse et Diagnostic Systeme~Regroupe 8 outils d'analyse (Systeme, Reseau...)"
-set "t[4]=---:REPARATION"
-set "t[5]=sys_rescue_menu:Outil Reparation Windows (Rescue)~Menu multi-outils (SFC, DISM, CHKDSK, Reset WinUpdate...)"
-set "t[6]=sys_repair_icons:Reparation Cache Icones~Corrige les icones/miniatures corrompues"
-set "t[7]=sys_winre:Mode Reparation (WinRE)~Demarrer dans l'environnement de reparation Windows"
-set "t[8]=---:NETTOYAGE ET OPTIMISATION"
-set "t[9]=sys_opti_menu:Nettoyeur et Optimiseur Systeme~Vider le cache, logs, et gagner en vitesse"
-set "t[10]=---:RESEAU"
-set "t[11]=dns_manager:Gestionnaire DNS~Changer DNS Cloudflare/Google"
-set "t[12]=sys_network_menu:Menu de Depannage Reseau~Outils avances (DNS, ARP, TCP/IP)"
-set "t[13]=net_cyber_menu:Scanner de failles et Pentest~Recherche de vulnerabilites Web et Reseau"
-set "t[14]=---:DISQUE"
-set "t[15]=disk_manager:Formatteur de Disque (DISKPART)~Formater un disque de facon securisee"
-set "t[16]=---:APPLICATIONS"
-set "t[17]=winget_manager:Mises a jour d'applications~Mettre a jour vos logiciels via Winget"
-set "t[18]=app_installer:Installateur d'applications~Installer des logiciels par categorie"
-set "t[19]=---:COMPTES ET SECURITE"
-set "t[20]=sys_passwords_menu:Extracteurs de mots de passe~Outils Powershell (Credentials, Wi-Fi)"
-set "t[21]=sys_unlock_notes:Recuperation de Compte bloque~Instructions pour reprendre controle"
-set "t[22]=um_menu:Gestion utilisateurs locaux~Panneau de gestion local (Admin, Pass, Ajouts)"
-set "t[23]=sys_av_test:Test Antivirus (EICAR Safe)~Tester votre antivirus"
-set "t[24]=cyber_privesc_audit:Audit de piratage local (PrivEsc)~Verifie l'elevation de privileges"
-set "t[25]=cyber_gen_htaccess:Protection de serveur Web (.htaccess)~Genere un fichier blinde"
-set "t[26]=res_restore_point:Creer un Point de Restauration~Recommande avant toute reparation:HIDDEN"
-set "t[27]=---:EXTRACTION ET SAUVEGARDE"
-set "t[28]=sys_export_menu:Extracteur et Sauvegarde de Donnees~Exporter les cles, mots de passe Wi-Fi et pilotes"
-set "t[29]=---:PERSONNALISATION"
-set "t[30]=context_menu:Menu contextuel Windows 11~Classic/Modern"
-set "t[31]=sys_god_mode:Dossier God Mode~Raccourci ultime des parametres"
-set "t[56]=sys_gaming_mode:Mode Gaming~Booster les perfs jeux"
-set "t[57]=sys_shortcuts_bureau:Raccourcis Bureau 1-Clic~Redemarrer/Eteindre"
-set "t[62]=---:MATERIEL"
-set "t[63]=touch_screen_manager:Gestionnaire Ecran Tactile~Activer/Desactiver"
-set "t[64]=sys_print_manager:Gestionnaire d'Imprimantes~Lister/Vider le Spooler"
-set "t[65]=sys_power_plan:Gestionnaire Plan d'Alimentation~Equilibre/Performances"
-set "t[66]=cyber_advanced_inject:Injections Avancees (SSTI/XXE/JWT)~Attaques serveur et API"
-set "t[67]=cyber_recon_advanced:Reconnaissance Avancee~AXFR, crt.sh, WHOIS"
-set "t[68]=cyber_pentest_report:Rapport Pentest HTML Unifie~Scan exhaustif"
-set "t[73]=cyber_exposure_audit:Audit d'Exposition des Donnees~Recherche fichiers sensibles:HIDDEN"
-set "t[74]=cyber_wifi_audit:Analyseur de Securite Wi-Fi~Detection Evil Twin:HIDDEN"
-REM t[75] supprime car doublon exact de t[147] (IP GRABBER)
-REM --- SUITE DES SOUS-MENUS RESEAU ET CYBER (HIDDEN) ---
-set "t[128]=show_dns_config:Affichage config DNS~Voir la configuration actuelle:HIDDEN"
-set "t[129]=install_cloudflare_full:DNS Cloudflare~1.1.1.1 et 1.0.0.1:HIDDEN"
-set "t[130]=install_google_full:DNS Google~8.8.8.8 et 8.8.4.4:HIDDEN"
-set "t[131]=restore_dns:Restauration DNS DHCP~Par defaut:HIDDEN"
-set "t[132]=net_flush_dns:Vider le cache DNS~ipconfig /flushdns:HIDDEN"
-set "t[133]=net_display_dns:Afficher le cache DNS~ipconfig /displaydns:HIDDEN"
-set "t[134]=net_clear_arp:Vider le cache ARP~arp -d *:HIDDEN"
-set "t[135]=net_display_arp:Afficher la table ARP~arp -a:HIDDEN"
-set "t[136]=net_renew_ip:Liberer et Renouveler l'IP~release / renew:HIDDEN"
-set "t[137]=net_reset_tcpip:Reset TCP/IP Stack~netsh int ip reset:HIDDEN"
-set "t[138]=net_reset_winsock:Reset Sockets Windows~netsh winsock reset:HIDDEN"
-set "t[139]=net_reset_all:Reset Reseau Automatique~Flush DNS, Winsock, TCP/IP:HIDDEN"
-set "t[140]=net_restart_adapters:Redemarrer les cartes reseau~Ethernet et Wi-Fi:HIDDEN"
-set "t[141]=net_fast_reset:Script d'Urgence Reseau~7 commandes de depannage:HIDDEN"
-set "t[142]=cyber_triage:TRIAGE Reseau~Diagnostic rapide de connexion:HIDDEN"
-set "t[143]=cyber_adapter_audit:ADAPTATEURS Reseau~Infos MAC et vitesse:HIDDEN"
-set "t[144]=cyber_lan_scan:LAN SCAN~Scan turbo (Marques/Ports/BruteForce):HIDDEN"
-set "t[145]=cyber_flux_analysis:FLUX Reseau~Analyse des ports et processus locaux:HIDDEN"
-set "t[146]=cyber_dns_leak:DNS LEAK~Verifier la fuite DNS (VPN):HIDDEN"
-set "t[147]=cyber_ip_grabber:IP GRABBER~Obtenir l'IP d'une box distante:HIDDEN"
-REM --- SOUS-OUTILS DU MENU DIAGNOSTIC ---
-set "t[148]=sys_report:Rapport Systeme~CPU, RAM, GPU, Stockage, Reseau:HIDDEN"
-set "t[149]=sys_temp_report:Rapport de Temperature~Capteurs CPU et GPU:HIDDEN"
-set "t[150]=sys_ram_check:Test de Memoire RAM~Analyse des barrettes:HIDDEN"
-set "t[151]=sys_diag_network:Diagnostic Reseau~Ping, tracert, ports:HIDDEN"
-set "t[152]=sys_battery_report:Rapport Batterie~Usure et autonomie:HIDDEN"
-set "t[153]=sys_bitlocker_check:Etat BitLocker~Chiffrement des disques:HIDDEN"
-set "t[154]=sys_event_log:Journal des Erreurs~Evenements critiques Windows:HIDDEN"
-set "t[155]=sys_hw_test:Test Materiel~Processeur et memoire stress test:HIDDEN"
-set "t[156]=sys_defender:Etat Windows Defender~Antivirus et protection:HIDDEN"
-REM --- SOUS-OUTILS DU MENU RESCUE ---
-set "t[157]=res_sfc:SFC Scannow~Reparation des fichiers systeme:HIDDEN"
-set "t[158]=res_dism_check:DISM CheckHealth~Verifier l'integrite de l'image:HIDDEN"
-set "t[159]=res_dism_restore:DISM RestoreHealth~Restaurer l'image systeme:HIDDEN"
-set "t[160]=res_temp_clean:Nettoyage temp et SoftwareDistribution~Liberer de l'espace:HIDDEN"
-set "t[161]=res_chkdsk:CHKDSK~Reparer les erreurs disque:HIDDEN"
-set "t[162]=res_wu_reset:Reset Windows Update~Reinitialiser les services MAJ:HIDDEN"
-set "t[163]=res_explorer_restart:Redemarrer l'Explorateur~Sans redemarrer le PC:HIDDEN"
-set "t[164]=res_gpu_reset:Reinitialiser le GPU~Win+Ctrl+Shift+B:HIDDEN"
-REM --- SOUS-OUTILS DU MENU MOT DE PASSE ---
-set "t[165]=dump_credman:Credential Manager~Extraire les identifiants Windows:HIDDEN"
-set "t[166]=dump_wifi:Mots de passe Wi-Fi~Afficher ou exporter les SSID:HIDDEN"
-set "t[167]=sys_nirsoft_pw:Extracteur Navigateurs (Nirsoft)~Chrome, Edge, Firefox:HIDDEN"
-REM --- SOUS-OUTILS EXTRACTION ET SAUVEGARDE ---
-set "t[168]=sys_win_key:Cle Windows~Retrouver la cle de licence Windows:HIDDEN"
-set "t[169]=sys_drivers:Export des Pilotes~Sauvegarde de tous les pilotes:HIDDEN"
-set "t[170]=sys_export_software:Liste des Logiciels~Exporter via Winget:HIDDEN"
-set "t[171]=sys_export_wifi_apps:Export Wi-Fi et Apps~Profils reseau et logiciels:HIDDEN"
-REM --- SOUS-OUTILS TEST MATERIEL (hw_test) ---
-set "t[172]=hw_smart:Test SMART des Disques~Sante et duree de vie:HIDDEN"
-set "t[173]=hw_winsat:Score WinSAT~Indice de performance Windows:HIDDEN"
-set "t[174]=hw_ram_test:Test RAM (Windows)~Outil de diagnostic memoire:HIDDEN"
-set "t[175]=hw_full_report:Rapport Materiel Complet~Tous les composants:HIDDEN"
-set "t[176]=hw_all:Tous les Tests~Lancer tous les tests materiels:HIDDEN"
-REM --- SOUS-OUTILS JOURNAL ERREURS (event_log) ---
-set "t[177]=ev_critical_24h:Erreurs Critiques 24h~Evenements systeme recents:HIDDEN"
-set "t[178]=ev_critical_7d:Erreurs Critiques 7 jours~Historique des pannes:HIDDEN"
-set "t[179]=ev_app_24h:Erreurs Applications 24h~Crash et exceptions:HIDDEN"
-set "t[180]=ev_disk_warn:Alertes Disque~Avertissements SMART et disque:HIDDEN"
-REM --- SOUS-OUTILS WINRE / MODE DEMARRAGE ---
-set "t[181]=winre_boot:Redemarrer sur WinRE~Environnement de reparation:HIDDEN"
-set "t[182]=winre_bios:Redemarrer vers le BIOS~Acces au firmware UEFI:HIDDEN"
-set "t[183]=winre_bootmenu:Menu de demarrage~Choisir le peripherique:HIDDEN"
-set "t[184]=winre_safe_minimal:Mode sans echec Minimal~Sans reseau ni ligne de cmd:HIDDEN"
-set "t[185]=winre_safe_network:Mode sans echec Reseau~Avec pilotes reseau:HIDDEN"
-set "t[186]=winre_safe_cmd:Mode sans echec Invite~Avec invite de commandes:HIDDEN"
-set "t[187]=winre_nosign:Sans verification signatures~Pilotes non signes:HIDDEN"
-set "t[188]=winre_status:Statut BCD actuel~Voir la configuration de demarrage:HIDDEN"
-set "t[189]=winre_reset:Reinitialiser BCD~Restaurer le demarrage normal:HIDDEN"
-REM --- SOUS-OUTILS WINDOWS DEFENDER ---
-set "t[190]=wd_quick:Scan Rapide Defender~Analyse de securite rapide:HIDDEN"
-set "t[191]=wd_full:Scan Complet Defender~Analyse totale du systeme:HIDDEN"
-set "t[192]=wd_update:Mettre a jour Defender~Signatures de virus:HIDDEN"
-set "t[193]=wd_threats:Voir les Menaces~Historique des virus detectes:HIDDEN"
-set "t[194]=wd_status:Statut Defender~Protection active ou non:HIDDEN"
-REM --- SOUS-OUTILS NETTOYAGE ET OPTIMISATION ---
-set "t[195]=sys_clean_unified:Nettoyage Complet Unifie~Temp, WU, DNS, disque...:HIDDEN"
-set "t[196]=sys_registry_cleanup:Nettoyage du Registre~Cles orphelines:HIDDEN"
-set "t[197]=sys_tweaks_menu:Optimisations Avancees~Telemetrie, Cortana, performance:HIDDEN"
-set "t[198]=sys_startup_manager:Gestionnaire Demarrage~Programmes au boot Windows:HIDDEN"
-REM --- SOUS-OUTILS NETTOYAGE GRANULAIRE (cl_*) ---
-set "t[199]=cl_temp:Vider les Temporaires~Fichiers temp utilisateur et systeme:HIDDEN"
-set "t[200]=cl_wu:Purger Windows Update~Cache SoftwareDistribution:HIDDEN"
-set "t[201]=cl_dns:Vider le cache DNS~ipconfig /flushdns:HIDDEN"
-set "t[202]=cl_disk:Nettoyage Disque~cleanmgr compression:HIDDEN"
-set "t[203]=cl_registry:Nettoyer le Registre~Cles orphelines:HIDDEN"
-set "t[204]=cl_clipboard:Vider le Presse-papiers~Nettoyer les donnees copiees:HIDDEN"
-set "t[205]=cl_all:Tout Nettoyer d'un coup~Nettoyage automatique complet:HIDDEN"
-REM --- SOUS-OUTILS TEST ANTIVIRUS (av_test) ---
-set "t[206]=av_launcher_eicar:Test EICAR Standard~Fichier de test antivirus officiel:HIDDEN"
-set "t[207]=av_launcher_heur:Test Heuristique~Detection comportementale:HIDDEN"
-set "t[208]=av_clean:Nettoyer les Fichiers Test~Supprimer les tests EICAR:HIDDEN"
-REM --- SOUS-OUTILS ECRAN TACTILE (Materiel) ---
-set "t[209]=touch_restart:Redemarrer le pilote tactile~Reset du service et peripherique:HIDDEN"
-set "t[210]=touch_disable:Desactiver l'ecran tactile~Desactive le pilote HID tactile:HIDDEN"
-set "t[211]=touch_enable:Activer l'ecran tactile~Reactive le pilote HID tactile:HIDDEN"
-REM --- SOUS-OUTILS IMPRIMANTE (Materiel) ---
-set "t[212]=print_list:Lister les imprimantes~Affiche toutes les imprimantes:HIDDEN"
-set "t[213]=print_clear_queue:Vider la file d'attente~Supprime les jobs bloques:HIDDEN"
-set "t[214]=print_remove:Supprimer une imprimante~Retirer une imprimante installee:HIDDEN"
-set "t[215]=print_restart_spooler:Redemarrer le Spooler~Relance le service d'impression:HIDDEN"
-REM --- SOUS-OUTILS PLAN D'ALIMENTATION (Materiel) ---
-set "t[216]=pp_balanced:Plan Equilibre~Usage quotidien (batterie + perf):HIDDEN"
-set "t[217]=pp_saver:Plan Economies d'Energie~Autonomie maximale:HIDDEN"
-set "t[218]=pp_high:Plan Hautes Performances~Maximum de puissance:HIDDEN"
-set "t[219]=pp_ultimate:Plan Performances Ultimes~Plan secret Windows:HIDDEN"
-set "t[220]=pp_current:Voir le Plan Actuel~Afficher le plan d'alimentation:HIDDEN"
-set "t[221]=pp_list:Lister tous les Plans~Tous les plans disponibles:HIDDEN"
-REM --- SOUS-OUTILS MENU CONTEXTUEL (Personnalisation) ---
-set "t[222]=activate_classic:Menu Contextuel Classique~Activer le menu classique Win10:HIDDEN"
-set "t[223]=restore_modern:Menu Contextuel Moderne~Restaurer le menu Win11:HIDDEN"
-REM --- SOUS-OUTILS WINGET (Applications) ---
-set "t[224]=update_single:Mettre a jour une application~Choisir l'app via Winget:HIDDEN"
-set "t[225]=update_all:Mettre a jour toutes les apps~winget upgrade --all:HIDDEN"
-REM --- SOUS-OUTILS INSTALLATEUR APPS ---
-set "t[226]=app_install_chrome:Google Chrome~Navigateur web Google:HIDDEN"
-set "t[227]=app_install_vlc:VLC Media Player~Lecteur multimedia:HIDDEN"
-set "t[228]=app_install_pdf:Sumatra PDF~Lecteur PDF ultra-leger:HIDDEN"
-set "t[229]=app_install_winrar:WinRAR~Gestionnaire d'archives:HIDDEN"
-REM --- SOUS-OUTILS GESTION UTILISATEURS ---
-set "t[230]=um_list:Lister les utilisateurs~Afficher tous les comptes locaux:HIDDEN"
-set "t[231]=um_add:Ajouter un utilisateur~Creer un nouveau compte local:HIDDEN"
-set "t[232]=um_del:Supprimer un utilisateur~Effacer compte et donnees:HIDDEN"
-set "t[233]=um_admin:Gerer les droits~Passer standard ou administrateur:HIDDEN"
-set "t[234]=um_reset:Ajouter/Modifier MDP~Changer mot de passe utilisateur:HIDDEN"
-set "t[235]=um_remove_pwd:Supprimer le MDP (Auto-login)~Enlever le mot de passe:HIDDEN"
-set "total_tools=235"
+set "t[1]=---:DIAGNOSTIC"
+set "t[2]=sys_diagnostic_menu:Analyse et Diagnostic Systeme~Regroupe 8 outils d'analyse (Systeme, Reseau...)"
+set "t[3]=sys_report:Rapport Systeme~CPU, RAM, GPU, Stockage, Reseau:HIDDEN"
+set "t[4]=sys_temp_report:Rapport de Temperature~Capteurs CPU et GPU:HIDDEN"
+set "t[5]=sys_ram_check:Test de Memoire RAM~Analyse des barrettes:HIDDEN"
+set "t[6]=sys_diag_network:Diagnostic Reseau~Ping, tracert, ports:HIDDEN"
+set "t[7]=sys_battery_report:Rapport Batterie~Usure et autonomie:HIDDEN"
+set "t[8]=sys_bitlocker_check:Etat BitLocker~Chiffrement des disques:HIDDEN"
+set "t[9]=sys_event_log:Journal des Erreurs~Evenements critiques Windows:HIDDEN"
+set "t[10]=sys_hw_test:Test Materiel~Processeur et memoire stress test:HIDDEN"
+set "t[11]=sys_defender:Etat Windows Defender~Antivirus et protection:HIDDEN"
+set "t[12]=ev_critical_24h:Erreurs Critiques 24h~Evenements systeme recents:HIDDEN"
+set "t[13]=ev_critical_7d:Erreurs Critiques 7 jours~Historique des pannes:HIDDEN"
+set "t[14]=ev_app_24h:Erreurs Applications 24h~Crash et exceptions:HIDDEN"
+set "t[15]=ev_disk_warn:Alertes Disque~Avertissements SMART et disque:HIDDEN"
+set "t[16]=---:REPARATION"
+set "t[17]=sys_rescue_menu:Outil Reparation Windows (Rescue)~Menu multi-outils (SFC, DISM, CHKDSK, Reset WinUpdate...)"
+set "t[18]=sys_repair_icons:Reparation Cache Icones~Corrige les icones/miniatures corrompues"
+set "t[19]=sys_winre:Mode Reparation (WinRE)~Demarrer dans l'environnement de reparation Windows"
+set "t[20]=res_sfc:SFC Scannow~Reparation des fichiers systeme:HIDDEN"
+set "t[21]=res_dism_check:DISM CheckHealth~Verifier l'integrite de l'image:HIDDEN"
+set "t[22]=res_dism_restore:DISM RestoreHealth~Restaurer l'image systeme:HIDDEN"
+set "t[23]=res_temp_clean:Nettoyage temp et SoftwareDistribution~Liberer de l'espace:HIDDEN"
+set "t[24]=res_chkdsk:CHKDSK~Reparer les erreurs disque:HIDDEN"
+set "t[25]=res_wu_reset:Reset Windows Update~Reinitialiser les services MAJ:HIDDEN"
+set "t[26]=res_explorer_restart:Redemarrer l'Explorateur~Sans redemarrer le PC:HIDDEN"
+set "t[27]=res_gpu_reset:Reinitialiser le GPU~Win+Ctrl+Shift+B:HIDDEN"
+set "t[28]=winre_boot:Redemarrer sur WinRE~Environnement de reparation:HIDDEN"
+set "t[29]=winre_bios:Redemarrer vers le BIOS~Acces au firmware UEFI:HIDDEN"
+set "t[30]=winre_bootmenu:Menu de demarrage~Choisir le peripherique:HIDDEN"
+set "t[31]=winre_safe_minimal:Mode sans echec Minimal~Sans reseau ni ligne de cmd:HIDDEN"
+set "t[32]=winre_safe_network:Mode sans echec Reseau~Avec pilotes reseau:HIDDEN"
+set "t[33]=winre_safe_cmd:Mode sans echec Invite~Avec invite de commandes:HIDDEN"
+set "t[34]=winre_nosign:Sans verification signatures~Pilotes non signes:HIDDEN"
+set "t[35]=winre_status:Statut BCD actuel~Voir la configuration de demarrage:HIDDEN"
+set "t[36]=winre_reset:Reinitialiser BCD~Restaurer le demarrage normal:HIDDEN"
+set "t[37]=---:NETTOYAGE ET OPTIMISATION"
+set "t[38]=sys_opti_menu:Nettoyeur et Optimiseur Systeme~Vider le cache, logs, et gagner en vitesse"
+set "t[39]=sys_clean_unified:Nettoyage Complet Unifie~Temp, WU, DNS, disque...:HIDDEN"
+set "t[40]=sys_registry_cleanup:Nettoyage du Registre~Cles orphelines:HIDDEN"
+set "t[41]=sys_tweaks_menu:Optimisations Avancees~Telemetrie, Cortana, performance:HIDDEN"
+set "t[42]=sys_startup_manager:Gestionnaire Demarrage~Programmes au boot Windows:HIDDEN"
+set "t[43]=cl_temp:Vider les Temporaires~Fichiers temp utilisateur et systeme:HIDDEN"
+set "t[44]=cl_wu:Purger Windows Update~Cache SoftwareDistribution:HIDDEN"
+set "t[45]=cl_dns:Vider le cache DNS~ipconfig /flushdns:HIDDEN"
+set "t[46]=cl_disk:Nettoyage Disque~cleanmgr compression:HIDDEN"
+set "t[47]=cl_registry:Nettoyer le Registre~Cles orphelines:HIDDEN"
+set "t[48]=cl_clipboard:Vider le Presse-papiers~Nettoyer les donnees copiees:HIDDEN"
+set "t[49]=cl_all:Tout Nettoyer d'un coup~Nettoyage automatique complet:HIDDEN"
+set "t[50]=---:RESEAU"
+set "t[51]=dns_manager:Gestionnaire DNS~Changer DNS Cloudflare/Google"
+set "t[52]=sys_network_menu:Menu de Depannage Reseau~Outils avances (DNS, ARP, TCP/IP)"
+set "t[53]=net_cyber_menu:Scanner de failles et Pentest~Recherche de vulnerabilites Web et Reseau"
+set "t[54]=show_dns_config:Affichage config DNS~Voir la configuration actuelle:HIDDEN"
+set "t[55]=install_cloudflare_full:DNS Cloudflare~1.1.1.1 et 1.0.0.1:HIDDEN"
+set "t[56]=install_google_full:DNS Google~8.8.8.8 et 8.8.4.4:HIDDEN"
+set "t[57]=restore_dns:Restauration DNS DHCP~Par defaut:HIDDEN"
+set "t[58]=net_flush_dns:Vider le cache DNS~ipconfig /flushdns:HIDDEN"
+set "t[59]=net_display_dns:Afficher le cache DNS~ipconfig /displaydns:HIDDEN"
+set "t[60]=net_clear_arp:Vider le cache ARP~arp -d *:HIDDEN"
+set "t[61]=net_display_arp:Afficher la table ARP~arp -a:HIDDEN"
+set "t[62]=net_renew_ip:Liberer et Renouveler l'IP~release / renew:HIDDEN"
+set "t[63]=net_reset_tcpip:Reset TCP/IP Stack~netsh int ip reset:HIDDEN"
+set "t[64]=net_reset_winsock:Reset Sockets Windows~netsh winsock reset:HIDDEN"
+set "t[65]=net_reset_all:Reset Reseau Automatique~Flush DNS, Winsock, TCP/IP:HIDDEN"
+set "t[66]=net_restart_adapters:Redemarrer les cartes reseau~Ethernet et Wi-Fi:HIDDEN"
+set "t[67]=net_fast_reset:Script d'Urgence Reseau~7 commandes de depannage:HIDDEN"
+set "t[68]=cyber_triage:TRIAGE Reseau~Diagnostic rapide de connexion:HIDDEN"
+set "t[69]=cyber_adapter_audit:ADAPTATEURS Reseau~Infos MAC et vitesse:HIDDEN"
+set "t[70]=cyber_lan_scan:LAN SCAN~Scan turbo (Marques/Ports/BruteForce):HIDDEN"
+set "t[71]=cyber_flux_analysis:FLUX Reseau~Analyse des ports et processus locaux:HIDDEN"
+set "t[72]=cyber_dns_leak:DNS LEAK~Verifier la fuite DNS (VPN):HIDDEN"
+set "t[73]=cyber_ip_grabber:IP GRABBER~Obtenir l'IP d'une box distante:HIDDEN"
+set "t[74]=---:DISQUE"
+set "t[75]=disk_manager:Formatteur de Disque (DISKPART)~Formater un disque de facon securisee"
+set "t[76]=---:APPLICATIONS"
+set "t[77]=winget_manager:Mises a jour d'applications~Mettre a jour vos logiciels via Winget"
+set "t[78]=app_installer:Installateur d'applications~Installer des logiciels par categorie"
+set "t[79]=update_single:Mettre a jour une application~Choisir l'app via Winget:HIDDEN"
+set "t[80]=update_all:Mettre a jour toutes les apps~winget upgrade --all:HIDDEN"
+set "t[81]=app_install_chrome:Google Chrome~Navigateur web Google:HIDDEN"
+set "t[82]=app_install_vlc:VLC Media Player~Lecteur multimedia:HIDDEN"
+set "t[83]=app_install_pdf:Sumatra PDF~Lecteur PDF ultra-leger:HIDDEN"
+set "t[84]=app_install_winrar:WinRAR~Gestionnaire d'archives:HIDDEN"
+set "t[85]=---:COMPTES ET SECURITE"
+set "t[86]=sys_passwords_menu:Extracteurs de mots de passe~Outils Powershell (Credentials, Wi-Fi)"
+set "t[87]=sys_unlock_notes:Recuperation de Compte bloque~Instructions pour reprendre controle"
+set "t[88]=um_menu:Gestion utilisateurs locaux~Panneau de gestion local (Admin, Pass, Ajouts)"
+set "t[89]=sys_av_test:Test Antivirus (EICAR Safe)~Tester votre antivirus"
+set "t[90]=cyber_privesc_audit:Audit de piratage local (PrivEsc)~Verifie l'elevation de privileges"
+set "t[91]=cyber_gen_htaccess:Protection de serveur Web (.htaccess)~Genere un fichier blinde"
+set "t[92]=res_restore_point:Creer un Point de Restauration~Recommande avant toute reparation:HIDDEN"
+set "t[93]=dump_credman:Credential Manager~Extraire les identifiants Windows:HIDDEN"
+set "t[94]=dump_wifi:Mots de passe Wi-Fi~Afficher ou exporter les SSID:HIDDEN"
+set "t[95]=sys_nirsoft_pw:Extracteur Navigateurs (Nirsoft)~Chrome, Edge, Firefox:HIDDEN"
+set "t[96]=wd_quick:Scan Rapide Defender~Analyse de securite rapide:HIDDEN"
+set "t[97]=wd_full:Scan Complet Defender~Analyse totale du systeme:HIDDEN"
+set "t[98]=wd_update:Mettre a jour Defender~Signatures de virus:HIDDEN"
+set "t[99]=wd_threats:Voir les Menaces~Historique des virus detectes:HIDDEN"
+set "t[100]=wd_status:Statut Defender~Protection active ou non:HIDDEN"
+set "t[101]=av_launcher_eicar:Test EICAR Standard~Fichier de test antivirus officiel:HIDDEN"
+set "t[102]=av_launcher_heur:Test Heuristique~Detection comportementale:HIDDEN"
+set "t[103]=av_clean:Nettoyer les Fichiers Test~Supprimer les tests EICAR:HIDDEN"
+set "t[104]=um_list:Lister les utilisateurs~Afficher tous les comptes locaux:HIDDEN"
+set "t[105]=um_add:Ajouter un utilisateur~Creer un nouveau compte local:HIDDEN"
+set "t[106]=um_del:Supprimer un utilisateur~Effacer compte et donnees:HIDDEN"
+set "t[107]=um_admin:Gerer les droits~Passer standard ou administrateur:HIDDEN"
+set "t[108]=um_reset:Ajouter/Modifier MDP~Changer mot de passe utilisateur:HIDDEN"
+set "t[109]=um_remove_pwd:Supprimer le MDP (Auto-login)~Enlever le mot de passe:HIDDEN"
+set "t[110]=---:EXTRACTION ET SAUVEGARDE"
+set "t[111]=sys_export_menu:Extracteur et Sauvegarde de Donnees~Exporter les cles, mots de passe Wi-Fi et pilotes"
+set "t[112]=sys_win_key:Cle Windows~Retrouver la cle de licence Windows:HIDDEN"
+set "t[113]=sys_drivers:Export des Pilotes~Sauvegarde de tous les pilotes:HIDDEN"
+set "t[114]=sys_export_software:Liste des Logiciels~Exporter via Winget:HIDDEN"
+set "t[115]=sys_export_wifi_apps:Export Wi-Fi et Apps~Profils reseau et logiciels:HIDDEN"
+set "t[116]=---:PERSONNALISATION"
+set "t[117]=context_menu:Menu contextuel Windows 11~Classic/Modern"
+set "t[118]=sys_god_mode:Dossier God Mode~Raccourci ultime des parametres"
+set "t[119]=sys_gaming_mode:Mode Gaming~Booster les perfs jeux"
+set "t[120]=sys_shortcuts_bureau:Raccourcis Bureau 1-Clic~Redemarrer/Eteindre"
+set "t[121]=activate_classic:Menu Contextuel Classique~Activer le menu classique Win10:HIDDEN"
+set "t[122]=restore_modern:Menu Contextuel Moderne~Restaurer le menu Win11:HIDDEN"
+set "t[123]=---:MATERIEL"
+set "t[124]=touch_screen_manager:Gestionnaire Ecran Tactile~Activer/Desactiver"
+set "t[125]=sys_print_manager:Gestionnaire d'Imprimantes~Lister/Vider le Spooler"
+set "t[126]=sys_power_plan:Gestionnaire Plan d'Alimentation~Equilibre/Performances"
+set "t[127]=cyber_advanced_inject:Injections Avancees (SSTI/XXE/JWT)~Attaques serveur et API"
+set "t[128]=cyber_recon_advanced:Reconnaissance Avancee~AXFR, crt.sh, WHOIS"
+set "t[129]=cyber_pentest_report:Rapport Pentest HTML Unifie~Scan exhaustif"
+set "t[130]=cyber_exposure_audit:Audit d'Exposition des Donnees~Recherche fichiers sensibles:HIDDEN"
+set "t[131]=cyber_wifi_audit:Analyseur de Securite Wi-Fi~Detection Evil Twin:HIDDEN"
+set "t[132]=hw_smart:Test SMART des Disques~Sante et duree de vie:HIDDEN"
+set "t[133]=hw_winsat:Score WinSAT~Indice de performance Windows:HIDDEN"
+set "t[134]=hw_ram_test:Test RAM (Windows)~Outil de diagnostic memoire:HIDDEN"
+set "t[135]=hw_full_report:Rapport Materiel Complet~Tous les composants:HIDDEN"
+set "t[136]=hw_all:Tous les Tests~Lancer tous les tests materiels:HIDDEN"
+set "t[137]=touch_restart:Redemarrer le pilote tactile~Reset du service et peripherique:HIDDEN"
+set "t[138]=touch_disable:Desactiver l'ecran tactile~Desactive le pilote HID tactile:HIDDEN"
+set "t[139]=touch_enable:Activer l'ecran tactile~Reactive le pilote HID tactile:HIDDEN"
+set "t[140]=print_list:Lister les imprimantes~Affiche toutes les imprimantes:HIDDEN"
+set "t[141]=print_clear_queue:Vider la file d'attente~Supprime les jobs bloques:HIDDEN"
+set "t[142]=print_remove:Supprimer une imprimante~Retirer une imprimante installee:HIDDEN"
+set "t[143]=print_restart_spooler:Redemarrer le Spooler~Relance le service d'impression:HIDDEN"
+set "t[144]=pp_balanced:Plan Equilibre~Usage quotidien (batterie + perf):HIDDEN"
+set "t[145]=pp_saver:Plan Economies d'Energie~Autonomie maximale:HIDDEN"
+set "t[146]=pp_high:Plan Hautes Performances~Maximum de puissance:HIDDEN"
+set "t[147]=pp_ultimate:Plan Performances Ultimes~Plan secret Windows:HIDDEN"
+set "t[148]=pp_current:Voir le Plan Actuel~Afficher le plan d'alimentation:HIDDEN"
+set "t[149]=pp_list:Lister tous les Plans~Tous les plans disponibles:HIDDEN"
+set "total_tools=149"
 REM --- NOMS D'AFFICHAGE POUR AutoMenu (map_label) ---
 set "map_touch_restart=Redemarrer le pilote tactile~Reset du service et peripherique"
 set "map_touch_disable=Desactiver l'ecran tactile~Desactive le pilote HID tactile"
@@ -979,25 +959,82 @@ goto system_tools
 REM ===================================================================
 :search_tools
 cls
-set "search_lbl="
-REM Construire les donnees de recherche via variable d'environnement (evite ecriture %TEMP% bloquee par Defender)
-set "ALEEX_TOOLS_DATA="
+echo ===================================================
+echo           RECHERCHE DE SCRIPTS / OUTILS
+echo ===================================================
+echo.
+set "search_term="
+set /p "search_term=Entrez le mot-cle (ex: DNS, Wifi) ou validation a vide pour Quitter : "
+
+if not defined search_term goto menu_principal
+
+:search_loop
+set "count=0"
+set "dyn_opts="
+set "current_cat="
+set "last_cat_added="
+
 for /l %%I in (1,1,%total_tools%) do (
-    set "_e=!t[%%I]!"
-    if defined _e (
-        if not "!_e:~0,3!"=="---" (
-            set "ALEEX_TOOLS_DATA=!ALEEX_TOOLS_DATA!|!_e!"
-        )
-    )
+    if defined t[%%I] (
+        set "_val=!t[%%I]!"
+        if "!_val:~0,3!"=="---" (
+            for /f "tokens=2 delims=:" %%C in ("!_val!") do set "current_cat=%%C"
+        ) else (
+            echo !_val! | findstr /I /C:"%search_term%" >nul
+            if !errorlevel! == 0 (
+                if !count! LSS 30 (
+                    set /a count+=1
+                    for /f "tokens=1,2 delims=:" %%a in ("!_val!") do (
+                        for /f "tokens=1,2 delims=~" %%c in ("%%b") do (
+                            set "search_res[!count!]=%%a"
+                            
+                            if not "!last_cat_added!"=="!current_cat!" (
+                                set "dyn_opts=!dyn_opts!;[--- !current_cat! ---]"
+                                set "last_cat_added=!current_cat!"
+                            )
+                            
+                            set "_d=%%d"
+                            if defined _d (
+                                set "_d=!_d::HIDDEN=!"
+                                set "dyn_opts=!dyn_opts!;%%c - !_d!"
+                            ) else (
+                                set "dyn_opts=!dyn_opts!;%%c"
+                            )
+                        )
+                    )
+                )
+            )
+        )
+    )
 )
-set "ALEEX_TOOLS_DATA=!ALEEX_TOOLS_DATA:~1!"
-for /f "usebackq tokens=*" %%L in (`powershell -NoProfile -ExecutionPolicy Bypass -Command "$raw=$env:ALEEX_TOOLS_DATA;$all=@();if($raw){foreach($entry in ($raw-split'\|')){$p=$entry-split'~',2;$ls=$p[0];$d=if($p.Count-gt 1){($p[1]-replace':HIDDEN$','').Trim()}else{'');$c2=$ls.IndexOf(':');if($c2-ge 0){$lb=$ls.Substring(0,$c2).Trim();$nm=$ls.Substring($c2+1).Trim();if($lb-and $lb-ne'---'){$all+=@{N=$nm;D=$d;L=$lb}}}}};$list=[array]($all|Sort-Object{$_['N']});$q='';$s=0;function Dsp{param($q,$r,$s);clear-host;Write-Host'  ============================================'-f Cyan;Write-Host'   [S] RECHERCHE D OUTILS'-f White;Write-Host'  ============================================'-f Cyan;Write-Host'';Write-Host('  Recherche : '+$q+'_')-f Yellow;Write-Host'';if($r.Count-gt 0){Write-Host('  '+$r.Count+' outil(s) trouve(s)')-f Cyan;Write-Host'';for($i=0;$i-lt[math]::Min($r.Count,30);$i++){if($i-eq $s){Write-Host('  >> ['+($i+1)+'] '+$r[$i]['N'])-NoNewline-f Black-b White;Write-Host(' - '+$r[$i]['D'])-f Yellow-b White}else{Write-Host('     ['+($i+1)+'] '+$r[$i]['N'])-NoNewline-f Gray;Write-Host(' - '+$r[$i]['D'])-f DarkGray}}}else{if($q.Length-gt 0){Write-Host'  Aucun resultat.'-f DarkGray}else{Write-Host'  Tapez pour filtrer les outils...'-f DarkGray}};Write-Host'';Write-Host'  --------------------------------------------'-f Cyan;Write-Host'  [LETTRES]Taper [FLECHES]Nav [ENTREE]Lancer [BACK]Effacer [ECHAP]Retour'-f DarkGray};while($true){$r2=if($q.Trim()){[array]($list|Where-Object{$_['N']-match[regex]::Escape($q)-or$_['D']-match[regex]::Escape($q)})}else{@()};if($r2.Count-gt 0-and $s-ge $r2.Count){$s=$r2.Count-1};Dsp $q $r2 $s;$k=$Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown');$v=$k.VirtualKeyCode;if($v-eq 27){clear-host;break}elseif($v-eq 8-and $q.Length-gt 0){$q=$q.Substring(0,$q.Length-1);$s=0}elseif($v-eq 38-and $r2.Count-gt 0){$s--;if($s-lt 0){$s=$r2.Count-1}}elseif($v-eq 40-and $r2.Count-gt 0){$s++;if($s-ge $r2.Count){$s=0}}elseif($v-eq 13-and $r2.Count-gt 0){clear-host;Write-Output $r2[$s]['L'];break}elseif([string]$k.Character-match'^[1-9]$'){$ci=[int][string]$k.Character-1;if($ci-lt $r2.Count){clear-host;Write-Output $r2[$ci]['L'];break}}elseif($k.Character-ge' '-and $k.Character-le'~'){$q+=$k.Character;$s=0}}" 2^>nul`) do set "search_lbl=%%L"
-REM Valider que search_lbl est un label valide (lettres/chiffres/underscore seulement)
-if defined search_lbl (
-    echo !search_lbl! | findstr /R /C:"^[a-zA-Z_][a-zA-Z0-9_]*$" >nul 2>&1
-    if !errorlevel!==0 goto !search_lbl!
+
+if "%count%"=="0" (
+    cls
+    echo ===================================================
+    echo   Resultats pour : "%search_term%"
+    echo ===================================================
+    echo.
+    echo   Aucun resultat trouve.
+    echo.
+    pause
+    goto search_tools
 )
-goto menu_principal
+
+set "dyn_opts=!dyn_opts:~1!"
+call :DynamicMenu "RESULTATS: %search_term%" "!dyn_opts!" "NOCLS"
+set "s_choice=!errorlevel!"
+
+if "!s_choice!"=="0" goto search_tools
+if "!s_choice!"=="299" goto search_tools
+
+if !s_choice! GEQ 200 (
+    set /a t_idx=!s_choice!-200
+    for %%X in (!t_idx!) do call :ToggleFav "!search_res[%%X]!"
+    goto search_loop
+)
+
+set "target=!search_res[%s_choice%]!"
+goto !target!
 
 REM ===================================================================
 REM              INSTALLATEUR D'APPLICATIONS (WINGET)
@@ -7033,6 +7070,7 @@ call :DynamicMenu "%am_title%" "!am_opts!" "%am_flags%"
 set "am_c=!errorlevel!"
 
 if "!am_c!"=="0" exit /b 0
+if "!am_c!"=="299" goto search_tools
 
 if !am_c! GEQ 200 (
     set /a t_idx=!am_c!-200
