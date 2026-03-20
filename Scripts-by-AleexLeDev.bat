@@ -232,7 +232,9 @@ set "t[146]=pp_high:Plan Hautes Performances~Maximum de puissance:HIDDEN"
 set "t[147]=pp_ultimate:Plan Performances Ultimes~Plan secret Windows:HIDDEN"
 set "t[148]=pp_current:Voir le Plan Actuel~Afficher le plan d'alimentation:HIDDEN"
 set "t[149]=pp_list:Lister tous les Plans~Tous les plans disponibles:HIDDEN"
-set "total_tools=149"
+REM Auto-detection du nombre de scripts (plus besoin de mettre a jour manuellement)
+set "total_tools=0"
+for /l %%I in (1,1,500) do if defined t[%%I] set "total_tools=%%I"
 
 REM --- TABLE DE MAPPING CATEGORIE -> MODULE (pour futur split en fichiers) ---
 set "_mod_DIAGNOSTIC=diagnostic"
@@ -913,9 +915,7 @@ for /l %%I in (1,1,%total_tools%) do (
         REM Extrait le label (avant le premier :)
         for /f "tokens=1 delims=:" %%A in ("!_entry!") do set "_lbl=%%A"
         
-        REM Extrait le nom et la description (entre le premier : et la fin)
-        set "_rest=!_entry!"
-        call set "_rest=%%_rest:*!_lbl!:=%%"
+        for /f "tokens=1* delims=:" %%X in ("!_entry!") do set "_rest=%%Y"
         
         REM Detecte HIDDEN (fin de ligne)
         set "_hidden=0"
@@ -944,6 +944,9 @@ for /l %%I in (1,1,%total_tools%) do (
         )
     )
 )
+
+REM Nettoyage des variables temporaires de la boucle
+set "_entry=" & set "_lbl=" & set "_rest=" & set "_hidden=" & set "_currentModule="
 
 set "opts=!opts:~1!"
 
