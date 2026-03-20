@@ -910,37 +910,39 @@ call :reload_fav_cache
 set "opts="
 set /a s_idx=0
 for /l %%I in (1,1,%total_tools%) do (
-    set "_entry=!t[%%I]!"
-    if defined _entry (
-        REM Extrait le label (avant le premier :)
-        for /f "tokens=1 delims=:" %%A in ("!_entry!") do set "_lbl=%%A"
-        
-        for /f "tokens=1* delims=:" %%X in ("!_entry!") do set "_rest=%%Y"
-        
-        REM Detecte HIDDEN (fin de ligne)
-        set "_hidden=0"
-        if "!_entry:~-7!"==":HIDDEN" (
-            set "_hidden=1"
-            set "_rest=!_rest:~0,-7!"
-        )
-        
-        REM Detecte separateur ---
-        if "!_lbl!"=="---" (
-            REM Pour les titres, garder juste le nom (avant le tilde si present)
-            for /f "tokens=1 delims=~" %%N in ("!_rest!") do set "_titleName=%%N"
-            set "opts=!opts!;[--- !_titleName! ---]"
-            for /f "tokens=1 delims= " %%W in ("!_titleName!") do set "_currentModule=!_mod_%%W!"
-        ) else if "!_hidden!"=="0" (
-            set "is_fav=0"
-            if defined fav_!_lbl! set "is_fav=1"
-            if "!is_fav!"=="1" (
-                set "opts=!opts!;(F) !_rest!"
-            ) else (
-                set "opts=!opts!;!_rest!"
+    if defined t[%%I] (
+        set "_entry=!t[%%I]!"
+        if defined _entry (
+            REM Extrait le label (avant le premier :)
+            for /f "tokens=1 delims=:" %%A in ("!_entry!") do set "_lbl=%%A"
+            
+            for /f "tokens=1* delims=:" %%X in ("!_entry!") do set "_rest=%%Y"
+            
+            REM Detecte HIDDEN (fin de ligne)
+            set "_hidden=0"
+            if "!_entry:~-7!"==":HIDDEN" (
+                set "_hidden=1"
+                set "_rest=!_rest:~0,-7!"
             )
-            set /a s_idx+=1
-            set "sys_target[!s_idx!]=!_lbl!"
-            set "sys_module[!s_idx!]=!_currentModule!"
+            
+            REM Detecte separateur ---
+            if "!_lbl!"=="---" (
+                REM Pour les titres, garder juste le nom (avant le tilde si present)
+                for /f "tokens=1 delims=~" %%N in ("!_rest!") do set "_titleName=%%N"
+                set "opts=!opts!;[--- !_titleName! ---]"
+                for /f "tokens=1 delims= " %%W in ("!_titleName!") do set "_currentModule=!_mod_%%W!"
+            ) else if "!_hidden!"=="0" (
+                set "is_fav=0"
+                if defined fav_!_lbl! set "is_fav=1"
+                if "!is_fav!"=="1" (
+                    set "opts=!opts!;(F) !_rest!"
+                ) else (
+                    set "opts=!opts!;!_rest!"
+                )
+                set /a s_idx+=1
+                set "sys_target[!s_idx!]=!_lbl!"
+                set "sys_module[!s_idx!]=!_currentModule!"
+            )
         )
     )
 )
@@ -993,37 +995,35 @@ set "current_cat="
 set "last_cat_added="
 
 for /l %%I in (1,1,%total_tools%) do (
-    if defined t[%%I] (
-        set "_val=!t[%%I]!"
-        if "!_val:~0,3!"=="---" (
-            for /f "tokens=2 delims=:" %%C in ("!_val!") do set "current_cat=%%C"
-        ) else (
-            echo !_val! | findstr /I /C:"%search_term%" >nul
-            if !errorlevel! == 0 (
-                if !count! LSS 30 (
-                    set /a count+=1
-                    for /f "tokens=1,2 delims=:" %%a in ("!_val!") do (
-                        for /f "tokens=1,2 delims=~" %%c in ("%%b") do (
-                            set "search_res[!count!]=%%a"
-                            
-                            if not "!last_cat_added!"=="!current_cat!" (
-                                set "dyn_opts=!dyn_opts!;[--- !current_cat! ---]"
-                                set "last_cat_added=!current_cat!"
-                            )
-                            
-                            set "_d=%%d"
-                            if defined _d (
-                                set "_d=!_d::HIDDEN=!"
-                                set "dyn_opts=!dyn_opts!;%%c - !_d!"
-                            ) else (
-                                set "dyn_opts=!dyn_opts!;%%c"
-                            )
-                        )
-                    )
-                )
-            )
-        )
-    )
+    if defined t[%%I] (
+        set "_val=!t[%%I]!"
+        if "!_val:~0,3!"=="---" (
+            for /f "tokens=2 delims=:" %%C in ("!_val!") do set "current_cat=%%C"
+        ) else (
+            echo !_val! | findstr /I /C:"%search_term%" >nul
+            if !errorlevel! == 0 (
+                if !count! LSS 30 (
+                    set /a count+=1
+                    for /f "tokens=1,2 delims=:" %%a in ("!_val!") do (
+                        for /f "tokens=1,2 delims=~" %%c in ("%%b") do (
+                            set "search_res[!count!]=%%a"
+                            if not "!last_cat_added!"=="!current_cat!" (
+                                set "dyn_opts=!dyn_opts!;[--- !current_cat! ---]"
+                                set "last_cat_added=!current_cat!"
+                            )
+                            set "_d=%%d"
+                            if defined _d (
+                                set "_d=!_d::HIDDEN=!"
+                                set "dyn_opts=!dyn_opts!;%%c - !_d!"
+                            ) else (
+                                set "dyn_opts=!dyn_opts!;%%c"
+                            )
+                        )
+                    )
+                )
+            )
+        )
+    )
 )
 
 if "%count%"=="0" (
