@@ -233,6 +233,18 @@ set "t[147]=pp_ultimate:Plan Performances Ultimes~Plan secret Windows:HIDDEN"
 set "t[148]=pp_current:Voir le Plan Actuel~Afficher le plan d'alimentation:HIDDEN"
 set "t[149]=pp_list:Lister tous les Plans~Tous les plans disponibles:HIDDEN"
 set "total_tools=149"
+
+REM --- TABLE DE MAPPING CATEGORIE -> MODULE (pour futur split en fichiers) ---
+set "_mod_DIAGNOSTIC=diagnostic"
+set "_mod_REPARATION=reparation"
+set "_mod_NETTOYAGE=nettoyage"
+set "_mod_RESEAU=reseau"
+set "_mod_DISQUE=disque"
+set "_mod_APPLICATIONS=applications"
+set "_mod_COMPTES=comptes_securite"
+set "_mod_EXTRACTION=extraction"
+set "_mod_PERSONNALISATION=personnalisation"
+set "_mod_MATERIEL=materiel"
 REM --- NOMS D'AFFICHAGE POUR AutoMenu (map_label) ---
 set "map_touch_restart=Redemarrer le pilote tactile~Reset du service et peripherique"
 set "map_touch_disable=Desactiver l'ecran tactile~Desactive le pilote HID tactile"
@@ -327,6 +339,7 @@ if not exist "%SCRIPT_DIR%\favoris.txt" type nul > "%SCRIPT_DIR%\favoris.txt"
 
 :menu_principal
 cls
+call :reload_fav_cache
 set "opts=[--- MES FAVORIS ---]"
 set /a fav_idx=0
 
@@ -335,11 +348,7 @@ for /l %%I in (1,1,%total_tools%) do (
         for /f "tokens=1,2,3 delims=:" %%A in ("!t[%%I]!") do (
             if not "%%A"=="---" (
                 set "is_fav=0"
-                if exist "%SCRIPT_DIR%\favoris.txt" (
-                    for /f "usebackq tokens=*" %%F in ("%SCRIPT_DIR%\favoris.txt") do (
-                        if "%%F"=="%%A" set "is_fav=1"
-                    )
-                )
+                if defined fav_%%A set "is_fav=1"
                 if "!is_fav!"=="1" (
                     set "opts=!opts!;(F) %%B"
                     set /a fav_idx+=1
@@ -895,6 +904,7 @@ REM                    OUTILS SYSTEME AVANCES
 REM ===================================================================
 :system_tools
 cls
+call :reload_fav_cache
 set "opts="
 set /a s_idx=0
 for /l %%I in (1,1,%total_tools%) do (
@@ -919,9 +929,10 @@ for /l %%I in (1,1,%total_tools%) do (
             REM Pour les titres, garder juste le nom (avant le tilde si present)
             for /f "tokens=1 delims=~" %%N in ("!_rest!") do set "_titleName=%%N"
             set "opts=!opts!;[--- !_titleName! ---]"
+            for /f "tokens=1 delims= " %%W in ("!_titleName!") do set "_currentModule=!_mod_%%W!"
         ) else if "!_hidden!"=="0" (
             set "is_fav=0"
-            for /f "usebackq tokens=*" %%F in ("%SCRIPT_DIR%\favoris.txt") do (if "%%F"=="!_lbl!" set "is_fav=1")
+            if defined fav_!_lbl! set "is_fav=1"
             if "!is_fav!"=="1" (
                 set "opts=!opts!;(F) !_rest!"
             ) else (
@@ -929,6 +940,7 @@ for /l %%I in (1,1,%total_tools%) do (
             )
             set /a s_idx+=1
             set "sys_target[!s_idx!]=!_lbl!"
+            set "sys_module[!s_idx!]=!_currentModule!"
         )
     )
 )
@@ -949,6 +961,13 @@ if !sys_choice! GEQ 200 (
 )
 
 set "target=!sys_target[%sys_choice%]!"
+set "_routemod=!sys_module[%sys_choice%]!"
+if defined _routemod (
+    if exist "%SCRIPT_DIR%\modules\!_routemod!.bat" (
+        call "%SCRIPT_DIR%\modules\!_routemod!.bat" !target!
+        goto system_tools
+    )
+)
 if defined target goto !target!
 goto system_tools
 REM ===================================================================
@@ -6676,6 +6695,17 @@ echo.
 pause
 goto sys_diagnostic_menu
 
+
+REM ===================================================================
+:reload_fav_cache
+REM Charge les favoris en memoire pour eviter N lectures de fichier par menu
+for /f "tokens=1 delims==" %%V in ('set fav_ 2^>nul') do set "%%V="
+if exist "%SCRIPT_DIR%\favoris.txt" (
+    for /f "usebackq tokens=*" %%F in ("%SCRIPT_DIR%\favoris.txt") do set "fav_%%F=1"
+)
+exit /b
+REM ===================================================================
+
 :ToggleFav
 set "tf_target=%~1"
 if not defined tf_target exit /b
@@ -6811,6 +6841,7 @@ set "am_labels=%~2"
 set "am_flags=%~3"
 
 :am_loop
+call :reload_fav_cache
 set "am_opts="
 set /a am_idx=0
 set "remain=%am_labels%"
@@ -6832,11 +6863,7 @@ for /f "tokens=1* delims=;" %%A in ("%remain%") do (
 
         REM Verifier si c est un favori
         set "is_f=0"
-        if exist "%SCRIPT_DIR%\favoris.txt" (
-            for /f "usebackq tokens=*" %%F in ("%SCRIPT_DIR%\favoris.txt") do (
-                if "%%F"=="!lbl!" set "is_f=1"
-            )
-        )
+        if defined fav_!lbl! set "is_f=1"
 
         if "!is_f!"=="1" (
             set "am_opts=!am_opts!;(F) !entry!"
@@ -6866,4 +6893,3 @@ exit /b 1
 REM ===================================================================
 REM                         FIN DU SCRIPT
 REM ===================================================================
-

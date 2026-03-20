@@ -2,7 +2,9 @@
   "permissions": {
     "allow": [
       "Bash(/tmp/remove_adv_jwt.ps1:*)",
-      "Bash(powershell -NoProfile -ExecutionPolicy Bypass -File /tmp/remove_adv_jwt.ps1)"
+      "Bash(powershell -NoProfile -ExecutionPolicy Bypass -File /tmp/remove_adv_jwt.ps1)",
+      "Bash(/tmp/debug2.ps1:*)",
+      "Bash(powershell -NoProfile -ExecutionPolicy Bypass -File /tmp/debug2.ps1)"
     ]
   }
 }
