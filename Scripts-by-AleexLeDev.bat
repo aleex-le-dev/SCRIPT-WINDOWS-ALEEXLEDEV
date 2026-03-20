@@ -1039,7 +1039,9 @@ if "%count%"=="0" (
     goto search_tools
 )
 
-set "dyn_opts=!dyn_opts:~1!"
+:search_display
+if not defined dyn_opts_clean set "dyn_opts_clean=!dyn_opts:~1!"
+set "dyn_opts=!dyn_opts_clean!"
 call :DynamicMenu "RESULTATS: %search_term%" "!dyn_opts!" "NOCLS"
 set "s_choice=!errorlevel!"
 
@@ -1055,8 +1057,8 @@ if "!s_choice!"=="299" (
 if !s_choice! GEQ 200 (
     set /a t_idx=!s_choice!-200
     for %%X in (!t_idx!) do call :ToggleFav "!search_res[%%X]!"
-    endlocal
-    goto search_loop
+    call :reload_fav_cache
+    goto search_display
 )
 
 if defined search_res[%s_choice%] (
