@@ -2941,6 +2941,7 @@ pause
 goto wan_post_scan
 
 :action_manual_pass
+set "man_1219_count=0"
 cls
 echo.
 echo %B%  [MANUEL] TEST MOT DE PASSE - SMB%N%
@@ -2963,7 +2964,10 @@ if not defined man_user (
 echo  [i] ECHAP ou mot de passe vide = retour au menu
 echo  ================================================
 :manual_pass_loop
-net use "\\!smb_host!" /delete /y >nul 2>&1
+net use "\\!smb_host!\IPC$"   /delete /y >nul 2>&1
+net use "\\!smb_host!\C$"     /delete /y >nul 2>&1
+net use "\\!smb_host!\ADMIN$" /delete /y >nul 2>&1
+net use "\\!smb_host!"        /delete /y >nul 2>&1
 set "man_pass="
 call :InputWithEsc "  Mot de passe : " man_pass
 if errorlevel 1 goto wan_menu_nocreds
@@ -2971,11 +2975,39 @@ if not defined man_pass (
     set "man_user="
     goto action_manual_pass
 )
-net use "\\!smb_host!\IPC$" "!man_pass!" /user:"!man_user!" >nul 2>&1
-if errorlevel 1 (
-    echo  %R%[-] Echec%N%
-    goto manual_pass_loop
+set "MAN_OUT=%TEMP%\man_out_%RANDOM%.txt"
+net use "\\!smb_host!\IPC$" "!man_pass!" /user:"!man_user!" > "%MAN_OUT%" 2>&1
+set "man_el=%errorlevel%"
+if "!man_el!"=="0" goto manual_pass_ok
+set "man_err="
+findstr /C:"1326" "%MAN_OUT%" >nul 2>&1 && set "man_err=Mot de passe incorrect ^(1326^)"
+findstr /C:"1219" "%MAN_OUT%" >nul 2>&1 && set "man_err=1219 - conflit session existante"
+findstr /C:"1331" "%MAN_OUT%" >nul 2>&1 && set "man_err=Compte verrouille ^(1331^)"
+findstr /C:"1909" "%MAN_OUT%" >nul 2>&1 && set "man_err=Trop de tentatives ^(1909^)"
+findstr /C:"53"   "%MAN_OUT%" >nul 2>&1 && if not defined man_err set "man_err=Machine introuvable ^(53^)"
+findstr /C:"5"    "%MAN_OUT%" >nul 2>&1 && if not defined man_err set "man_err=Acces refuse ^(5^) - UAC distant"
+if not defined man_err set "man_err=code !man_el!"
+if exist "%MAN_OUT%" del /f /q "%MAN_OUT%"
+echo  %R%[-] !man_err!%N%
+if "!man_el!"=="1219" (
+    set /a man_1219_count=!man_1219_count!+1
+    if "!man_1219_count!" GEQ "2" (
+        echo.
+        echo  %Y%[!] ATTENTION : erreur 1219 persistante%N%
+        echo  [i] Cause probable : tu testes contre ta propre machine
+        echo      depuis la meme session Windows.
+        echo  [i] Solutions :
+        echo      - Tester depuis un autre PC du reseau
+        echo      - Utiliser l'IP LAN de la cible si differente
+        echo      - Executer le script depuis un autre compte
+        echo.
+        set "man_1219_count=0"
+    )
+    timeout /t 1 >nul
 )
+goto manual_pass_loop
+:manual_pass_ok
+if exist "%MAN_OUT%" del /f /q "%MAN_OUT%"
 net use "\\!smb_host!\IPC$" /delete /y >nul 2>&1
 echo.
 echo  %G%[+] MOT DE PASSE CORRECT : !man_user! / !man_pass!%N%
