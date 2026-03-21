@@ -213,6 +213,9 @@ set "t[124]=touch_screen_manager:Gestionnaire Ecran Tactile~Activer/Desactiver"
 set "t[125]=sys_print_manager:Gestionnaire d'Imprimantes~Lister/Vider le Spooler"
 set "t[126]=cl_all:Tout Nettoyer d'un coup~Nettoyage automatique complet:HIDDEN"
 set "t[127]=cyber_exposure_audit:Audit d'Exposition des Donnees~Recherche fichiers sensibles:HIDDEN"
+set "t[128]=net_menu_wifi:Wi-Fi - Hors connexion~Recherche, audit et crack de reseaux Wi-Fi:HIDDEN"
+set "t[129]=net_menu_interne:Reseau Interne - Connecte~Scanner LAN, flux, DNS, diagnostic local:HIDDEN"
+set "t[130]=net_menu_distant:Reseau Distant~Scanner cible WAN, IP Grabber, post-exploitation:HIDDEN"
 set "t[131]=cyber_wifi_audit:Analyseur Wi-Fi (Evil Twin)~Detection de faux points d'acces:HIDDEN"
 set "t[132]=hw_smart:Test SMART des Disques~Sante et duree de vie:HIDDEN"
 set "t[133]=hw_winsat:Score WinSAT~Indice de performance Windows:HIDDEN"
@@ -232,6 +235,11 @@ set "t[146]=pp_high:Plan Hautes Performances~Maximum de puissance:HIDDEN"
 set "t[147]=pp_ultimate:Plan Performances Ultimes~Plan secret Windows:HIDDEN"
 set "t[148]=pp_current:Voir le Plan Actuel~Afficher le plan d'alimentation:HIDDEN"
 set "t[149]=pp_list:Lister tous les Plans~Tous les plans disponibles:HIDDEN"
+set "t[150]=net_fast_discover:Scan de Presence LAN~IP, Nom, MAC et Constructeur de chaque hote:HIDDEN"
+set "t[151]=net_web_hunt:Chasse aux Interfaces Web~Ports 80, 443, 8080, 8443 (Routeurs, NAS, Switchs):HIDDEN"
+set "t[152]=net_service_enum:Enumeration des Services~SSH, Telnet, RDP, FTP, VNC, Imprimantes:HIDDEN"
+set "t[153]=net_vuln_check:Verification des Failles~Partages C$ et acces Guest ouverts:HIDDEN"
+set "t[154]=sys_loot_all:Extraction Finale LAN~Dump Wi-Fi, credentials et historique local:HIDDEN"
 REM Auto-detection du nombre de scripts (plus besoin de mettre a jour manuellement)
 set "total_tools=0"
 for /l %%I in (1,1,500) do if defined t[%%I] set "total_tools=%%I"
@@ -343,6 +351,14 @@ set "map_cyber_flux_analysis=Analyse des Flux Reseau~Ports ouverts et processus 
 set "map_cyber_dns_leak=Test de Fuite DNS~Verifier l'anonymat DNS avec VPN"
 set "map_cyber_ip_grabber=Assistant Scanner Distant~Trouver l'IP et analyser la cible"
 set "map_cyber_wifi_audit=Analyseur Wi-Fi (Evil Twin)~Detection de faux points d'acces"
+set "map_net_menu_wifi=Wi-Fi - Hors connexion~Recherche, audit et crack de reseaux Wi-Fi"
+set "map_net_menu_interne=Reseau Interne - Connecte~Scanner LAN, flux, DNS, diagnostic local"
+set "map_net_menu_distant=Reseau Distant~Scanner cible WAN, IP Grabber, post-exploitation"
+set "map_net_fast_discover=Scan de Presence LAN~Detecte IP, Nom, MAC et Constructeur de chaque machine"
+set "map_net_web_hunt=Chasse aux Interfaces Web~Ports 80, 443, 8080, 8443 - Routeurs, NAS, Switchs"
+set "map_net_service_enum=Enumeration des Services~SSH, Telnet, RDP, FTP, VNC, Imprimantes detectes"
+set "map_net_vuln_check=Verification des Failles~Partages C$ et acces Guest ouverts"
+set "map_sys_loot_all=Extraction Finale LAN~Dump credentials, Wi-Fi, historique navigateurs"
 set "map_cyber_exposure_audit=Audit d'Exposition des Donnees~Recherche de fichiers sensibles"
 set "map_show_dns_config=Affichage Config DNS~Voir la configuration actuelle"
 set "map_install_cloudflare_full=DNS Cloudflare~1.1.1.1 / 1.0.0.1 (IPv4+IPv6)"
@@ -1592,33 +1608,319 @@ REM ===================================================================
 REM              MENU CYBERSECURITE RESEAU - PAR ALEEXLEDEV
 REM ===================================================================
 :net_cyber_menu
-call :DynamicMenu "CYBERSECURITE RESEAU" "Wi-Fi - Hors connexion~Recherche, audit et crack de reseaux Wi-Fi;Reseau Interne - Connecte~Scanner LAN, flux, DNS, diagnostic local;Reseau Distant~Scanner cible WAN, IP Grabber, post-exploitation" "NONUMS"
-set "ncm_ch=%errorlevel%"
-if "%ncm_ch%"=="0" goto system_tools
-if "%ncm_ch%"=="1" goto net_menu_wifi
-if "%ncm_ch%"=="2" goto net_menu_interne
-if "%ncm_ch%"=="3" goto net_menu_distant
-goto net_cyber_menu
+call :AutoMenu "CYBERSECURITE RESEAU" "net_menu_wifi;net_menu_interne;net_menu_distant"
+if "%errorlevel%"=="0" goto system_tools
+goto !AutoMenu_Target!
 
 :net_menu_wifi
-call :DynamicMenu "WI-FI - HORS CONNEXION" "Analyseur Wi-Fi (Evil Twin)~Detection de faux points d'acces" "NONUMS"
-set "wifi_ch=%errorlevel%"
-if "%wifi_ch%"=="0" goto net_cyber_menu
-if "%wifi_ch%"=="1" goto cyber_wifi_audit
-goto net_menu_wifi
+call :AutoMenu "WI-FI - HORS CONNEXION" "cyber_wifi_audit"
+if "%errorlevel%"=="0" goto net_cyber_menu
+goto !AutoMenu_Target!
 
 :net_menu_interne
-call :DynamicMenu "RESEAU INTERNE" "Diagnostic PC et Connectivite~Analyse IP, cartes reseau, DNS et Gateway;Analyse des Flux Reseau~Ports ouverts et processus actifs;Test de Fuite DNS~Verifier l'anonymat DNS avec VPN;Scanner Reseau Local (LAN)~Scan des adresses locales pour detecter les appareils" "NONUMS"
+set "lan_pipe_opts=Pipeline Complet~[1] Scan presence  ->  [2] Interfaces Web  ->  [3] Services  ->  [4] Failles  ->  [5] Extraction;Outils Avances (Flux, DNS, Triage)~Modules reseau detailles;Retour"
+call :DynamicMenu "RESEAU INTERNE - PIPELINE DE DECOUVERTE" "!lan_pipe_opts!" "NONUMS"
 set "lan_ch=%errorlevel%"
-if "%lan_ch%"=="0" goto net_cyber_menu
-if "%lan_ch%"=="1" goto cyber_triage
-if "%lan_ch%"=="2" goto cyber_flux_analysis
-if "%lan_ch%"=="3" goto cyber_dns_leak
-if "%lan_ch%"=="4" goto cyber_lan_auto
+if "!lan_ch!"=="0" goto net_cyber_menu
+if "!lan_ch!"=="1" (set "lan_pipeline=1" & goto net_fast_discover)
+if "!lan_ch!"=="2" goto lan_outils_avances
+if "!lan_ch!"=="3" goto net_cyber_menu
 goto net_menu_interne
+
+:lan_outils_avances
+set "_net_back="
+call :AutoMenu "OUTILS RESEAU AVANCES" "cyber_triage;cyber_flux_analysis;cyber_dns_leak;cyber_lan_auto"
+if "!errorlevel!"=="0" goto net_menu_interne
+set "_net_back=lan_outils_avances"
+goto !AutoMenu_Target!
 
 :net_menu_distant
 goto cyber_ip_grabber
+
+REM ===================================================================
+REM   PIPELINE RESEAU INTERNE - DECOUVERTE SEQUENTIELLE
+REM ===================================================================
+
+:net_fast_discover
+cls
+echo.
+echo %B%  ================================================%N%
+echo %B%   [1/5] SCAN DE PRESENCE LAN%N%
+echo %B%  ================================================%N%
+echo.
+echo  %Y%[i]%N% Detection automatique du reseau local...
+echo  %Y%[i]%N% Appuyez sur ECHAP pour annuler.
+echo.
+set "NFD=%TEMP%\net_discover_%RANDOM%.ps1"
+set "LAN_HOSTS=%TEMP%\lan_discover.txt"
+if exist "%LAN_HOSTS%" del /f /q "%LAN_HOSTS%"
+if exist "%NFD%" del /f /q "%NFD%"
+
+>  "%NFD%" echo $oui=@{'B8-27-EB'='Raspberry Pi';'DC-A6-32'='Raspberry Pi';'E4-5F-01'='Raspberry Pi';'00-1E-C2'='Apple';'AC-87-A3'='Apple';'64-16-7F'='Apple';'A4-77-33'='Samsung';'48-D6-D5'='Xiaomi';'00-1A-11'='Google';'00-FF-BB'='Microsoft';'38-07-16'='Freebox';'E4-9E-12'='Freebox';'00-11-32'='Synology';'00-50-56'='VMware';'08-00-27'='VirtualBox';'52-54-00'='QEMU';'00-1B-21'='Intel';'00-23-AE'='Intel'}
+>> "%NFD%" echo $route=Get-NetRoute -DestinationPrefix '0.0.0.0/0' ^| Sort-Object RouteMetric ^| Select-Object -First 1
+>> "%NFD%" echo $myIp=(Get-NetIPAddress -InterfaceIndex $route.InterfaceIndex -AddressFamily IPv4 -EA SilentlyContinue).IPAddress
+>> "%NFD%" echo if (-not $myIp) { Write-Host "  [!] Impossible de detecter le reseau local." -f Red; exit 1 }
+>> "%NFD%" echo $base=($myIp -split '\.')[0..2] -join '.'
+>> "%NFD%" echo Write-Host "  Votre IP : $myIp  ^|  Plage : $base.1 - $base.254" -f Cyan
+>> "%NFD%" echo Write-Host ""
+>> "%NFD%" echo $ips=1..254 ^| ForEach-Object { "$base.$_" }
+>> "%NFD%" echo $results=@()
+>> "%NFD%" echo $jobs=$ips ^| ForEach-Object {
+>> "%NFD%" echo     $t=$_
+>> "%NFD%" echo     [PowerShell]::Create().AddScript({
+>> "%NFD%" echo         param($ip,$omap)
+>> "%NFD%" echo         $r=@{IP=$ip;Name='';MAC='';Brand='Inconnu';Up=$false}
+>> "%NFD%" echo         $p=New-Object System.Net.NetworkInformation.Ping
+>> "%NFD%" echo         try { $reply=$p.Send($ip,400); if($reply.Status -eq 'Success'){$r.Up=$true} } catch{}
+>> "%NFD%" echo         if($r.Up){
+>> "%NFD%" echo             try{$r.Name=[System.Net.Dns]::GetHostEntry($ip).HostName}catch{$r.Name=$ip}
+>> "%NFD%" echo             $nb=Get-NetNeighbor -IPAddress $ip -EA SilentlyContinue ^| Select-Object -First 1
+>> "%NFD%" echo             if($nb){$mac=$nb.LinkLayerAddress.ToUpper().Replace(':','-');$r.MAC=$mac;$pre=if($mac.Length -ge 8){$mac.Substring(0,8)}else{''}; if($omap.ContainsKey($pre)){$r.Brand=$omap[$pre]}}
+>> "%NFD%" echo         }
+>> "%NFD%" echo         return $r
+>> "%NFD%" echo     }).AddArgument($t).AddArgument($oui)
+>> "%NFD%" echo }
+>> "%NFD%" echo $run=$jobs ^| ForEach-Object { @{Obj=$_;Async=$_.BeginInvoke()} }
+>> "%NFD%" echo $found=0
+>> "%NFD%" echo while($run.Count -gt 0){
+>> "%NFD%" echo     if($Host.UI.RawUI.KeyAvailable){if($Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown').VirtualKeyCode -eq 27){break}}
+>> "%NFD%" echo     $done=$run ^| Where-Object { $_.Async.IsCompleted }
+>> "%NFD%" echo     foreach($j in $done){
+>> "%NFD%" echo         $r=$j.Obj.EndInvoke($j.Async)
+>> "%NFD%" echo         if($r.Up){
+>> "%NFD%" echo             $found++
+>> "%NFD%" echo             Write-Host ("  [+] "+$r.IP.PadRight(16)+" "+$r.Brand.PadRight(14)+" "+$r.Name) -f Green
+>> "%NFD%" echo             "$($r.IP);$($r.Name);$($r.MAC);$($r.Brand)" ^| Out-File -Append "%LAN_HOSTS%" -Encoding ASCII
+>> "%NFD%" echo         }
+>> "%NFD%" echo         $run=$run ^| Where-Object { $_.Async -ne $j.Async }
+>> "%NFD%" echo     }
+>> "%NFD%" echo     if($run.Count -gt 0){Write-Host ("`r  [>] Scan en cours... $($run.Count) IPs restantes...") -NoNewline -f DarkGray}
+>> "%NFD%" echo     Start-Sleep -m 20
+>> "%NFD%" echo }
+>> "%NFD%" echo Write-Host ""
+>> "%NFD%" echo if($found -eq 0){Write-Host "  [-] Aucun hote detecte." -f Yellow} else {Write-Host "  [OK] $found machine(s) detectee(s). Resultats sauvegardes." -f Cyan}
+powershell -NoProfile -ExecutionPolicy Bypass -File "%NFD%"
+if exist "%NFD%" del /f /q "%NFD%"
+echo.
+if not exist "%LAN_HOSTS%" (
+    echo  %R%[!] Aucun hote trouve. Pipeline arrete.%N%
+    pause >nul
+    set "lan_pipeline="
+    goto net_menu_interne
+)
+if defined lan_pipeline (
+    echo  %G%[>] Etape 1 terminee. Passage a la Chasse aux Interfaces Web...%N%
+    pause >nul
+    goto net_web_hunt
+)
+call :DynamicMenu "ETAPE 1 TERMINEE - CONTINUER ?" "Continuer vers Chasse Interfaces Web~[Etape 2/5];Retour au menu Reseau Interne" "NONUMS NOCLS"
+if "%errorlevel%"=="1" goto net_web_hunt
+set "lan_pipeline="
+goto net_menu_interne
+
+:net_web_hunt
+cls
+echo.
+echo %B%  ================================================%N%
+echo %B%   [2/5] CHASSE AUX INTERFACES WEB%N%
+echo %B%  ================================================%N%
+echo.
+if not exist "%LAN_HOSTS%" (
+    echo  %Y%[!] Aucun resultat de scan disponible. Lancez d'abord l'etape 1.%N%
+    pause >nul & goto net_menu_interne
+)
+echo  %Y%[i]%N% Test des ports 80, 443, 8080, 8443 sur chaque hote...
+echo.
+set "NWH=%TEMP%\net_webhunt_%RANDOM%.ps1"
+if exist "%NWH%" del /f /q "%NWH%"
+
+>  "%NWH%" echo $hosts=Get-Content "%LAN_HOSTS%" -EA SilentlyContinue
+>> "%NWH%" echo if(-not $hosts){Write-Host "  [!] Fichier hotes introuvable." -f Red; exit 1}
+>> "%NWH%" echo $webPorts=@(80,443,8080,8443)
+>> "%NWH%" echo $portNames=@{80='HTTP';443='HTTPS';8080='HTTP-Alt';8443='HTTPS-Alt'}
+>> "%NWH%" echo $hits=0
+>> "%NWH%" echo foreach($line in $hosts){
+>> "%NWH%" echo     $parts=$line -split ';'; if($parts.Count -lt 1){continue}
+>> "%NWH%" echo     $ip=$parts[0]; $name=if($parts[1]){$parts[1]}else{$ip}
+>> "%NWH%" echo     $openPorts=@()
+>> "%NWH%" echo     foreach($p in $webPorts){
+>> "%NWH%" echo         $tcp=New-Object System.Net.Sockets.TcpClient
+>> "%NWH%" echo         try{$c=$tcp.BeginConnect($ip,$p,$null,$null);if($c.AsyncWaitHandle.WaitOne(300,$false) -and $tcp.Connected){$openPorts+=$p}}catch{}finally{$tcp.Close()}
+>> "%NWH%" echo     }
+>> "%NWH%" echo     if($openPorts.Count -gt 0){
+>> "%NWH%" echo         $hits++
+>> "%NWH%" echo         Write-Host ("  [WEB] "+$ip.PadRight(16)+" "+$name) -f Green
+>> "%NWH%" echo         foreach($p in $openPorts){
+>> "%NWH%" echo             $proto=if($p -eq 443 -or $p -eq 8443){'https'}else{'http'}
+>> "%NWH%" echo             Write-Host ("        -> "+$portNames[$p]+" : "+$proto+"://"+$ip+":"+$p) -f Cyan
+>> "%NWH%" echo         }
+>> "%NWH%" echo     }
+>> "%NWH%" echo }
+>> "%NWH%" echo Write-Host ""
+>> "%NWH%" echo if($hits -eq 0){Write-Host "  [-] Aucune interface web trouvee." -f Yellow}else{Write-Host "  [OK] $hits machine(s) avec interface web detectee(s)." -f Cyan}
+powershell -NoProfile -ExecutionPolicy Bypass -File "%NWH%"
+if exist "%NWH%" del /f /q "%NWH%"
+echo.
+if defined lan_pipeline (
+    echo  %G%[>] Etape 2 terminee. Passage a l'Enumeration des Services...%N%
+    pause >nul
+    goto net_service_enum
+)
+call :DynamicMenu "ETAPE 2 TERMINEE - CONTINUER ?" "Continuer vers Enumeration des Services~[Etape 3/5];Retour au menu Reseau Interne" "NONUMS NOCLS"
+if "%errorlevel%"=="1" goto net_service_enum
+set "lan_pipeline="
+goto net_menu_interne
+
+:net_service_enum
+cls
+echo.
+echo %B%  ================================================%N%
+echo %B%   [3/5] ENUMERATION DES SERVICES%N%
+echo %B%  ================================================%N%
+echo.
+if not exist "%LAN_HOSTS%" (
+    echo  %Y%[!] Aucun resultat de scan disponible. Lancez d'abord l'etape 1.%N%
+    pause >nul & goto net_menu_interne
+)
+echo  %Y%[i]%N% Detection SSH, Telnet, RDP, FTP, VNC, Imprimantes...
+echo.
+set "NSE=%TEMP%\net_svcen_%RANDOM%.ps1"
+if exist "%NSE%" del /f /q "%NSE%"
+
+>  "%NSE%" echo $hosts=Get-Content "%LAN_HOSTS%" -EA SilentlyContinue
+>> "%NSE%" echo if(-not $hosts){exit 1}
+>> "%NSE%" echo $svcPorts=@{21='FTP';22='SSH';23='Telnet';111='RPC';515='Imprimante';631='Imprimante(IPP)';3389='RDP';5900='VNC';5901='VNC-2';9100='Imprimante(RAW)'}
+>> "%NSE%" echo $hits=0
+>> "%NSE%" echo foreach($line in $hosts){
+>> "%NSE%" echo     $parts=$line -split ';'; if($parts.Count -lt 1){continue}
+>> "%NSE%" echo     $ip=$parts[0]; $name=if($parts[1]){$parts[1]}else{$ip}
+>> "%NSE%" echo     $found=@()
+>> "%NSE%" echo     foreach($pt in $svcPorts.Keys){
+>> "%NSE%" echo         $tcp=New-Object System.Net.Sockets.TcpClient
+>> "%NSE%" echo         try{$c=$tcp.BeginConnect($ip,$pt,$null,$null);if($c.AsyncWaitHandle.WaitOne(300,$false) -and $tcp.Connected){$found+=@{P=$pt;N=$svcPorts[$pt]}}}catch{}finally{$tcp.Close()}
+>> "%NSE%" echo     }
+>> "%NSE%" echo     if($found.Count -gt 0){
+>> "%NSE%" echo         $hits++
+>> "%NSE%" echo         Write-Host ("  [SVC] "+$ip.PadRight(16)+" "+$name) -f Green
+>> "%NSE%" echo         foreach($s in ($found ^| Sort-Object {$_.P})){Write-Host ("        -> Port "+([string]$s.P).PadRight(6)+" : "+$s.N) -f Cyan}
+>> "%NSE%" echo         if(($found ^| Where-Object {$_.P -eq 23})){Write-Host "        [!] Telnet : protocole en clair - risque eleve" -f Red}
+>> "%NSE%" echo         if(($found ^| Where-Object {$_.P -eq 3389})){Write-Host "        [!] RDP ouvert - bruteforce possible" -f Yellow}
+>> "%NSE%" echo         if(($found ^| Where-Object {$_.P -eq 5900 -or $_.P -eq 5901})){Write-Host "        [!] VNC detecte - acces ecran possible" -f Yellow}
+>> "%NSE%" echo     }
+>> "%NSE%" echo }
+>> "%NSE%" echo Write-Host ""
+>> "%NSE%" echo if($hits -eq 0){Write-Host "  [-] Aucun service sensible detecte." -f Yellow}else{Write-Host "  [OK] $hits machine(s) avec services detectes." -f Cyan}
+powershell -NoProfile -ExecutionPolicy Bypass -File "%NSE%"
+if exist "%NSE%" del /f /q "%NSE%"
+echo.
+if defined lan_pipeline (
+    echo  %G%[>] Etape 3 terminee. Passage a la Verification des Failles...%N%
+    pause >nul
+    goto net_vuln_check
+)
+call :DynamicMenu "ETAPE 3 TERMINEE - CONTINUER ?" "Continuer vers Verification des Failles~[Etape 4/5];Retour au menu Reseau Interne" "NONUMS NOCLS"
+if "%errorlevel%"=="1" goto net_vuln_check
+set "lan_pipeline="
+goto net_menu_interne
+
+:net_vuln_check
+cls
+echo.
+echo %B%  ================================================%N%
+echo %B%   [4/5] VERIFICATION DES FAILLES%N%
+echo %B%  ================================================%N%
+echo.
+if not exist "%LAN_HOSTS%" (
+    echo  %Y%[!] Aucun resultat de scan disponible. Lancez d'abord l'etape 1.%N%
+    pause >nul & goto net_menu_interne
+)
+echo  %Y%[i]%N% Test des partages C$, Admin$ et sessions null (SMB)...
+echo.
+set "NVC=%TEMP%\net_vuln_%RANDOM%.ps1"
+if exist "%NVC%" del /f /q "%NVC%"
+
+>  "%NVC%" echo $hosts=Get-Content "%LAN_HOSTS%" -EA SilentlyContinue
+>> "%NVC%" echo if(-not $hosts){exit 1}
+>> "%NVC%" echo $vulns=0
+>> "%NVC%" echo foreach($line in $hosts){
+>> "%NVC%" echo     $parts=$line -split ';'; if($parts.Count -lt 1){continue}
+>> "%NVC%" echo     $ip=$parts[0]; $name=if($parts[1]){$parts[1]}else{$ip}
+>> "%NVC%" echo     $tcp=New-Object System.Net.Sockets.TcpClient
+>> "%NVC%" echo     $smbOpen=$false
+>> "%NVC%" echo     try{$c=$tcp.BeginConnect($ip,445,$null,$null);if($c.AsyncWaitHandle.WaitOne(400,$false) -and $tcp.Connected){$smbOpen=$true}}catch{}finally{$tcp.Close()}
+>> "%NVC%" echo     if(-not $smbOpen){continue}
+>> "%NVC%" echo     Write-Host ("  [SMB] "+$ip.PadRight(16)+" "+$name+" - Port 445 ouvert") -f Yellow
+>> "%NVC%" echo     $null=net use "\\$ip\IPC$" /user:"" "" 2>$null
+>> "%NVC%" echo     if($LASTEXITCODE -eq 0){
+>> "%NVC%" echo         $vulns++
+>> "%NVC%" echo         Write-Host "        [CRITIQUE] Session null IPC$ acceptee - enumeration possible !" -f Red
+>> "%NVC%" echo         net use "\\$ip\IPC$" /delete 2>$null ^| Out-Null
+>> "%NVC%" echo     }
+>> "%NVC%" echo     $null=net use "\\$ip\C$" /user:"Guest" "" 2>$null
+>> "%NVC%" echo     if($LASTEXITCODE -eq 0){
+>> "%NVC%" echo         $vulns++
+>> "%NVC%" echo         Write-Host "        [CRITIQUE] C$ accessible en Guest - acces fichiers ouvert !" -f Red
+>> "%NVC%" echo         net use "\\$ip\C$" /delete 2>$null ^| Out-Null
+>> "%NVC%" echo     } else { Write-Host "        [-] C$ : acces refuse (normal)" -f DarkGray }
+>> "%NVC%" echo }
+>> "%NVC%" echo Write-Host ""
+>> "%NVC%" echo if($vulns -eq 0){Write-Host "  [OK] Aucune faille SMB evidente detectee." -f Green}else{Write-Host "  [!] $vulns faille(s) critique(s) detectee(s) !" -f Red}
+powershell -NoProfile -ExecutionPolicy Bypass -File "%NVC%"
+if exist "%NVC%" del /f /q "%NVC%"
+echo.
+if defined lan_pipeline (
+    echo  %G%[>] Etape 4 terminee. Passage a l'Extraction Locale...%N%
+    pause >nul
+    goto sys_loot_all
+)
+call :DynamicMenu "ETAPE 4 TERMINEE - CONTINUER ?" "Continuer vers Extraction Locale~[Etape 5/5];Retour au menu Reseau Interne" "NONUMS NOCLS"
+if "%errorlevel%"=="1" goto sys_loot_all
+set "lan_pipeline="
+goto net_menu_interne
+
+:sys_loot_all
+set "lan_pipeline="
+cls
+echo.
+echo %B%  ================================================%N%
+echo %B%   [5/5] EXTRACTION LOCALE - SECRETS ET CREDENTIALS%N%
+echo %B%  ================================================%N%
+echo.
+echo  %Y%[i]%N% Extraction des secrets locaux pour lateral movement...
+echo.
+set "SLA=%TEMP%\sys_loot_%RANDOM%.ps1"
+if exist "%SLA%" del /f /q "%SLA%"
+
+>  "%SLA%" echo Write-Host "  === MOT DE PASSE WI-FI ===" -f Cyan
+>> "%SLA%" echo $profiles=netsh wlan show profiles 2>$null ^| Select-String "Profil d'utilisateur|User Profile" ^| ForEach-Object { ($_ -split ':')[1].Trim() }
+>> "%SLA%" echo if($profiles){foreach($p in $profiles){$k=netsh wlan show profile name="$p" key=clear 2>$null ^| Select-String "Contenu de la|Key Content";if($k){$pass=($k -split ':')[1].Trim();Write-Host ("  [WIFI] "+$p.PadRight(30)+" Pass: "+$pass) -f Green}else{Write-Host ("  [WIFI] "+$p.PadRight(30)+" (pas de mot de passe)") -f DarkGray}}}else{Write-Host "  [-] Aucun profil Wi-Fi." -f DarkGray}
+>> "%SLA%" echo Write-Host ""
+>> "%SLA%" echo Write-Host "  === CREDENTIAL MANAGER ===" -f Cyan
+>> "%SLA%" echo $credOutput=cmdkey /list 2>$null
+>> "%SLA%" echo if($credOutput){$credOutput ^| Where-Object {$_ -match "Cible|Target|Utilisateur|User"} ^| ForEach-Object {Write-Host ("  [CRED] "+$_.Trim()) -f Yellow}}else{Write-Host "  [-] Aucun credential stocke." -f DarkGray}
+>> "%SLA%" echo Write-Host ""
+>> "%SLA%" echo Write-Host "  === SESSIONS ACTIVES ===" -f Cyan
+>> "%SLA%" echo query session 2>$null ^| ForEach-Object { Write-Host ("  [SES] "+$_) -f Gray }
+>> "%SLA%" echo Write-Host ""
+>> "%SLA%" echo Write-Host "  === PARTAGES RESEAU CONNECTES ===" -f Cyan
+>> "%SLA%" echo net use 2>$null ^| Where-Object {$_ -match '\\'} ^| ForEach-Object {Write-Host ("  [USE] "+$_.Trim()) -f Yellow}
+>> "%SLA%" echo Write-Host ""
+>> "%SLA%" echo Write-Host "  === CLES SSH LOCALES ===" -f Cyan
+>> "%SLA%" echo $sshDir="$env:USERPROFILE\.ssh"
+>> "%SLA%" echo if(Test-Path $sshDir){Get-ChildItem $sshDir ^| Where-Object {-not $_.Name.EndsWith('.pub')} ^| ForEach-Object {Write-Host ("  [SSH] "+$_.FullName) -f Green}}else{Write-Host "  [-] Aucune cle SSH locale." -f DarkGray}
+>> "%SLA%" echo Write-Host ""
+>> "%SLA%" echo Write-Host "  === MOTS DE PASSE NAVIGATEURS (presence) ===" -f Cyan
+>> "%SLA%" echo $loginDb="$env:LOCALAPPDATA\Google\Chrome\User Data\Default\Login Data"
+>> "%SLA%" echo if(Test-Path $loginDb){Write-Host "  [CHROME] Base Login Data presente - extractible avec outil dedie" -f Yellow}else{Write-Host "  [-] Chrome Login Data absent." -f DarkGray}
+>> "%SLA%" echo $edgeDb="$env:LOCALAPPDATA\Microsoft\Edge\User Data\Default\Login Data"
+>> "%SLA%" echo if(Test-Path $edgeDb){Write-Host "  [EDGE] Base Login Data presente - extractible avec outil dedie" -f Yellow}else{Write-Host "  [-] Edge Login Data absent." -f DarkGray}
+>> "%SLA%" echo Write-Host ""
+>> "%SLA%" echo Write-Host "  [DONE] Extraction terminee." -f Cyan
+powershell -NoProfile -ExecutionPolicy Bypass -File "%SLA%"
+if exist "%SLA%" del /f /q "%SLA%"
+echo.
+pause >nul
+goto net_menu_interne
 
 REM ===================================================================
 :cyber_ip_grabber
@@ -2102,6 +2404,7 @@ echo.
 echo   [>] 4. Cartes reseau physiques (Hardware)...
 powershell -NoProfile -Command "Write-Host ' NOM             | STATUT       | VITESSE      | ADRESSE MAC' -f White; Write-Host ' ---------------|--------------|--------------|-------------------' -f Gray; Get-NetAdapter -EA SilentlyContinue | Where-Object {$_.Status -ne 'Not Present'} | ForEach-Object { $s = switch($_.Status){'Up'{'Actif'};'Down'{'Inactif'};'Disconnected'{'Deconnecte'};default{$_.Status}}; Write-Host (' {0,-15} | {1,-12} | {2,-12} | {3}' -f $_.Name, $s, $_.LinkSpeed, $_.MacAddress) -f Gray }"
 pause
+if defined _net_back goto %_net_back%
 goto net_cyber_menu
 
 
@@ -2114,6 +2417,7 @@ echo  ================================================
 powershell -NoProfile -Command "$conns = Get-NetTCPConnection -State Established,Listen -EA SilentlyContinue; if($conns){ $conns | Select-Object @{N='Port_Local';E={$_.LocalPort}}, @{N='Adresse_Distante';E={$_.RemoteAddress}}, @{N='Etat';E={$_.State}}, @{N='Processus';E={(Get-Process -Id $_.OwningProcess -EA SilentlyContinue).Name}} | Sort-Object Etat | Format-Table -AutoSize } else { Write-Host '   Aucune connexion active detectee.' -f Yellow }"
 echo.
 pause
+if defined _net_back goto %_net_back%
 goto net_cyber_menu
 
 :cyber_security_audit
@@ -2479,9 +2783,10 @@ echo.
 echo  Resolution de test vers un domaine public :
 powershell -NoProfile -Command "try { $r = Resolve-DnsName 'whoami.akamai.net' -EA Stop; Write-Host ('  IP resolue : ' + $r.IP4Address) -f Green } catch { Write-Host '  Impossible de resoudre le domaine de test.' -f Red }"
 echo.
-echo  [i] CONSEIL : Si vous utilisez un VPN, vous ne devriez PAS voir les IP 
+echo  [i] CONSEIL : Si vous utilisez un VPN, vous ne devriez PAS voir les IP
 echo      de votre box internet ici. Utilisez 1.1.1.1 ou 8.8.8.8 pour plus de securite.
 pause
+if defined _net_back goto %_net_back%
 goto net_cyber_menu
 
 :cyber_phishing_gen
@@ -3670,6 +3975,7 @@ set "nxt=%errorlevel%"
 if "%nxt%"=="1" goto lan_all_deep
 if "%nxt%"=="2" goto lan_all_smb
 if "%nxt%"=="3" goto cyber_smb_explorer
+if defined _net_back goto %_net_back%
 goto net_cyber_menu
 
 :cyber_smb_explorer
