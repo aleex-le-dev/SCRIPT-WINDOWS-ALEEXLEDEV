@@ -1,0 +1,1 @@
+      } else { Write-Host '     - presente' -f DarkGray }

