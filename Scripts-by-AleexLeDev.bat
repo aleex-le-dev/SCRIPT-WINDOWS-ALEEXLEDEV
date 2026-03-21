@@ -1592,9 +1592,33 @@ REM ===================================================================
 REM              MENU CYBERSECURITE RESEAU - PAR ALEEXLEDEV
 REM ===================================================================
 :net_cyber_menu
-call :AutoMenu "CYBERSECURITE RESEAU" "cyber_triage;cyber_flux_analysis;cyber_dns_leak;cyber_wifi_audit;cyber_ip_grabber;cyber_lan_auto"
-if "%errorlevel%"=="0" goto system_tools
-goto !AutoMenu_Target!
+call :DynamicMenu "CYBERSECURITE RESEAU" "Wi-Fi - Hors connexion~Recherche, audit et crack de reseaux Wi-Fi;Reseau Interne - Connecte~Scanner LAN, flux, DNS, diagnostic local;Reseau Distant~Scanner cible WAN, IP Grabber, post-exploitation" "NONUMS"
+set "ncm_ch=%errorlevel%"
+if "%ncm_ch%"=="0" goto system_tools
+if "%ncm_ch%"=="1" goto net_menu_wifi
+if "%ncm_ch%"=="2" goto net_menu_interne
+if "%ncm_ch%"=="3" goto net_menu_distant
+goto net_cyber_menu
+
+:net_menu_wifi
+call :DynamicMenu "WI-FI - HORS CONNEXION" "Analyseur Wi-Fi (Evil Twin)~Detection de faux points d'acces" "NONUMS"
+set "wifi_ch=%errorlevel%"
+if "%wifi_ch%"=="0" goto net_cyber_menu
+if "%wifi_ch%"=="1" goto cyber_wifi_audit
+goto net_menu_wifi
+
+:net_menu_interne
+call :DynamicMenu "RESEAU INTERNE" "Diagnostic PC et Connectivite~Analyse IP, cartes reseau, DNS et Gateway;Analyse des Flux Reseau~Ports ouverts et processus actifs;Test de Fuite DNS~Verifier l'anonymat DNS avec VPN;Scanner Reseau Local (LAN)~Scan des adresses locales pour detecter les appareils" "NONUMS"
+set "lan_ch=%errorlevel%"
+if "%lan_ch%"=="0" goto net_cyber_menu
+if "%lan_ch%"=="1" goto cyber_triage
+if "%lan_ch%"=="2" goto cyber_flux_analysis
+if "%lan_ch%"=="3" goto cyber_dns_leak
+if "%lan_ch%"=="4" goto cyber_lan_auto
+goto net_menu_interne
+
+:net_menu_distant
+goto cyber_ip_grabber
 
 REM ===================================================================
 :cyber_ip_grabber
