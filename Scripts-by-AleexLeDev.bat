@@ -1608,6 +1608,53 @@ if "%ds_ch%"=="2" goto gm_traps_menu
 goto cyber_ip_grabber
 
 :ds_saisir_ip
+REM --- Construire menu depuis ip distant.txt ---
+set "CAP_PS=%TEMP%\capbld_%RANDOM%.ps1"
+set "CAP_OPTS=%TEMP%\capopts.txt"
+set "CAP_IPS=%TEMP%\capips.txt"
+if exist "%CAP_OPTS%" del /f /q "%CAP_OPTS%"
+if exist "%CAP_IPS%"  del /f /q "%CAP_IPS%"
+>>"%CAP_PS%" echo if (-not (Test-Path "ip distant.txt")) { exit 1 }
+>>"%CAP_PS%" echo $seen=@{}; $entries=@()
+>>"%CAP_PS%" echo foreach ($l in (Get-Content "ip distant.txt" -EA SilentlyContinue)) {
+>>"%CAP_PS%" echo     if ($l -match "IP: ([^\s]+) -- PC: ([^\s]+) -- User: (.+)$") {
+>>"%CAP_PS%" echo         $ip=$matches[1]; $pc=$matches[2]; $usr=$matches[3].Trim()
+>>"%CAP_PS%" echo         if (-not $seen[$ip]) { $seen[$ip]=$true; $entries += @{IP=$ip;PC=$pc;USR=$usr} }
+>>"%CAP_PS%" echo     } }
+>>"%CAP_PS%" echo $entries = $entries ^| Select-Object -Last 9
+>>"%CAP_PS%" echo if ($entries.Count -eq 0) { exit 1 }
+>>"%CAP_PS%" echo $opts = ($entries ^| ForEach-Object { $_.IP + "~PC: " + $_.PC + " / User: " + $_.USR }) -join ";"
+>>"%CAP_PS%" echo $opts + ";[---];Saisir une IP ou DNS manuellement~IPv4, IPv6, DDNS, Tailscale;Retour" ^| Set-Content "%CAP_OPTS%" -Encoding ASCII
+>>"%CAP_PS%" echo ($entries ^| ForEach-Object { $_.IP }) ^| Set-Content "%CAP_IPS%" -Encoding ASCII
+powershell -NoProfile -ExecutionPolicy Bypass -File "%CAP_PS%"
+set "cap_rc=%errorlevel%"
+if exist "%CAP_PS%" del /f /q "%CAP_PS%"
+if "%cap_rc%"=="1" goto ds_saisir_ip_manual
+set "cap_opts_str="
+set /p cap_opts_str=<"%CAP_OPTS%"
+if exist "%CAP_OPTS%" del /f /q "%CAP_OPTS%"
+if not defined cap_opts_str goto ds_saisir_ip_manual
+call :DynamicMenu "CIBLES CAPTUREES - CHOISIR UNE CIBLE" "!cap_opts_str!" "NONUMS"
+set "cap_sel=%errorlevel%"
+if "%cap_sel%"=="0" goto cyber_ip_grabber
+REM --- Retrouver l'IP par index (ligne N dans cap_ips) ---
+set "remote_ip="
+set "cnt=0"
+for /f "usebackq" %%L in ("%CAP_IPS%") do (
+    set /a cnt+=1
+    if "!cnt!"=="!cap_sel!" set "remote_ip=%%L"
+)
+if exist "%CAP_IPS%" del /f /q "%CAP_IPS%"
+if defined remote_ip (
+    set "remote_pc="
+    set "remote_port=NONE"
+    goto wan_public_scan
+)
+REM --- sel > N (Saisir manuellement ou Retour) ---
+set /a n_retour=!cnt!+2
+if "!cap_sel!"=="!n_retour!" goto cyber_ip_grabber
+REM --- Saisie manuelle ([N] choisi ou pas de captures) ---
+:ds_saisir_ip_manual
 cls
 echo.
 echo  ================================================
@@ -1616,6 +1663,7 @@ echo  ================================================
 echo.
 echo  Exemples :
 echo   - IP publique WAN  : 82.xx.xx.xx
+echo   - IPv6 WAN         : 2a01:e0a:5b4:5510:...
 echo   - DDNS             : cible.duckdns.org
 echo   - Tailscale        : nom-pc.tailXXXX.ts.net
 echo.
@@ -1631,6 +1679,8 @@ set "VALPS=%TEMP%\val_%RANDOM%.ps1"
 >>  "%VALPS%" echo     $parts = $in.Split(".")
 >>  "%VALPS%" echo     $ok = ($parts ^| Where-Object { [int]$_ -gt 255 }).Count -eq 0
 >>  "%VALPS%" echo     if ($ok) { $resolved = $in }
+>>  "%VALPS%" echo } elseif ($in -match "^[0-9a-fA-F:]{3,39}$") {
+>>  "%VALPS%" echo     $addr = $null; if ([System.Net.IPAddress]::TryParse($in, [ref]$addr) -and $addr.AddressFamily -eq "InterNetworkV6") { $resolved = $in }
 >>  "%VALPS%" echo } else {
 >>  "%VALPS%" echo     try { $a = [System.Net.Dns]::GetHostAddresses($in) ^| Where-Object { $_.AddressFamily -eq "InterNetwork" } ^| Select-Object -First 1; if ($a) { $resolved = $a.IPAddressToString } } catch {}
 >>  "%VALPS%" echo }
@@ -1644,7 +1694,7 @@ if "%val_err%"=="1" (
     echo.
     echo  %R%[!] Saisie invalide. Veuillez entrer une IP valide ou un nom de domaine resolvable.%N%
     timeout /t 2 >nul
-    goto ds_saisir_ip
+    goto ds_saisir_ip_manual
 )
 if exist "%TEMP%\val_result.txt" (
     set /p remote_ip=<"%TEMP%\val_result.txt"
@@ -2387,7 +2437,7 @@ call :DynamicMenu "!remote_info_title!" "%opts%" "NONUMS"
 set "rc_opt=%errorlevel%"
 
 REM --- [1] Explorer partages SMB ---
-if "%rc_opt%"=="1" goto smb_explore
+if "%rc_opt%"=="1" (set "smb_ret=cyber_remote_menu" & goto smb_explore)
 
 REM --- [2] Session WinRM/PowerShell ---
 if "%rc_opt%"=="2" (
@@ -2436,14 +2486,36 @@ echo  %Y%[1]%N% Listage des partages accessibles...
 net view \\!remote_ip! /all 2>nul
 if %errorlevel% neq 0 (
     echo  %R%[!] Partages inaccessibles - connexion refusee ou SMB bloque.%N%
-) else (
     echo.
-    echo  [?] Ouvrir le disque C$ dans l'explorateur ?
-    call :InputWithEsc "(O/N) : " smb_open
-    if /i "!smb_open!"=="O" start "" "\\!remote_ip!\C$"
+    pause >nul
+    goto cyber_remote_menu
 )
 echo.
+call :DynamicMenu "Ouvrir le disque C$ dans l'explorateur ?" "Ouvrir C$~Lance l'Explorateur sur \\cible\C$;Annuler" "NONUMS NOCLS"
+if "%errorlevel%"=="0" goto smb_explore_end
+if "%errorlevel%"=="2" goto smb_explore_end
+set "smb_host2=!remote_ip!"
+set "tmp_v6b=!remote_ip::=!"
+if not "!tmp_v6b!"=="!remote_ip!" set "smb_host2=!remote_ip::=-!.ipv6-literal.net"
+net use \\!smb_host2!\C$ >nul 2>&1
+if not errorlevel 1 goto smb_exp_launch
+echo  [i] Acces refuse sans credentials - tentative avec mot de passe...
+set "smb_user=!remote_user!"
+if not defined smb_user set /p "smb_user=  Utilisateur : "
+:smb_exp_pwd_loop
+set "smb_pass="
+set /p "smb_pass=  Mot de passe (vide = annuler) : "
+if not defined smb_pass goto smb_explore_end
+net use \\!smb_host2!\C$ "!smb_pass!" /user:"!smb_user!" >nul 2>&1
+if errorlevel 1 (echo  [-] Echec - reessayez. & goto smb_exp_pwd_loop)
+echo  [+] Connecte ^!
+set "smb_pass="
+:smb_exp_launch
+start "" "\\!smb_host2!\C$"
+:smb_explore_end
+echo.
 pause >nul
+if defined smb_ret (goto !smb_ret!)
 goto cyber_remote_menu
 
 :wan_public_scan
@@ -2463,6 +2535,7 @@ set "WPORTS=%TEMP%\wan_ports_result.txt"
 if exist "%WANS%" del /f /q "%WANS%"
 if exist "%WPORTS%" del /f /q "%WPORTS%"
 
+>>  "%WANS%" echo $Host.UI.RawUI.FlushInputBuffer()
 >>  "%WANS%" echo $ip = "!remote_ip!"
 >>  "%WANS%" echo $wanPorts = @(
 >>  "%WANS%" echo     @{P=21;  N="FTP";         R="MEDIUM";   H="Transfert fichiers en clair"},
@@ -2493,16 +2566,17 @@ if exist "%WPORTS%" del /f /q "%WPORTS%"
 >>  "%WANS%" echo     @{P=8443;N="HTTPS-Alt";   R="MEDIUM";   H="Interface admin securisee"}
 >>  "%WANS%" echo ^)
 >>  "%WANS%" echo if ("!remote_port!" -ne "NONE" -and "!remote_port!" -match "^\d+$") { $wanPorts += @{P=[int]"!remote_port!"; N="Port Custom"; R="HIGH"; H="Port specifie manuellement"} }
+>>  "%WANS%" echo $ipObj = $null
+>>  "%WANS%" echo try { $ipObj = [System.Net.IPAddress]::Parse($ip) } catch { Write-Host "  [!] IP invalide : $ip" -ForegroundColor Red; Set-Content "%WPORTS%" "NONE" -Encoding ASCII; exit 1 }
 >>  "%WANS%" echo $found = @()
 >>  "%WANS%" echo foreach ($e in $wanPorts) {
 >>  "%WANS%" echo     $esc = $false
 >>  "%WANS%" echo     if ($Host.UI.RawUI.KeyAvailable) { if ($Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown").VirtualKeyCode -eq 27) { $esc=$true } }
 >>  "%WANS%" echo     if ($esc) { break }
 >>  "%WANS%" echo     [Console]::Write("`r  [*] Test port $($e.P) ($($e.N))...    ")
->>  "%WANS%" echo     $ipObj = [System.Net.IPAddress]::Parse($ip)
 >>  "%WANS%" echo     $tcp = New-Object System.Net.Sockets.TcpClient($ipObj.AddressFamily)
 >>  "%WANS%" echo     try {
->>  "%WANS%" echo         $c = $tcp.BeginConnect($ip, $e.P, $null, $null)
+>>  "%WANS%" echo         $c = $tcp.BeginConnect($ipObj, $e.P, $null, $null)
 >>  "%WANS%" echo         if ($c.AsyncWaitHandle.WaitOne(800, $false) -and $tcp.Connected) {
 >>  "%WANS%" echo             $col = switch($e.R){ "CRITICAL"{"Magenta"}; "HIGH"{"Red"}; "MEDIUM"{"Yellow"}; default{"Cyan"} }
 >>  "%WANS%" echo             Write-Host ("`r  [PORT OUVERT] $($e.P.ToString().PadRight(5)) $($e.N.PadRight(12)) [$($e.R.PadRight(8))] $($e.H)") -f $col
@@ -2521,7 +2595,7 @@ if exist "%WPORTS%" del /f /q "%WPORTS%"
 >>  "%WANS%" echo     Set-Content "%WPORTS%" (($found ^| ForEach-Object { [string]$_.P }) -join ",") -Encoding ASCII
 >>  "%WANS%" echo }
 
-powershell -NoProfile -ExecutionPolicy Bypass -File "%WANS%"
+powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "%WANS%"
 if exist "%WANS%" del /f /q "%WANS%"
 set "found_ports="
 set /p found_ports=<"%WPORTS%"
@@ -2531,17 +2605,19 @@ echo.
 if "!found_ports!"=="NONE" goto cyber_ip_grabber
 if not defined found_ports goto cyber_ip_grabber
 
+:wan_post_scan
 set "fwd_opts=Retour"
 set "fwd_actions=retour"
 set "fp=,!found_ports!,"
 
 if not "!fp:,445,=!"=="!fp!" set "fwd_opts=Explorer partages SMB (C$, Admin$, partages);!fwd_opts!" & set "fwd_actions=smb,!fwd_actions!"
-if not "!fp:,445,=!"=="!fp!" set "fwd_opts=[SMB] Test session anonyme - Null Session;!fwd_opts!" & set "fwd_actions=smb_null,!fwd_actions!"
-if not "!fp:,135,=!"=="!fp!" set "fwd_opts=[RPC] Enumerer endpoints DCOM/WMI (port 135);!fwd_opts!" & set "fwd_actions=rpc_enum,!fwd_actions!"
-if not "!fp:,21,=!"=="!fp!" set "fwd_opts=[FTP] Test login anonyme (port 21);!fwd_opts!" & set "fwd_actions=ftp_anon,!fwd_actions!"
-if not "!fp:,5985,=!"=="!fp!" set "fwd_opts=[WinRM] Session PowerShell distante (port 5985);!fwd_opts!" & set "fwd_actions=winrm,!fwd_actions!"
-if not "!fp:,22,=!"=="!fp!" set "fwd_opts=[SSH] Connexion terminal SSH (port 22);!fwd_opts!" & set "fwd_actions=ssh,!fwd_actions!"
-if not "!fp:,3389,=!"=="!fp!" set "fwd_opts=[RDP] Bureau a distance - mstsc (port 3389);!fwd_opts!" & set "fwd_actions=rdp,!fwd_actions!"
+if not "!fp:,445,=!"=="!fp!" set "fwd_opts=[SMB] Test session anonyme - sans mot de passe;!fwd_opts!" & set "fwd_actions=smb_null,!fwd_actions!"
+if not "!fp:,445,=!"=="!fp!" set "fwd_opts=[SMB] Acces disque C$ - mot de passe requis;!fwd_opts!" & set "fwd_actions=smb_creds,!fwd_actions!"
+if not "!fp:,135,=!"=="!fp!" set "fwd_opts=[RPC] WMI/DCOM - mot de passe requis + firewall cible;!fwd_opts!" & set "fwd_actions=rpc_enum,!fwd_actions!"
+if not "!fp:,21,=!"=="!fp!" set "fwd_opts=[FTP] Test login anonyme - sans mot de passe;!fwd_opts!" & set "fwd_actions=ftp_anon,!fwd_actions!"
+if not "!fp:,5985,=!"=="!fp!" set "fwd_opts=[WinRM] Session PowerShell - mot de passe requis;!fwd_opts!" & set "fwd_actions=winrm,!fwd_actions!"
+if not "!fp:,22,=!"=="!fp!" set "fwd_opts=[SSH] Connexion terminal - mot de passe requis;!fwd_opts!" & set "fwd_actions=ssh,!fwd_actions!"
+if not "!fp:,3389,=!"=="!fp!" set "fwd_opts=[RDP] Bureau a distance - mot de passe requis;!fwd_opts!" & set "fwd_actions=rdp,!fwd_actions!"
 
 call :DynamicMenu "QUE FAIRE AVEC CETTE CIBLE ?" "!fwd_opts!" "NONUMS NOCLS"
 set "fwd_ch=%errorlevel%"
@@ -2559,16 +2635,16 @@ if "!sel_action!"=="rdp" (
     echo  [i] Lancement connexion Bureau a distance vers !remote_ip!...
     start mstsc /v:!remote_ip!
     pause
-    goto wan_public_scan
+    goto wan_post_scan
 )
 if "!sel_action!"=="ssh" (
     echo.
     echo  [i] Connexion SSH vers !remote_ip!...
     set /p "ssh_user=Utilisateur cible : "
-    if not defined ssh_user goto wan_public_scan
+    if not defined ssh_user goto wan_post_scan
     if "!remote_port!"=="NONE" (ssh !ssh_user!@!remote_ip!) else (ssh -p !remote_port! !ssh_user!@!remote_ip!)
     pause
-    goto wan_public_scan
+    goto wan_post_scan
 )
 if "!sel_action!"=="winrm" (
     cls
@@ -2576,93 +2652,191 @@ if "!sel_action!"=="winrm" (
     echo [i] Tentative de connexion WinRM Remote PowerShell sur !remote_ip!...
     powershell -NoProfile -Command "Enter-PSSession -ComputerName !remote_ip! -Credential (Get-Credential)"
     pause
-    goto wan_public_scan
+    goto wan_post_scan
 )
-if "!sel_action!"=="smb" goto smb_explore
+if "!sel_action!"=="smb" (set "smb_ret=wan_post_scan" & goto smb_explore)
 if "!sel_action!"=="retour" goto cyber_ip_grabber
 
-if "!sel_action!"=="smb_null" (
-    cls
-    echo.
-    echo %B%  [SMB] TEST SESSION ANONYME - NULL SESSION%N%
-    echo  Cible : !remote_ip!
-    echo.
-    echo  [*] Tentative connexion IPC$ sans credentials...
-    net use \\!remote_ip!\IPC$ "" /user:"" 2>&1
-    if errorlevel 1 (
-        echo.
-        echo %R%  [-] Null session refusee - SMB correctement protege.%N%
-    ) else (
-        echo.
-        echo %G%  [+] NULL SESSION ACCEPTEE ^! Enumeration des partages :%N%
-        net view \\!remote_ip! 2>&1
-        echo.
-        echo  [*] Deconnexion...
-        net use \\!remote_ip!\IPC$ /delete >nul 2>&1
-    )
-    echo.
-    pause
-    goto wan_public_scan
-)
-
-if "!sel_action!"=="rpc_enum" (
-    cls
-    echo.
-    echo %B%  [RPC] ENUMERATION ENDPOINTS DCOM/WMI%N%
-    echo  Cible : !remote_ip!
-    echo.
-    set "RPC_TMP=%TEMP%\rpc_enum_%RANDOM%.ps1"
-    >> "!RPC_TMP!" echo $ip = "!remote_ip!"
-    >> "!RPC_TMP!" echo Write-Host "  [*] Tentative connexion WMI distante (credentials requis)..." -f Yellow
-    >> "!RPC_TMP!" echo try {
-    >> "!RPC_TMP!" echo     $cred = Get-Credential -Message "Identifiants de la cible !remote_ip!"
-    >> "!RPC_TMP!" echo     $opt = New-CimSessionOption -Protocol Dcom
-    >> "!RPC_TMP!" echo     $sess = New-CimSession -ComputerName $ip -Credential $cred -SessionOption $opt -EA Stop
-    >> "!RPC_TMP!" echo     $sys = Get-CimInstance Win32_ComputerSystem -CimSession $sess
-    >> "!RPC_TMP!" echo     Write-Host "  [+] ACCES WMI OK !" -f Green
-    >> "!RPC_TMP!" echo     Write-Host "  Nom     : $($sys.Name)" -f Cyan
-    >> "!RPC_TMP!" echo     Write-Host "  Domaine : $($sys.Domain)" -f Cyan
-    >> "!RPC_TMP!" echo     Write-Host "  OS      : $($sys.Caption)" -f Cyan
-    >> "!RPC_TMP!" echo     Write-Host "" ; Write-Host "  [*] Processus en cours :" -f Yellow
-    >> "!RPC_TMP!" echo     Get-CimInstance Win32_Process -CimSession $sess ^| Select Name,ProcessId,@{N='Mem(MB)';E={[math]::Round($_.WorkingSetSize/1MB,1)}} ^| Sort Mem -Desc ^| Select -First 15 ^| Format-Table -Auto
-    >> "!RPC_TMP!" echo     Remove-CimSession $sess
-    >> "!RPC_TMP!" echo } catch { Write-Host "  [-] Echec RPC/WMI : $($_.Exception.Message)" -f Red }
-    powershell -NoProfile -ExecutionPolicy Bypass -File "!RPC_TMP!"
-    if exist "!RPC_TMP!" del /f /q "!RPC_TMP!"
-    echo.
-    pause
-    goto wan_public_scan
-)
-
-if "!sel_action!"=="ftp_anon" (
-    cls
-    echo.
-    echo %B%  [FTP] TEST LOGIN ANONYME%N%
-    echo  Cible : !remote_ip!:21
-    echo.
-    set "FTP_TMP=%TEMP%\ftp_anon_%RANDOM%.ps1"
-    >> "!FTP_TMP!" echo $ip = "!remote_ip!"
-    >> "!FTP_TMP!" echo $req = [System.Net.FtpWebRequest]::Create("ftp://$ip/")
-    >> "!FTP_TMP!" echo $req.Credentials = New-Object System.Net.NetworkCredential("anonymous","pentest@lab.local")
-    >> "!FTP_TMP!" echo $req.Method = [System.Net.WebRequestMethods+Ftp]::ListDirectory
-    >> "!FTP_TMP!" echo $req.Timeout = 5000
-    >> "!FTP_TMP!" echo try {
-    >> "!FTP_TMP!" echo     $resp = $req.GetResponse()
-    >> "!FTP_TMP!" echo     $reader = New-Object System.IO.StreamReader($resp.GetResponseStream())
-    >> "!FTP_TMP!" echo     $content = $reader.ReadToEnd()
-    >> "!FTP_TMP!" echo     Write-Host "  [+] FTP ANONYME ACCEPTE !" -f Green
-    >> "!FTP_TMP!" echo     Write-Host "  Contenu racine :" -f Yellow
-    >> "!FTP_TMP!" echo     Write-Host $content -f Cyan
-    >> "!FTP_TMP!" echo     $reader.Close() ; $resp.Close()
-    >> "!FTP_TMP!" echo } catch { Write-Host "  [-] FTP anonyme refuse : $($_.Exception.Message)" -f Red }
-    powershell -NoProfile -ExecutionPolicy Bypass -File "!FTP_TMP!"
-    if exist "!FTP_TMP!" del /f /q "!FTP_TMP!"
-    echo.
-    pause
-    goto wan_public_scan
-)
-
+if "!sel_action!"=="smb_null" goto action_smb_null
+if "!sel_action!"=="smb_creds" goto action_smb_creds
+if "!sel_action!"=="rpc_enum" goto action_rpc_enum
+if "!sel_action!"=="ftp_anon" goto action_ftp_anon
 goto cyber_ip_grabber
+
+:action_smb_creds
+cls
+echo.
+echo %B%  [SMB] ACCES DISQUE C$ AVEC CREDENTIALS%N%
+echo  Cible : !remote_ip!
+echo.
+set "smb_host=!remote_ip!"
+set "tmp_v6=!remote_ip::=!"
+if not "!tmp_v6!"=="!remote_ip!" set "smb_host=!remote_ip::=-!.ipv6-literal.net"
+set "smb_user=!remote_user!"
+if not defined smb_user set /p "smb_user=  Utilisateur : "
+if not defined smb_user goto wan_post_scan
+echo  Utilisateur : %Y%!smb_user!%N%
+:smb_creds_loop
+set "smb_pass="
+set /p "smb_pass=  Mot de passe (vide = annuler) : "
+if not defined smb_pass goto wan_post_scan
+net use \\!smb_host!\C$ "!smb_pass!" /user:"!smb_user!" >nul 2>&1
+if errorlevel 1 (
+    echo  [-] Echec - mauvais mot de passe ou acces refuse.
+    goto smb_creds_loop
+)
+echo.
+echo  [+] ACCES C$ OK ^! Ouverture explorateur...
+start explorer \\!smb_host!\C$
+echo.
+echo  [i] Partage connecte. Pour deconnecter : net use \\!smb_host!\C$ /delete
+set "smb_pass="
+echo.
+pause
+net use \\!smb_host!\C$ /delete >nul 2>&1
+goto wan_post_scan
+
+:action_smb_null
+cls
+echo.
+echo %B%  [SMB] TEST SESSION ANONYME - NULL SESSION%N%
+echo  Cible : !remote_ip!
+echo.
+set "smb_host=!remote_ip!"
+set "tmp_v6=!remote_ip::=!"
+if not "!tmp_v6!"=="!remote_ip!" set "smb_host=!remote_ip::=-!.ipv6-literal.net"
+echo  [*] Tentative connexion \\!smb_host!\IPC$ sans credentials...
+set "SMB_OUT=%TEMP%\smb_null_out.txt"
+net use \\!smb_host!\IPC$ "" /user:"" > "%SMB_OUT%" 2>&1
+set "smb_el=%errorlevel%"
+type "%SMB_OUT%"
+echo.
+if "!smb_el!"=="0" (
+    echo  [+] NULL SESSION ACCEPTEE ^! Enumeration des partages :
+    net view \\!smb_host! 2>&1
+    echo.
+    echo  [*] Deconnexion...
+    net use \\!smb_host!\IPC$ /delete >nul 2>&1
+    if exist "%SMB_OUT%" del /f /q "%SMB_OUT%"
+    goto smb_null_end
+)
+findstr /C:"1937" "%SMB_OUT%" >nul 2>&1
+if not errorlevel 1 (echo  [-] NTLM desactive - authentification anonyme bloquee par GPO. & goto smb_null_done)
+findstr /C:"67" "%SMB_OUT%" >nul 2>&1
+if not errorlevel 1 (echo  [-] Reseau introuvable - cible hors ligne ou port 445 bloque. & goto smb_null_done)
+findstr /C:"5" "%SMB_OUT%" >nul 2>&1
+if not errorlevel 1 (echo  [-] Acces refuse - null session rejetee par la politique Windows. & goto smb_null_done)
+echo  [-] Null session refusee ^(code systeme !smb_el!^).
+:smb_null_done
+if exist "%SMB_OUT%" del /f /q "%SMB_OUT%"
+:smb_null_end
+echo.
+pause
+goto wan_post_scan
+
+:action_rpc_enum
+cls
+echo.
+echo %B%  [RPC] ENUMERATION ENDPOINTS DCOM/WMI%N%
+echo  Cible : !remote_ip!
+echo.
+echo  [*] Test accessibilite WMI/RPC...
+set "RPC_PRB=%TEMP%\rpc_probe_%RANDOM%.ps1"
+set "RPC_PRB_RES=%TEMP%\rpc_probe_res.txt"
+>> "%RPC_PRB%" echo try {
+>> "%RPC_PRB%" echo     $opt  = New-CimSessionOption -Protocol Dcom
+>> "%RPC_PRB%" echo     $sess = New-CimSession -ComputerName "!remote_ip!" -Credential (New-Object PSCredential("probe",(ConvertTo-SecureString "probe" -AsPlainText -Force))) -SessionOption $opt -EA Stop
+>> "%RPC_PRB%" echo } catch {
+>> "%RPC_PRB%" echo     $c = $_.Exception.HResult -band 0xFFFF
+>> "%RPC_PRB%" echo     Set-Content "%RPC_PRB_RES%" $c -Encoding ASCII
+>> "%RPC_PRB%" echo }
+powershell -NoProfile -ExecutionPolicy Bypass -File "%RPC_PRB%" >nul 2>&1
+if exist "%RPC_PRB%" del /f /q "%RPC_PRB%"
+set "rpc_probe="
+if exist "%RPC_PRB_RES%" for /f "usebackq delims=" %%L in ("%RPC_PRB_RES%") do set "rpc_probe=%%L"
+if exist "%RPC_PRB_RES%" del /f /q "%RPC_PRB_RES%"
+if "!rpc_probe!"=="1722" (
+    echo  [x] FIREWALL BLOQUE - Ports dynamiques RPC fermes sur la cible.
+    echo  [i] WMI inaccessible depuis ce reseau. Utilisez SMB C$ a la place.
+    echo.
+    pause
+    goto wan_post_scan
+)
+if "!rpc_probe!"=="5" echo  [+] Firewall ouvert - WMI accessible, credentials requis.
+if "!rpc_probe!"=="1753" (
+    echo  [x] Service WMI non disponible sur la cible.
+    echo.
+    pause
+    goto wan_post_scan
+)
+echo.
+set "rpc_user=!remote_user!"
+if not defined rpc_user set /p "rpc_user=  Utilisateur (non capture) : "
+if not defined rpc_user goto wan_post_scan
+set "RPC_TMP=%TEMP%\rpc_enum_%RANDOM%.ps1"
+if exist "%RPC_TMP%" del /f /q "%RPC_TMP%"
+>> "%RPC_TMP%" echo $ip   = "!remote_ip!"
+>> "%RPC_TMP%" echo $user = "!rpc_user!"
+>> "%RPC_TMP%" echo Write-Host "  Utilisateur : $user" -f Yellow
+>> "%RPC_TMP%" echo Write-Host "  (Entree vide = annuler)" -f DarkGray
+>> "%RPC_TMP%" echo while ($true) {
+>> "%RPC_TMP%" echo     $sp = Read-Host "  Mot de passe"
+>> "%RPC_TMP%" echo     if ($sp.Length -eq 0) { Write-Host "  [i] Annule." -f Yellow; break }
+>> "%RPC_TMP%" echo     $ss   = ConvertTo-SecureString $sp -AsPlainText -Force
+>> "%RPC_TMP%" echo     $cred = New-Object PSCredential($user, $ss)
+>> "%RPC_TMP%" echo     Write-Host "  [*] Connexion WMI/DCOM..." -f Yellow
+>> "%RPC_TMP%" echo     try {
+>> "%RPC_TMP%" echo         $opt  = New-CimSessionOption -Protocol Dcom
+>> "%RPC_TMP%" echo         $sess = New-CimSession -ComputerName $ip -Credential $cred -SessionOption $opt -EA Stop
+>> "%RPC_TMP%" echo         $sys  = Get-CimInstance Win32_ComputerSystem -CimSession $sess
+>> "%RPC_TMP%" echo         $os   = Get-CimInstance Win32_OperatingSystem -CimSession $sess
+>> "%RPC_TMP%" echo         Write-Host "  [+] ACCES WMI OK !" -f Green
+>> "%RPC_TMP%" echo         Write-Host "  PC  : $($sys.Name)" -f Cyan
+>> "%RPC_TMP%" echo         Write-Host "  OS  : $($os.Caption) $($os.Version)" -f Cyan
+>> "%RPC_TMP%" echo         Write-Host "  RAM : $([math]::Round($os.TotalVisibleMemorySize/1MB,1)) GB  libre: $([math]::Round($os.FreePhysicalMemory/1MB,1)) GB" -f Cyan
+>> "%RPC_TMP%" echo         Write-Host ""
+>> "%RPC_TMP%" echo         Write-Host "  [*] Top 15 processus (RAM) :" -f Yellow
+>> "%RPC_TMP%" echo         Get-CimInstance Win32_Process -CimSession $sess ^| Sort-Object WorkingSetSize -Desc ^| Select-Object -First 15 @{N='Processus';E={$_.Name}},@{N='PID';E={$_.ProcessId}},@{N='RAM MB';E={[math]::Round($_.WorkingSetSize/1MB,1)}} ^| Format-Table -AutoSize
+>> "%RPC_TMP%" echo         Remove-CimSession $sess
+>> "%RPC_TMP%" echo         break
+>> "%RPC_TMP%" echo     } catch {
+>> "%RPC_TMP%" echo         Write-Host "  [-] Echec : $($_.Exception.Message)" -f Red
+>> "%RPC_TMP%" echo         Write-Host "  [i] Reessayez (Entree vide pour annuler)." -f Yellow
+>> "%RPC_TMP%" echo         Write-Host ""
+>> "%RPC_TMP%" echo     }
+>> "%RPC_TMP%" echo }
+powershell -NoProfile -ExecutionPolicy Bypass -File "%RPC_TMP%"
+if exist "%RPC_TMP%" del /f /q "%RPC_TMP%"
+echo.
+pause
+goto wan_post_scan
+
+:action_ftp_anon
+cls
+echo.
+echo %B%  [FTP] TEST LOGIN ANONYME%N%
+echo  Cible : !remote_ip!:21
+echo.
+set "FTP_TMP=%TEMP%\ftp_anon_%RANDOM%.ps1"
+if exist "%FTP_TMP%" del /f /q "%FTP_TMP%"
+>> "%FTP_TMP%" echo $ip = "!remote_ip!"
+>> "%FTP_TMP%" echo $req = [System.Net.FtpWebRequest]::Create("ftp://$ip/")
+>> "%FTP_TMP%" echo $req.Credentials = New-Object System.Net.NetworkCredential("anonymous","pentest@lab.local")
+>> "%FTP_TMP%" echo $req.Method = [System.Net.WebRequestMethods+Ftp]::ListDirectory
+>> "%FTP_TMP%" echo $req.Timeout = 5000
+>> "%FTP_TMP%" echo try {
+>> "%FTP_TMP%" echo     $resp = $req.GetResponse()
+>> "%FTP_TMP%" echo     $reader = New-Object System.IO.StreamReader($resp.GetResponseStream())
+>> "%FTP_TMP%" echo     $content = $reader.ReadToEnd()
+>> "%FTP_TMP%" echo     Write-Host "  [+] FTP ANONYME ACCEPTE !" -f Green
+>> "%FTP_TMP%" echo     Write-Host $content -f Cyan
+>> "%FTP_TMP%" echo     $reader.Close() ; $resp.Close()
+>> "%FTP_TMP%" echo } catch { Write-Host "  [-] FTP anonyme refuse : $($_.Exception.Message)" -f Red }
+powershell -NoProfile -ExecutionPolicy Bypass -File "%FTP_TMP%"
+if exist "%FTP_TMP%" del /f /q "%FTP_TMP%"
+echo.
+pause
+goto wan_post_scan
 
 :start_lan_scan
 echo.
