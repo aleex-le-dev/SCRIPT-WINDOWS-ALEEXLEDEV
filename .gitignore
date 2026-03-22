@@ -5,8 +5,8 @@
 credentials.txt
 favoris.txt
 ip distant.txt
-dns_backups/
 *.log
+webhook_tokens.txt
 
 # Ignore Windows executables
 *.exe
