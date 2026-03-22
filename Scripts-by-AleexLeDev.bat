@@ -1616,7 +1616,7 @@ if "%errorlevel%"=="0" goto system_tools
 goto !AutoMenu_Target!
 
 :net_menu_wifi
-set "wifi_opts=Crack Reseau Wi-Fi~Scan, analyse et crack de la cle WPA2 en pipeline;[---];Audit Evil Twin~Detection de faux points d'acces;Retour"
+set "wifi_opts=Crack Reseau Wi-Fi~Scan, analyse et crack de la cle WPA2;[---];Audit Evil Twin~Detection de faux points d'acces;Retour"
 call :DynamicMenu "WI-FI - HORS CONNEXION" "!wifi_opts!" "NONUMS"
 set "wifi_ch=%errorlevel%"
 if "!wifi_ch!"=="0" goto net_cyber_menu
