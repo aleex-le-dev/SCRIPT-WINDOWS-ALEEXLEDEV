@@ -19,6 +19,9 @@ DiagNav
 **/Local State
 **/login data
 
+# Fichier parasite batch (redirect mal echappee)
+]
+
 # Fichiers temporaires / dev
 nul
 *.py
