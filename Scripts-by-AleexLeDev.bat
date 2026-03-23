@@ -1525,26 +1525,8 @@ set "DBL_PS=%TEMP%\diag_browser_%RANDOM%.ps1"
 powershell -NoProfile -ExecutionPolicy Bypass -File "%DBL_PS%" >nul 2>&1
 del /f /q "%DBL_PS%" 2>nul
 
-set "PYCMD="
-for /f "delims=" %%p in ('where python 2^>nul') do if not defined PYCMD set "PYCMD=%%p"
-for /f "delims=" %%p in ('where py 2^>nul') do if not defined PYCMD set "PYCMD=%%p"
-
-if not defined PYCMD (
-    echo  [!] Python absent - Telechargement et installation automatique...
-    set "PY_PS=%TEMP%\py_inst_%RANDOM%.ps1"
-    > "!PY_PS!" echo $inst = "$env:TEMP\py_setup.exe"
-    >> "!PY_PS!" echo Write-Host "  Telechargement Python 3.12..." -ForegroundColor Cyan
-    >> "!PY_PS!" echo Invoke-WebRequest 'https://www.python.org/ftp/python/3.12.10/python-3.12.10-amd64.exe' -OutFile $inst -UseBasicParsing
-    >> "!PY_PS!" echo Write-Host "  Installation silencieuse..." -ForegroundColor Cyan
-    >> "!PY_PS!" echo Start-Process $inst -ArgumentList '/quiet InstallAllUsers=0 PrependPath=1 Include_test=0' -Wait
-    >> "!PY_PS!" echo Remove-Item $inst -Force
-    >> "!PY_PS!" echo Write-Host "  [OK] Python installe" -ForegroundColor Green
-    powershell -NoProfile -ExecutionPolicy Bypass -File "!PY_PS!"
-    del /f /q "!PY_PS!" 2>nul
-    for /f "delims=" %%p in ('where /r "%LOCALAPPDATA%\Programs\Python" python.exe 2^>nul') do if not defined PYCMD set "PYCMD=%%p"
-)
-
-if not defined PYCMD (
+call :ensure_python
+if defined PYERR (
     echo  [!] Echec installation Python. Installez manuellement depuis python.org
     pause
     endlocal
@@ -1728,12 +1710,9 @@ echo  ^|   Detection d'URLs sensibles - Chrome / Edge    ^|
 echo  +--------------------------------------------------+
 echo.
 
-set "PYCMD="
-for /f "delims=" %%p in ('where python 2^>nul') do if not defined PYCMD set "PYCMD=%%p"
-for /f "delims=" %%p in ('where py 2^>nul') do if not defined PYCMD set "PYCMD=%%p"
-
-if not defined PYCMD (
-    echo  [!] Python requis mais absent. Installez Python depuis python.org
+call :ensure_python
+if defined PYERR (
+    echo  [!] Echec installation Python. Installez manuellement depuis python.org
     pause
     endlocal
     goto sys_passwords_menu
@@ -1853,12 +1832,9 @@ echo  ^|   Factures, RIB, Contrats, Mots de passe        ^|
 echo  +--------------------------------------------------+
 echo.
 
-set "PYCMD="
-for /f "delims=" %%p in ('where python 2^>nul') do if not defined PYCMD set "PYCMD=%%p"
-for /f "delims=" %%p in ('where py 2^>nul') do if not defined PYCMD set "PYCMD=%%p"
-
-if not defined PYCMD (
-    echo  [!] Python requis. Installez Python depuis python.org
+call :ensure_python
+if defined PYERR (
+    echo  [!] Echec installation Python. Installez manuellement depuis python.org
     pause
     endlocal
     goto sys_passwords_menu
@@ -2208,6 +2184,30 @@ if "!RES!"=="1" goto scan_web_routes
 endlocal
 pause
 
+
+::--------------------------------------------------------------
+:: Subroutine : Verifie/installe Python, expose PYCMD ou PYERR
+::--------------------------------------------------------------
+:ensure_python
+set "PYCMD=" & set "PYERR="
+for /f "delims=" %%p in ('where python 2^>nul') do if not defined PYCMD set "PYCMD=%%p"
+for /f "delims=" %%p in ('where py    2^>nul') do if not defined PYCMD set "PYCMD=%%p"
+if defined PYCMD goto :eof
+echo  [!] Python absent - Telechargement et installation automatique...
+set "PY_PS=%TEMP%\py_inst_%RANDOM%.ps1"
+> "!PY_PS!" echo $inst = "$env:TEMP\py_setup.exe"
+>> "!PY_PS!" echo Write-Host "  Telechargement Python 3.12..." -ForegroundColor Cyan
+>> "!PY_PS!" echo Invoke-WebRequest 'https://www.python.org/ftp/python/3.12.10/python-3.12.10-amd64.exe' -OutFile $inst -UseBasicParsing
+>> "!PY_PS!" echo Write-Host "  Installation en cours (silencieuse)..." -ForegroundColor Cyan
+>> "!PY_PS!" echo Start-Process $inst -ArgumentList '/quiet InstallAllUsers=0 PrependPath=1 Include_test=0' -Wait
+>> "!PY_PS!" echo Remove-Item $inst -Force -ErrorAction SilentlyContinue
+>> "!PY_PS!" echo Write-Host "  [OK] Python installe." -ForegroundColor Green
+powershell -NoProfile -ExecutionPolicy Bypass -File "!PY_PS!"
+del /f /q "!PY_PS!" 2>nul
+for /f "delims=" %%p in ('where /r "%LOCALAPPDATA%\Programs\Python" python.exe 2^>nul') do if not defined PYCMD set "PYCMD=%%p"
+for /f "delims=" %%p in ('where python 2^>nul') do if not defined PYCMD set "PYCMD=%%p"
+if not defined PYCMD set "PYERR=1"
+goto :eof
 
 :sys_rescue_menu
 call :AutoMenu "OUTIL DE REPARATION WINDOWS (Rescue)" "res_restore_point;res_sfc;res_dism_check;res_dism_restore;res_temp_clean;res_chkdsk;res_wu_reset;res_explorer_restart;res_gpu_reset"
