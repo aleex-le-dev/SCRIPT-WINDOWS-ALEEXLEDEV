@@ -2162,7 +2162,11 @@ set "SCAN_PS=%TEMP%\web_scan_%RANDOM%.ps1"
 >> "!SCAN_PS!" echo   '/server-status','/server-info','/.well-known/security.txt',
 >> "!SCAN_PS!" echo   '/firebase.json','/google-services.json','/service-account.json',
 >> "!SCAN_PS!" echo   '/.ssh/id_rsa','/.ssh/authorized_keys','/private.key','/server.key',
->> "!SCAN_PS!" echo   '/robots.txt','/sitemap.xml','/.DS_Store','/thumbs.db'
+>> "!SCAN_PS!" echo   '/robots.txt','/sitemap.xml','/.DS_Store','/thumbs.db',
+>> "!SCAN_PS!" echo   '/v1/chat/completions','/v1/models','/api/generate',
+>> "!SCAN_PS!" echo   '/webhook','/webhooks','/webhooks/stripe','/hooks',
+>> "!SCAN_PS!" echo   '/metrics','/health','/healthz','/actuator/health','/actuator',
+>> "!SCAN_PS!" echo   '/redis','/memcached'
 >> "!SCAN_PS!" echo )
 >> "!SCAN_PS!" echo $domain = ($url -replace '^https?://','') -replace '/.*',''
 >> "!SCAN_PS!" echo Write-Host "  ================================================" -ForegroundColor DarkCyan
@@ -2192,6 +2196,51 @@ set "SCAN_PS=%TEMP%\web_scan_%RANDOM%.ps1"
 >> "!SCAN_PS!" echo       Write-Host "  SSL expire  : $($exp.ToString('dd/MM/yyyy')) ($days j)" -ForegroundColor $col
 >> "!SCAN_PS!" echo       Write-Host "  SSL emetteur: $iss" -ForegroundColor White
 >> "!SCAN_PS!" echo     }
+>> "!SCAN_PS!" echo   } else {
+>> "!SCAN_PS!" echo     Write-Host "  SSL         : Aucun (HTTP non chiffre)" -ForegroundColor Yellow
+>> "!SCAN_PS!" echo   }
+>> "!SCAN_PS!" echo   Write-Host "  --- HEADERS DE SECURITE ---" -ForegroundColor DarkCyan
+>> "!SCAN_PS!" echo   $secHeaders = [ordered]@{
+>> "!SCAN_PS!" echo     'Strict-Transport-Security' = 'HSTS - Force HTTPS'
+>> "!SCAN_PS!" echo     'Content-Security-Policy'   = 'CSP - Bloque scripts XSS'
+>> "!SCAN_PS!" echo     'X-Frame-Options'           = 'Anti-Clickjacking'
+>> "!SCAN_PS!" echo     'X-Content-Type-Options'    = 'Anti-MIME sniffing'
+>> "!SCAN_PS!" echo     'Referrer-Policy'           = 'Controle infos referrer'
+>> "!SCAN_PS!" echo     'Permissions-Policy'        = 'Controle API navigateur'
+>> "!SCAN_PS!" echo   }
+>> "!SCAN_PS!" echo   foreach ($hname in $secHeaders.Keys) {
+>> "!SCAN_PS!" echo     if ($hresp.Headers[$hname]) {
+>> "!SCAN_PS!" echo       Write-Host "  [OK] $hname" -ForegroundColor Green
+>> "!SCAN_PS!" echo     } else {
+>> "!SCAN_PS!" echo       Write-Host "  [!] MANQUANT : $hname  ($($secHeaders[$hname]))" -ForegroundColor Yellow
+>> "!SCAN_PS!" echo     }
+>> "!SCAN_PS!" echo   }
+>> "!SCAN_PS!" echo   if ($hresp.Headers['Server'] -match '\d') {
+>> "!SCAN_PS!" echo     Write-Host "  [!] Server header expose une version : $($hresp.Headers['Server'])" -ForegroundColor Yellow
+>> "!SCAN_PS!" echo   }
+>> "!SCAN_PS!" echo   if ($hresp.Headers['X-Powered-By']) {
+>> "!SCAN_PS!" echo     Write-Host "  [!] X-Powered-By expose la techno : $($hresp.Headers['X-Powered-By'])" -ForegroundColor Yellow
+>> "!SCAN_PS!" echo   }
+>> "!SCAN_PS!" echo   Write-Host "  --- COOKIES ---" -ForegroundColor DarkCyan
+>> "!SCAN_PS!" echo   $rawCookies = $hresp.Headers.GetValues('Set-Cookie')
+>> "!SCAN_PS!" echo   if ($rawCookies) {
+>> "!SCAN_PS!" echo     foreach ($ck in $rawCookies) {
+>> "!SCAN_PS!" echo       $cname = ($ck -split '=')[0].Trim()
+>> "!SCAN_PS!" echo       $hasHttpOnly = $ck -match 'HttpOnly'
+>> "!SCAN_PS!" echo       $hasSecure   = $ck -match 'Secure'
+>> "!SCAN_PS!" echo       $hasSameSite = $ck -match 'SameSite'
+>> "!SCAN_PS!" echo       $issues = @()
+>> "!SCAN_PS!" echo       if (-not $hasHttpOnly) { $issues += 'HttpOnly manquant (vol XSS possible)' }
+>> "!SCAN_PS!" echo       if (-not $hasSecure)   { $issues += 'Secure manquant (cookie en clair HTTP)' }
+>> "!SCAN_PS!" echo       if (-not $hasSameSite) { $issues += 'SameSite manquant (CSRF possible)' }
+>> "!SCAN_PS!" echo       if ($issues.Count -eq 0) {
+>> "!SCAN_PS!" echo         Write-Host "  [OK] Cookie '$cname' bien configure" -ForegroundColor Green
+>> "!SCAN_PS!" echo       } else {
+>> "!SCAN_PS!" echo         Write-Host "  [!] Cookie '$cname' : $($issues -join ' / ')" -ForegroundColor Yellow
+>> "!SCAN_PS!" echo       }
+>> "!SCAN_PS!" echo     }
+>> "!SCAN_PS!" echo   } else {
+>> "!SCAN_PS!" echo     Write-Host "  Aucun cookie Set-Cookie detecte sur la page d'accueil" -ForegroundColor DarkGray
 >> "!SCAN_PS!" echo   }
 >> "!SCAN_PS!" echo   $hresp.Close()
 >> "!SCAN_PS!" echo } catch {}
@@ -2220,6 +2269,7 @@ set "SCAN_PS=%TEMP%\web_scan_%RANDOM%.ps1"
 >> "!SCAN_PS!" echo     $req = [System.Net.HttpWebRequest]::Create($target)
 >> "!SCAN_PS!" echo     $req.Method = 'GET'; $req.Timeout = 5000; $req.AllowAutoRedirect = $false
 >> "!SCAN_PS!" echo     $req.UserAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'
+>> "!SCAN_PS!" echo     $req.Accept = 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
 >> "!SCAN_PS!" echo     try {
 >> "!SCAN_PS!" echo       $r = $req.GetResponse(); $c = [int]$r.StatusCode; $r.Close(); return $c
 >> "!SCAN_PS!" echo     } catch [System.Net.WebException] {
@@ -2228,17 +2278,42 @@ set "SCAN_PS=%TEMP%\web_scan_%RANDOM%.ps1"
 >> "!SCAN_PS!" echo     }
 >> "!SCAN_PS!" echo   } catch { return 0 }
 >> "!SCAN_PS!" echo }
->> "!SCAN_PS!" echo $exposed = 0; $protected = 0; $errors = 0
+>> "!SCAN_PS!" echo function Get-Snippet($target) {
+>> "!SCAN_PS!" echo   try {
+>> "!SCAN_PS!" echo     $req = [System.Net.HttpWebRequest]::Create($target)
+>> "!SCAN_PS!" echo     $req.Method = 'GET'; $req.Timeout = 5000
+>> "!SCAN_PS!" echo     $req.UserAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'
+>> "!SCAN_PS!" echo     $resp = $req.GetResponse()
+>> "!SCAN_PS!" echo     $sr = New-Object System.IO.StreamReader($resp.GetResponseStream())
+>> "!SCAN_PS!" echo     $buf = New-Object char[] 800
+>> "!SCAN_PS!" echo     $sr.Read($buf, 0, 800) ^| Out-Null
+>> "!SCAN_PS!" echo     $sr.Close(); $resp.Close()
+>> "!SCAN_PS!" echo     return [string]::new($buf)
+>> "!SCAN_PS!" echo   } catch { return '' }
+>> "!SCAN_PS!" echo }
+>> "!SCAN_PS!" echo $secretPats = @('DB_PASSWORD','DB_PASS','SECRET_KEY','APP_KEY','APP_SECRET','sk-','AKIA','hf_','private_key','password','token','LOGIN','api_key','database_url','auth_token')
+>> "!SCAN_PS!" echo $fpCode = Get-Status ($url + '/_fp_test_aleex_' + (Get-Random))
+>> "!SCAN_PS!" echo $fp = ($fpCode -eq 200)
+>> "!SCAN_PS!" echo if ($fp) { Write-Host "  [AVERT] Site renvoie 200 pour toutes les URLs (SPA/CMS) - verifier manuellement les EXPOSE" -ForegroundColor Magenta; Write-Host "" }
+>> "!SCAN_PS!" echo $exposed = 0; $protected = 0; $errors = 0; $i = 0; $total = $routes.Count
 >> "!SCAN_PS!" echo foreach ($r in $routes) {
+>> "!SCAN_PS!" echo   $i++
+>> "!SCAN_PS!" echo   Write-Host "  [$i/$total] $r$((' ' * [Math]::Max(0, 55 - $r.Length)))" -NoNewline -ForegroundColor DarkGray
 >> "!SCAN_PS!" echo   $code = Get-Status ($url + $r)
 >> "!SCAN_PS!" echo   if ($code -eq 200) {
->> "!SCAN_PS!" echo     Write-Host "  [EXPOSE   $code]  $r" -ForegroundColor Red; $exposed++
+>> "!SCAN_PS!" echo     $label = if ($fp) { '[A VERIFIER]' } else { '[EXPOSE]    ' }
+>> "!SCAN_PS!" echo     $col   = if ($fp) { 'Magenta' } else { 'Red' }
+>> "!SCAN_PS!" echo     Write-Host "`r  $label $code  $r$((' ' * [Math]::Max(0, 45 - $r.Length)))" -ForegroundColor $col; $exposed++
+>> "!SCAN_PS!" echo     $snip = Get-Snippet ($url + $r)
+>> "!SCAN_PS!" echo     foreach ($pat in $secretPats) { if ($snip -match $pat) { Write-Host "           --> SECRET : '$pat'" -ForegroundColor DarkRed; break } }
 >> "!SCAN_PS!" echo   } elseif ($code -in @(401,403)) {
->> "!SCAN_PS!" echo     Write-Host "  [PROTEGE  $code]  $r" -ForegroundColor Yellow; $protected++
+>> "!SCAN_PS!" echo     Write-Host "`r  [PROTEGE]  $code  $r$((' ' * [Math]::Max(0, 45 - $r.Length)))" -ForegroundColor Yellow; $protected++
 >> "!SCAN_PS!" echo   } elseif ($code -in @(301,302,307,308)) {
->> "!SCAN_PS!" echo     Write-Host "  [REDIRECT $code]  $r" -ForegroundColor Cyan
+>> "!SCAN_PS!" echo     Write-Host "`r  [REDIRECT] $code  $r$((' ' * [Math]::Max(0, 45 - $r.Length)))" -ForegroundColor Cyan
 >> "!SCAN_PS!" echo   } elseif ($code -eq 500) {
->> "!SCAN_PS!" echo     Write-Host "  [ERREUR   $code]  $r" -ForegroundColor Magenta; $errors++
+>> "!SCAN_PS!" echo     Write-Host "`r  [ERREUR]   $code  $r$((' ' * [Math]::Max(0, 45 - $r.Length)))" -ForegroundColor Magenta; $errors++
+>> "!SCAN_PS!" echo   } else {
+>> "!SCAN_PS!" echo     Write-Host "`r$((' ' * 75))`r" -NoNewline
 >> "!SCAN_PS!" echo   }
 >> "!SCAN_PS!" echo }
 >> "!SCAN_PS!" echo Write-Host ""
@@ -2252,10 +2327,31 @@ set "SCAN_PS=%TEMP%\web_scan_%RANDOM%.ps1"
 >> "!SCAN_PS!" echo if ($errors -gt 0)    { Write-Host "  [~]  $errors erreur(s) serveur (500)" -ForegroundColor Magenta }
 >> "!SCAN_PS!" echo Write-Host "  ================================================" -ForegroundColor DarkGray
 >> "!SCAN_PS!" echo Write-Host ""
->> "!SCAN_PS!" echo Write-Host "  Appuyez sur une touche pour revenir au menu..." -ForegroundColor DarkGray
->> "!SCAN_PS!" echo [Console]::ReadKey($true) ^| Out-Null
+>> "!SCAN_PS!" echo $host.UI.RawUI.FlushInputBuffer()
+>> "!SCAN_PS!" echo $sel = 0
+>> "!SCAN_PS!" echo function Show-ScanChoice { param($s)
+>> "!SCAN_PS!" echo   $c = $host.UI.RawUI.CursorPosition; $c.X = 0; $host.UI.RawUI.CursorPosition = $c
+>> "!SCAN_PS!" echo   Write-Host "  Tester une autre URL ?  " -NoNewline -ForegroundColor White
+>> "!SCAN_PS!" echo   if ($s -eq 0) { Write-Host " O " -NoNewline -ForegroundColor Black -BackgroundColor Green; Write-Host "     N  " -ForegroundColor DarkGray }
+>> "!SCAN_PS!" echo   else          { Write-Host " O " -NoNewline -ForegroundColor DarkGray;                    Write-Host "     N  " -ForegroundColor Black -BackgroundColor Red }
+>> "!SCAN_PS!" echo }
+>> "!SCAN_PS!" echo Show-ScanChoice $sel
+>> "!SCAN_PS!" echo while ($true) {
+>> "!SCAN_PS!" echo   $k = [Console]::ReadKey($true)
+>> "!SCAN_PS!" echo   if ($k.Key -in @('LeftArrow','RightArrow')) {
+>> "!SCAN_PS!" echo     $sel = 1 - $sel
+>> "!SCAN_PS!" echo     $c = $host.UI.RawUI.CursorPosition; $c.Y--; $host.UI.RawUI.CursorPosition = $c
+>> "!SCAN_PS!" echo     Show-ScanChoice $sel
+>> "!SCAN_PS!" echo   } elseif ($k.Key -eq 'Enter') { break }
+>> "!SCAN_PS!" echo   elseif ($k.Key -eq 'Escape')                              { $sel = 1; break }
+>> "!SCAN_PS!" echo   elseif ($k.KeyChar -eq 'o' -or $k.KeyChar -eq 'O')        { $sel = 0; break }
+>> "!SCAN_PS!" echo   elseif ($k.KeyChar -eq 'n' -or $k.KeyChar -eq 'N')        { $sel = 1; break }
+>> "!SCAN_PS!" echo }
+>> "!SCAN_PS!" echo if ($sel -eq 0) { exit 1 } else { exit 0 }
 powershell -NoProfile -ExecutionPolicy Bypass -File "!SCAN_PS!"
+set "SCAN_AGAIN=%errorlevel%"
 del /f /q "!SCAN_PS!" 2>nul
+if "!SCAN_AGAIN!"=="1" (endlocal & goto scan_web_routes)
 endlocal
 goto sys_passwords_menu
 
