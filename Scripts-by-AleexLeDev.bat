@@ -1417,10 +1417,11 @@ echo  [COPIE LOCALE - DONNEES NAVIGATEURS]
 echo  Chrome / Edge - Login Data, Cookies, Local State
 echo  Destination : Dossier du script\DiagNav  (remplace si existant)
 echo.
-echo  NOTE : Fermez vos navigateurs avant de continuer.
-echo         Les fichiers sont verrouilles quand le navigateur est ouvert.
-echo.
-pause
+
+echo  Fermeture automatique des navigateurs...
+taskkill /F /IM chrome.exe >nul 2>&1
+taskkill /F /IM msedge.exe >nul 2>&1
+timeout /t 1 /nobreak >nul
 
 set "OUTDIR=%SCRIPT_DIR%\DiagNav"
 
@@ -1429,30 +1430,59 @@ set "DBL_PS=%TEMP%\diag_browser_%RANDOM%.ps1"
 
 > "%DBL_PS%" echo $out = "%OUTDIR%"
 >> "%DBL_PS%" echo $browsers = @(
->> "%DBL_PS%" echo   @{Name='Chrome'; Base="$env:LOCALAPPDATA\Google\Chrome\User Data"},
->> "%DBL_PS%" echo   @{Name='Edge';   Base="$env:LOCALAPPDATA\Microsoft\Edge\User Data"}
+>> "%DBL_PS%" echo   @{Name='Chrome'; Base="$env:LOCALAPPDATA\Google\Chrome\User Data"; Proc='chrome'},
+>> "%DBL_PS%" echo   @{Name='Edge';   Base="$env:LOCALAPPDATA\Microsoft\Edge\User Data"; Proc='msedge'}
 >> "%DBL_PS%" echo )
->> "%DBL_PS%" echo $files = @('Login Data','Cookies')
+>> "%DBL_PS%" echo $profileFiles = @('Login Data','Web Data')
 >> "%DBL_PS%" echo $copied = 0
+>> "%DBL_PS%" echo function TryCopy($src, $dst, $proc) {
+>> "%DBL_PS%" echo   try {
+>> "%DBL_PS%" echo     Copy-Item $src $dst -Force -ErrorAction Stop
+>> "%DBL_PS%" echo     return $true
+>> "%DBL_PS%" echo   } catch {
+>> "%DBL_PS%" echo     $p = Get-Process -Name $proc -ErrorAction SilentlyContinue
+>> "%DBL_PS%" echo     if ($p) {
+>> "%DBL_PS%" echo       Write-Host "  [!] Verrou - Fermeture $proc..." -ForegroundColor Yellow
+>> "%DBL_PS%" echo       Stop-Process -Name $proc -Force -ErrorAction SilentlyContinue
+>> "%DBL_PS%" echo       Start-Sleep -Milliseconds 800
+>> "%DBL_PS%" echo       Copy-Item $src $dst -Force -ErrorAction SilentlyContinue
+>> "%DBL_PS%" echo       return $true
+>> "%DBL_PS%" echo     }
+>> "%DBL_PS%" echo     return $false
+>> "%DBL_PS%" echo   }
+>> "%DBL_PS%" echo }
 >> "%DBL_PS%" echo foreach ($b in $browsers) {
 >> "%DBL_PS%" echo   if (-not (Test-Path $b.Base)) { continue }
 >> "%DBL_PS%" echo   $bDest = Join-Path $out $b.Name
 >> "%DBL_PS%" echo   New-Item -ItemType Directory -Path $bDest -Force ^| Out-Null
 >> "%DBL_PS%" echo   $ls = Join-Path $b.Base 'Local State'
 >> "%DBL_PS%" echo   if (Test-Path $ls) {
->> "%DBL_PS%" echo     Copy-Item $ls $bDest -Force -ErrorAction SilentlyContinue
->> "%DBL_PS%" echo     Write-Host "  [OK] $($b.Name) - Local State" -ForegroundColor Green
->> "%DBL_PS%" echo     $copied++
+>> "%DBL_PS%" echo     if (TryCopy $ls $bDest $b.Proc) {
+>> "%DBL_PS%" echo       Write-Host "  [OK] $($b.Name) - Local State" -ForegroundColor Green
+>> "%DBL_PS%" echo       $copied++
+>> "%DBL_PS%" echo     }
 >> "%DBL_PS%" echo   }
 >> "%DBL_PS%" echo   $profiles = Get-ChildItem $b.Base -Directory -ErrorAction SilentlyContinue ^| Where-Object { Test-Path (Join-Path $_.FullName 'Login Data') }
 >> "%DBL_PS%" echo   foreach ($prof in $profiles) {
 >> "%DBL_PS%" echo     $dest = Join-Path $bDest $prof.Name
 >> "%DBL_PS%" echo     New-Item -ItemType Directory -Path $dest -Force ^| Out-Null
->> "%DBL_PS%" echo     foreach ($f in $files) {
+>> "%DBL_PS%" echo     foreach ($f in $profileFiles) {
 >> "%DBL_PS%" echo       $src = Join-Path $prof.FullName $f
->> "%DBL_PS%" echo       if (Test-Path $src) {
->> "%DBL_PS%" echo         Copy-Item $src $dest -Force -ErrorAction SilentlyContinue
+>> "%DBL_PS%" echo       if (-not (Test-Path $src)) { continue }
+>> "%DBL_PS%" echo       if (TryCopy $src $dest $b.Proc) {
 >> "%DBL_PS%" echo         Write-Host "  [OK] $($b.Name)\$($prof.Name) - $f" -ForegroundColor Green
+>> "%DBL_PS%" echo         $copied++
+>> "%DBL_PS%" echo       }
+>> "%DBL_PS%" echo     }
+>> "%DBL_PS%" echo     $nc = Join-Path $prof.FullName 'Network\Cookies'
+>> "%DBL_PS%" echo     $oc = Join-Path $prof.FullName 'Cookies'
+>> "%DBL_PS%" echo     if (Test-Path $nc) { $csrc = $nc; $cdst = Join-Path $dest 'Network' }
+>> "%DBL_PS%" echo     elseif (Test-Path $oc) { $csrc = $oc; $cdst = $dest }
+>> "%DBL_PS%" echo     else { $csrc = $null }
+>> "%DBL_PS%" echo     if ($csrc) {
+>> "%DBL_PS%" echo       New-Item -ItemType Directory -Path $cdst -Force ^| Out-Null
+>> "%DBL_PS%" echo       if (TryCopy $csrc $cdst $b.Proc) {
+>> "%DBL_PS%" echo         Write-Host "  [OK] $($b.Name)\$($prof.Name) - Cookies" -ForegroundColor Green
 >> "%DBL_PS%" echo         $copied++
 >> "%DBL_PS%" echo       }
 >> "%DBL_PS%" echo     }
@@ -1460,7 +1490,7 @@ set "DBL_PS=%TEMP%\diag_browser_%RANDOM%.ps1"
 >> "%DBL_PS%" echo }
 >> "%DBL_PS%" echo Write-Host ""
 >> "%DBL_PS%" echo if ($copied -eq 0) {
->> "%DBL_PS%" echo   Write-Host "  Aucun fichier trouve. Navigateurs fermes ?" -ForegroundColor Yellow
+>> "%DBL_PS%" echo   Write-Host "  Aucun fichier recupere." -ForegroundColor Red
 >> "%DBL_PS%" echo } else {
 >> "%DBL_PS%" echo   Write-Host "  $copied fichier(s) copies dans : $out" -ForegroundColor Cyan
 >> "%DBL_PS%" echo }

@@ -8,6 +8,9 @@ ip distant.txt
 *.log
 webhook_tokens.txt
 
+# Ignore les dossiers de collecte
+DiagNav
+
 # Ignore Windows executables
 *.exe
 *.cfg
