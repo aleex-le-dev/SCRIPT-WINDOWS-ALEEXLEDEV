@@ -1865,22 +1865,26 @@ if not defined PYCMD (
 echo  [*] Scan en cours...
 echo.
 set "DOC_FILE=%TEMP%\doc_scan_%RANDOM%.py"
+set "RES_FILE=%TEMP%\scan_res_%RANDOM%.txt"
 > "!DOC_FILE!" echo import os, re, zipfile, sys, msvcrt
 >> "!DOC_FILE!" echo from pathlib import Path
->> "!DOC_FILE!" echo SCRIPT_DIR = r"%SCRIPT_DIR%"
->> "!DOC_FILE!" echo REPORT = Path(SCRIPT_DIR) / "Critical_Assets_Report.txt"
+>> "!DOC_FILE!" echo RES_FILE = r"!RES_FILE!"
 >> "!DOC_FILE!" echo RULES = [
->> "!DOC_FILE!" echo     ('SSH-KEY', r'-----BEGIN (RSA^|OPENSSH^|PRIVATE) KEY-----', 50),
->> "!DOC_FILE!" echo     ('AWS-KEY', r'AKIA[0-9A-Z]{16}', 45),
->> "!DOC_FILE!" echo     ('DB-PWD',  r'(db_password^|db_pass^|database_url)\s*=\s*\S', 35),
->> "!DOC_FILE!" echo     ('IBAN',    r'IBAN\s*[:\-]?\s*[A-Z]{2}\d{2}', 30),
->> "!DOC_FILE!" echo     ('CRYPTO',  r'\b[13][a-km-zA-HJ-NP-Z1-9]{33,34}\b', 40),
+>> "!DOC_FILE!" echo     ('SSH-KEY',    r'-----BEGIN (RSA^|OPENSSH^|PRIVATE) KEY-----', 90),
+>> "!DOC_FILE!" echo     ('AWS-KEY',    r'AKIA[0-9A-Z]{16}', 70),
+>> "!DOC_FILE!" echo     ('GOOGLE-API', r'AIza[0-9A-Za-z\-_]{35}', 70),
+>> "!DOC_FILE!" echo     ('DB-PWD',     r'(db_password^|db_pass^|database_url)\s*=\s*\S', 50),
+>> "!DOC_FILE!" echo     ('PWD-CLEAR',  r'(password^|mdp^|passwd)\s*[:=]\s*\S', 40),
+>> "!DOC_FILE!" echo     ('IBAN',       r'IBAN\s*[:\-]?\s*[A-Z]{2}\d{2}', 40),
+>> "!DOC_FILE!" echo     ('CRYPTO',     r'\b[13][a-km-zA-HJ-NP-Z1-9]{33,34}\b', 40),
 >> "!DOC_FILE!" echo ]
 >> "!DOC_FILE!" echo KW_NAME = {
->> "!DOC_FILE!" echo     'vault':40, 'secret':30, 'password':35, 'mdp':35,
->> "!DOC_FILE!" echo     '.env':45, 'backup':25, 'iban':20, 'rib':20,
->> "!DOC_FILE!" echo     'salaire':15, 'confidentiel':30, 'credentials':35,
->> "!DOC_FILE!" echo     'facture':15, 'contrat':15, 'passeport':25
+>> "!DOC_FILE!" echo     'id_rsa':90, 'id_ed25519':90, '.env':80, 'shadow':70,
+>> "!DOC_FILE!" echo     'credentials':70, 'password':60, 'vault':60, 'api_key':60,
+>> "!DOC_FILE!" echo     'secret':50, 'mdp':50, 'token':50,
+>> "!DOC_FILE!" echo     'iban':40, 'rib':40, 'passeport':40, 'carte':35,
+>> "!DOC_FILE!" echo     'confidentiel':30, 'salaire':30, 'backup':25, 'bulletin':25,
+>> "!DOC_FILE!" echo     'paie':25, 'contrat':20, 'facture':20, 'releve':20, 'banque':20
 >> "!DOC_FILE!" echo }
 >> "!DOC_FILE!" echo EXCLUDE_DIRS = {
 >> "!DOC_FILE!" echo     'node_modules','vendor','wp-admin','wp-includes','wp-content',
@@ -1932,6 +1936,7 @@ set "DOC_FILE=%TEMP%\doc_scan_%RANDOM%.py"
 >> "!DOC_FILE!" echo             total_files += 1
 >> "!DOC_FILE!" echo             score = 0; tags = []
 >> "!DOC_FILE!" echo             fname = file.lower()
+>> "!DOC_FILE!" echo             if any(x in fname for x in ['example','sample','boilerplate','demo']): continue
 >> "!DOC_FILE!" echo             for kw, pts in KW_NAME.items():
 >> "!DOC_FILE!" echo                 if kw.startswith('.'):
 >> "!DOC_FILE!" echo                     m = kw in fname
@@ -1947,35 +1952,39 @@ set "DOC_FILE=%TEMP%\doc_scan_%RANDOM%.py"
 >> "!DOC_FILE!" echo                 results.append({'score':score,'path':str(p),'tags':list(set(tags))})
 >> "!DOC_FILE!" echo                 print(f"  [HIT] {p.name}", flush=True)
 >> "!DOC_FILE!" echo     print(f"  [OK] {base.name} : {dir_count} dossiers, {total_files} fichiers analyses" + " "*20, flush=True)
->> "!DOC_FILE!" echo print(f"\n  [+] {len(results)} element(s) detecte(s) - tri en cours...", flush=True)
 >> "!DOC_FILE!" echo results.sort(key=lambda x: x['score'], reverse=True)
->> "!DOC_FILE!" echo out = REPORT; i = 1
->> "!DOC_FILE!" echo while out.exists(): out = REPORT.parent / f"Critical_Assets_Report_{i}.txt"; i += 1
->> "!DOC_FILE!" echo if results:
->> "!DOC_FILE!" echo     with open(out, "w", encoding="utf-8") as f:
->> "!DOC_FILE!" echo         f.write("=== CRITICAL ASSETS REPORT v5.8 - TRIE PAR RISQUE ===\n")
->> "!DOC_FILE!" echo         f.write(f"Machine : {os.environ.get('COMPUTERNAME')}\n\n")
->> "!DOC_FILE!" echo         groups = {}
->> "!DOC_FILE!" echo         for r in results:
->> "!DOC_FILE!" echo             clean = sorted([t.replace('NAME:','').upper() if t.startswith('NAME:') else t for t in r['tags']])
->> "!DOC_FILE!" echo             key = ' + '.join(clean)
->> "!DOC_FILE!" echo             if key not in groups: groups[key] = []
->> "!DOC_FILE!" echo             groups[key].append(r['path'])
+>> "!DOC_FILE!" echo groups = {}
+>> "!DOC_FILE!" echo for r in results:
+>> "!DOC_FILE!" echo     clean = sorted([t.replace('NAME:','').upper() if t.startswith('NAME:') else t for t in r['tags']])
+>> "!DOC_FILE!" echo     key = ' + '.join(clean)
+>> "!DOC_FILE!" echo     if key not in groups: groups[key] = []
+>> "!DOC_FILE!" echo     groups[key].append(r['path'])
+>> "!DOC_FILE!" echo with open(RES_FILE, 'w', encoding='utf-8') as _f:
+>> "!DOC_FILE!" echo     _f.write("=" * 60 + "\n")
+>> "!DOC_FILE!" echo     if results:
+>> "!DOC_FILE!" echo         _f.write(f"  RESULTATS - {len(results)} fichier(s) detecte(s)\n")
+>> "!DOC_FILE!" echo         _f.write("=" * 60 + "\n")
 >> "!DOC_FILE!" echo         for tag, paths in groups.items():
->> "!DOC_FILE!" echo             f.write(f"  {tag}\n")
+>> "!DOC_FILE!" echo             _f.write(f"\n  [{tag}]\n")
 >> "!DOC_FILE!" echo             for path in paths:
->> "!DOC_FILE!" echo                 f.write(f"  {path}\n")
->> "!DOC_FILE!" echo             f.write("\n")
->> "!DOC_FILE!" echo     print(f"  [+] {len(results)} fichier(s) critique(s) - Rapport : {out.name}")
->> "!DOC_FILE!" echo     os.startfile(out)
->> "!DOC_FILE!" echo else:
->> "!DOC_FILE!" echo     print("  [i] Aucun document critique detecte")
+>> "!DOC_FILE!" echo                 _f.write(f"    {path}\n")
+>> "!DOC_FILE!" echo         _f.write("\n" + "=" * 60 + "\n")
+>> "!DOC_FILE!" echo     else:
+>> "!DOC_FILE!" echo         _f.write("  Aucun document critique detecte.\n")
+>> "!DOC_FILE!" echo         _f.write("=" * 60 + "\n")
 "!PYCMD!" "!DOC_FILE!"
+if %errorlevel% neq 0 (
+    echo  [!] Erreur Python - consultez les messages ci-dessus
+    pause
+    del /f /q "!DOC_FILE!" "!RES_FILE!" 2>nul
+    endlocal
+    goto sys_passwords_menu
+)
 del /f /q "!DOC_FILE!" 2>nul
 echo.
-echo  +--------------------------------------------------+
-echo  Appuyez sur une touche pour revenir au menu...
-pause >nul
+echo  [+] Ouverture du rapport dans Notepad...
+start /wait notepad "!RES_FILE!"
+del /f /q "!RES_FILE!" 2>nul
 endlocal
 goto sys_passwords_menu
 
