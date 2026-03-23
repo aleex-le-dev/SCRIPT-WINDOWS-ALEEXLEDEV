@@ -2100,18 +2100,17 @@ goto sys_passwords_menu
 
 
 
-@echo off
 :scan_web_routes
 setlocal enabledelayedexpansion
 cls
 echo.
 echo  +------------------------------------------------------+
-echo  ^|           AUDIT DE SECURITE WEB - V9.0               ^|
-echo  ^|    DETECTION REELLE (SSL LOGS) + GEO-IP + ROUTES     ^|
+echo  ^|        AUDIT DE SECURITE WEB - V10.0                ^|
+echo  ^|   GEO-IP + SSL + HEADERS + 70 ROUTES SENSIBLES      ^|
 echo  +------------------------------------------------------+
 echo.
 set "TARGET_URL="
-set /p "TARGET_URL=  Domaine racine (ex: salutalex.fr) : "
+set /p "TARGET_URL=  Domaine (ex: salutalex.fr) : "
 if "!TARGET_URL!"=="" goto scan_web_routes
 
 set "DOMAIN=!TARGET_URL!"
@@ -2120,69 +2119,108 @@ set "DOMAIN=!DOMAIN:http://=!"
 for /f "tokens=1 delims=/" %%a in ("!DOMAIN!") do set "DOMAIN=%%a"
 
 echo.
-echo  [*] Phase 1 : Extraction de la surface d'attaque pour !DOMAIN!...
+echo  [*] Lancement de l'audit pour !DOMAIN!...
 echo.
 
 set "SCAN_PS=%TEMP%\web_scan_%RANDOM%.ps1"
 
 > "!SCAN_PS!" echo [System.Net.ServicePointManager]::ServerCertificateValidationCallback = { $true }
 >> "!SCAN_PS!" echo [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12
->> "!SCAN_PS!" echo $domain = "!DOMAIN!"
->> "!SCAN_PS!" echo $routes = @('/.env','/wp-config.php','/.htaccess','/.git/config','/backup.sql','/phpinfo.php','/robots.txt','/api/v1','/admin','/wp-login.php')
->> "!SCAN_PS!" echo # --- 1. GEO-IP & AS ---
+>> "!SCAN_PS!" echo $domain = '!DOMAIN!'
+>> "!SCAN_PS!" echo $routes  = @('/.env','/.env.local','/.env.production','/.env.backup','/.env.example','/.env.dev')
+>> "!SCAN_PS!" echo $routes += @('/wp-config.php','/wp-config.php.bak','/wp-config.php~','/wp-config-sample.php')
+>> "!SCAN_PS!" echo $routes += @('/.htaccess','/.htpasswd','/.git/config','/.git/HEAD','/.gitignore','/.gitattributes')
+>> "!SCAN_PS!" echo $routes += @('/backup.sql','/db.sql','/database.sql','/dump.sql','/data.sql','/mysql.sql')
+>> "!SCAN_PS!" echo $routes += @('/backup.zip','/backup.tar.gz','/www.zip','/site.zip','/old.zip','/archive.zip')
+>> "!SCAN_PS!" echo $routes += @('/phpinfo.php','/info.php','/test.php','/debug.php','/shell.php','/cmd.php')
+>> "!SCAN_PS!" echo $routes += @('/robots.txt','/sitemap.xml','/crossdomain.xml','/security.txt','/.well-known/security.txt')
+>> "!SCAN_PS!" echo $routes += @('/api','/api/v1','/api/v2','/api/v3','/api/users','/api/admin','/api/config','/api/keys','/api/tokens')
+>> "!SCAN_PS!" echo $routes += @('/admin','/administrator','/admin/','/backend','/manage','/management','/console')
+>> "!SCAN_PS!" echo $routes += @('/wp-admin','/wp-login.php','/wp-json/wp/v2/users','/wp-content/debug.log')
+>> "!SCAN_PS!" echo $routes += @('/login','/signin','/dashboard','/panel','/cpanel','/webmail','/roundcube')
+>> "!SCAN_PS!" echo $routes += @('/phpmyadmin','/pma','/mysql','/adminer.php','/dbadmin')
+>> "!SCAN_PS!" echo $routes += @('/server-status','/server-info','/_profiler','/actuator')
+>> "!SCAN_PS!" echo $routes += @('/actuator/health','/actuator/env','/actuator/beans','/actuator/mappings','/actuator/metrics')
+>> "!SCAN_PS!" echo $routes += @('/.DS_Store','/.bash_history','/.ssh/id_rsa','/.ssh/authorized_keys','/.ssh/known_hosts')
+>> "!SCAN_PS!" echo $routes += @('/web.config','/config.php','/settings.php','/config.yml','/config.yaml','/config.json')
+>> "!SCAN_PS!" echo $routes += @('/package.json','/composer.json','/requirements.txt','/Dockerfile','/docker-compose.yml')
+>> "!SCAN_PS!" echo $routes += @('/swagger.json','/swagger-ui.html','/api-docs','/openapi.json','/openapi.yaml')
+>> "!SCAN_PS!" echo $routes += @('/graphql','/graphiql','/__graphql','/v1/graphql')
+>> "!SCAN_PS!" echo $routes += @('/uploads','/upload','/files','/static/uploads','/media')
+>> "!SCAN_PS!" echo $routes += @('/logs','/log','/error.log','/access.log','/debug.log','/app.log')
+>> "!SCAN_PS!" echo $routes += @('/.svn/entries','/.hg/hgrc','/CVS/Root','/trace.axd','/elmah.axd')
+>> "!SCAN_PS!" echo $routes += @('/metrics','/health','/healthz','/readyz','/status','/ping','/version','/info')
+>> "!SCAN_PS!" echo # GEO-IP
 >> "!SCAN_PS!" echo try {
 >> "!SCAN_PS!" echo   $ip = ([System.Net.Dns]::GetHostAddresses($domain) ^| Select-Object -First 1).IPAddressToString
->> "!SCAN_PS!" echo   $geo = Invoke-RestMethod "http://ip-api.com/json/$ip?fields=status,country,city,isp"
->> "!SCAN_PS!" echo   Write-Host "  IP          : $ip" -ForegroundColor White
->> "!SCAN_PS!" echo   if($geo.status -eq 'success'){ Write-Host "  LOCALISATION: $($geo.city), $($geo.country) ($($geo.isp))" -ForegroundColor Cyan }
->> "!SCAN_PS!" echo } catch { Write-Host "  [!] Erreur Reseau/GeoIP" -ForegroundColor Red }
->> "!SCAN_PS!" echo # --- 2. DETECTION REELLE DES SOUS-DOMAINES (SANS MOTS-CLES) ---
->> "!SCAN_PS!" echo Write-Host "`n  --- SOUS-DOMAINES REELS (SSL LOGS) ---" -ForegroundColor DarkCyan
->> "!SCAN_PS!" echo $targets = @("https://$domain")
+>> "!SCAN_PS!" echo   Write-Host ('  IP          : ' + $ip) -ForegroundColor White
+>> "!SCAN_PS!" echo   $geo = Invoke-RestMethod ('https://ipinfo.io/' + $ip + '/json') -TimeoutSec 5
+>> "!SCAN_PS!" echo   Write-Host ('  Org/AS      : ' + $geo.org) -ForegroundColor Cyan
+>> "!SCAN_PS!" echo   Write-Host ('  Localisation: ' + $geo.city + ', ' + $geo.region + ', ' + $geo.country) -ForegroundColor Cyan
+>> "!SCAN_PS!" echo   if ($geo.hostname) { Write-Host ('  Hostname    : ' + $geo.hostname) -ForegroundColor DarkGray }
+>> "!SCAN_PS!" echo } catch { Write-Host ('  [!] GeoIP : ' + $_.Exception.Message.Split([char]10)[0]) -ForegroundColor Red }
+>> "!SCAN_PS!" echo # SOUS-DOMAINES SSL
+>> "!SCAN_PS!" echo Write-Host '' ; Write-Host '  --- SOUS-DOMAINES (crt.sh) ---' -ForegroundColor DarkCyan
+>> "!SCAN_PS!" echo $targets = @('https://' + $domain)
 >> "!SCAN_PS!" echo try {
->> "!SCAN_PS!" echo   $json = Invoke-RestMethod "https://crt.sh/?q=%.$domain&output=json" -TimeoutSec 15
+>> "!SCAN_PS!" echo   $crtUrl = 'https://crt.sh/?q=%%25.' + $domain + '^&output=json'
+>> "!SCAN_PS!" echo   $json = Invoke-RestMethod $crtUrl -TimeoutSec 15
 >> "!SCAN_PS!" echo   $realSubs = $json.common_name ^| Select-Object -Unique ^| Where-Object { $_ -ne $domain -and $_ -notmatch '^\*' }
 >> "!SCAN_PS!" echo   if ($realSubs) {
->> "!SCAN_PS!" echo     foreach ($s in $realSubs) { 
->> "!SCAN_PS!" echo        Write-Host "  [+] Service Officiel : $s" -ForegroundColor Green
->> "!SCAN_PS!" echo        $targets += "https://$s"
->> "!SCAN_PS!" echo     }
->> "!SCAN_PS!" echo   } else { Write-Host "  [-] Aucun sous-domaine public repertorie." -ForegroundColor DarkGray }
->> "!SCAN_PS!" echo } catch { Write-Host "  [!] API crt.sh indisponible. Utilisation du domaine principal." -ForegroundColor Yellow }
->> "!SCAN_PS!" echo # --- 3. AUDIT RECURSIF SUR CHAQUE CIBLE ---
+>> "!SCAN_PS!" echo     foreach ($s in $realSubs) { Write-Host ('  [+] ' + $s) -ForegroundColor Green ; $targets += ('https://' + $s) }
+>> "!SCAN_PS!" echo   } else { Write-Host '  [-] Aucun sous-domaine public.' -ForegroundColor DarkGray }
+>> "!SCAN_PS!" echo } catch { Write-Host ('  [!] crt.sh : ' + $_.Exception.Message.Split([char]10)[0]) -ForegroundColor Yellow }
+>> "!SCAN_PS!" echo # AUDIT PAR CIBLE
 >> "!SCAN_PS!" echo foreach ($t in ($targets ^| Select-Object -Unique)) {
->> "!SCAN_PS!" echo   Write-Host "`n  >>> AUDIT COMPLET : $t" -ForegroundColor Cyan -BackgroundColor DarkBlue
+>> "!SCAN_PS!" echo   Write-Host '' ; Write-Host ('  ^>^>^> AUDIT : ' + $t) -ForegroundColor Cyan -BackgroundColor DarkBlue
 >> "!SCAN_PS!" echo   try {
->> "!SCAN_PS!" echo     $req = [System.Net.HttpWebRequest]::Create($t); $req.Method = 'GET'; $req.Timeout = 5000; $req.UserAgent = 'Mozilla/5.0'
->> "!SCAN_PS!" echo     $res = $req.GetResponse(); $h = $res.Headers
->> "!SCAN_PS!" echo     Write-Host "  Serveur : $($h['Server'])" -ForegroundColor White
->> "!SCAN_PS!" echo     @('Strict-Transport-Security','Content-Security-Policy','X-Frame-Options') ^| %% {
->> "!SCAN_PS!" echo       if($h[$_]){ Write-Host "  (OK) $_" -ForegroundColor Green } else { Write-Host "  (!!) MANQUANT: $_" -ForegroundColor Yellow }
+>> "!SCAN_PS!" echo     $req = [System.Net.HttpWebRequest]::Create($t)
+>> "!SCAN_PS!" echo     $req.Method = 'GET' ; $req.Timeout = 6000 ; $req.UserAgent = 'Mozilla/5.0' ; $req.AllowAutoRedirect = $false
+>> "!SCAN_PS!" echo     try { $res = $req.GetResponse() } catch [System.Net.WebException] { $res = $_.Exception.Response }
+>> "!SCAN_PS!" echo     if ($res) {
+>> "!SCAN_PS!" echo       $h = $res.Headers
+>> "!SCAN_PS!" echo       $srv = $h['Server'] ; $xpow = $h['X-Powered-By']
+>> "!SCAN_PS!" echo       if ($srv)  { Write-Host ('  Serveur     : ' + $srv) -ForegroundColor White }
+>> "!SCAN_PS!" echo       if ($xpow) { Write-Host ('  Technologie : ' + $xpow) -ForegroundColor White }
+>> "!SCAN_PS!" echo       Write-Host '  -- En-tetes securite --' -ForegroundColor DarkGray
+>> "!SCAN_PS!" echo       foreach ($hdr in @('Strict-Transport-Security','Content-Security-Policy','X-Frame-Options','X-Content-Type-Options','Referrer-Policy','Permissions-Policy')) {
+>> "!SCAN_PS!" echo         if ($h[$hdr]) { Write-Host ('  [OK] ' + $hdr) -ForegroundColor Green } else { Write-Host ('  [!!] MANQUANT : ' + $hdr) -ForegroundColor Yellow }
+>> "!SCAN_PS!" echo       }
+>> "!SCAN_PS!" echo       $res.Close()
 >> "!SCAN_PS!" echo     }
->> "!SCAN_PS!" echo     $res.Close()
->> "!SCAN_PS!" echo     # --- SCAN DES 112 ROUTES ---
->> "!SCAN_PS!" echo     Write-Host "  Scan des routes sensibles..." -ForegroundColor DarkGray
->> "!SCAN_PS!" echo     foreach ($r in $routes) {
->> "!SCAN_PS!" echo       try {
->> "!SCAN_PS!" echo         $sreq = [System.Net.HttpWebRequest]::Create($t + $r); $sreq.Method = 'GET'; $sreq.Timeout = 1500; $sreq.AllowAutoRedirect = $false
->> "!SCAN_PS!" echo         $sres = $sreq.GetResponse()
->> "!SCAN_PS!" echo         if ([int]$sres.StatusCode -eq 200) { Write-Host "    [EXPOSE] 200 $r" -ForegroundColor Red }
->> "!SCAN_PS!" echo         $sres.Close()
->> "!SCAN_PS!" echo       } catch [System.Net.WebException] {
->> "!SCAN_PS!" echo         if($_.Exception.Response -and [int]$_.Exception.Response.StatusCode -eq 403){ Write-Host "    [PROTEGE] 403 $r" -ForegroundColor Yellow }
->> "!SCAN_PS!" echo       } catch {}
->> "!SCAN_PS!" echo     }
->> "!SCAN_PS!" echo   } catch { Write-Host "  [!] Impossible de joindre ce service." -ForegroundColor DarkGray }
+>> "!SCAN_PS!" echo   } catch { Write-Host ('  [!] Connexion : ' + $_.Exception.Message.Split([char]10)[0]) -ForegroundColor Red }
+>> "!SCAN_PS!" echo   Write-Host '' ; Write-Host ('  -- Scan des ' + $routes.Count + ' routes --') -ForegroundColor DarkGray
+>> "!SCAN_PS!" echo   $found = 0
+>> "!SCAN_PS!" echo   foreach ($r in $routes) {
+>> "!SCAN_PS!" echo     try {
+>> "!SCAN_PS!" echo       $sreq = [System.Net.HttpWebRequest]::Create($t + $r)
+>> "!SCAN_PS!" echo       $sreq.Method = 'GET' ; $sreq.Timeout = 2000 ; $sreq.AllowAutoRedirect = $false ; $sreq.UserAgent = 'Mozilla/5.0'
+>> "!SCAN_PS!" echo       $sres = $sreq.GetResponse()
+>> "!SCAN_PS!" echo       $code = [int]$sres.StatusCode ; $sres.Close()
+>> "!SCAN_PS!" echo       if     ($code -eq 200)                { Write-Host ('    [EXPOSE]   200 ' + $r) -ForegroundColor Red     ; $found++ }
+>> "!SCAN_PS!" echo       elseif ($code -in @(301,302,307,308)) { Write-Host ('    [REDIRECT] ' + $code + ' ' + $r) -ForegroundColor Yellow  ; $found++ }
+>> "!SCAN_PS!" echo       elseif ($code -eq 403)                { Write-Host ('    [PROTEGE]  403 ' + $r) -ForegroundColor Green   ; $found++ }
+>> "!SCAN_PS!" echo       elseif ($code -eq 500)                { Write-Host ('    [ERREUR]   500 ' + $r) -ForegroundColor Magenta ; $found++ }
+>> "!SCAN_PS!" echo     } catch [System.Net.WebException] {
+>> "!SCAN_PS!" echo       if ($_.Exception.Response) {
+>> "!SCAN_PS!" echo         $c2 = [int]$_.Exception.Response.StatusCode
+>> "!SCAN_PS!" echo         if     ($c2 -eq 403)                { Write-Host ('    [PROTEGE]  403 ' + $r) -ForegroundColor Green   ; $found++ }
+>> "!SCAN_PS!" echo         elseif ($c2 -eq 500)                { Write-Host ('    [ERREUR]   500 ' + $r) -ForegroundColor Magenta ; $found++ }
+>> "!SCAN_PS!" echo         elseif ($c2 -in @(301,302,307,308)) { Write-Host ('    [REDIRECT] ' + $c2 + ' ' + $r) -ForegroundColor Yellow  ; $found++ }
+>> "!SCAN_PS!" echo       }
+>> "!SCAN_PS!" echo     } catch {}
+>> "!SCAN_PS!" echo   }
+>> "!SCAN_PS!" echo   if ($found -eq 0) { Write-Host '  [-] Aucune route notable (toutes en 404/timeout).' -ForegroundColor DarkGray }
 >> "!SCAN_PS!" echo }
->> "!SCAN_PS!" echo Write-Host "`n  Audit V9.0 Termine. Recommencer ? (O/N)"
->> "!SCAN_PS!" echo if ([Console]::ReadKey($true).KeyChar -eq 'o') { exit 1 } else { exit 0 }
+>> "!SCAN_PS!" echo Write-Host '' ; Write-Host '  Audit termine. Tester une autre URL ? (O=Oui / N=Retour)' -ForegroundColor White
+>> "!SCAN_PS!" echo if (([Console]::ReadKey($true).KeyChar).ToString().ToLower() -eq 'o') { exit 1 } else { exit 0 }
 
 powershell -NoProfile -ExecutionPolicy Bypass -File "!SCAN_PS!"
 set "RES=%errorlevel%"
-del /f /q "!SCAN_PS!"
-if "!RES!"=="1" goto scan_web_routes
+del /f /q "!SCAN_PS!" 2>nul
+if "!RES!"=="1" (endlocal & goto scan_web_routes)
 endlocal
-pause
+goto sys_passwords_menu
 
 
 ::--------------------------------------------------------------
