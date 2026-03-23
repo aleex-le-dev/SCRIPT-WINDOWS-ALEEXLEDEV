@@ -246,6 +246,7 @@ set "t[157]=net_wifi_crack:Cracker la Cle Wi-Fi~Profils sauvegardes + attaque di
 set "t[158]=dump_browser_local:Extracteur Navigateurs (Script)~Nouvelle methode avec decryptage DPAPI:HIDDEN"
 set "t[160]=gather_browser_history:Analyse Historique Navigateurs~Detecte les URLs sensibles dans l'historique Chrome/Edge:HIDDEN"
 set "t[161]=search_sensitive_docs:Scan Documents Critiques~Score de risque v5.5 - SSH, AWS, IBAN, mots de passe:HIDDEN"
+set "t[162]=scan_web_routes:Audit Routes Web~Detecte .env, wp-config, /api, /admin exposes sur une URL:HIDDEN"
 set "t[159]=Chrome, Edge - Dechiffrement DPAPI des identifiants et mots de passe:HIDDEN"
 REM Auto-detection du nombre de scripts (plus besoin de mettre a jour manuellement)
 set "total_tools=0"
@@ -303,6 +304,7 @@ set "map_sys_nirsoft_pw=Extracteur Navigateurs (Nirsoft)~Ancienne methode"
 set "map_dump_browser_local=Extracteur Navigateurs (Script)~Nouvelle methode avec decryptage DPAPI"
 set "map_gather_browser_history=Analyse Historique Navigateurs~Detecte les URLs sensibles dans l'historique Chrome/Edge"
 set "map_search_sensitive_docs=Recherche Documents Sensibles~Factures, RIB, Contrats, Mots de passe sur le PC"
+set "map_scan_web_routes=Audit Routes Web~.env, wp-config, /api, /admin, /graphql, backups, logs"
 set "map_sys_win_key=Cle Windows~Retrouver la cle de licence Windows"
 set "map_sys_drivers=Export des Pilotes~Sauvegarde de tous les pilotes"
 set "map_sys_export_software=Liste des Logiciels~Exporter via Winget"
@@ -1200,7 +1202,7 @@ goto app_installer
 :: Menu d'extraction de mots de passe
 :: ===============================================
 :sys_passwords_menu
-call :AutoMenu "PIRATAGE / EXTRACTION DE MOTS DE PASSE" "dump_credman;dump_wifi;sys_nirsoft_pw;dump_browser_local;gather_browser_history;search_sensitive_docs"
+call :AutoMenu "PIRATAGE / EXTRACTION DE MOTS DE PASSE" "dump_credman;dump_wifi;sys_nirsoft_pw;dump_browser_local;gather_browser_history;search_sensitive_docs;scan_web_routes"
 if "%errorlevel%"=="0" goto system_tools
 goto !AutoMenu_Target!
 
@@ -2116,6 +2118,144 @@ set "DISP_PS=%TEMP%\disp_%RANDOM%.ps1"
 >> "!DISP_PS!" echo }
 powershell -NoProfile -ExecutionPolicy Bypass -File "!DISP_PS!"
 del /f /q "!DISP_PS!" "!RES_FILE!" "!COPY_PS!" 2>nul
+endlocal
+goto sys_passwords_menu
+
+:scan_web_routes
+setlocal enabledelayedexpansion
+cls
+echo.
+echo  +--------------------------------------------------+
+echo  ^|         AUDIT ROUTES WEB - SECURITE             ^|
+echo  ^|  .env / wp-config / API / admin / backups...    ^|
+echo  +--------------------------------------------------+
+echo.
+set "TARGET_URL="
+set /p "TARGET_URL=  URL cible (ex: https://salutalex.fr) : "
+if "!TARGET_URL!"=="" goto scan_web_routes
+if "!TARGET_URL:~-1!"=="/" set "TARGET_URL=!TARGET_URL:~0,-1!"
+echo.
+echo  [*] Scan en cours sur !TARGET_URL!...
+echo.
+set "SCAN_PS=%TEMP%\web_scan_%RANDOM%.ps1"
+> "!SCAN_PS!" echo [System.Net.ServicePointManager]::ServerCertificateValidationCallback = { $true }
+>> "!SCAN_PS!" echo [System.Net.ServicePointManager]::SecurityProtocol = 'Tls12'
+>> "!SCAN_PS!" echo $url = "!TARGET_URL!"
+>> "!SCAN_PS!" echo $routes = @(
+>> "!SCAN_PS!" echo   '/.env','/.env.local','/.env.production','/.env.backup','/.env.example','/.env.dev',
+>> "!SCAN_PS!" echo   '/wp-config.php','/wp-config.php.bak','/wp-config.php~','/config.php','/config.ini',
+>> "!SCAN_PS!" echo   '/.htaccess','/.htpasswd','/web.config','/appsettings.json','/settings.py',
+>> "!SCAN_PS!" echo   '/local.settings.json','/database.yml','/database.php','/parameters.yml',
+>> "!SCAN_PS!" echo   '/api','/api/v1','/api/v2','/api/v3','/graphql','/gql',
+>> "!SCAN_PS!" echo   '/swagger','/swagger-ui.html','/swagger-ui','/swagger.json','/swagger.yaml',
+>> "!SCAN_PS!" echo   '/api-docs','/openapi.json','/openapi.yaml','/docs','/redoc',
+>> "!SCAN_PS!" echo   '/admin','/wp-admin/','/administrator','/phpmyadmin','/pma',
+>> "!SCAN_PS!" echo   '/adminer.php','/adminer','/cpanel','/webmail','/manager','/console','/dashboard',
+>> "!SCAN_PS!" echo   '/wp-login.php','/wp-json/wp/v2/users','/xmlrpc.php','/wp-content/debug.log',
+>> "!SCAN_PS!" echo   '/.git/config','/.git/HEAD','/.gitignore','/.svn/entries',
+>> "!SCAN_PS!" echo   '/composer.json','/composer.lock','/package.json','/Dockerfile','/.dockerignore',
+>> "!SCAN_PS!" echo   '/backup','/backup.sql','/dump.sql','/db.sql','/database.sql',
+>> "!SCAN_PS!" echo   '/backup.zip','/backup.tar.gz','/site.sql','/www.zip','/dump.zip',
+>> "!SCAN_PS!" echo   '/logs','/log','/error.log','/access.log','/debug.log','/application.log',
+>> "!SCAN_PS!" echo   '/storage/logs/laravel.log','/var/log/app.log',
+>> "!SCAN_PS!" echo   '/info.php','/phpinfo.php','/test.php','/install.php','/setup.php',
+>> "!SCAN_PS!" echo   '/server-status','/server-info','/.well-known/security.txt',
+>> "!SCAN_PS!" echo   '/firebase.json','/google-services.json','/service-account.json',
+>> "!SCAN_PS!" echo   '/.ssh/id_rsa','/.ssh/authorized_keys','/private.key','/server.key',
+>> "!SCAN_PS!" echo   '/robots.txt','/sitemap.xml','/.DS_Store','/thumbs.db'
+>> "!SCAN_PS!" echo )
+>> "!SCAN_PS!" echo $domain = ($url -replace '^https?://','') -replace '/.*',''
+>> "!SCAN_PS!" echo Write-Host "  ================================================" -ForegroundColor DarkCyan
+>> "!SCAN_PS!" echo Write-Host "  DOMAINE : $domain" -ForegroundColor Cyan
+>> "!SCAN_PS!" echo Write-Host "  ================================================" -ForegroundColor DarkCyan
+>> "!SCAN_PS!" echo $ip = try { ([System.Net.Dns]::GetHostAddresses($domain) ^| Select-Object -First 1).IPAddressToString } catch { 'N/A' }
+>> "!SCAN_PS!" echo Write-Host "  IP          : $ip" -ForegroundColor White
+>> "!SCAN_PS!" echo try {
+>> "!SCAN_PS!" echo   $ii = Invoke-RestMethod "https://ipinfo.io/$ip/json" -TimeoutSec 5 -ErrorAction Stop
+>> "!SCAN_PS!" echo   if ($ii.org)     { Write-Host "  Hebergeur   : $($ii.org)" -ForegroundColor White }
+>> "!SCAN_PS!" echo   if ($ii.city)    { Write-Host "  Localisation: $($ii.city), $($ii.region), $($ii.country)" -ForegroundColor White }
+>> "!SCAN_PS!" echo } catch {}
+>> "!SCAN_PS!" echo try {
+>> "!SCAN_PS!" echo   $hreq = [System.Net.HttpWebRequest]::Create($url)
+>> "!SCAN_PS!" echo   $hreq.Method = 'HEAD'; $hreq.Timeout = 5000; $hreq.AllowAutoRedirect = $false
+>> "!SCAN_PS!" echo   $hresp = $hreq.GetResponse()
+>> "!SCAN_PS!" echo   $sv = $hresp.Headers['Server']; $px = $hresp.Headers['X-Powered-By']
+>> "!SCAN_PS!" echo   if ($sv) { Write-Host "  Serveur     : $sv" -ForegroundColor White }
+>> "!SCAN_PS!" echo   if ($px) { Write-Host "  Technologie : $px" -ForegroundColor White }
+>> "!SCAN_PS!" echo   if ($url -match '^https') {
+>> "!SCAN_PS!" echo     $cert = $hreq.ServicePoint.Certificate
+>> "!SCAN_PS!" echo     if ($cert) {
+>> "!SCAN_PS!" echo       $exp  = [datetime]::Parse($cert.GetExpirationDateString())
+>> "!SCAN_PS!" echo       $days = ($exp - (Get-Date)).Days
+>> "!SCAN_PS!" echo       $col  = if ($days -lt 30) { 'Red' } elseif ($days -lt 90) { 'Yellow' } else { 'Green' }
+>> "!SCAN_PS!" echo       $iss  = $cert.Issuer -replace '.*CN=','' -replace ',.*',''
+>> "!SCAN_PS!" echo       Write-Host "  SSL expire  : $($exp.ToString('dd/MM/yyyy')) ($days j)" -ForegroundColor $col
+>> "!SCAN_PS!" echo       Write-Host "  SSL emetteur: $iss" -ForegroundColor White
+>> "!SCAN_PS!" echo     }
+>> "!SCAN_PS!" echo   }
+>> "!SCAN_PS!" echo   $hresp.Close()
+>> "!SCAN_PS!" echo } catch {}
+>> "!SCAN_PS!" echo try {
+>> "!SCAN_PS!" echo   $rdap = Invoke-RestMethod "https://rdap.org/domain/$domain" -TimeoutSec 8 -ErrorAction Stop
+>> "!SCAN_PS!" echo   $reg  = ($rdap.entities ^| Where-Object { $_.roles -contains 'registrar' } ^| Select-Object -First 1)
+>> "!SCAN_PS!" echo   if ($reg) {
+>> "!SCAN_PS!" echo     $rname = ($reg.vcardArray[1] ^| Where-Object { $_[0] -eq 'fn' } ^| Select-Object -First 1)[3]
+>> "!SCAN_PS!" echo     if ($rname) { Write-Host "  Registrar   : $rname" -ForegroundColor White }
+>> "!SCAN_PS!" echo   }
+>> "!SCAN_PS!" echo   $evcreate = $rdap.events ^| Where-Object { $_.eventAction -eq 'registration' } ^| Select-Object -First 1
+>> "!SCAN_PS!" echo   $evexpire = $rdap.events ^| Where-Object { $_.eventAction -eq 'expiration'   } ^| Select-Object -First 1
+>> "!SCAN_PS!" echo   if ($evcreate) { Write-Host "  Cree le     : $([datetime]::Parse($evcreate.eventDate).ToString('dd/MM/yyyy'))" -ForegroundColor White }
+>> "!SCAN_PS!" echo   if ($evexpire) {
+>> "!SCAN_PS!" echo     $dexp = ([datetime]::Parse($evexpire.eventDate) - (Get-Date)).Days
+>> "!SCAN_PS!" echo     $dcol = if ($dexp -lt 30) { 'Red' } else { 'White' }
+>> "!SCAN_PS!" echo     Write-Host "  Expire le   : $([datetime]::Parse($evexpire.eventDate).ToString('dd/MM/yyyy')) ($dexp j)" -ForegroundColor $dcol
+>> "!SCAN_PS!" echo   }
+>> "!SCAN_PS!" echo } catch {}
+>> "!SCAN_PS!" echo Write-Host "  ================================================" -ForegroundColor DarkCyan
+>> "!SCAN_PS!" echo Write-Host ""
+>> "!SCAN_PS!" echo Write-Host "  Scan de $($routes.Count) routes..." -ForegroundColor DarkGray
+>> "!SCAN_PS!" echo Write-Host ""
+>> "!SCAN_PS!" echo function Get-Status($target) {
+>> "!SCAN_PS!" echo   try {
+>> "!SCAN_PS!" echo     $req = [System.Net.HttpWebRequest]::Create($target)
+>> "!SCAN_PS!" echo     $req.Method = 'GET'; $req.Timeout = 5000; $req.AllowAutoRedirect = $false
+>> "!SCAN_PS!" echo     $req.UserAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'
+>> "!SCAN_PS!" echo     try {
+>> "!SCAN_PS!" echo       $r = $req.GetResponse(); $c = [int]$r.StatusCode; $r.Close(); return $c
+>> "!SCAN_PS!" echo     } catch [System.Net.WebException] {
+>> "!SCAN_PS!" echo       if ($_.Exception.Response) { return [int]$_.Exception.Response.StatusCode }
+>> "!SCAN_PS!" echo       return 0
+>> "!SCAN_PS!" echo     }
+>> "!SCAN_PS!" echo   } catch { return 0 }
+>> "!SCAN_PS!" echo }
+>> "!SCAN_PS!" echo $exposed = 0; $protected = 0; $errors = 0
+>> "!SCAN_PS!" echo foreach ($r in $routes) {
+>> "!SCAN_PS!" echo   $code = Get-Status ($url + $r)
+>> "!SCAN_PS!" echo   if ($code -eq 200) {
+>> "!SCAN_PS!" echo     Write-Host "  [EXPOSE   $code]  $r" -ForegroundColor Red; $exposed++
+>> "!SCAN_PS!" echo   } elseif ($code -in @(401,403)) {
+>> "!SCAN_PS!" echo     Write-Host "  [PROTEGE  $code]  $r" -ForegroundColor Yellow; $protected++
+>> "!SCAN_PS!" echo   } elseif ($code -in @(301,302,307,308)) {
+>> "!SCAN_PS!" echo     Write-Host "  [REDIRECT $code]  $r" -ForegroundColor Cyan
+>> "!SCAN_PS!" echo   } elseif ($code -eq 500) {
+>> "!SCAN_PS!" echo     Write-Host "  [ERREUR   $code]  $r" -ForegroundColor Magenta; $errors++
+>> "!SCAN_PS!" echo   }
+>> "!SCAN_PS!" echo }
+>> "!SCAN_PS!" echo Write-Host ""
+>> "!SCAN_PS!" echo Write-Host "  ================================================" -ForegroundColor DarkGray
+>> "!SCAN_PS!" echo if ($exposed -gt 0) {
+>> "!SCAN_PS!" echo   Write-Host "  /!\ $exposed route(s) EXPOSEES (200) - ACTION REQUISE" -ForegroundColor Red
+>> "!SCAN_PS!" echo } else {
+>> "!SCAN_PS!" echo   Write-Host "  [OK] Aucune route critique exposee" -ForegroundColor Green
+>> "!SCAN_PS!" echo }
+>> "!SCAN_PS!" echo if ($protected -gt 0) { Write-Host "  [!]  $protected route(s) protegees (401/403) - existent" -ForegroundColor Yellow }
+>> "!SCAN_PS!" echo if ($errors -gt 0)    { Write-Host "  [~]  $errors erreur(s) serveur (500)" -ForegroundColor Magenta }
+>> "!SCAN_PS!" echo Write-Host "  ================================================" -ForegroundColor DarkGray
+>> "!SCAN_PS!" echo Write-Host ""
+>> "!SCAN_PS!" echo Write-Host "  Appuyez sur une touche pour revenir au menu..." -ForegroundColor DarkGray
+>> "!SCAN_PS!" echo [Console]::ReadKey($true) ^| Out-Null
+powershell -NoProfile -ExecutionPolicy Bypass -File "!SCAN_PS!"
+del /f /q "!SCAN_PS!" 2>nul
 endlocal
 goto sys_passwords_menu
 
