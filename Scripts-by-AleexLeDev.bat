@@ -1955,10 +1955,17 @@ set "DOC_FILE=%TEMP%\doc_scan_%RANDOM%.py"
 >> "!DOC_FILE!" echo     with open(out, "w", encoding="utf-8") as f:
 >> "!DOC_FILE!" echo         f.write("=== CRITICAL ASSETS REPORT v5.8 - TRIE PAR RISQUE ===\n")
 >> "!DOC_FILE!" echo         f.write(f"Machine : {os.environ.get('COMPUTERNAME')}\n\n")
+>> "!DOC_FILE!" echo         groups = {}
 >> "!DOC_FILE!" echo         for r in results:
->> "!DOC_FILE!" echo             clean = [t.replace('NAME:','').upper() if t.startswith('NAME:') else t for t in r['tags']]
->> "!DOC_FILE!" echo             f.write(f"  {' + '.join(clean)}\n")
->> "!DOC_FILE!" echo             f.write(f"  {r['path']}\n\n")
+>> "!DOC_FILE!" echo             clean = sorted([t.replace('NAME:','').upper() if t.startswith('NAME:') else t for t in r['tags']])
+>> "!DOC_FILE!" echo             key = ' + '.join(clean)
+>> "!DOC_FILE!" echo             if key not in groups: groups[key] = []
+>> "!DOC_FILE!" echo             groups[key].append(r['path'])
+>> "!DOC_FILE!" echo         for tag, paths in groups.items():
+>> "!DOC_FILE!" echo             f.write(f"  {tag}\n")
+>> "!DOC_FILE!" echo             for path in paths:
+>> "!DOC_FILE!" echo                 f.write(f"  {path}\n")
+>> "!DOC_FILE!" echo             f.write("\n")
 >> "!DOC_FILE!" echo     print(f"  [+] {len(results)} fichier(s) critique(s) - Rapport : {out.name}")
 >> "!DOC_FILE!" echo     os.startfile(out)
 >> "!DOC_FILE!" echo else:
