@@ -1981,10 +1981,15 @@ if %errorlevel% neq 0 (
     goto sys_passwords_menu
 )
 del /f /q "!DOC_FILE!" 2>nul
-echo.
-echo  [+] Ouverture du rapport dans Notepad...
-start /wait notepad "!RES_FILE!"
-del /f /q "!RES_FILE!" 2>nul
+set "DISP_PS=%TEMP%\disp_%RANDOM%.ps1"
+> "!DISP_PS!" echo try { $b=$host.UI.RawUI.BufferSize; $host.UI.RawUI.BufferSize=New-Object Management.Automation.Host.Size($b.Width,3000) } catch {}
+>> "!DISP_PS!" echo [Console]::Clear()
+>> "!DISP_PS!" echo Get-Content '!RES_FILE!'
+>> "!DISP_PS!" echo $host.UI.RawUI.FlushInputBuffer()
+>> "!DISP_PS!" echo Write-Host "`n  Appuyez sur une touche pour revenir au menu..."
+>> "!DISP_PS!" echo [Console]::ReadKey($true) ^| Out-Null
+powershell -NoProfile -ExecutionPolicy Bypass -File "!DISP_PS!"
+del /f /q "!DISP_PS!" "!RES_FILE!" 2>nul
 endlocal
 goto sys_passwords_menu
 
