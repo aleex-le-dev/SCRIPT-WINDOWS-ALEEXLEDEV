@@ -1956,7 +1956,7 @@ set "DOC_FILE=%TEMP%\doc_scan_%RANDOM%.py"
 >> "!DOC_FILE!" echo         f.write("=== CRITICAL ASSETS REPORT v5.8 - TRIE PAR RISQUE ===\n")
 >> "!DOC_FILE!" echo         f.write(f"Machine : {os.environ.get('COMPUTERNAME')}\n\n")
 >> "!DOC_FILE!" echo         for r in results:
->> "!DOC_FILE!" echo             clean = [t.replace('NAME:','').lower() if t.startswith('NAME:') else t for t in r['tags']]
+>> "!DOC_FILE!" echo             clean = [t.replace('NAME:','').upper() if t.startswith('NAME:') else t for t in r['tags']]
 >> "!DOC_FILE!" echo             f.write(f"  {' + '.join(clean)}\n")
 >> "!DOC_FILE!" echo             f.write(f"  {r['path']}\n\n")
 >> "!DOC_FILE!" echo     print(f"  [+] {len(results)} fichier(s) critique(s) - Rapport : {out.name}")
