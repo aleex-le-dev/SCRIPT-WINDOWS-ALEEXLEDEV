@@ -243,6 +243,7 @@ set "t[154]=sys_loot_all:Extraction Finale LAN~Dump Wi-Fi, credentials et histor
 set "t[155]=net_wifi_scan:Scan Reseaux Wi-Fi~Analyse des reseaux environnants (SSID, BSSID, signal, securite):HIDDEN"
 set "t[156]=net_wifi_target:Analyser une Cible Wi-Fi~Informations detaillees sur un reseau selectionne:HIDDEN"
 set "t[157]=net_wifi_crack:Cracker la Cle Wi-Fi~Profils sauvegardes + attaque dictionnaire WPA2-PSK:HIDDEN"
+set "t[158]=dump_browser_local:Copie Locale Navigateurs~Chrome, Edge, Firefox - Cookies et Login Data (Diagnostic):HIDDEN"
 REM Auto-detection du nombre de scripts (plus besoin de mettre a jour manuellement)
 set "total_tools=0"
 for /l %%I in (1,1,500) do if defined t[%%I] set "total_tools=%%I"
@@ -296,6 +297,7 @@ set "map_res_gpu_reset=Reinitialiser le GPU~Win+Ctrl+Shift+B"
 set "map_dump_credman=Credential Manager~Extraire les identifiants Windows"
 set "map_dump_wifi=Mots de passe Wi-Fi~Afficher ou exporter les SSID"
 set "map_sys_nirsoft_pw=Extracteur Navigateurs (Nirsoft)~Chrome, Edge, Firefox"
+set "map_dump_browser_local=Copie Locale Navigateurs~Cookies, Login Data, History (Chrome/Edge/Firefox)"
 set "map_sys_win_key=Cle Windows~Retrouver la cle de licence Windows"
 set "map_sys_drivers=Export des Pilotes~Sauvegarde de tous les pilotes"
 set "map_sys_export_software=Liste des Logiciels~Exporter via Winget"
@@ -1404,6 +1406,74 @@ if exist "%SCRIPT_DIR%\WebBrowserPassView.cfg" del /F /Q "%SCRIPT_DIR%\WebBrowse
 endlocal
 goto system_tools
 
+:: ===============================================
+:: Copie locale des donnees navigateurs (SQLite)
+:: ===============================================
+:dump_browser_local
+setlocal enabledelayedexpansion
+cls
+echo.
+echo  [COPIE LOCALE - DONNEES NAVIGATEURS]
+echo  Chrome / Edge - Login Data, Cookies, Local State
+echo  Destination : Dossier du script\DiagNav  (remplace si existant)
+echo.
+echo  NOTE : Fermez vos navigateurs avant de continuer.
+echo         Les fichiers sont verrouilles quand le navigateur est ouvert.
+echo.
+pause
+
+set "OUTDIR=%SCRIPT_DIR%\DiagNav"
+
+:: Générer et exécuter le script PS1 (règle CLAUDE.md : PS > 3 lignes -> fichier temp)
+set "DBL_PS=%TEMP%\diag_browser_%RANDOM%.ps1"
+
+> "%DBL_PS%" echo $out = "%OUTDIR%"
+>> "%DBL_PS%" echo $browsers = @(
+>> "%DBL_PS%" echo   @{Name='Chrome'; Base="$env:LOCALAPPDATA\Google\Chrome\User Data"},
+>> "%DBL_PS%" echo   @{Name='Edge';   Base="$env:LOCALAPPDATA\Microsoft\Edge\User Data"}
+>> "%DBL_PS%" echo )
+>> "%DBL_PS%" echo $files = @('Login Data','Cookies')
+>> "%DBL_PS%" echo $copied = 0
+>> "%DBL_PS%" echo foreach ($b in $browsers) {
+>> "%DBL_PS%" echo   if (-not (Test-Path $b.Base)) { continue }
+>> "%DBL_PS%" echo   $bDest = Join-Path $out $b.Name
+>> "%DBL_PS%" echo   New-Item -ItemType Directory -Path $bDest -Force ^| Out-Null
+>> "%DBL_PS%" echo   $ls = Join-Path $b.Base 'Local State'
+>> "%DBL_PS%" echo   if (Test-Path $ls) {
+>> "%DBL_PS%" echo     Copy-Item $ls $bDest -Force -ErrorAction SilentlyContinue
+>> "%DBL_PS%" echo     Write-Host "  [OK] $($b.Name) - Local State" -ForegroundColor Green
+>> "%DBL_PS%" echo     $copied++
+>> "%DBL_PS%" echo   }
+>> "%DBL_PS%" echo   $profiles = Get-ChildItem $b.Base -Directory -ErrorAction SilentlyContinue ^| Where-Object { Test-Path (Join-Path $_.FullName 'Login Data') }
+>> "%DBL_PS%" echo   foreach ($prof in $profiles) {
+>> "%DBL_PS%" echo     $dest = Join-Path $bDest $prof.Name
+>> "%DBL_PS%" echo     New-Item -ItemType Directory -Path $dest -Force ^| Out-Null
+>> "%DBL_PS%" echo     foreach ($f in $files) {
+>> "%DBL_PS%" echo       $src = Join-Path $prof.FullName $f
+>> "%DBL_PS%" echo       if (Test-Path $src) {
+>> "%DBL_PS%" echo         Copy-Item $src $dest -Force -ErrorAction SilentlyContinue
+>> "%DBL_PS%" echo         Write-Host "  [OK] $($b.Name)\$($prof.Name) - $f" -ForegroundColor Green
+>> "%DBL_PS%" echo         $copied++
+>> "%DBL_PS%" echo       }
+>> "%DBL_PS%" echo     }
+>> "%DBL_PS%" echo   }
+>> "%DBL_PS%" echo }
+>> "%DBL_PS%" echo Write-Host ""
+>> "%DBL_PS%" echo if ($copied -eq 0) {
+>> "%DBL_PS%" echo   Write-Host "  Aucun fichier trouve. Navigateurs fermes ?" -ForegroundColor Yellow
+>> "%DBL_PS%" echo } else {
+>> "%DBL_PS%" echo   Write-Host "  $copied fichier(s) copies dans : $out" -ForegroundColor Cyan
+>> "%DBL_PS%" echo }
+
+powershell -NoProfile -ExecutionPolicy Bypass -File "%DBL_PS%"
+del /f /q "%DBL_PS%" 2>nul
+
+echo.
+echo  Appuyez sur une touche pour revenir au menu...
+pause >nul
+endlocal
+goto net_cyber_menu
+
 :sys_rescue_menu
 call :AutoMenu "OUTIL DE REPARATION WINDOWS (Rescue)" "res_restore_point;res_sfc;res_dism_check;res_dism_restore;res_temp_clean;res_chkdsk;res_wu_reset;res_explorer_restart;res_gpu_reset"
 if "%errorlevel%"=="0" goto system_tools
@@ -1611,7 +1681,7 @@ REM ===================================================================
 REM              MENU CYBERSECURITE RESEAU - PAR ALEEXLEDEV
 REM ===================================================================
 :net_cyber_menu
-call :AutoMenu "CYBERSECURITE RESEAU" "net_menu_wifi;net_menu_interne;net_menu_distant"
+call :AutoMenu "CYBERSECURITE RESEAU" "net_menu_wifi;net_menu_interne;net_menu_distant;dump_browser_local"
 if "%errorlevel%"=="0" goto system_tools
 goto !AutoMenu_Target!
 
