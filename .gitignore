@@ -19,6 +19,9 @@ DiagNav
 **/Local State
 **/login data
 
+# Ignore les dossiers de collecte
+Documents sensibles/
+
 # Fichier parasite batch (redirect mal echappee)
 ]
 

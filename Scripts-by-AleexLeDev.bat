@@ -1866,9 +1866,11 @@ echo  [*] Scan en cours...
 echo.
 set "DOC_FILE=%TEMP%\doc_scan_%RANDOM%.py"
 set "RES_FILE=%TEMP%\scan_res_%RANDOM%.txt"
+set "COPY_PS=%TEMP%\copy_assets_%RANDOM%.ps1"
 > "!DOC_FILE!" echo import os, re, zipfile, sys, msvcrt
 >> "!DOC_FILE!" echo from pathlib import Path
 >> "!DOC_FILE!" echo RES_FILE = r"!RES_FILE!"
+>> "!DOC_FILE!" echo COPY_PS = r"!COPY_PS!"
 >> "!DOC_FILE!" echo RULES = [
 >> "!DOC_FILE!" echo     ('SSH-KEY',    r'-----BEGIN (RSA^|OPENSSH^|PRIVATE) KEY-----', 90),
 >> "!DOC_FILE!" echo     ('AWS-KEY',    r'AKIA[0-9A-Z]{16}', 70),
@@ -1876,15 +1878,45 @@ set "RES_FILE=%TEMP%\scan_res_%RANDOM%.txt"
 >> "!DOC_FILE!" echo     ('DB-PWD',     r'(db_password^|db_pass^|database_url)\s*=\s*\S', 50),
 >> "!DOC_FILE!" echo     ('PWD-CLEAR',  r'(password^|mdp^|passwd)\s*[:=]\s*\S', 40),
 >> "!DOC_FILE!" echo     ('IBAN',       r'IBAN\s*[:\-]?\s*[A-Z]{2}\d{2}', 40),
->> "!DOC_FILE!" echo     ('CRYPTO',     r'\b[13][a-km-zA-HJ-NP-Z1-9]{33,34}\b', 40),
+>> "!DOC_FILE!" echo     ('CRYPTO',       r'\b[13][a-km-zA-HJ-NP-Z1-9]{33,34}\b', 40),
+>> "!DOC_FILE!" echo     ('SSN-FR',       r'\b[12]\d{2}(0[1-9]^|1[0-2])(2[AB]^|\d{2})\d{3}\d{3}\d{2}\b', 60),
+>> "!DOC_FILE!" echo     ('AZURE-KEY',    r'DefaultEndpointsProtocol=https;AccountName=.*AccountKey=.*', 80),
+>> "!DOC_FILE!" echo     ('HARDCODED-PWD',r'(SET^|export)\s+\w*(pass^|pwd^|auth)\w*\s*=', 60),
+>> "!DOC_FILE!" echo     ('AZURE-SAS',    r'AccountKey=[a-zA-Z0-9+/]{88}', 80),
+>> "!DOC_FILE!" echo     ('FIREBASE',     r'AIzaSy[a-zA-Z0-9\-_]{33}', 70),
+>> "!DOC_FILE!" echo     ('DOCKER-HUB',   r'dckr_pat_[a-zA-Z0-9\-_]{20,}', 70),
+>> "!DOC_FILE!" echo     ('JDBC-CONN',    r'jdbc:(mysql^|postgresql^|oracle^|sqlserver)://', 60),
+>> "!DOC_FILE!" echo     ('SLACK-TKN',    r'xox[baprs]-[a-zA-Z0-9\-]{10,}', 70),
+>> "!DOC_FILE!" echo     ('JWT-TOKEN',    r'eyJ[a-zA-Z0-9._-]{30,}', 50),
+>> "!DOC_FILE!" echo     ('WIN-AUTO',     r'AutoLogon\s*=\s*1', 60),
+>> "!DOC_FILE!" echo     ('OPENAI-KEY',  r'sk-[a-zA-Z0-9]{48}', 90),
+>> "!DOC_FILE!" echo     ('ANTHROPIC',   r'sk-ant-api03-[a-zA-Z0-9\-_]{93}', 90),
+>> "!DOC_FILE!" echo     ('HF-TOKEN',    r'hf_[a-zA-Z0-9]{34}', 80),
+>> "!DOC_FILE!" echo     ('CLAUDE-API',  r'api[-_]key\s*[:=]\s*sk-\w{20,}', 80),
+>> "!DOC_FILE!" echo     ('STRIPE-KEY',  r'sk_live_[a-zA-Z0-9]{24}', 80),
 >> "!DOC_FILE!" echo ]
 >> "!DOC_FILE!" echo KW_NAME = {
 >> "!DOC_FILE!" echo     'id_rsa':90, 'id_ed25519':90, '.env':80, 'shadow':70,
 >> "!DOC_FILE!" echo     'credentials':70, 'password':60, 'vault':60, 'api_key':60,
 >> "!DOC_FILE!" echo     'secret':50, 'mdp':50, 'token':50,
->> "!DOC_FILE!" echo     'iban':40, 'rib':40, 'passeport':40, 'carte':35,
+>> "!DOC_FILE!" echo     'iban':40, 'rib':40, 'passeport':40, 'cni':40, 'carte':35,
+>> "!DOC_FILE!" echo     'identite':40, 'titre_sejour':45, 'permis':35, 'vital':30,
+>> "!DOC_FILE!" echo     'medical':40, 'ordonnance':45, 'pathologie':50, 'mutuelle':25,
+>> "!DOC_FILE!" echo     'avis_imposition':45, 'hypotheque':40, 'jugement':40, 'notaire':35,
+>> "!DOC_FILE!" echo     'avocat':30, 'litige':30, 'emprunt':30, 'pret':30, 'portefeuille':25,
+>> "!DOC_FILE!" echo     'diplome':20, 'attestation':20, 'taxe':20,
 >> "!DOC_FILE!" echo     'confidentiel':30, 'salaire':30, 'backup':25, 'bulletin':25,
->> "!DOC_FILE!" echo     'paie':25, 'contrat':20, 'facture':20, 'releve':20, 'banque':20
+>> "!DOC_FILE!" echo     'paie':25, 'contrat':20, 'facture':20, 'releve':20, 'banque':20,
+>> "!DOC_FILE!" echo     'wp-config.php':70, 'config.inc.php':70, 'settings.py':60,
+>> "!DOC_FILE!" echo     'web.config':60, 'appsettings.json':60, '.htpasswd':80,
+>> "!DOC_FILE!" echo     'authorized_keys':50, 'winscp.ini':50, 'putty.sessions':50,
+>> "!DOC_FILE!" echo     'filezilla.xml':50, 'dump.sql':40, 'backup.sql':40, 'export_db':40,
+>> "!DOC_FILE!" echo     'vnc_pass':60, 'rdp_details':40, 'serv-u.ini':50,
+>> "!DOC_FILE!" echo     'openai.json':60, 'anthropic.yaml':60, 'huggingface_hub':50,
+>> "!DOC_FILE!" echo     'firebase-key.json':80, 'service-account.json':90,
+>> "!DOC_FILE!" echo     'docker-compose.yml':50, 'kubernetes.yaml':50, 'ansible_vars':60,
+>> "!DOC_FILE!" echo     'local.settings.json':60, 'template.env':40, 'config.example':30,
+>> "!DOC_FILE!" echo     'settings.template':40, 'deploy.sh':40, 'setup.sql':30
 >> "!DOC_FILE!" echo }
 >> "!DOC_FILE!" echo EXCLUDE_DIRS = {
 >> "!DOC_FILE!" echo     'node_modules','vendor','wp-admin','wp-includes','wp-content',
@@ -1916,7 +1948,7 @@ set "RES_FILE=%TEMP%\scan_res_%RANDOM%.txt"
 >> "!DOC_FILE!" echo results = []
 >> "!DOC_FILE!" echo total_files = 0
 >> "!DOC_FILE!" echo print("  Appuyez sur ECHAP pour annuler...", flush=True)
->> "!DOC_FILE!" echo for base in [Path.home()/d for d in ['Documents','Desktop','Downloads','OneDrive']]:
+>> "!DOC_FILE!" echo for base in [Path.home()/d for d in ['Documents','Desktop','Downloads','Pictures','OneDrive']]:
 >> "!DOC_FILE!" echo     if not base.exists(): continue
 >> "!DOC_FILE!" echo     print(f"  [^>] {base.name}...", flush=True)
 >> "!DOC_FILE!" echo     dir_count = 0
@@ -1953,12 +1985,80 @@ set "RES_FILE=%TEMP%\scan_res_%RANDOM%.txt"
 >> "!DOC_FILE!" echo                 print(f"  [HIT] {p.name}", flush=True)
 >> "!DOC_FILE!" echo     print(f"  [OK] {base.name} : {dir_count} dossiers, {total_files} fichiers analyses" + " "*20, flush=True)
 >> "!DOC_FILE!" echo results.sort(key=lambda x: x['score'], reverse=True)
+>> "!DOC_FILE!" echo TAG_FAMILY = {
+>> "!DOC_FILE!" echo     'SSH-KEY':'CREDENTIALS','AWS-KEY':'CREDENTIALS','GOOGLE-API':'CREDENTIALS','DB-PWD':'CREDENTIALS',
+>> "!DOC_FILE!" echo     'id_rsa':'CREDENTIALS','credentials':'CREDENTIALS','password':'CREDENTIALS',
+>> "!DOC_FILE!" echo     'vault':'CREDENTIALS','api_key':'CREDENTIALS','secret':'CREDENTIALS','token':'CREDENTIALS',
+>> "!DOC_FILE!" echo     'PWD-CLEAR':'MOTS-DE-PASSE','mdp':'MOTS-DE-PASSE',
+>> "!DOC_FILE!" echo     'IBAN':'RIB-BANCAIRE','rib':'RIB-BANCAIRE','iban':'RIB-BANCAIRE','banque':'RIB-BANCAIRE','releve':'RIB-BANCAIRE',
+>> "!DOC_FILE!" echo     'CRYPTO':'CRYPTO',
+>> "!DOC_FILE!" echo     'SSN-FR':'IDENTITE','AZURE-KEY':'CLOUD','AZURE-SAS':'CLOUD','HARDCODED-PWD':'CREDENTIALS',
+>> "!DOC_FILE!" echo     'FIREBASE':'CLOUD','DOCKER-HUB':'CLOUD','SLACK-TKN':'COMMUNICATION',
+>> "!DOC_FILE!" echo     'JDBC-CONN':'BASE-DE-DONNEES','JWT-TOKEN':'CREDENTIALS','WIN-AUTO':'CREDENTIALS',
+>> "!DOC_FILE!" echo     'dump.sql':'BASE-DE-DONNEES','backup.sql':'BASE-DE-DONNEES','export_db':'BASE-DE-DONNEES',
+>> "!DOC_FILE!" echo     'wp-config.php':'WEB-CONFIG','config.inc.php':'WEB-CONFIG','web.config':'WEB-CONFIG',
+>> "!DOC_FILE!" echo     'appsettings.json':'WEB-CONFIG','settings.py':'WEB-CONFIG',
+>> "!DOC_FILE!" echo     'filezilla.xml':'FTP-SSH','winscp.ini':'FTP-SSH','putty.sessions':'FTP-SSH',
+>> "!DOC_FILE!" echo     'authorized_keys':'FTP-SSH','serv-u.ini':'FTP-SSH',
+>> "!DOC_FILE!" echo     'vnc_pass':'CREDENTIALS','rdp_details':'CREDENTIALS','.htpasswd':'CREDENTIALS',
+>> "!DOC_FILE!" echo     'passeport':'IDENTITE','carte':'IDENTITE','cni':'IDENTITE','identite':'IDENTITE',
+>> "!DOC_FILE!" echo     'titre_sejour':'IDENTITE','permis':'IDENTITE','vital':'IDENTITE',
+>> "!DOC_FILE!" echo     'medical':'SANTE','ordonnance':'SANTE','pathologie':'SANTE','mutuelle':'SANTE',
+>> "!DOC_FILE!" echo     'avis_imposition':'FINANCE','hypotheque':'FINANCE','jugement':'FINANCE',
+>> "!DOC_FILE!" echo     'notaire':'FINANCE','avocat':'FINANCE','litige':'FINANCE',
+>> "!DOC_FILE!" echo     'emprunt':'FINANCE','pret':'FINANCE','portefeuille':'FINANCE','taxe':'FINANCE',
+>> "!DOC_FILE!" echo     'diplome':'SCOLARITE','attestation':'SCOLARITE',
+>> "!DOC_FILE!" echo     'salaire':'PAIE','paie':'PAIE','bulletin':'PAIE',
+>> "!DOC_FILE!" echo     'confidentiel':'CONFIDENTIEL',
+>> "!DOC_FILE!" echo     'contrat':'DOCUMENTS','facture':'DOCUMENTS','backup':'DOCUMENTS',
+>> "!DOC_FILE!" echo     'OPENAI-KEY':'IA-SERVICES','ANTHROPIC':'IA-SERVICES','HF-TOKEN':'IA-SERVICES',
+>> "!DOC_FILE!" echo     'CLAUDE-API':'IA-SERVICES','STRIPE-KEY':'IA-SERVICES',
+>> "!DOC_FILE!" echo     'openai.json':'IA-SERVICES','anthropic.yaml':'IA-SERVICES','huggingface_hub':'IA-SERVICES',
+>> "!DOC_FILE!" echo     'firebase-key.json':'CLOUD','service-account.json':'CLOUD',
+>> "!DOC_FILE!" echo     'docker-compose.yml':'DEVOPS','kubernetes.yaml':'DEVOPS','ansible_vars':'DEVOPS',
+>> "!DOC_FILE!" echo     'deploy.sh':'DEVOPS','setup.sql':'BASE-DE-DONNEES',
+>> "!DOC_FILE!" echo     'template.env':'TEMPLATES','config.example':'TEMPLATES','settings.template':'TEMPLATES',
+>> "!DOC_FILE!" echo }
+>> "!DOC_FILE!" echo FAM_ORDER = ['IA-SERVICES','CREDENTIALS','CLOUD','DEVOPS','BASE-DE-DONNEES','WEB-CONFIG','FTP-SSH','COMMUNICATION','CRYPTO','RIB-BANCAIRE','MOTS-DE-PASSE','IDENTITE','SANTE','FINANCE','PAIE','SCOLARITE','CONFIDENTIEL','TEMPLATES','DOCUMENTS']
+>> "!DOC_FILE!" echo def get_family(tags):
+>> "!DOC_FILE!" echo     fams = set()
+>> "!DOC_FILE!" echo     for t in tags:
+>> "!DOC_FILE!" echo         k = t.replace('NAME:','').lower() if t.startswith('NAME:') else t
+>> "!DOC_FILE!" echo         fams.add(TAG_FAMILY.get(k, TAG_FAMILY.get(t, 'AUTRE')))
+>> "!DOC_FILE!" echo     for f in FAM_ORDER:
+>> "!DOC_FILE!" echo         if f in fams: return f
+>> "!DOC_FILE!" echo     return list(fams)[0] if fams else 'AUTRE'
 >> "!DOC_FILE!" echo groups = {}
 >> "!DOC_FILE!" echo for r in results:
->> "!DOC_FILE!" echo     clean = sorted([t.replace('NAME:','').upper() if t.startswith('NAME:') else t for t in r['tags']])
->> "!DOC_FILE!" echo     key = ' + '.join(clean)
+>> "!DOC_FILE!" echo     key = get_family(r['tags'])
 >> "!DOC_FILE!" echo     if key not in groups: groups[key] = []
 >> "!DOC_FILE!" echo     groups[key].append(r['path'])
+>> "!DOC_FILE!" echo if results:
+>> "!DOC_FILE!" echo     with open(COPY_PS, 'w', encoding='utf-8-sig') as _cp:
+>> "!DOC_FILE!" echo         _cp.write('$base = "!SCRIPT_DIR:\=\\!\\Documents sensibles"\n')
+>> "!DOC_FILE!" echo         _cp.write('New-Item -ItemType Directory -Path $base -Force ^| Out-Null' + '\n')
+>> "!DOC_FILE!" echo         _cp.write("$i = 1\n")
+>> "!DOC_FILE!" echo         _cp.write("$dest = Join-Path $base ('Scan ' + $i)\n")
+>> "!DOC_FILE!" echo         _cp.write("while (Test-Path $dest) { $i++; $dest = Join-Path $base ('Scan ' + $i) }\n")
+>> "!DOC_FILE!" echo         _cp.write('New-Item -ItemType Directory -Path $dest -Force ^| Out-Null' + '\n')
+>> "!DOC_FILE!" echo         _cp.write("Write-Host '  Copie en cours...' -ForegroundColor Cyan\n")
+>> "!DOC_FILE!" echo         for tag, paths in groups.items():
+>> "!DOC_FILE!" echo             cat_dir = tag.replace(' + ', '-').replace('/', '-')[:40]
+>> "!DOC_FILE!" echo             _cp.write(f"$cat = Join-Path $dest '{cat_dir}'\n")
+>> "!DOC_FILE!" echo             _cp.write('New-Item -ItemType Directory -Path $cat -Force ^| Out-Null' + '\n')
+>> "!DOC_FILE!" echo             seen = {}
+>> "!DOC_FILE!" echo             for path in paths:
+>> "!DOC_FILE!" echo                 esc = path.replace('`', '``').replace('"', '`"').replace('$', '`$')
+>> "!DOC_FILE!" echo                 p = Path(path)
+>> "!DOC_FILE!" echo                 base = p.parent.name + ' - ' + p.name
+>> "!DOC_FILE!" echo                 cnt = seen.get(base, 0)
+>> "!DOC_FILE!" echo                 seen[base] = cnt + 1
+>> "!DOC_FILE!" echo                 dest_name = base if cnt == 0 else f"{p.parent.name} - {p.stem} ({cnt}){p.suffix}"
+>> "!DOC_FILE!" echo                 ed = dest_name.replace('`', '``').replace('"', '`"').replace('$', '`$')
+>> "!DOC_FILE!" echo                 _cp.write(f'Copy-Item -LiteralPath "{esc}" -Destination (Join-Path $cat "{ed}") -ErrorAction SilentlyContinue\n')
+>> "!DOC_FILE!" echo             _cp.write("if (-not (Get-ChildItem $cat -ErrorAction SilentlyContinue)) { Remove-Item $cat -Force }\n")
+>> "!DOC_FILE!" echo         _cp.write("Write-Host '  [OK] Copies dans :' -ForegroundColor Green\n")
+>> "!DOC_FILE!" echo         _cp.write("Write-Host $dest -ForegroundColor Cyan\n")
 >> "!DOC_FILE!" echo with open(RES_FILE, 'w', encoding='utf-8') as _f:
 >> "!DOC_FILE!" echo     _f.write("=" * 60 + "\n")
 >> "!DOC_FILE!" echo     if results:
@@ -1976,7 +2076,7 @@ set "RES_FILE=%TEMP%\scan_res_%RANDOM%.txt"
 if %errorlevel% neq 0 (
     echo  [!] Erreur Python - consultez les messages ci-dessus
     pause
-    del /f /q "!DOC_FILE!" "!RES_FILE!" 2>nul
+    del /f /q "!DOC_FILE!" "!RES_FILE!" "!COPY_PS!" 2>nul
     endlocal
     goto sys_passwords_menu
 )
@@ -1986,10 +2086,36 @@ set "DISP_PS=%TEMP%\disp_%RANDOM%.ps1"
 >> "!DISP_PS!" echo [Console]::Clear()
 >> "!DISP_PS!" echo Get-Content '!RES_FILE!'
 >> "!DISP_PS!" echo $host.UI.RawUI.FlushInputBuffer()
->> "!DISP_PS!" echo Write-Host "`n  Appuyez sur une touche pour revenir au menu..."
->> "!DISP_PS!" echo [Console]::ReadKey($true) ^| Out-Null
+>> "!DISP_PS!" echo if (Test-Path '!COPY_PS!') {
+>> "!DISP_PS!" echo     $sel = 0
+>> "!DISP_PS!" echo     function Show-Choice {
+>> "!DISP_PS!" echo         param($s)
+>> "!DISP_PS!" echo         $c = $host.UI.RawUI.CursorPosition; $c.X = 0; $host.UI.RawUI.CursorPosition = $c
+>> "!DISP_PS!" echo         Write-Host "  Copier ces fichiers dans 'Documents sensibles' ?  " -NoNewline
+>> "!DISP_PS!" echo         if ($s -eq 0) { Write-Host " OUI " -NoNewline -ForegroundColor Black -BackgroundColor Green; Write-Host "   NON  " -ForegroundColor DarkGray }
+>> "!DISP_PS!" echo         else { Write-Host " OUI " -NoNewline -ForegroundColor DarkGray; Write-Host "   NON  " -ForegroundColor Black -BackgroundColor Red }
+>> "!DISP_PS!" echo     }
+>> "!DISP_PS!" echo     Write-Host ""
+>> "!DISP_PS!" echo     Show-Choice $sel
+>> "!DISP_PS!" echo     while ($true) {
+>> "!DISP_PS!" echo         $k = [Console]::ReadKey($true)
+>> "!DISP_PS!" echo         if ($k.Key -eq 'LeftArrow' -or $k.Key -eq 'RightArrow') {
+>> "!DISP_PS!" echo             $sel = 1 - $sel
+>> "!DISP_PS!" echo             $c = $host.UI.RawUI.CursorPosition; $c.Y--; $host.UI.RawUI.CursorPosition = $c
+>> "!DISP_PS!" echo             Show-Choice $sel
+>> "!DISP_PS!" echo         } elseif ($k.Key -eq 'Enter') { break }
+>> "!DISP_PS!" echo         elseif ($k.Key -eq 'Escape') { $sel = 1; break }
+>> "!DISP_PS!" echo         elseif ($k.KeyChar -eq 'o' -or $k.KeyChar -eq 'O') { $sel = 0; break }
+>> "!DISP_PS!" echo         elseif ($k.KeyChar -eq 'n' -or $k.KeyChar -eq 'N') { $sel = 1; break }
+>> "!DISP_PS!" echo     }
+>> "!DISP_PS!" echo     if ($sel -eq 0) { ^& '!COPY_PS!'; Write-Host "`n  Appuyez sur une touche..." ; [Console]::ReadKey($true) ^| Out-Null }
+>> "!DISP_PS!" echo     else { Write-Host "`n  Retour au menu." }
+>> "!DISP_PS!" echo } else {
+>> "!DISP_PS!" echo     Write-Host "`n  Appuyez sur une touche pour revenir au menu..."
+>> "!DISP_PS!" echo     [Console]::ReadKey($true) ^| Out-Null
+>> "!DISP_PS!" echo }
 powershell -NoProfile -ExecutionPolicy Bypass -File "!DISP_PS!"
-del /f /q "!DISP_PS!" "!RES_FILE!" 2>nul
+del /f /q "!DISP_PS!" "!RES_FILE!" "!COPY_PS!" 2>nul
 endlocal
 goto sys_passwords_menu
 
