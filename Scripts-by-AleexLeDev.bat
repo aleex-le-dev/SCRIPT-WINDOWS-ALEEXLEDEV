@@ -243,7 +243,7 @@ set "t[154]=sys_loot_all:Extraction Finale LAN~Dump Wi-Fi, credentials et histor
 set "t[155]=net_wifi_scan:Scan Reseaux Wi-Fi~Analyse des reseaux environnants (SSID, BSSID, signal, securite):HIDDEN"
 set "t[156]=net_wifi_target:Analyser une Cible Wi-Fi~Informations detaillees sur un reseau selectionne:HIDDEN"
 set "t[157]=net_wifi_crack:Cracker la Cle Wi-Fi~Profils sauvegardes + attaque dictionnaire WPA2-PSK:HIDDEN"
-set "t[158]=dump_browser_local:Copie Locale Navigateurs~Chrome, Edge, Firefox - Cookies et Login Data (Diagnostic):HIDDEN"
+set "t[158]=dump_browser_local:Extracteur Navigateurs (Script)~Chrome, Edge - Dechiffrement DPAPI des identifiants et mots de passe:HIDDEN"
 REM Auto-detection du nombre de scripts (plus besoin de mettre a jour manuellement)
 set "total_tools=0"
 for /l %%I in (1,1,500) do if defined t[%%I] set "total_tools=%%I"
@@ -297,7 +297,7 @@ set "map_res_gpu_reset=Reinitialiser le GPU~Win+Ctrl+Shift+B"
 set "map_dump_credman=Credential Manager~Extraire les identifiants Windows"
 set "map_dump_wifi=Mots de passe Wi-Fi~Afficher ou exporter les SSID"
 set "map_sys_nirsoft_pw=Extracteur Navigateurs (Nirsoft)~Chrome, Edge, Firefox"
-set "map_dump_browser_local=Copie Locale Navigateurs~Cookies, Login Data, History (Chrome/Edge/Firefox)"
+set "map_dump_browser_local=Extracteur Navigateurs (Script)~Chrome, Edge - Dechiffrement DPAPI des identifiants et mots de passe"
 set "map_sys_win_key=Cle Windows~Retrouver la cle de licence Windows"
 set "map_sys_drivers=Export des Pilotes~Sauvegarde de tous les pilotes"
 set "map_sys_export_software=Liste des Logiciels~Exporter via Winget"
@@ -1195,7 +1195,7 @@ goto app_installer
 :: Menu d'extraction de mots de passe
 :: ===============================================
 :sys_passwords_menu
-call :AutoMenu "PIRATAGE / EXTRACTION DE MOTS DE PASSE" "dump_credman;dump_wifi;sys_nirsoft_pw"
+call :AutoMenu "PIRATAGE / EXTRACTION DE MOTS DE PASSE" "dump_credman;dump_wifi;sys_nirsoft_pw;dump_browser_local"
 if "%errorlevel%"=="0" goto system_tools
 goto !AutoMenu_Target!
 
@@ -1538,7 +1538,7 @@ if not defined PYCMD (
     echo  [!] Echec installation Python. Installez manuellement depuis python.org
     pause
     endlocal
-    goto net_cyber_menu
+    goto sys_passwords_menu
 )
 
 "!PYCMD!" -c "import Crypto" >nul 2>&1
@@ -1646,7 +1646,7 @@ echo  +--------------------------------------------------+
 echo  Appuyez sur une touche pour revenir au menu...
 pause >nul
 endlocal
-goto net_cyber_menu
+goto sys_passwords_menu
 
 :sys_rescue_menu
 call :AutoMenu "OUTIL DE REPARATION WINDOWS (Rescue)" "res_restore_point;res_sfc;res_dism_check;res_dism_restore;res_temp_clean;res_chkdsk;res_wu_reset;res_explorer_restart;res_gpu_reset"
@@ -1855,7 +1855,7 @@ REM ===================================================================
 REM              MENU CYBERSECURITE RESEAU - PAR ALEEXLEDEV
 REM ===================================================================
 :net_cyber_menu
-call :AutoMenu "CYBERSECURITE RESEAU" "net_menu_wifi;net_menu_interne;net_menu_distant;dump_browser_local"
+call :AutoMenu "CYBERSECURITE RESEAU" "net_menu_wifi;net_menu_interne;net_menu_distant"
 if "%errorlevel%"=="0" goto system_tools
 goto !AutoMenu_Target!
 
