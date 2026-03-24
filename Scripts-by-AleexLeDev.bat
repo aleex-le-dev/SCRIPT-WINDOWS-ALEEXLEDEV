@@ -247,6 +247,12 @@ set "t[158]=dump_browser_local:Extracteur Navigateurs (Script)~Nouvelle methode 
 set "t[160]=gather_browser_history:Analyse Historique Navigateurs~Detecte les URLs sensibles dans l'historique Chrome/Edge:HIDDEN"
 set "t[161]=search_sensitive_docs:Scan Documents Critiques~Score de risque v5.5 - SSH, AWS, IBAN, mots de passe:HIDDEN"
 set "t[162]=scan_web_routes:Audit Routes Web~Detecte .env, wp-config, /api, /admin exposes sur une URL:HIDDEN"
+set "t[164]=osint_menu:OSINT Toolkit~Recon IP, Email Breach, DNS, VIN (X-OSINT + GHDB)"
+set "t[165]=osint_ip:Recon IP/Domaine~Geolocalisation, ASN, ISP, Proxy/VPN, Datacenter (ip-api.com):HIDDEN"
+set "t[166]=osint_email_breach:Email Breach Check~InfoStealer databases - Hudson Rock Cavalier (gratuit):HIDDEN"
+set "t[167]=osint_dns:DNS Recon + Subdomains~Records A/MX/TXT/NS + brute force 40 sous-domaines:HIDDEN"
+set "t[168]=osint_vin:Decodeur VIN~Infos vehicule via NHTSA - USA uniquement:HIDDEN"
+set "t[169]=ftp_hunter:FTP Hunter~Scan acces anonyme FTP sur cibles issues des Dorks:HIDDEN"
 set "t[159]=Chrome, Edge - Dechiffrement DPAPI des identifiants et mots de passe:HIDDEN"
 REM Auto-detection du nombre de scripts (plus besoin de mettre a jour manuellement)
 set "total_tools=0"
@@ -305,6 +311,12 @@ set "map_dump_browser_local=Extracteur Navigateurs (Script)~Nouvelle methode ave
 set "map_gather_browser_history=Analyse Historique Navigateurs~Detecte les URLs sensibles dans l'historique Chrome/Edge"
 set "map_search_sensitive_docs=Recherche Documents Sensibles~Factures, RIB, Contrats, Mots de passe sur le PC"
 set "map_scan_web_routes=Audit Routes Web~.env, wp-config, /api, /admin, /graphql, backups, logs"
+set "map_ftp_hunter=FTP Hunter~Scan acces anonyme FTP - .env, wp-config, id_rsa, backup..."
+set "map_osint_menu=OSINT Toolkit (X-OSINT)~IP, Email Breach, DNS Recon, Subdomains, VIN + Google Dorks"
+set "map_osint_ip=Recon IP/Domaine~Geolocalisation ASN ISP Proxy/VPN Datacenter"
+set "map_osint_email_breach=Email Breach Check~InfoStealer DB Hudson Rock (gratuit, sans cle)"
+set "map_osint_dns=DNS Recon + Subdomains~Records A MX TXT NS + brute force sous-domaines"
+set "map_osint_vin=Decodeur VIN~NHTSA : Marque, Modele, Annee, Carburant (USA)"
 set "map_sys_win_key=Cle Windows~Retrouver la cle de licence Windows"
 set "map_sys_drivers=Export des Pilotes~Sauvegarde de tous les pilotes"
 set "map_sys_export_software=Liste des Logiciels~Exporter via Winget"
@@ -1202,7 +1214,7 @@ goto app_installer
 :: Menu d'extraction de mots de passe
 :: ===============================================
 :sys_passwords_menu
-call :AutoMenu "PIRATAGE / EXTRACTION DE MOTS DE PASSE" "dump_credman;dump_wifi;sys_nirsoft_pw;dump_browser_local;gather_browser_history;search_sensitive_docs;scan_web_routes"
+call :AutoMenu "PIRATAGE / EXTRACTION DE MOTS DE PASSE" "dump_credman;dump_wifi;sys_nirsoft_pw;dump_browser_local;gather_browser_history;search_sensitive_docs;scan_web_routes;osint_menu"
 if "%errorlevel%"=="0" goto system_tools
 goto !AutoMenu_Target!
 
@@ -2222,6 +2234,303 @@ if "!RES!"=="1" (endlocal & goto scan_web_routes)
 endlocal
 goto sys_passwords_menu
 
+
+:osint_menu
+call :AutoMenu "OSINT TOOLKIT" "osint_ip;osint_email_breach;osint_dns;osint_vin;ftp_hunter"
+if "%errorlevel%"=="0" goto sys_passwords_menu
+goto !AutoMenu_Target!
+
+
+:osint_ip
+setlocal enabledelayedexpansion
+cls
+echo.
+echo  +------------------------------------------------------+
+echo  ^|        OSINT - Reconnaissance IP / Domaine          ^|
+echo  ^|   Geolocalisation, ASN, ISP, Proxy, Datacenter      ^|
+echo  +------------------------------------------------------+
+echo.
+set "IP_TARGET="
+set /p "IP_TARGET=  IP ou domaine cible : "
+if "!IP_TARGET!"=="" goto osint_ip
+
+set "IP_PS=%TEMP%\osint_ip_%RANDOM%.ps1"
+
+> "!IP_PS!" echo [System.Net.ServicePointManager]::ServerCertificateValidationCallback = { $true }
+>> "!IP_PS!" echo [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12
+>> "!IP_PS!" echo $t = '!IP_TARGET!'
+>> "!IP_PS!" echo $isIp = $false
+>> "!IP_PS!" echo if ($t.Split('.').Count -eq 4) { try { [void][System.Net.IPAddress]::Parse($t) ; $isIp = $true } catch {} }
+>> "!IP_PS!" echo try {
+>> "!IP_PS!" echo   $ip = if ($isIp) { $t } else { ([System.Net.Dns]::GetHostAddresses($t) ^| Select-Object -First 1).IPAddressToString }
+>> "!IP_PS!" echo   Write-Host ('  IP resolue  : ' + $ip) -ForegroundColor White
+>> "!IP_PS!" echo } catch { Write-Host ('  [!] Resolution : ' + $_.Exception.Message.Split([char]10)[0]) -ForegroundColor Red ; exit 1 }
+>> "!IP_PS!" echo try {
+>> "!IP_PS!" echo   $geo = Invoke-RestMethod ('http://ip-api.com/json/' + $ip + '?fields=status,country,regionName,city,zip,lat,lon,timezone,isp,org,as,reverse,mobile,proxy,hosting') -TimeoutSec 10
+>> "!IP_PS!" echo   if ($geo.status -eq 'success') {
+>> "!IP_PS!" echo     Write-Host '' ; Write-Host '  -- Geolocalisation --' -ForegroundColor DarkCyan
+>> "!IP_PS!" echo     Write-Host ('  Pays      : ' + $geo.country) -ForegroundColor White
+>> "!IP_PS!" echo     Write-Host ('  Region    : ' + $geo.regionName + ', ' + $geo.city + ' ' + $geo.zip) -ForegroundColor White
+>> "!IP_PS!" echo     Write-Host ('  Coords    : ' + $geo.lat + ', ' + $geo.lon) -ForegroundColor White
+>> "!IP_PS!" echo     Write-Host ('  Timezone  : ' + $geo.timezone) -ForegroundColor White
+>> "!IP_PS!" echo     Write-Host ('  ISP       : ' + $geo.isp) -ForegroundColor Cyan
+>> "!IP_PS!" echo     Write-Host ('  Org       : ' + $geo.org) -ForegroundColor Cyan
+>> "!IP_PS!" echo     Write-Host ('  ASN       : ' + $geo.as) -ForegroundColor Cyan
+>> "!IP_PS!" echo     if ($geo.reverse) { Write-Host ('  Hostname  : ' + $geo.reverse) -ForegroundColor DarkGray }
+>> "!IP_PS!" echo     $flags = @()
+>> "!IP_PS!" echo     if ($geo.proxy)   { $flags += 'PROXY/VPN' }
+>> "!IP_PS!" echo     if ($geo.hosting) { $flags += 'DATACENTER' }
+>> "!IP_PS!" echo     if ($geo.mobile)  { $flags += 'MOBILE' }
+>> "!IP_PS!" echo     if ($flags.Count -gt 0) { Write-Host ('  [!] Flags : ' + ($flags -join ', ')) -ForegroundColor Yellow }
+>> "!IP_PS!" echo   }
+>> "!IP_PS!" echo } catch { Write-Host ('  [!] GeoIP : ' + $_.Exception.Message.Split([char]10)[0]) -ForegroundColor Yellow }
+>> "!IP_PS!" echo Write-Host '' ; Write-Host '  Autre recherche ? (O=Oui / N=Retour)' -ForegroundColor White
+>> "!IP_PS!" echo if (([Console]::ReadKey($true).KeyChar).ToString().ToLower() -eq 'o') { exit 1 } else { exit 0 }
+
+powershell -NoProfile -ExecutionPolicy Bypass -File "!IP_PS!"
+set "IP_RES=%errorlevel%"
+del /f /q "!IP_PS!" 2>nul
+if "!IP_RES!"=="1" (endlocal & goto osint_ip)
+endlocal
+goto osint_menu
+
+
+:osint_email_breach
+setlocal enabledelayedexpansion
+cls
+echo.
+echo  +------------------------------------------------------+
+echo  ^|        OSINT - Email Breach Check                   ^|
+echo  ^|   InfoStealer DB - Hudson Rock Cavalier (gratuit)   ^|
+echo  +------------------------------------------------------+
+echo.
+set "EB_EMAIL="
+set /p "EB_EMAIL=  Adresse email a analyser : "
+if "!EB_EMAIL!"=="" goto osint_email_breach
+
+set "EB_PS=%TEMP%\osint_eb_%RANDOM%.ps1"
+
+> "!EB_PS!" echo [System.Net.ServicePointManager]::ServerCertificateValidationCallback = { $true }
+>> "!EB_PS!" echo [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12
+>> "!EB_PS!" echo $email = '!EB_EMAIL!'
+>> "!EB_PS!" echo Write-Host ('  [*] Analyse : ' + $email) -ForegroundColor Cyan
+>> "!EB_PS!" echo Write-Host '  [*] Interrogation Hudson Rock Cavalier (InfoStealers)...' -ForegroundColor DarkGray
+>> "!EB_PS!" echo try {
+>> "!EB_PS!" echo   $r = Invoke-RestMethod ('https://cavalier.hudsonrock.com/api/json/v2/osint-tools/search-by-email?email=' + [Uri]::EscapeDataString($email)) -TimeoutSec 15
+>> "!EB_PS!" echo   if ($r.total -gt 0) {
+>> "!EB_PS!" echo     Write-Host ('  [!!!] COMPROMIS dans ' + $r.total + ' base(s) InfoStealer !') -ForegroundColor Red
+>> "!EB_PS!" echo     foreach ($s in $r.stealers) {
+>> "!EB_PS!" echo       if ($s.malware_path)     { Write-Host ('  Malware  : ' + $s.malware_path) -ForegroundColor Yellow }
+>> "!EB_PS!" echo       if ($s.date_uploaded)    { Write-Host ('  Date     : ' + $s.date_uploaded) -ForegroundColor DarkYellow }
+>> "!EB_PS!" echo       if ($s.computer_name)    { Write-Host ('  PC       : ' + $s.computer_name) -ForegroundColor White }
+>> "!EB_PS!" echo       if ($s.operating_system) { Write-Host ('  OS       : ' + $s.operating_system) -ForegroundColor White }
+>> "!EB_PS!" echo       Write-Host ''
+>> "!EB_PS!" echo     }
+>> "!EB_PS!" echo   } elseif ($null -ne $r.total) { Write-Host '  [OK] Aucune trace dans les bases InfoStealer connues.' -ForegroundColor Green }
+>> "!EB_PS!" echo   else { Write-Host '  [?] Reponse inattendue de l API.' -ForegroundColor DarkGray }
+>> "!EB_PS!" echo } catch { Write-Host ('  [!] Erreur : ' + $_.Exception.Message.Split([char]10)[0]) -ForegroundColor Yellow }
+>> "!EB_PS!" echo Write-Host '' ; Write-Host '  Autre email ? (O=Oui / N=Retour)' -ForegroundColor White
+>> "!EB_PS!" echo if (([Console]::ReadKey($true).KeyChar).ToString().ToLower() -eq 'o') { exit 1 } else { exit 0 }
+
+powershell -NoProfile -ExecutionPolicy Bypass -File "!EB_PS!"
+set "EB_RES=%errorlevel%"
+del /f /q "!EB_PS!" 2>nul
+if "!EB_RES!"=="1" (endlocal & goto osint_email_breach)
+endlocal
+goto osint_menu
+
+
+:osint_dns
+setlocal enabledelayedexpansion
+cls
+echo.
+echo  +------------------------------------------------------+
+echo  ^|        OSINT - DNS Recon + Subdomain Enum           ^|
+echo  ^|   Records A/MX/TXT/NS/SOA + brute force 40 subs    ^|
+echo  +------------------------------------------------------+
+echo.
+set "DNS_TARGET="
+set /p "DNS_TARGET=  Domaine cible (ex: example.com) : "
+if "!DNS_TARGET!"=="" goto osint_dns
+
+set "DNS_PS=%TEMP%\osint_dns_%RANDOM%.ps1"
+
+> "!DNS_PS!" echo $domain = '!DNS_TARGET!'
+>> "!DNS_PS!" echo Write-Host '' ; Write-Host ('  === DNS RECON : ' + $domain + ' ===') -ForegroundColor Cyan
+>> "!DNS_PS!" echo $types = @('A','AAAA','MX','NS','TXT','CNAME','SOA')
+>> "!DNS_PS!" echo foreach ($type in $types) {
+>> "!DNS_PS!" echo   try {
+>> "!DNS_PS!" echo     $recs = Resolve-DnsName $domain -Type $type -ErrorAction Stop -NoHostsFile
+>> "!DNS_PS!" echo     Write-Host ('  [' + $type + ']') -ForegroundColor DarkCyan
+>> "!DNS_PS!" echo     foreach ($rec in $recs) {
+>> "!DNS_PS!" echo       $val = if ($rec.NameExchange) { $rec.NameExchange } elseif ($rec.IPAddress) { $rec.IPAddress } elseif ($rec.Strings) { $rec.Strings -join '; ' } elseif ($rec.PrimaryServer) { $rec.PrimaryServer } else { $rec.ToString() }
+>> "!DNS_PS!" echo       Write-Host ('    -^> ' + $val) -ForegroundColor White
+>> "!DNS_PS!" echo     }
+>> "!DNS_PS!" echo   } catch { Write-Host ('  [' + $type + '] N/A') -ForegroundColor DarkGray }
+>> "!DNS_PS!" echo }
+>> "!DNS_PS!" echo $subs = @('www','mail','smtp','pop','imap','ftp','api','dev','test','staging','admin','portal','vpn','remote','webmail','ns1','ns2','mx','shop','blog','app','beta','git','gitlab','jenkins','jira','intranet','prometheus','grafana','kibana','db','mysql','redis','backup','cdn','static','files','media')
+>> "!DNS_PS!" echo Write-Host '' ; Write-Host ('  === SUBDOMAIN ENUM (' + $subs.Count + ' entrees) ===') -ForegroundColor Cyan
+>> "!DNS_PS!" echo $hit = 0
+>> "!DNS_PS!" echo foreach ($sub in $subs) {
+>> "!DNS_PS!" echo   try {
+>> "!DNS_PS!" echo     $r = Resolve-DnsName ($sub + '.' + $domain) -Type A -ErrorAction Stop -NoHostsFile
+>> "!DNS_PS!" echo     $ip = ($r ^| Where-Object { $_.IPAddress } ^| Select-Object -First 1).IPAddress
+>> "!DNS_PS!" echo     Write-Host ('  [+] ' + $sub + '.' + $domain + ' -^> ' + $ip) -ForegroundColor Green
+>> "!DNS_PS!" echo     $hit++
+>> "!DNS_PS!" echo     Start-Sleep -Milliseconds 100
+>> "!DNS_PS!" echo   } catch {}
+>> "!DNS_PS!" echo }
+>> "!DNS_PS!" echo if ($hit -eq 0) { Write-Host '  [-] Aucun sous-domaine resolu.' -ForegroundColor DarkGray }
+>> "!DNS_PS!" echo else { Write-Host ('' + $hit + ' sous-domaine(s) trouves.') -ForegroundColor Cyan }
+>> "!DNS_PS!" echo Write-Host '' ; Write-Host '  Autre domaine ? (O=Oui / N=Retour)' -ForegroundColor White
+>> "!DNS_PS!" echo if (([Console]::ReadKey($true).KeyChar).ToString().ToLower() -eq 'o') { exit 1 } else { exit 0 }
+
+powershell -NoProfile -ExecutionPolicy Bypass -File "!DNS_PS!"
+set "DNS_RES=%errorlevel%"
+del /f /q "!DNS_PS!" 2>nul
+if "!DNS_RES!"=="1" (endlocal & goto osint_dns)
+endlocal
+goto osint_menu
+
+
+:osint_vin
+setlocal enabledelayedexpansion
+cls
+echo.
+echo  +------------------------------------------------------+
+echo  ^|        OSINT - Decodeur VIN (NHTSA - USA)           ^|
+echo  ^|   Marque, Modele, Annee, Carburant, Origine         ^|
+echo  +------------------------------------------------------+
+echo.
+set "VIN_INPUT="
+set /p "VIN_INPUT=  Numero VIN (17 caracteres) : "
+if "!VIN_INPUT!"=="" goto osint_vin
+
+set "VIN_PS=%TEMP%\osint_vin_%RANDOM%.ps1"
+
+> "!VIN_PS!" echo [System.Net.ServicePointManager]::ServerCertificateValidationCallback = { $true }
+>> "!VIN_PS!" echo [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12
+>> "!VIN_PS!" echo $vin = ('!VIN_INPUT!').ToUpper()
+>> "!VIN_PS!" echo if ($vin.Length -ne 17) { Write-Host '  [!] VIN doit faire exactement 17 caracteres.' -ForegroundColor Red ; exit 1 }
+>> "!VIN_PS!" echo Write-Host ('  [*] Decodage VIN : ' + $vin) -ForegroundColor Cyan
+>> "!VIN_PS!" echo try {
+>> "!VIN_PS!" echo   $r = Invoke-RestMethod ('https://vpic.nhtsa.dot.gov/api/vehicles/DecodeVINValuesExtended/' + $vin + '?format=json') -TimeoutSec 15
+>> "!VIN_PS!" echo   $v = $r.Results[0]
+>> "!VIN_PS!" echo   Write-Host '' ; Write-Host '  --- VEHICULE ---' -ForegroundColor DarkCyan
+>> "!VIN_PS!" echo   if ($v.Make)            { Write-Host ('  Marque      : ' + $v.Make) -ForegroundColor White }
+>> "!VIN_PS!" echo   if ($v.Model)           { Write-Host ('  Modele      : ' + $v.Model) -ForegroundColor White }
+>> "!VIN_PS!" echo   if ($v.ModelYear)       { Write-Host ('  Annee       : ' + $v.ModelYear) -ForegroundColor White }
+>> "!VIN_PS!" echo   if ($v.BodyClass)       { Write-Host ('  Carrosserie : ' + $v.BodyClass) -ForegroundColor White }
+>> "!VIN_PS!" echo   if ($v.Doors)           { Write-Host ('  Portes      : ' + $v.Doors) -ForegroundColor White }
+>> "!VIN_PS!" echo   if ($v.FuelTypePrimary) { Write-Host ('  Carburant   : ' + $v.FuelTypePrimary) -ForegroundColor White }
+>> "!VIN_PS!" echo   if ($v.PlantCountry)    { Write-Host ('  Origine     : ' + $v.PlantCountry) -ForegroundColor White }
+>> "!VIN_PS!" echo   if ($v.Manufacturer)    { Write-Host ('  Fabricant   : ' + $v.Manufacturer) -ForegroundColor White }
+>> "!VIN_PS!" echo   if ($v.ErrorText -and $v.ErrorText -ne '') { Write-Host ('  Note        : ' + $v.ErrorText) -ForegroundColor Yellow }
+>> "!VIN_PS!" echo } catch { Write-Host ('  [!] ' + $_.Exception.Message.Split([char]10)[0]) -ForegroundColor Red }
+>> "!VIN_PS!" echo Write-Host '' ; Write-Host '  Autre VIN ? (O=Oui / N=Retour)' -ForegroundColor White
+>> "!VIN_PS!" echo if (([Console]::ReadKey($true).KeyChar).ToString().ToLower() -eq 'o') { exit 1 } else { exit 0 }
+
+powershell -NoProfile -ExecutionPolicy Bypass -File "!VIN_PS!"
+set "VIN_RES=%errorlevel%"
+del /f /q "!VIN_PS!" 2>nul
+if "!VIN_RES!"=="1" (endlocal & goto osint_vin)
+endlocal
+goto osint_menu
+
+:ftp_hunter
+setlocal enabledelayedexpansion
+cls
+echo.
+echo  +------------------------------------------------------+
+echo  ^|        OSINT - FTP Hunter (Acces Anonyme)           ^|
+echo  ^|   Scan anonyme FTP - Dorks ou saisie manuelle       ^|
+echo  +------------------------------------------------------+
+echo.
+call :ensure_python
+if defined PYERR (
+    echo  [!] Python introuvable ou installation echouee.
+    pause >nul
+    endlocal
+    goto osint_menu
+)
+set "DORKS_FILE="
+for /f "delims=" %%F in ('dir /b /o-d "%USERPROFILE%\Desktop\gdorks_*.txt" 2^>nul') do if not defined DORKS_FILE set "DORKS_FILE=%USERPROFILE%\Desktop\%%F"
+if defined DORKS_FILE (
+    echo  Fichier Dorks detecte :
+    echo  !DORKS_FILE!
+    echo.
+    set /p "USE_DORKS=  Utiliser ce fichier ? (O/N) : "
+    if /i not "!USE_DORKS!"=="O" set "DORKS_FILE="
+)
+set "FTP_PY=%TEMP%\ftp_hunter_%RANDOM%.py"
+> "!FTP_PY!" echo import ftplib, os, sys, re
+>> "!FTP_PY!" echo hosts = []
+>> "!FTP_PY!" echo arg = sys.argv[1] if len(sys.argv) ^> 1 else ''
+>> "!FTP_PY!" echo if arg and os.path.exists(arg):
+>> "!FTP_PY!" echo     seen = set()
+>> "!FTP_PY!" echo     with open(arg, encoding='utf-8', errors='ignore') as f:
+>> "!FTP_PY!" echo         for line in f:
+>> "!FTP_PY!" echo             m = re.search(r'https?://([^^ /:?]+)', line)
+>> "!FTP_PY!" echo             if m:
+>> "!FTP_PY!" echo                 h = m.group(1)
+>> "!FTP_PY!" echo                 if h not in seen:
+>> "!FTP_PY!" echo                     seen.add(h)
+>> "!FTP_PY!" echo                     hosts.append(h)
+>> "!FTP_PY!" echo     print('  ' + str(len(hosts)) + ' hote(s) extraits du fichier dorks.')
+>> "!FTP_PY!" echo else:
+>> "!FTP_PY!" echo     raw = input('  Hotes FTP (ex: ftp.example.com,192.168.1.1) : ')
+>> "!FTP_PY!" echo     hosts = [h.strip() for h in raw.split(',') if h.strip()]
+>> "!FTP_PY!" echo SENS = re.compile(r'(\.env^|wp-config^|backup^|iban^|rib^|id_rsa^|password^|credential^|passwd^|shadow^|\.sql^|\.bak^|config\.php^|\.pem^|\.key)', re.IGNORECASE)
+>> "!FTP_PY!" echo out = os.path.join(os.path.expanduser('~'), 'Desktop', 'ftp_hunter.txt')
+>> "!FTP_PY!" echo results = []
+>> "!FTP_PY!" echo def scan(host):
+>> "!FTP_PY!" echo     try:
+>> "!FTP_PY!" echo         ftp = ftplib.FTP(timeout=8)
+>> "!FTP_PY!" echo         ftp.connect(host, 21, timeout=8)
+>> "!FTP_PY!" echo         ftp.login('anonymous', 'probe@test.com')
+>> "!FTP_PY!" echo         print('  [+] ' + host + ' - LOGIN ANONYME OK', flush=True)
+>> "!FTP_PY!" echo         found = []
+>> "!FTP_PY!" echo         def ls(p, d):
+>> "!FTP_PY!" echo             if d ^> 3: return
+>> "!FTP_PY!" echo             try:
+>> "!FTP_PY!" echo                 items = []
+>> "!FTP_PY!" echo                 ftp.retrlines('NLST ' + p, items.append)
+>> "!FTP_PY!" echo                 for item in items:
+>> "!FTP_PY!" echo                     name = item.split('/')[-1]
+>> "!FTP_PY!" echo                     if SENS.search(name):
+>> "!FTP_PY!" echo                         full = p.rstrip('/') + '/' + name
+>> "!FTP_PY!" echo                         print('    [!] ftp://' + host + full, flush=True)
+>> "!FTP_PY!" echo                         found.append('ftp://' + host + full)
+>> "!FTP_PY!" echo                     try:
+>> "!FTP_PY!" echo                         ftp.cwd(p + '/' + name)
+>> "!FTP_PY!" echo                         ls(p + '/' + name, d + 1)
+>> "!FTP_PY!" echo                         ftp.cwd(p if p else '/')
+>> "!FTP_PY!" echo                     except: pass
+>> "!FTP_PY!" echo             except: pass
+>> "!FTP_PY!" echo         ls('/', 1)
+>> "!FTP_PY!" echo         try: ftp.quit()
+>> "!FTP_PY!" echo         except: pass
+>> "!FTP_PY!" echo         return found
+>> "!FTP_PY!" echo     except Exception as e:
+>> "!FTP_PY!" echo         print('  [-] ' + host + ' : ' + str(e)[:50], flush=True)
+>> "!FTP_PY!" echo         return []
+>> "!FTP_PY!" echo print('  Scan FTP anonyme - ' + str(len(hosts)) + ' cibles')
+>> "!FTP_PY!" echo print('')
+>> "!FTP_PY!" echo for host in hosts:
+>> "!FTP_PY!" echo     r = scan(host)
+>> "!FTP_PY!" echo     if r: results.extend(r)
+>> "!FTP_PY!" echo print('')
+>> "!FTP_PY!" echo if results:
+>> "!FTP_PY!" echo     with open(out, 'w', encoding='utf-8') as f:
+>> "!FTP_PY!" echo         f.write('\n'.join(results))
+>> "!FTP_PY!" echo     print('  ' + str(len(results)) + ' fichier(s) sensible(s) -^> ' + out)
+>> "!FTP_PY!" echo else:
+>> "!FTP_PY!" echo     print('  Aucun acces anonyme ou fichier sensible trouve.')
+>> "!FTP_PY!" echo input('  Appuyez sur Entree...')
+"!PYCMD!" "!FTP_PY!" "!DORKS_FILE!"
+del /f /q "!FTP_PY!" 2>nul
+endlocal
+goto osint_menu
 
 ::--------------------------------------------------------------
 :: Subroutine : Verifie/installe Python, expose PYCMD ou PYERR
