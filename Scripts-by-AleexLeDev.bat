@@ -7,11 +7,10 @@ set "SCRIPT_DIR=%~dp0"
 if "%SCRIPT_DIR:~-1%"=="\" set "SCRIPT_DIR=%SCRIPT_DIR:~0,-1%"
 cd /d "%SCRIPT_DIR%"
 
-REM --- DESACTIVATION DU MODE SELECTION (QUICKEDIT) POUR EVITER LES PAUSES ---
-powershell -NoProfile -Command "$h = Get-Host; $r = $h.UI.RawUI; $m = $r.WindowTitle; $p = [AppDomain]::CurrentDomain.GetAssemblies() | Where-Object { $_.FullName -match 'mscorlib' }; $t = $p.GetType('Microsoft.Win32.Win32Native'); $k = [IntPtr]::Zero; if ($t) { $s = [System.Runtime.InteropServices.Marshal]::GetLastWin32Error() }" >nul 2>&1
-
-REM --- INITIALISATION DES COULEURS ANSI ---
-for /F %%a in ('powershell -NoProfile -Command "[char]27"') do set "ESC=%%a"
+REM --- INITIALISATION DES COULEURS ANSI (sans PowerShell) ---
+prompt $E
+set "ESC=%PROMPT%"
+prompt $P$G
 @echo off
 set "R=%ESC%[91m"
 set "G=%ESC%[92m"
@@ -25,18 +24,15 @@ fsutil dirty query %systemdrive% >nul 2>&1
 if %errorlevel% neq 0 (
     cls
     echo.
-    echo %R%    #################################################%N%
-    echo %R%    #                                               #%N%
-    echo %R%    #      [!] ACCES REFUSE : DROITS INSUFFISANTS   #%N%
-    echo %R%    #                                               #%N%
-    echo %R%    #   CE MODULE NECESSITE LES PRIVILEGES ADMIN    #%N%
-    echo %R%    #                                               #%N%
-    echo %R%    #################################################%N%
+    echo %R%  ▄▄▄▄▄▄▄ ▄▄       ▄▄▄▄▄▄▄ ▄▄▄▄▄▄▄ ▄▄   ▄▄    ▄▄       ▄▄▄▄▄▄▄    ▄▄▄▄▄▄  ▄▄▄▄▄▄▄ ▄▄   ▄▄ %N%
+    echo %R% █       █  █     █       █       █  █ █  █  █  █     █       █  █      ██       █  █ █  █%N%
+    echo %R% █   ▄   █  █     █    ▄▄▄█    ▄▄▄█  █▄█  █  █  █     █    ▄▄▄█  █  ▄    █    ▄▄▄█  █▄█  █%N%
+    echo %R% █  █▄█  █  █     █   █▄▄▄█   █▄▄▄█       █  █  █     █   █▄▄▄   █ █ █   █   █▄▄▄█       █%N%
+    echo %R% █       █  █▄▄▄▄▄█    ▄▄▄█    ▄▄▄█       █  █  █▄▄▄▄▄█    ▄▄▄█  █ █▄█   █    ▄▄▄█       █%N%
+    echo %R% █   ▄   █       █   █▄▄▄█   █▄▄▄█   ▄   █  █       █   █▄▄▄   █       █   █▄▄▄█   ▄   █%N%
+    echo %R% █▄▄█ █▄▄█▄▄▄▄▄▄▄█▄▄▄▄▄▄▄█▄▄▄▄▄▄▄█▄▄█ █▄▄█  █▄▄▄▄▄▄▄█▄▄▄▄▄▄▄█  █▄▄▄▄▄▄█▄▄▄▄▄▄▄█▄▄█ █▄▄█%N%
     echo.
-    echo %Y%    [i] Relancement automatique en mode Administrateur...%N%
-    echo.
-    echo %B%    [ %G%■■■■■■■■■■■■■■■■■■■■■■■■ %B%]%N%
-    powershell -Command "Start-Process '%~f0' -Verb RunAs"
+    start "" /b powershell -WindowStyle Hidden -Command "Start-Process cmd -ArgumentList '/c \"%~f0\"' -Verb RunAs"
     exit /b
 )
 
@@ -49,10 +45,10 @@ cls
 echo %R%  ▄▄▄▄▄▄▄ ▄▄       ▄▄▄▄▄▄▄ ▄▄▄▄▄▄▄ ▄▄   ▄▄    ▄▄       ▄▄▄▄▄▄▄    ▄▄▄▄▄▄  ▄▄▄▄▄▄▄ ▄▄   ▄▄ %N%
 echo %R% █       █  █     █       █       █  █ █  █  █  █     █       █  █      ██       █  █ █  █%N%
 echo %R% █   ▄   █  █     █    ▄▄▄█    ▄▄▄█  █▄█  █  █  █     █    ▄▄▄█  █  ▄    █    ▄▄▄█  █▄█  █%N%
-echo %W% █  █▄█  █  █     █   █▄▄▄█   █▄▄▄█       █  █  █     █   █▄▄▄   █ █ █   █   █▄▄▄█       █%N%
-echo %W% █       █  █▄▄▄▄▄█    ▄▄▄█    ▄▄▄█       █  █  █▄▄▄▄▄█    ▄▄▄█  █ █▄█   █    ▄▄▄█       █%N%
-echo %W% █   ▄   █       █   █▄▄▄█   █▄▄▄█   ▄   █  █       █   █▄▄▄   █       █   █▄▄▄█   ▄   █%N%
-echo %W% █▄▄█ █▄▄█▄▄▄▄▄▄▄█▄▄▄▄▄▄▄█▄▄▄▄▄▄▄█▄▄█ █▄▄█  █▄▄▄▄▄▄▄█▄▄▄▄▄▄▄█  █▄▄▄▄▄▄█▄▄▄▄▄▄▄█▄▄█ █▄▄█%N%
+echo %R% █  █▄█  █  █     █   █▄▄▄█   █▄▄▄█       █  █  █     █   █▄▄▄   █ █ █   █   █▄▄▄█       █%N%
+echo %R% █       █  █▄▄▄▄▄█    ▄▄▄█    ▄▄▄█       █  █  █▄▄▄▄▄█    ▄▄▄█  █ █▄█   █    ▄▄▄█       █%N%
+echo %R% █   ▄   █       █   █▄▄▄█   █▄▄▄█   ▄   █  █       █   █▄▄▄   █       █   █▄▄▄█   ▄   █%N%
+echo %R% █▄▄█ █▄▄█▄▄▄▄▄▄▄█▄▄▄▄▄▄▄█▄▄▄▄▄▄▄█▄▄█ █▄▄█  █▄▄▄▄▄▄▄█▄▄▄▄▄▄▄█  █▄▄▄▄▄▄█▄▄▄▄▄▄▄█▄▄█ █▄▄█%N%
 echo.
 echo %Y%             ---===[  A  L  E  E  X     L  E     D  E  V  ]===---%N%
 echo.
@@ -421,7 +417,9 @@ if "!opts!"=="[--- MES FAVORIS ---]" (
 
 set "opts=!opts!;[--- OUTILS AVANCES ---];Voir les outils systeme avances"
 
+set "SHOW_LOGO=1"
 call :DynamicMenu "BOITE A SCRIPTS WINDOWS - By ALEEXLEDEV" "!opts!"
+set "SHOW_LOGO="
 set "main_choice=%errorlevel%"
 
 if "!main_choice!"=="0" goto exit_script
@@ -8904,7 +8902,7 @@ set "m_title=%~1"
 set "m_opts=%~2"
 set "m_flags=%~3"
 
-set "ps_code=$o=($env:m_opts -split ';');$t=$env:m_title;$fl=$env:m_flags;$sel=@();for($i=0;$i -lt $o.Count;$i++){if($o[$i] -notmatch '^\[---'){$sel+=$i}};$sIdx=0;$pad=115;try{if([console]::WindowWidth -gt 5){$pad=[math]::Min([console]::WindowWidth-5, 115)}}catch{};$maxV=50;try{if([console]::WindowHeight -gt 0){$maxV=[math]::Max([console]::WindowHeight-10, 10)}}catch{};$topI=0;if($fl -notmatch 'NOCLS'){clear-host;try{$cY=[console]::WindowTop}catch{$cY=0}}else{try{$cY=[console]::CursorTop}catch{$cY=0}};function D{ try{[console]::SetCursorPosition(0,$cY)}catch{};write-host '  ========================================================================================' -f Cyan;write-host ('   ' + $t) -f White;write-host '  ========================================================================================' -f Cyan;write-host (' '.PadRight($pad));$num=1;$printed=0;for($i=0;$i -lt $o.Count;$i++){$parts=$o[$i]-split'~';$s=$parts[0];$d='';if($parts.Count -gt 1){$d=$parts[1]};$isH=($s -match '^\[---');if(-not $isH){$cNum=$num;$num++};if($i -lt $topI -or $printed -ge $maxV){continue};if($isH){write-host (' '.PadRight($pad));$printed++;if($printed -lt $maxV){write-host ('       ' + $s).PadRight($pad) -f Cyan;$printed++}}else{$f_str='    ';if($s -match '^\(F\) '){$f_str='(F) ';$s=$s.Substring(4)};if($i -eq $sel[$sIdx]){$str='{0}>> [{1}] {2}  ' -f $f_str, $cNum, $s; write-host $str -NoNewline -f Black -b White; $rem=$pad-$str.Length; if($rem -lt 0){$rem=0}; $ds=if($d){'   - '+$d}else{''}; if($ds.Length -gt $rem){$ds=$ds.Substring(0,$rem)}; write-host $ds.PadRight($rem) -f Yellow}else{$str='{0}   [{1}] {2}  ' -f $f_str, $cNum, $s; write-host $str.PadRight($pad) -f Gray};$printed++}};if($fl -notmatch 'NOCLS'){while($printed -lt $maxV){write-host (' '.PadRight($pad));$printed++};write-host (' '.PadRight($pad));}else{write-host ''};write-host '  ----------------------------------------------------------------------------------------' -f Cyan;$show_help='   [FLECHES] Naviguer | [ENTREE] Valider | [F] Favoriser | [S] Rechercher | [0/ECHAP] Retour';if($fl -match 'NONUMS'){$show_help='   [FLECHES] Naviguer | [ENTREE] Valider | [ECHAP] Retour'};write-host $show_help -NoNewline -f DarkGray};while($true){$target=$sel[$sIdx];if($target -lt $topI){$topI=$target};$lines=0;for($i=$topI;$i -le $target;$i++){if($o[$i] -match '^\[---'){$lines+=2}else{$lines+=1}};while($lines -gt $maxV){if($o[$topI] -match '^\[---'){$lines-=2}else{$lines-=1};$topI++};D;$k=$Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown');$v=$k.VirtualKeyCode;if($v -eq 38){$sIdx--;if($sIdx -lt 0){$sIdx=$sel.Count-1}}elseif($v -eq 40){$sIdx++;if($sIdx -ge $sel.Count){$sIdx=0}}elseif($v -eq 13){if($fl -notmatch 'NOCLS'){clear-host};exit ($sIdx+1)}elseif($v -eq 27 -or ($fl -notmatch 'NONUMS' -and $k.Character -eq '0')){if($fl -notmatch 'NOCLS'){clear-host};exit 0}elseif($fl -notmatch 'NONUMS' -and $v -eq 70){if($fl -notmatch 'NOCLS'){clear-host};exit (200+$sIdx+1)}elseif($fl -notmatch 'NONUMS' -and ($k.Character -eq 'S' -or $k.Character -eq 's')){if($fl -notmatch 'NOCLS'){clear-host};exit 299}elseif($fl -notmatch 'NONUMS' -and [string]$k.Character -match '^[1-9]$' -and [int][string]$k.Character -le $sel.Count){if($fl -notmatch 'NOCLS'){clear-host};exit ([int][string]$k.Character)}}"
+set "ps_code=$o=($env:m_opts -split ';');$t=$env:m_title;$fl=$env:m_flags;$sel=@();for($i=0;$i -lt $o.Count;$i++){if($o[$i] -notmatch '^\[---'){$sel+=$i}};$sIdx=0;$pad=115;try{if([console]::WindowWidth -gt 5){$pad=[math]::Min([console]::WindowWidth-5, 115)}}catch{};$maxV=50;try{if([console]::WindowHeight -gt 0){$maxV=[math]::Max([console]::WindowHeight-10, 10)}}catch{};$topI=0;if($fl -notmatch 'NOCLS'){clear-host;try{$cY=[console]::WindowTop}catch{$cY=0}}else{try{$cY=[console]::CursorTop}catch{$cY=0}};if($env:SHOW_LOGO -eq '1'){$maxV=[math]::Max($maxV-9,10)};function D{ try{[console]::SetCursorPosition(0,$cY)}catch{};if($env:SHOW_LOGO -eq '1'){write-host '  ▄▄▄▄▄▄▄ ▄▄       ▄▄▄▄▄▄▄ ▄▄▄▄▄▄▄ ▄▄   ▄▄    ▄▄       ▄▄▄▄▄▄▄    ▄▄▄▄▄▄  ▄▄▄▄▄▄▄ ▄▄   ▄▄ ' -f Red;write-host ' █       █  █     █       █       █  █ █  █  █  █     █       █  █      ██       █  █ █  █' -f Red;write-host ' █   ▄   █  █     █    ▄▄▄█    ▄▄▄█  █▄█  █  █  █     █    ▄▄▄█  █  ▄    █    ▄▄▄█  █▄█  █' -f Red;write-host ' █  █▄█  █  █     █   █▄▄▄█   █▄▄▄█       █  █  █     █   █▄▄▄   █ █ █   █   █▄▄▄█       █' -f Red;write-host ' █       █  █▄▄▄▄▄█    ▄▄▄█    ▄▄▄█       █  █  █▄▄▄▄▄█    ▄▄▄█  █ █▄█   █    ▄▄▄█       █' -f Red;write-host ' █   ▄   █       █   █▄▄▄█   █▄▄▄█   ▄   █  █       █   █▄▄▄   █       █   █▄▄▄█   ▄   █' -f Red;write-host ' █▄▄█ █▄▄█▄▄▄▄▄▄▄█▄▄▄▄▄▄▄█▄▄▄▄▄▄▄█▄▄█ █▄▄█  █▄▄▄▄▄▄▄█▄▄▄▄▄▄▄█  █▄▄▄▄▄▄█▄▄▄▄▄▄▄█▄▄█ █▄▄█' -f Red;write-host ''};write-host '  ========================================================================================' -f Cyan;write-host ('   ' + $t) -f White;write-host '  ========================================================================================' -f Cyan;write-host (' '.PadRight($pad));$num=1;$printed=0;for($i=0;$i -lt $o.Count;$i++){$parts=$o[$i]-split'~';$s=$parts[0];$d='';if($parts.Count -gt 1){$d=$parts[1]};$isH=($s -match '^\[---');if(-not $isH){$cNum=$num;$num++};if($i -lt $topI -or $printed -ge $maxV){continue};if($isH){write-host (' '.PadRight($pad));$printed++;if($printed -lt $maxV){write-host ('       ' + $s).PadRight($pad) -f Cyan;$printed++}}else{$f_str='    ';if($s -match '^\(F\) '){$f_str='(F) ';$s=$s.Substring(4)};if($i -eq $sel[$sIdx]){$str='{0}>> [{1}] {2}  ' -f $f_str, $cNum, $s; write-host $str -NoNewline -f Black -b White; $rem=$pad-$str.Length; if($rem -lt 0){$rem=0}; $ds=if($d){'   - '+$d}else{''}; if($ds.Length -gt $rem){$ds=$ds.Substring(0,$rem)}; write-host $ds.PadRight($rem) -f Yellow}else{$str='{0}   [{1}] {2}  ' -f $f_str, $cNum, $s; write-host $str.PadRight($pad) -f Gray};$printed++}};if($fl -notmatch 'NOCLS'){while($printed -lt $maxV){write-host (' '.PadRight($pad));$printed++};write-host (' '.PadRight($pad));}else{write-host ''};write-host '  ----------------------------------------------------------------------------------------' -f Cyan;$show_help='   [FLECHES] Naviguer | [ENTREE] Valider | [F] Favoriser | [S] Rechercher | [0/ECHAP] Retour';if($fl -match 'NONUMS'){$show_help='   [FLECHES] Naviguer | [ENTREE] Valider | [ECHAP] Retour'};write-host $show_help -NoNewline -f DarkGray};while($true){$target=$sel[$sIdx];if($target -lt $topI){$topI=$target};$lines=0;for($i=$topI;$i -le $target;$i++){if($o[$i] -match '^\[---'){$lines+=2}else{$lines+=1}};while($lines -gt $maxV){if($o[$topI] -match '^\[---'){$lines-=2}else{$lines-=1};$topI++};D;$k=$Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown');$v=$k.VirtualKeyCode;if($v -eq 38){$sIdx--;if($sIdx -lt 0){$sIdx=$sel.Count-1}}elseif($v -eq 40){$sIdx++;if($sIdx -ge $sel.Count){$sIdx=0}}elseif($v -eq 13){if($fl -notmatch 'NOCLS'){clear-host};exit ($sIdx+1)}elseif($v -eq 27 -or ($fl -notmatch 'NONUMS' -and $k.Character -eq '0')){if($fl -notmatch 'NOCLS'){clear-host};exit 0}elseif($fl -notmatch 'NONUMS' -and $v -eq 70){if($fl -notmatch 'NOCLS'){clear-host};exit (200+$sIdx+1)}elseif($fl -notmatch 'NONUMS' -and ($k.Character -eq 'S' -or $k.Character -eq 's')){if($fl -notmatch 'NOCLS'){clear-host};exit 299}elseif($fl -notmatch 'NONUMS' -and [string]$k.Character -match '^[1-9]$' -and [int][string]$k.Character -le $sel.Count){if($fl -notmatch 'NOCLS'){clear-host};exit ([int][string]$k.Character)}}"
 
 powershell -NoProfile -ExecutionPolicy Bypass -Command "%ps_code%"
 set "res=%errorlevel%"
