@@ -2636,7 +2636,7 @@ echo.
 echo  [GPU] Reinitialisation du pilote graphique en cours...
 echo  L'ecran va peut-etre clignoter brievement (c'est normal).
 echo.
-powershell -NoProfile -Command "Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.SendKeys]::SendWait('^+%(B)')"
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$c='[DllImport(\"user32.dll\")]public static extern void keybd_event(byte b,byte s,uint f,uint e);';$t=Add-Type -MemberDefinition $c -Name 'K' -PassThru;$t::keybd_event(0x5B,0,0,0);$t::keybd_event(0x11,0,0,0);$t::keybd_event(0x10,0,0,0);$t::keybd_event(0x42,0,0,0);$t::keybd_event(0x42,0,2,0);$t::keybd_event(0x10,0,2,0);$t::keybd_event(0x11,0,2,0);$t::keybd_event(0x5B,0,2,0)"
 timeout /t 2 /nobreak >nul
 echo  [OK] Signal de reinitialisation GPU envoye !
 echo  Si l'ecran n'a pas clignote, verifiez que votre GPU supporte
