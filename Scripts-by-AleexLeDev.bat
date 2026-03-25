@@ -7946,14 +7946,20 @@ if !errorlevel! equ 0 (
 )
 
 echo.
-set /p confirm_dec=Le lecteur est chiffre. Voulez-vous lancer le dechiffrement maintenant ? (O/N): 
-if /i "%confirm_dec%"=="O" (
+echo -----------------------------------------------
+echo  Le lecteur est chiffre. Lancer le dechiffrement ?
+echo -----------------------------------------------
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$sel=0;$done=$false;[Console]::CursorVisible=$false;while(-not $done){if($sel -eq 0){Write-Host '  [>] Oui ' -f Green;Write-Host '  [ ] Non ' -f DarkGray}else{Write-Host '  [ ] Oui ' -f DarkGray;Write-Host '  [>] Non ' -f Red};$k=[Console]::ReadKey($true);switch($k.Key){'UpArrow'{$sel=1-$sel}'DownArrow'{$sel=1-$sel}'Enter'{$done=$true}};if(-not $done){[Console]::SetCursorPosition(0,[Console]::CursorTop-2)}};[Console]::CursorVisible=$true;exit $sel"
+set "bde_choice=%errorlevel%"
+if "%bde_choice%"=="0" (
+    echo.
     echo Lancement du dechiffrement de %dl% ...
     manage-bde -off %dl%
     echo Commande envoyee. Le processus peut prendre du temps.
     pause
     goto system_tools
 ) else (
+    echo.
     echo Operation annulee.
     pause
     goto system_tools
