@@ -8438,11 +8438,13 @@ if "%errorlevel%"=="0" goto system_tools
 goto !AutoMenu_Target!
 
 :hw_smart
+if "%~1"=="SILENT" goto :hw_smart_core
 cls
 echo ================================================
 echo   SANTE DES DISQUES - SMART
 echo ================================================
 echo.
+:hw_smart_core
 powershell -NoProfile -ExecutionPolicy Bypass -Command ^
     "$disks = Get-PhysicalDisk | Select-Object FriendlyName,MediaType,HealthStatus,OperationalStatus,Size;" ^
     "foreach($d in $disks){" ^
@@ -8452,11 +8454,13 @@ powershell -NoProfile -ExecutionPolicy Bypass -Command ^
     "    Write-Host ('      Sante: '+$d.HealthStatus+' | Statut: '+$d.OperationalStatus) -f $color;" ^
     "    Write-Host '' " ^
     "}"
+if "%~1"=="SILENT" exit /b
 echo.
 pause
 goto sys_hw_test
 
 :hw_winsat
+if "%~1"=="SILENT" goto :hw_winsat_core
 cls
 echo ================================================
 echo   TEST PERFORMANCE DISQUE (WinSAT)
@@ -8464,6 +8468,7 @@ echo ================================================
 echo.
 echo  [!] Test en cours, patientez (30-60 secondes)...
 echo.
+:hw_winsat_core
 winsat disk -drive c >nul 2>&1
 powershell -NoProfile -Command ^
     "$r=Get-CimInstance -ClassName Win32_WinSAT -EA SilentlyContinue;" ^
@@ -8481,6 +8486,7 @@ powershell -NoProfile -Command ^
     "    elseif($d -ge 3.0){Write-Host '  [ATTENTION] Disque lent (HDD ou SSD use)' -f Yellow}" ^
     "    else{Write-Host '  [CRITIQUE] Disque tres lent ou defaillant !' -f Red}" ^
     "}else{Write-Host '  [INFO] Score WinSAT non disponible, relancez le test.' -f Yellow}"
+if "%~1"=="SILENT" exit /b
 echo.
 pause
 goto sys_hw_test
@@ -8494,10 +8500,15 @@ echo.
 echo  Le test RAM necessite un redemarrage du PC.
 echo  Windows effectuera le diagnostic avant de demarrer.
 echo.
-set /p ramconf= Planifier le test RAM au prochain demarrage ? (O/N): 
-if /i "%ramconf%"=="O" (
+echo -----------------------------------------------
+echo  Planifier le test RAM au prochain demarrage ?
+echo -----------------------------------------------
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$sel=0;$done=$false;[Console]::CursorVisible=$false;while(-not $done){if($sel -eq 0){Write-Host '  [>] Oui ' -f Green;Write-Host '  [ ] Non ' -f DarkGray}else{Write-Host '  [ ] Oui ' -f DarkGray;Write-Host '  [>] Non ' -f Red};$k=[Console]::ReadKey($true);switch($k.Key){'UpArrow'{$sel=1-$sel}'DownArrow'{$sel=1-$sel}'Enter'{$done=$true}};if(-not $done){[Console]::SetCursorPosition(0,[Console]::CursorTop-2)}};[Console]::CursorVisible=$true;exit $sel"
+set "ram_choice=%errorlevel%"
+if "%ram_choice%"=="0" (
     MdSched.exe
 ) else (
+    echo.
     echo  Operation annulee.
 )
 echo.
@@ -8505,11 +8516,13 @@ pause
 goto sys_hw_test
 
 :hw_full_report
+if "%~1"=="SILENT" goto :hw_full_report_core
 cls
 echo ================================================
 echo   RAPPORT COMPLET DES COMPOSANTS
 echo ================================================
 echo.
+:hw_full_report_core
 powershell -NoProfile -ExecutionPolicy Bypass -Command ^
     "$cpu=Get-CimInstance Win32_Processor | Select-Object -First 1;" ^
     "$ram=Get-CimInstance Win32_ComputerSystem;" ^
@@ -8539,14 +8552,32 @@ powershell -NoProfile -ExecutionPolicy Bypass -Command ^
     "Write-Host '';" ^
     "Write-Host '  DISQUES' -f Cyan;" ^
     "Get-PhysicalDisk | ForEach-Object {$s=[math]::Round($_.Size/1GB,1); Write-Host ('  '+$_.FriendlyName+' ('+$_.MediaType+', '+$s+' Go) - Sante: '+$_.HealthStatus) -f $(if($_.HealthStatus -eq 'Healthy'){'Green'}else{'Red'})}"
+if "%~1"=="SILENT" exit /b
 echo.
 pause
 goto sys_hw_test
 
 :hw_all
-call :hw_smart
-call :hw_winsat
-call :hw_full_report
+cls
+echo ================================================
+echo   LANCEMENT DE TOUS LES TESTS MATERIELS
+echo ================================================
+echo.
+echo  [1/3] Analyse SMART des disques...
+call :hw_smart SILENT
+echo.
+echo  [2/3] Performance disque et systeme (WinSAT)...
+echo  [!] Patientez, ce test est long...
+call :hw_winsat SILENT
+echo.
+echo  [3/3] Analyse complete des composants...
+call :hw_full_report SILENT
+echo.
+echo ================================================
+echo   [FIN] TOUS LES TESTS SONT TERMINES.
+echo ================================================
+echo.
+pause
 goto sys_hw_test
 
 REM ===================================================================
