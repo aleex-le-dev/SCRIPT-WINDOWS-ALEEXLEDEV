@@ -7869,15 +7869,33 @@ echo ===============================================
 echo      Rapport de Batterie (Sante et Usure)
 echo ===============================================
 echo.
-echo Generation du rapport en cours...
-powercfg /batteryreport /output "%USERPROFILE%\Desktop\battery_report.html" >nul 2>&1
+echo Analyse de la batterie en cours...
+powercfg /batteryreport /output "%TEMP%\battery_report_tmp.html" >nul 2>&1
 echo.
-powershell -NoProfile -ExecutionPolicy Bypass -Command "$r='%USERPROFILE%\Desktop\battery_report.html';if(Test-Path $r){$c=Get-Content $r -Raw;$d=0;$f=0;if($c -match '(?s)DESIGN CAPACITY.*?([\d\s,\xA0]+)\s*mWh'){$d=[int]($matches[1] -replace '\D','')};if($c -match '(?s)FULL CHARGE CAPACITY.*?([\d\s,\xA0]+)\s*mWh'){$f=[int]($matches[1] -replace '\D','')};if($d -gt 0){$h=[math]::Round(($f/$d)*100,2);if($h -gt 100){$h=100};$w=[math]::Round(100-$h,2);if($w -lt 0){$w=0};Write-Host ('  - Capacite d''usine : '+$d+' mWh') -f Cyan;Write-Host ('  - Capacite actuelle : '+$f+' mWh') -f Cyan;Write-Host ('  - Sante de la batterie : '+$h+'%%') -f Green;Write-Host ('  - Niveau d''usure : '+$w+'%%') -f Yellow}else{Write-Host 'Impossible de lire les donnees de capacite. (PC Fixe ou pas de batterie ?)' -f Red}}else{Write-Host 'Le fichier de rapport n''a pas pu etre cree.' -f Red}"
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$r='%TEMP%\battery_report_tmp.html';if(Test-Path $r){$c=Get-Content $r -Raw;$d=0;$f=0;if($c -match '(?s)DESIGN CAPACITY.*?([\d\s,\xA0]+)\s*mWh'){$d=[int]($matches[1] -replace '\D','')};if($c -match '(?s)FULL CHARGE CAPACITY.*?([\d\s,\xA0]+)\s*mWh'){$f=[int]($matches[1] -replace '\D','')};if($d -gt 0){$h=[math]::Round(($f/$d)*100,2);if($h -gt 100){$h=100};$w=[math]::Round(100-$h,2);if($w -lt 0){$w=0};Write-Host ('  - Capacite d''usine : '+$d+' mWh') -f Cyan;Write-Host ('  - Capacite actuelle : '+$f+' mWh') -f Cyan;Write-Host ('  - Sante de la batterie : '+$h+'%%') -f Green;Write-Host ('  - Niveau d''usure : '+$w+'%%') -f Yellow}else{Write-Host 'Impossible de lire les donnees de capacite. (PC Fixe ou pas de batterie ?)' -f Red}}else{Write-Host 'Le fichier de rapport n''a pas pu etre cree.' -f Red}"
 echo.
-echo Le rapport complet (Historique, Cycles) est sur votre Bureau:
+echo -----------------------------------------------
+echo  Generer le rapport complet sur le Bureau ?
+echo  (Historique, Cycles, Details)
+echo -----------------------------------------------
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$sel=0;$done=$false;[Console]::CursorVisible=$false;while(-not $done){if($sel -eq 0){Write-Host '  [>] Oui ' -f Green;Write-Host '  [ ] Non ' -f DarkGray}else{Write-Host '  [ ] Oui ' -f DarkGray;Write-Host '  [>] Non ' -f Red};$k=[Console]::ReadKey($true);switch($k.Key){'UpArrow'{$sel=1-$sel}'DownArrow'{$sel=1-$sel}'Enter'{$done=$true}};if(-not $done){[Console]::SetCursorPosition(0,[Console]::CursorTop-2)}};[Console]::CursorVisible=$true;exit $sel"
+set "bat_choice=%errorlevel%"
+if "%bat_choice%"=="0" goto sys_battery_save
+if "%bat_choice%"=="1" goto sys_battery_cleanup
+goto sys_battery_cleanup
+
+:sys_battery_save
+copy /y "%TEMP%\battery_report_tmp.html" "%USERPROFILE%\Desktop\battery_report.html" >nul 2>&1
+del /f /q "%TEMP%\battery_report_tmp.html" >nul 2>&1
+echo.
+echo [OK] Le rapport complet a ete enregistre sur votre Bureau :
 echo battery_report.html
 echo.
 pause
+goto system_tools
+
+:sys_battery_cleanup
+del /f /q "%TEMP%\battery_report_tmp.html" >nul 2>&1
 goto system_tools
 
 :sys_bitlocker_check
