@@ -409,11 +409,7 @@ for /l %%I in (1,1,%total_tools%) do (
     )
 )
 
-if "!opts!"=="[--- MES FAVORIS ---]" (
-    set "opts=!opts!;(Aucun favori - Appuyez sur [F] pour ajouter)"
-    set /a fav_idx+=1
-    set "main_target[!fav_idx!]=none"
-)
+if "!opts!"=="[--- MES FAVORIS ---]" goto system_tools
 
 set "opts=!opts!;[--- OUTILS AVANCES ---];Voir les outils systeme avances"
 
@@ -7938,7 +7934,7 @@ cls
 echo Verification du statut BitLocker pour !dl! ...
 manage-bde -status !dl! > "%TEMP%\bde_status.txt" 2>&1
 type "%TEMP%\bde_status.txt"
-
+echo.
 rem Detection fiable (compatible FR/EN) pour eviter de proposer de dechiffrer un lecteur deja clair.
 powershell -NoProfile -ExecutionPolicy Bypass -Command "$src=Get-Content '%TEMP%\bde_status.txt' -Raw; if ($src -match 'Protection\s+On' -or $src -match 'Protection\s+activ' -or $src -match '100\.0\s*%%' -or $src -match '100\,0\s*%%') { exit 1 } else { exit 0 }"
 if !errorlevel! equ 0 (
