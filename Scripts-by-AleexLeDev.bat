@@ -9564,42 +9564,53 @@ echo.
 set "TPR_PS=%TEMP%\sys_temp_report.ps1"
 if exist "%TPR_PS%" del "%TPR_PS%"
 >  "%TPR_PS%" echo function Get-TempStatus { param($temp) if ($temp -lt 60) { return @{ Status = 'OK'; Color = 'Green' } } elseif ($temp -lt 80) { return @{ Status = 'Acceptable'; Color = 'Yellow' } } elseif ($temp -lt 90) { return @{ Status = 'Elevee'; Color = 'DarkYellow' } } else { return @{ Status = 'Critique'; Color = 'Red' } } }
+>> "%TPR_PS%" echo function Get-ZoneLabel { param($name) $n = $name.ToUpper(); if ($n -match 'CPU^|PROC^|TZX^|TZ0') { return 'CPU' } elseif ($n -match 'GPU^|VGA^|VIDEO^|DISP') { return 'GPU' } elseif ($n -match 'SSD^|HDD^|DISK^|NVME^|STOR') { return 'Stockage' } elseif ($n -match 'BAT^|BATT') { return 'Batterie' } elseif ($n -match 'TZS^|SYS^|AMB^|SKIN^|CASE') { return 'Systeme/Carte mere' } elseif ($n -match 'PWR^|VRM^|MOSFET') { return 'Alimentation/VRM' } else { return 'Capteur systeme' } }
+>> "%TPR_PS%" echo $found = $false
 >> "%TPR_PS%" echo try {
 >> "%TPR_PS%" echo     $ohm = Get-CimInstance -Namespace 'root/OpenHardwareMonitor' -ClassName Sensor -ErrorAction Stop
->> "%TPR_PS%" echo     if ($ohm) {
->> "%TPR_PS%" echo         Write-Host 'Temperatures (OpenHardwareMonitor):' -f Green
->> "%TPR_PS%" echo         $ohm ^| Where-Object { $_.SensorType -eq 'Temperature' } ^| ForEach-Object {
+>> "%TPR_PS%" echo     $temps = $ohm ^| Where-Object { $_.SensorType -eq 'Temperature' }
+>> "%TPR_PS%" echo     if ($temps) {
+>> "%TPR_PS%" echo         $found = $true
+>> "%TPR_PS%" echo         Write-Host 'Source : OpenHardwareMonitor (precis)' -f Green
+>> "%TPR_PS%" echo         $temps ^| ForEach-Object {
 >> "%TPR_PS%" echo             $status = Get-TempStatus -temp $_.Value
->> "%TPR_PS%" echo             Write-Host -NoNewline ('   ' + $_.Name + ' (' + $_.Parent + '): ' + $_.Value + ' C')
+>> "%TPR_PS%" echo             $label = Get-ZoneLabel -name $_.Name
+>> "%TPR_PS%" echo             Write-Host -NoNewline ('   [' + $label + '] ' + $_.Name + ' : ' + $_.Value + ' C')
 >> "%TPR_PS%" echo             Write-Host (' - ' + $status.Status) -f $status.Color
 >> "%TPR_PS%" echo         }
 >> "%TPR_PS%" echo     }
->> "%TPR_PS%" echo } catch {
+>> "%TPR_PS%" echo } catch {}
+>> "%TPR_PS%" echo try {
+>> "%TPR_PS%" echo     $ctr = Get-Counter '\Thermal Zone Information(*)\Temperature' -ErrorAction Stop
+>> "%TPR_PS%" echo     $ctr.CounterSamples ^| ForEach-Object {
+>> "%TPR_PS%" echo         $tempK = $_.CookedValue; $tempC = [math]::Round($tempK - 273.15, 1)
+>> "%TPR_PS%" echo         if ($tempC -gt 0 -and $tempC -lt 150) {
+>> "%TPR_PS%" echo             $found = $true
+>> "%TPR_PS%" echo             $label = Get-ZoneLabel -name $_.InstanceName
+>> "%TPR_PS%" echo             $status = Get-TempStatus -temp $tempC
+>> "%TPR_PS%" echo             Write-Host -NoNewline ('   [' + $label + '] ' + $_.InstanceName + ' : ' + $tempC + ' C')
+>> "%TPR_PS%" echo             Write-Host (' - ' + $status.Status) -f $status.Color
+>> "%TPR_PS%" echo         }
+>> "%TPR_PS%" echo     }
+>> "%TPR_PS%" echo } catch {}
+>> "%TPR_PS%" echo if (-not $found) {
 >> "%TPR_PS%" echo     try {
 >> "%TPR_PS%" echo         $wmi = Get-CimInstance -Namespace 'root/WMI' -ClassName MSAcpi_ThermalZoneTemperature -ErrorAction Stop
 >> "%TPR_PS%" echo         if ($wmi) {
->> "%TPR_PS%" echo             Write-Host 'Temperatures (WMI):' -f Yellow
+>> "%TPR_PS%" echo             Write-Host 'Source : ACPI/WMI (zones generiques BIOS)' -f Yellow
+>> "%TPR_PS%" echo             Write-Host 'Note   : Pour CPU/GPU precis, installez LibreHardwareMonitor' -f DarkGray
 >> "%TPR_PS%" echo             $wmi ^| ForEach-Object {
->> "%TPR_PS%" echo                 $temp = [math]::Round(($_.CurrentTemperature - 2732) / 10, 2)
+>> "%TPR_PS%" echo                 $temp = [math]::Round(($_.CurrentTemperature - 2732) / 10, 1)
+>> "%TPR_PS%" echo                 $label = Get-ZoneLabel -name $_.InstanceName
 >> "%TPR_PS%" echo                 $status = Get-TempStatus -temp $temp
->> "%TPR_PS%" echo                 Write-Host -NoNewline ('   Instance: ' + $_.InstanceName + ' - ' + $temp + ' C')
+>> "%TPR_PS%" echo                 Write-Host -NoNewline ('   [' + $label + '] ' + $_.InstanceName + ' : ' + $temp + ' C')
 >> "%TPR_PS%" echo                 Write-Host (' - ' + $status.Status) -f $status.Color
 >> "%TPR_PS%" echo             }
->> "%TPR_PS%" echo         } else {
->> "%TPR_PS%" echo             Write-Host 'Aucun capteur de temperature trouve via WMI ou OpenHardwareMonitor.' -f Red
->> "%TPR_PS%" echo         }
->> "%TPR_PS%" echo     } catch {
->> "%TPR_PS%" echo         Write-Host 'Impossible d''acceder a WMI pour les temperatures.' -f Red
->> "%TPR_PS%" echo     }
+>> "%TPR_PS%" echo         } else { Write-Host 'Aucun capteur accessible.' -f Red }
+>> "%TPR_PS%" echo     } catch { Write-Host 'Impossible d''acceder aux capteurs WMI.' -f Red }
 >> "%TPR_PS%" echo }
 powershell -NoProfile -ExecutionPolicy Bypass -File "%TPR_PS%"
 if exist "%TPR_PS%" del "%TPR_PS%" >nul 2>&1
-echo.
-echo Legende des statuts:
-powershell -Command "Write-Host '  OK (^< 60C)' -f Green; Write-Host '  Acceptable (60-80C)' -f Yellow; Write-Host '  Elevee (80-90C)' -f DarkYellow; Write-Host '  Critique (^> 90C)' -f Red"
-echo.
-echo Le rapport ci-dessus peut varier en fonction des pilotes et logiciels installes.
-echo Pour des resultats plus precis, utilisez un logiciel dedie comme HWMonitor ou Core Temp.
 echo.
 pause
 goto sys_diagnostic_menu
