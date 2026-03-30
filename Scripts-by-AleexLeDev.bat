@@ -168,6 +168,8 @@ set "t[81]=app_install_chrome:Google Chrome~Navigateur web Google:HIDDEN"
 set "t[82]=app_install_vlc:VLC Media Player~Lecteur multimedia:HIDDEN"
 set "t[83]=app_install_pdf:Sumatra PDF~Lecteur PDF ultra-leger:HIDDEN"
 set "t[84]=app_install_winrar:WinRAR~Gestionnaire d'archives:HIDDEN"
+set "t[91]=app_install_office:Microsoft Office 2024~Telecharger Office 2024 via Google Drive:HIDDEN"
+set "t[92]=app_install_activation:Activateur Windows/Office~Telecharger l'outil d'activation:HIDDEN"
 set "t[85]=---:COMPTES ET SECURITE"
 set "t[86]=sys_passwords_menu:Extracteurs de mots de passe~Outils Powershell (Credentials, Wi-Fi)"
 set "t[87]=sys_unlock_notes:Recuperation de Compte bloque~Instructions pour reprendre controle"
@@ -347,6 +349,8 @@ set "map_app_install_chrome=Google Chrome~Navigateur web Google"
 set "map_app_install_vlc=VLC Media Player~Lecteur multimedia"
 set "map_app_install_pdf=Sumatra PDF~Lecteur PDF ultra-leger"
 set "map_app_install_winrar=WinRAR~Gestionnaire d'archives"
+set "map_app_install_office=Microsoft Office 2024~Telecharger Office 2024 (7 Go) via Google Drive"
+set "map_app_install_activation=Activateur Windows/Office~Telecharger l'outil d'activation"
 set "map_um_list=Lister les utilisateurs~Afficher tous les comptes locaux"
 set "map_um_add=Ajouter un utilisateur~Creer un nouveau compte local"
 set "map_um_del=Supprimer un utilisateur~Effacer compte et donnees"
@@ -1112,7 +1116,7 @@ REM ===================================================================
 set "wg_id="
 set "wg_label="
 cls
-call :AutoMenu "INSTALLATEUR D'APPLICATIONS" "[--- NAVIGATEURS ---];app_install_chrome;[--- MULTIMEDIA ---];app_install_vlc;[--- PDF ---];app_install_pdf;[--- ARCHIVAGE ---];app_install_winrar"
+call :AutoMenu "INSTALLATEUR D'APPLICATIONS" "[--- NAVIGATEURS ---];app_install_chrome;[--- MULTIMEDIA ---];app_install_vlc;[--- PDF ---];app_install_pdf;[--- ARCHIVAGE ---];app_install_winrar;[--- OFFICE ---];app_install_office;[--- ACTIVATION ---];app_install_activation"
 if "!errorlevel!"=="0" goto system_tools
 goto !AutoMenu_Target!
 
@@ -1131,6 +1135,102 @@ goto app_installer_exec
 :app_install_winrar
 set "app_choice=4"
 goto app_installer_exec
+
+:app_install_office
+cls
+echo ================================================
+echo   MICROSOFT OFFICE 2024 - TELECHARGEMENT (7.0 Go)
+echo ================================================
+echo.
+echo  Destination : %USERPROFILE%\Downloads\Office2024.iso
+echo  [1/1] Telechargement en cours... (fichier volumineux, soyez patient)
+echo  ------------------------------------------------
+if exist "%USERPROFILE%\Downloads\Office2024.iso" del /f /q "%USERPROFILE%\Downloads\Office2024.iso" >nul 2>&1
+if exist "%TEMP%\Office2024.iso" del /f /q "%TEMP%\Office2024.iso" >nul 2>&1
+curl -L --progress-bar -o "%TEMP%\Office2024.iso" "https://drive.usercontent.google.com/download?id=1wf1eqVkXIM0f0R2963Ee4RKK-a_rgWld&export=download&confirm=t"
+set "dl_err=!errorlevel!"
+if !dl_err!==0 move /y "%TEMP%\Office2024.iso" "%USERPROFILE%\Downloads\Office2024.iso" >nul 2>&1
+echo  ------------------------------------------------
+echo.
+if !dl_err!==0 (
+    echo  [OK] Office 2024 telecharge : %USERPROFILE%\Downloads\Office2024.iso
+    explorer "%USERPROFILE%\Downloads"
+) else (
+    echo  [ERREUR] Echec du telechargement. Verifiez votre connexion.
+)
+echo.
+echo  Retour au menu dans 5 secondes...
+timeout /t 5 /nobreak >nul
+goto app_installer
+
+:app_install_activation
+cls
+echo ================================================
+echo   ACTIVATEUR WINDOWS / OFFICE
+echo ================================================
+echo.
+echo  [1/2] Telechargement de l'activateur...
+echo  ------------------------------------------------
+set "act_tmp=%TEMP%\activateur.bin"
+set "act_dir=%TEMP%\activateur"
+set "act_ps=%TEMP%\act_dl.ps1"
+echo $ProgressPreference = 'SilentlyContinue' > "!act_ps!"
+echo $id = '1y3sInTwbmVzaAfMRVAnjONgtWPfJNobb' >> "!act_ps!"
+echo $out = '%act_tmp%' >> "!act_ps!"
+echo $wc = New-Object System.Net.WebClient >> "!act_ps!"
+echo $wc.Headers.Add('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)') >> "!act_ps!"
+echo $html = $wc.DownloadString("https://drive.google.com/uc?export=download^&id=$id") >> "!act_ps!"
+echo if ($html -match 'confirm=([0-9A-Za-z_-]+)') { $c = $matches[1] } else { $c = 't' } >> "!act_ps!"
+echo $url = "https://drive.google.com/uc?export=download^&id=$id^&confirm=$c" >> "!act_ps!"
+echo try { $wc.DownloadFile($url, $out); Write-Host '[OK] Telechargement reussi.' } catch { Write-Host '[ERREUR] ' + $_.Exception.Message; exit 1 } >> "!act_ps!"
+powershell -NoProfile -ExecutionPolicy Bypass -File "!act_ps!"
+set "dl_err=!errorlevel!"
+del /f /q "!act_ps!" >nul 2>&1
+echo  ------------------------------------------------
+if !dl_err! NEQ 0 (
+    echo  [ERREUR] Impossible de telecharger l'activateur.
+    echo.
+    echo  Retour au menu dans 4 secondes...
+    timeout /t 4 /nobreak >nul
+    goto app_installer
+)
+echo.
+echo  [2/2] Detection et lancement...
+set "act_ps=%TEMP%\act_run.ps1"
+echo $file = '%act_tmp%' > "!act_ps!"
+echo $dst = '%act_dir%' >> "!act_ps!"
+echo $b = [System.IO.File]::ReadAllBytes($file)[0..3] >> "!act_ps!"
+echo if ($b[0] -eq 0x50 -and $b[1] -eq 0x4B) { >> "!act_ps!"
+echo     if (Test-Path $dst) { Remove-Item $dst -Recurse -Force } >> "!act_ps!"
+echo     Expand-Archive -Path $file -DestinationPath $dst -Force >> "!act_ps!"
+echo     $exe = Get-ChildItem $dst -Recurse -Include *.exe,*.bat,*.cmd ^| Select-Object -First 1 >> "!act_ps!"
+echo     if ($exe) { Start-Process $exe.FullName -Verb RunAs } else { exit 1 } >> "!act_ps!"
+echo } elseif ($b[0] -eq 0x4D -and $b[1] -eq 0x5A) { >> "!act_ps!"
+echo     $p = [System.IO.Path]::ChangeExtension($file, '.exe') >> "!act_ps!"
+echo     Move-Item $file $p -Force >> "!act_ps!"
+echo     Start-Process $p -Verb RunAs >> "!act_ps!"
+echo } else { >> "!act_ps!"
+echo     $p = [System.IO.Path]::ChangeExtension($file, '.iso') >> "!act_ps!"
+echo     Move-Item $file $p -Force >> "!act_ps!"
+echo     Write-Host '[ISO] Montage de l image...' >> "!act_ps!"
+echo     Mount-DiskImage -ImagePath $p ^| Out-Null >> "!act_ps!"
+echo     $letter = (Get-DiskImage $p ^| Get-Volume).DriveLetter >> "!act_ps!"
+echo     Start-Process explorer.exe "$letter`:\" >> "!act_ps!"
+echo } >> "!act_ps!"
+powershell -NoProfile -ExecutionPolicy Bypass -File "!act_ps!"
+set "run_err=!errorlevel!"
+del /f /q "!act_ps!" >nul 2>&1
+del /f /q "!act_tmp!" >nul 2>&1
+echo.
+if !run_err!==0 (
+    echo  [OK] Activateur lance.
+) else (
+    echo  [INFO] Fichier extrait dans : !act_dir!
+)
+echo.
+echo  Retour au menu dans 4 secondes...
+timeout /t 4 /nobreak >nul
+goto app_installer
 
 :app_installer_exec
 
