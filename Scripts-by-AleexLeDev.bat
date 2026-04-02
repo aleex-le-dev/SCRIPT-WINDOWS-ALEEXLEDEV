@@ -894,7 +894,7 @@ set "LF_PS=%TEMP%\list_folder_%RANDOM%.ps1"
 >> "!LF_PS!" echo         $last = ($i -eq $ch.Count - 1)
 >> "!LF_PS!" echo         $conn = if ($last) { '\-- ' } else { '+-- ' }
 >> "!LF_PS!" echo         $next = if ($last) { $pre + '    ' } else { $pre + '^|   ' }
->> "!LF_PS!" echo         $l = $pre + $conn + $ch[$i].Name
+>> "!LF_PS!" echo         $l = $pre + $conn + $ch[$i].Name.ToUpper()
 >> "!LF_PS!" echo         Write-Host $l
 >> "!LF_PS!" echo         $script:lines.Add($l)
 >> "!LF_PS!" echo         Show-Tree -p $ch[$i].FullName -pre $next -depth ($depth + 1)
@@ -904,7 +904,7 @@ set "LF_PS=%TEMP%\list_folder_%RANDOM%.ps1"
 >> "!LF_PS!" echo $script:totalCount = 0
 >> "!LF_PS!" echo $script:lines = New-Object System.Collections.Generic.List[System.String]
 >> "!LF_PS!" echo $rootLabel = if ($leaf) { $leaf } else { $base }
->> "!LF_PS!" echo $rootDir = $rootLabel + "\"
+>> "!LF_PS!" echo $rootDir = $rootLabel.ToUpper() + "\"
 >> "!LF_PS!" echo Write-Host $rootDir
 >> "!LF_PS!" echo $script:lines.Add($rootDir)
 >> "!LF_PS!" echo try { Show-Tree -p $path } catch { Write-Host "  [!] Erreur fatale : $_" -ForegroundColor Red }
@@ -971,19 +971,53 @@ set "LF_PS=%TEMP%\list_ext_%RANDOM%.ps1"
 >> "!LF_PS!" echo Write-Host "  [~] Scan en cours... (Appuyez sur ECHAP pour annuler)" -ForegroundColor Cyan
 >> "!LF_PS!" echo $cancelled = $false
 >> "!LF_PS!" echo $files = [System.Collections.Generic.List[System.IO.FileInfo]]::new()
->> "!LF_PS!" echo try {
->> "!LF_PS!" echo     Get-ChildItem -LiteralPath $path -Include $filters -Recurse -File -ErrorAction SilentlyContinue ^| ForEach-Object {
->> "!LF_PS!" echo         if ([System.Console]::KeyAvailable) {
->> "!LF_PS!" echo             if ([System.Console]::ReadKey($true).Key -eq [System.ConsoleKey]::Escape) {
->> "!LF_PS!" echo                 Write-Host "  [X] Annulation en cours..." -ForegroundColor Red
->> "!LF_PS!" echo                 $cancelled = $true
->> "!LF_PS!" echo                 break
+>> "!LF_PS!" echo $regex = ($filters ^| ForEach-Object { [regex]::Escape($_.Replace('*','')) }) -join '^|'
+>> "!LF_PS!" echo $regex = "(?i)($regex)$"
+>> "!LF_PS!" echo $treeLines = [System.Collections.Generic.List[string]]::new()
+>> "!LF_PS!" echo $script:printed = [System.Collections.Generic.HashSet[string]]::new()
+>> "!LF_PS!" echo function Show-Tree {
+>> "!LF_PS!" echo     param($p, $pre = '', $depth = 1, $chain = @())
+>> "!LF_PS!" echo     if ($depth -gt 10) { return }
+>> "!LF_PS!" echo     try {
+>> "!LF_PS!" echo         $found = @(Get-ChildItem -LiteralPath $p -File -ErrorAction SilentlyContinue ^| Where-Object { $_.Name -match $regex })
+>> "!LF_PS!" echo         if ($found.Count -gt 0) {
+>> "!LF_PS!" echo             foreach ($c in $chain) {
+>> "!LF_PS!" echo                 if ($script:printed.Add($c.Path)) {
+>> "!LF_PS!" echo                     Write-Host $c.Line
+>> "!LF_PS!" echo                     $treeLines.Add($c.Line)
+>> "!LF_PS!" echo                 }
+>> "!LF_PS!" echo             }
+>> "!LF_PS!" echo             foreach ($f in $found) {
+>> "!LF_PS!" echo                 $files.Add($f)
+>> "!LF_PS!" echo                 $fl = $pre + "  - " + $f.Name
+>> "!LF_PS!" echo                 Write-Host $fl -ForegroundColor DarkCyan
+>> "!LF_PS!" echo                 $treeLines.Add($fl)
 >> "!LF_PS!" echo             }
 >> "!LF_PS!" echo         }
->> "!LF_PS!" echo         $files.Add($_)
->> "!LF_PS!" echo         Write-Host ("  Trouve: " + $_.Name) -ForegroundColor DarkGray
+>> "!LF_PS!" echo     } catch {}
+>> "!LF_PS!" echo     try { $ch = @(Get-ChildItem -LiteralPath $p -Directory -ErrorAction SilentlyContinue ^| Sort-Object Name) } catch { return }
+>> "!LF_PS!" echo     for ($i = 0; $i -lt $ch.Count; $i++) {
+>> "!LF_PS!" echo         if ([System.Console]::KeyAvailable) {
+>> "!LF_PS!" echo             if ([System.Console]::ReadKey($true).Key -eq [System.ConsoleKey]::Escape) {
+>> "!LF_PS!" echo                 if (-not $script:cancelled) { Write-Host "  [X] Annulation en cours..." -ForegroundColor Red }
+>> "!LF_PS!" echo                 $script:cancelled = $true
+>> "!LF_PS!" echo                 return
+>> "!LF_PS!" echo             }
+>> "!LF_PS!" echo         }
+>> "!LF_PS!" echo         if ($script:cancelled) { return }
+>> "!LF_PS!" echo         $last = ($i -eq $ch.Count - 1)
+>> "!LF_PS!" echo         $conn = if ($last) { '\-- ' } else { '+-- ' }
+>> "!LF_PS!" echo         $next = if ($last) { $pre + '    ' } else { $pre + '^|   ' }
+>> "!LF_PS!" echo         $l = $pre + $conn + $ch[$i].Name.ToUpper()
+>> "!LF_PS!" echo         $newChain = $chain + @( @{ Path = $ch[$i].FullName; Line = $l } )
+>> "!LF_PS!" echo         Show-Tree -p $ch[$i].FullName -pre $next -depth ($depth + 1) -chain $newChain
 >> "!LF_PS!" echo     }
->> "!LF_PS!" echo } catch { Write-Host "  [!] Erreur fatale : $_" -ForegroundColor Red }
+>> "!LF_PS!" echo }
+>> "!LF_PS!" echo $script:cancelled = $false
+>> "!LF_PS!" echo $rootLabel = if ($leaf) { $leaf } else { $base }
+>> "!LF_PS!" echo $rootDir = $rootLabel.ToUpper() + "\"
+>> "!LF_PS!" echo $rootChain = @( @{ Path = $path; Line = $rootDir } )
+>> "!LF_PS!" echo try { Show-Tree -p $path -chain $rootChain } catch { Write-Host "  [!] Erreur fatale : $_" -ForegroundColor Red }
 >> "!LF_PS!" echo Write-Host ""
 >> "!LF_PS!" echo Write-Host "  Traitement et tri par taille..." -ForegroundColor Cyan
 >> "!LF_PS!" echo $files = $files ^| Sort-Object Length -Descending
@@ -999,7 +1033,13 @@ set "LF_PS=%TEMP%\list_ext_%RANDOM%.ps1"
 >> "!LF_PS!" echo $lines.Add("  Poids total      : $totalMB MB")
 >> "!LF_PS!" echo $lines.Add($sep)
 >> "!LF_PS!" echo $lines.Add("")
->> "!LF_PS!" echo $lines.Add((( "TAILLE".PadRight(10) + "│ " + "NOM DU FICHIER".PadRight(50) + "│ " + "CHEMIN COMPLET" )))
+>> "!LF_PS!" echo $lines.Add(" --- ARBORESCENCE SCANNEE --- ")
+>> "!LF_PS!" echo $lines.AddRange($treeLines)
+>> "!LF_PS!" echo $lines.Add("")
+>> "!LF_PS!" echo $lines.Add(" --- RESULTATS DE LA RECHERCHE --- ")
+>> "!LF_PS!" echo $lines.Add("")
+>> "!LF_PS!" echo $bar = " " + [char]124 + " "
+>> "!LF_PS!" echo $lines.Add((( "TAILLE".PadRight(10) + $bar + "NOM DU FICHIER".PadRight(50) + $bar + "CHEMIN COMPLET" )))
 >> "!LF_PS!" echo $lines.Add("-" * 120)
 >> "!LF_PS!" echo foreach ($f in $files) {
 >> "!LF_PS!" echo     $kb = [math]::Round($f.Length / 1KB, 1)
@@ -1008,7 +1048,7 @@ set "LF_PS=%TEMP%\list_ext_%RANDOM%.ps1"
 >> "!LF_PS!" echo     if ($kb -gt 1048576) { $sz = "$([math]::Round($f.Length / 1GB, 2)) GB" }
 >> "!LF_PS!" echo     $n = $f.Name
 >> "!LF_PS!" echo     if ($n.Length -gt 48) { $n = $n.Substring(0, 45) + "..." }
->> "!LF_PS!" echo     $lines.Add(( $sz.PadRight(10) + "│ " + $n.PadRight(50) + "│ " + $f.FullName ))
+>> "!LF_PS!" echo     $lines.Add(( $sz.PadRight(10) + $bar + $n.PadRight(50) + $bar + $f.FullName ))
 >> "!LF_PS!" echo }
 >> "!LF_PS!" echo $lines.ToArray() ^| Out-File -FilePath $out -Encoding UTF8
 >> "!LF_PS!" echo Write-Host ""
