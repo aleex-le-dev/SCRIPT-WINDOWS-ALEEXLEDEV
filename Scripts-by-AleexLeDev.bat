@@ -780,14 +780,15 @@ goto _lf_scan_ext
 :_lf_select_path
 setlocal enabledelayedexpansion
 REM -- Options fixes --
-set "_lf_p[1]=%USERPROFILE%\Documents"
-set "_lf_p[2]=%USERPROFILE%\Desktop"
-set "_lf_p[3]=%USERPROFILE%\Downloads"
-set "_lf_p[4]=%USERPROFILE%\Videos"
-set "_lf_p[5]=%USERPROFILE%\Music"
-set "_lf_p[6]=%USERPROFILE%\Pictures"
-set "_lf_cnt=6"
-set "_lf_opts=Documents~%USERPROFILE%\Documents;Bureau~%USERPROFILE%\Desktop;Telechargements~%USERPROFILE%\Downloads;Videos~%USERPROFILE%\Videos;Musique~%USERPROFILE%\Music;Images~%USERPROFILE%\Pictures"
+set "_lf_p[1]=ALL_DRIVES"
+set "_lf_p[2]=%USERPROFILE%\Documents"
+set "_lf_p[3]=%USERPROFILE%\Desktop"
+set "_lf_p[4]=%USERPROFILE%\Downloads"
+set "_lf_p[5]=%USERPROFILE%\Videos"
+set "_lf_p[6]=%USERPROFILE%\Music"
+set "_lf_p[7]=%USERPROFILE%\Pictures"
+set "_lf_cnt=7"
+set "_lf_opts=Tous emplacements locaux~Scanner tous les disques;Documents~%USERPROFILE%\Documents;Bureau~%USERPROFILE%\Desktop;Telechargements~%USERPROFILE%\Downloads;Videos~%USERPROFILE%\Videos;Musique~%USERPROFILE%\Music;Images~%USERPROFILE%\Pictures"
 
 set "_lf_drv_ps=%TEMP%\lf_drv_%RANDOM%.ps1"
 set "_lf_drv_txt=%TEMP%\lf_drv_%RANDOM%.txt"
@@ -839,11 +840,13 @@ if "!_lf_sel!"=="!_lf_cust!" (
     set /p "TMP_PATH=  > "
 )
 if not defined TMP_PATH goto _lf_sel_loop
-if not exist "!TMP_PATH!\" (
-    echo.
-    echo  [!] Dossier introuvable.
-    pause
-    goto _lf_sel_loop
+if "!TMP_PATH!" neq "ALL_DRIVES" (
+    if not exist "!TMP_PATH!\" (
+        echo.
+        echo  [!] Dossier introuvable.
+        pause
+        goto _lf_sel_loop
+    )
 )
 for /f "delims=" %%A in ("!TMP_PATH!") do (
     endlocal
@@ -858,12 +861,14 @@ echo  [~] Analyse recursive : !_lf_path!
 echo.
 set "LF_PS=%TEMP%\list_folder_%RANDOM%.ps1"
 >  "!LF_PS!" echo $path = '!_lf_path!'
->> "!LF_PS!" echo $base = $path.TrimEnd('\')
->> "!LF_PS!" echo $leaf = Split-Path $base -Leaf
+>> "!LF_PS!" echo $paths = if ($path -eq 'ALL_DRIVES') { @((Get-WmiObject Win32_LogicalDisk ^| Where-Object { $_.DriveType -eq 3 -or $_.DriveType -eq 2 }).DeviceID ^| ForEach-Object { "$_\" }) } else { @($path) }
+>> "!LF_PS!" echo $base = if ($path -eq 'ALL_DRIVES') { 'TousLesDisques' } else { $path.TrimEnd('\') }
+>> "!LF_PS!" echo $leaf = if ($path -eq 'ALL_DRIVES') { 'Tous_Les_Disques' } else { Split-Path $base -Leaf }
 >> "!LF_PS!" echo if (-not $leaf) { $leaf = $base }
 >> "!LF_PS!" echo $leaf = $leaf -replace '[:\\/:*?"^<^>^|]', ''
 >> "!LF_PS!" echo $stamp = Get-Date -Format 'yyyyMMdd_HHmm'
 >> "!LF_PS!" echo $out = Join-Path '!SCRIPT_DIR!' "Liste_${leaf}_${stamp}.txt"
+>> "!LF_PS!" echo while ([System.Console]::KeyAvailable) { [System.Console]::ReadKey($true) ^| Out-Null }
 >> "!LF_PS!" echo Write-Host "  [~] Scan en cours... (Appuyez sur ECHAP pour annuler)" -ForegroundColor Cyan
 >> "!LF_PS!" echo $sep = '=' * 70
 >> "!LF_PS!" echo Write-Host $sep
@@ -903,11 +908,14 @@ set "LF_PS=%TEMP%\list_folder_%RANDOM%.ps1"
 >> "!LF_PS!" echo $script:cancelled = $false
 >> "!LF_PS!" echo $script:totalCount = 0
 >> "!LF_PS!" echo $script:lines = New-Object System.Collections.Generic.List[System.String]
->> "!LF_PS!" echo $rootLabel = if ($leaf) { $leaf } else { $base }
->> "!LF_PS!" echo $rootDir = $rootLabel.ToUpper() + "\"
->> "!LF_PS!" echo Write-Host $rootDir
->> "!LF_PS!" echo $script:lines.Add($rootDir)
->> "!LF_PS!" echo try { Show-Tree -p $path } catch { Write-Host "  [!] Erreur fatale : $_" -ForegroundColor Red }
+>> "!LF_PS!" echo foreach ($p in $paths) {
+>> "!LF_PS!" echo     $rootLabel = if ($path -eq 'ALL_DRIVES') { $p } elseif ($leaf) { $leaf } else { $base }
+>> "!LF_PS!" echo     $rSep = if ($rootLabel.EndsWith('\')) { '' } else { '\' }
+>> "!LF_PS!" echo     $rootDir = $rootLabel.ToUpper() + $rSep
+>> "!LF_PS!" echo     Write-Host $rootDir
+>> "!LF_PS!" echo     $script:lines.Add($rootDir)
+>> "!LF_PS!" echo     try { Show-Tree -p $p } catch { Write-Host "  [!] Erreur fatale : $_" -ForegroundColor Red }
+>> "!LF_PS!" echo }
 >> "!LF_PS!" echo $total = $script:totalCount
 >> "!LF_PS!" echo Write-Host ""
 >> "!LF_PS!" echo Write-Host "  Sous-dossiers trouves : $total" -ForegroundColor Yellow
@@ -933,21 +941,22 @@ endlocal & goto list_folder_menu
 :_lf_scan_ext
 setlocal enabledelayedexpansion
 :ext_menu_loop
-set "ext_opts=Videos (.mp4, .mkv, .avi...);Audios (.mp3, .wav...);Documents (.pdf, .docx...);Images (.jpg, .png...);Archives (.zip, .rar...);Executables (.exe, .msi...);Autres Extensions...;Retour"
+set "ext_opts=Toutes les extensions (*.*);Videos (.mp4, .mkv, .avi...);Audios (.mp3, .wav...);Documents (.pdf, .docx...);Images (.jpg, .png...);Archives (.zip, .rar...);Executables (.exe, .msi...);Autres Extensions...;Retour"
 call :DynamicMenu "RECHERCHE EXTENSIONS : !_lf_path!" "!ext_opts!" "NONUMS"
 set "ext_sel=!errorlevel!"
 if "!ext_sel!"=="0" (endlocal & goto list_folder_menu)
-if "!ext_sel!"=="8" (endlocal & goto list_folder_menu)
+if "!ext_sel!"=="9" (endlocal & goto list_folder_menu)
 
 set "ext_filter="
 set "ext_name="
-if "!ext_sel!"=="1" (set "ext_filter=*.mp4,*.mkv,*.avi,*.mov,*.wmv" & set "ext_name=Videos")
-if "!ext_sel!"=="2" (set "ext_filter=*.mp3,*.wav,*.flac,*.m4a,*.ogg" & set "ext_name=Audios")
-if "!ext_sel!"=="3" (set "ext_filter=*.pdf,*.docx,*.xlsx,*.pptx,*.txt" & set "ext_name=Documents")
-if "!ext_sel!"=="4" (set "ext_filter=*.jpg,*.jpeg,*.png,*.gif,*.bmp,*.webp" & set "ext_name=Images")
-if "!ext_sel!"=="5" (set "ext_filter=*.zip,*.rar,*.7z,*.tar,*.gz" & set "ext_name=Archives")
-if "!ext_sel!"=="6" (set "ext_filter=*.exe,*.bat,*.ps1,*.msi,*.cmd" & set "ext_name=Executables")
-if "!ext_sel!"=="7" (
+if "!ext_sel!"=="1" (set "ext_filter=*.*" & set "ext_name=TousFichiers")
+if "!ext_sel!"=="2" (set "ext_filter=*.mp4,*.mkv,*.avi,*.mov,*.wmv" & set "ext_name=Videos")
+if "!ext_sel!"=="3" (set "ext_filter=*.mp3,*.wav,*.flac,*.m4a,*.ogg" & set "ext_name=Audios")
+if "!ext_sel!"=="4" (set "ext_filter=*.pdf,*.docx,*.xlsx,*.pptx,*.txt" & set "ext_name=Documents")
+if "!ext_sel!"=="5" (set "ext_filter=*.jpg,*.jpeg,*.png,*.gif,*.bmp,*.webp" & set "ext_name=Images")
+if "!ext_sel!"=="6" (set "ext_filter=*.zip,*.rar,*.7z,*.tar,*.gz" & set "ext_name=Archives")
+if "!ext_sel!"=="7" (set "ext_filter=*.exe,*.bat,*.ps1,*.msi,*.cmd" & set "ext_name=Executables")
+if "!ext_sel!"=="8" (
     cls
     echo.
     echo  Entrez les extensions separees par des virgules (ex: *.txt,*.csv)
@@ -958,21 +967,28 @@ if "!ext_sel!"=="7" (
 
 cls
 echo  [~] Recherche des fichiers !ext_name! dans : !_lf_path!
+echo  [.] Initialisation du moteur de scan... (Lancement automatique)
 echo.
 set "LF_PS=%TEMP%\list_ext_%RANDOM%.ps1"
 >  "!LF_PS!" echo $path = '!_lf_path!'
+>> "!LF_PS!" echo $paths = if ($path -eq 'ALL_DRIVES') { @((Get-WmiObject Win32_LogicalDisk ^| Where-Object { $_.DriveType -eq 3 -or $_.DriveType -eq 2 }).DeviceID ^| ForEach-Object { "$_\" }) } else { @($path) }
 >> "!LF_PS!" echo $filters = '!ext_filter!' -split ',' ^| ForEach-Object { "$($_.Trim())" }
->> "!LF_PS!" echo $base = $path.TrimEnd('\')
->> "!LF_PS!" echo $leaf = Split-Path $base -Leaf
+>> "!LF_PS!" echo $base = if ($path -eq 'ALL_DRIVES') { 'TousLesDisques' } else { $path.TrimEnd('\') }
+>> "!LF_PS!" echo $leaf = if ($path -eq 'ALL_DRIVES') { 'Tous_Les_Disques' } else { Split-Path $base -Leaf }
 >> "!LF_PS!" echo if (-not $leaf) { $leaf = $base }
 >> "!LF_PS!" echo $leaf = $leaf -replace '[:\\/:*?"^<^>^|]', ''
 >> "!LF_PS!" echo $stamp = Get-Date -Format 'yyyyMMdd_HHmm'
 >> "!LF_PS!" echo $out = Join-Path '!SCRIPT_DIR!' "Recherche_!ext_name!_${leaf}_${stamp}.txt"
+>> "!LF_PS!" echo while ([System.Console]::KeyAvailable) { [System.Console]::ReadKey($true) ^| Out-Null }
 >> "!LF_PS!" echo Write-Host "  [~] Scan en cours... (Appuyez sur ECHAP pour annuler)" -ForegroundColor Cyan
 >> "!LF_PS!" echo $cancelled = $false
 >> "!LF_PS!" echo $files = [System.Collections.Generic.List[System.IO.FileInfo]]::new()
->> "!LF_PS!" echo $regex = ($filters ^| ForEach-Object { [regex]::Escape($_.Replace('*','')) }) -join '^|'
->> "!LF_PS!" echo $regex = "(?i)($regex)$"
+>> "!LF_PS!" echo if ('!ext_filter!' -eq '*.*') {
+>> "!LF_PS!" echo     $regex = '.'
+>> "!LF_PS!" echo } else {
+>> "!LF_PS!" echo     $regex = ($filters ^| ForEach-Object { [regex]::Escape($_.Replace('*','')) }) -join '^|'
+>> "!LF_PS!" echo     $regex = "(?i)($regex)$"
+>> "!LF_PS!" echo }
 >> "!LF_PS!" echo $treeLines = [System.Collections.Generic.List[string]]::new()
 >> "!LF_PS!" echo $script:printed = [System.Collections.Generic.HashSet[string]]::new()
 >> "!LF_PS!" echo function Show-Tree {
@@ -1014,10 +1030,13 @@ set "LF_PS=%TEMP%\list_ext_%RANDOM%.ps1"
 >> "!LF_PS!" echo     }
 >> "!LF_PS!" echo }
 >> "!LF_PS!" echo $script:cancelled = $false
->> "!LF_PS!" echo $rootLabel = if ($leaf) { $leaf } else { $base }
->> "!LF_PS!" echo $rootDir = $rootLabel.ToUpper() + "\"
->> "!LF_PS!" echo $rootChain = @( @{ Path = $path; Line = $rootDir } )
->> "!LF_PS!" echo try { Show-Tree -p $path -chain $rootChain } catch { Write-Host "  [!] Erreur fatale : $_" -ForegroundColor Red }
+>> "!LF_PS!" echo foreach ($p in $paths) {
+>> "!LF_PS!" echo     $rootLabel = if ($path -eq 'ALL_DRIVES') { $p } elseif ($leaf) { $leaf } else { $base }
+>> "!LF_PS!" echo     $rSep = if ($rootLabel.EndsWith('\')) { '' } else { '\' }
+>> "!LF_PS!" echo     $rootDir = $rootLabel.ToUpper() + $rSep
+>> "!LF_PS!" echo     $rootChain = @( @{ Path = $p; Line = $rootDir } )
+>> "!LF_PS!" echo     try { Show-Tree -p $p -chain $rootChain } catch { Write-Host "  [!] Erreur fatale : $_" -ForegroundColor Red }
+>> "!LF_PS!" echo }
 >> "!LF_PS!" echo Write-Host ""
 >> "!LF_PS!" echo Write-Host "  Traitement et tri par taille..." -ForegroundColor Cyan
 >> "!LF_PS!" echo $files = $files ^| Sort-Object Length -Descending
