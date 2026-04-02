@@ -2309,16 +2309,25 @@ goto sys_passwords_menu
 set "PYCMD=" & set "PYERR="
 for /f "delims=" %%p in ('where python 2^>nul') do if not defined PYCMD set "PYCMD=%%p"
 for /f "delims=" %%p in ('where py    2^>nul') do if not defined PYCMD set "PYCMD=%%p"
+if defined PYCMD (
+    "!PYCMD!" --version >nul 2>&1
+    if !errorlevel! neq 0 set "PYCMD="
+)
 if defined PYCMD goto :eof
-echo  [!] Python absent - Telechargement et installation automatique...
+echo.
+echo  [!] Python introuvable - Installation automatique...
+echo.
 set "PY_PS=%TEMP%\py_inst_%RANDOM%.ps1"
 > "!PY_PS!" echo $inst = "$env:TEMP\py_setup.exe"
->> "!PY_PS!" echo Write-Host "  Telechargement Python 3.12..." -ForegroundColor Cyan
->> "!PY_PS!" echo Invoke-WebRequest 'https://www.python.org/ftp/python/3.12.10/python-3.12.10-amd64.exe' -OutFile $inst -UseBasicParsing
->> "!PY_PS!" echo Write-Host "  Installation en cours (silencieuse)..." -ForegroundColor Cyan
+>> "!PY_PS!" echo $url  = 'https://www.python.org/ftp/python/3.12.10/python-3.12.10-amd64.exe'
+>> "!PY_PS!" echo $ProgressPreference = 'Continue'
+>> "!PY_PS!" echo Write-Host '  [~] Telechargement Python 3.12.10 (~27 MB)...' -ForegroundColor Cyan
+>> "!PY_PS!" echo Invoke-WebRequest $url -OutFile $inst
+>> "!PY_PS!" echo Write-Host ''
+>> "!PY_PS!" echo Write-Host '  [~] Installation silencieuse en cours...' -ForegroundColor Cyan
 >> "!PY_PS!" echo Start-Process $inst -ArgumentList '/quiet InstallAllUsers=0 PrependPath=1 Include_test=0' -Wait
 >> "!PY_PS!" echo Remove-Item $inst -Force -ErrorAction SilentlyContinue
->> "!PY_PS!" echo Write-Host "  [OK] Python installe." -ForegroundColor Green
+>> "!PY_PS!" echo Write-Host '  [OK] Python 3.12 installe.' -ForegroundColor Green
 powershell -NoProfile -ExecutionPolicy Bypass -File "!PY_PS!"
 del /f /q "!PY_PS!" 2>nul
 for /f "delims=" %%p in ('where /r "%LOCALAPPDATA%\Programs\Python" python.exe 2^>nul') do if not defined PYCMD set "PYCMD=%%p"
