@@ -12,12 +12,6 @@ prompt $E
 set "ESC=%PROMPT%"
 prompt $P$G
 @echo off
-set "R=%ESC%[91m"
-set "G=%ESC%[92m"
-set "Y=%ESC%[93m"
-set "B=%ESC%[94m"
-set "W=%ESC%[97m"
-set "N=%ESC%[0m"
 
 REM === AUTO-ELEVATION EN ADMINISTRATEUR ===
 fsutil dirty query %systemdrive% >nul 2>&1
@@ -198,15 +192,15 @@ set "t[112]=sys_win_key:Cle Windows~Retrouver la cle de licence Windows:HIDDEN"
 set "t[113]=sys_drivers:Export des Pilotes~Sauvegarde de tous les pilotes:HIDDEN"
 set "t[114]=sys_export_software:Liste des Logiciels~Exporter via Winget:HIDDEN"
 set "t[115]=sys_export_wifi_apps:Export Wi-Fi et Apps~Profils reseau et logiciels:HIDDEN"
-set "t[116]=---:PERSONNALISATION"
-set "t[117]=context_menu:Menu contextuel Windows 11~Classic/Modern"
-set "t[118]=sys_god_mode:Dossier God Mode~Raccourci ultime des parametres"
-set "t[119]=sys_gaming_mode:Mode Gaming~Booster les perfs jeux"
-set "t[120]=sys_shortcuts_bureau:Raccourcis Bureau 1-Clic~Redemarrer/Eteindre"
-set "t[121]=activate_classic:Menu Contextuel Classique~Activer le menu classique Win10:HIDDEN"
-set "t[122]=restore_modern:Menu Contextuel Moderne~Restaurer le menu Win11:HIDDEN"
-set "t[123]=photo_viewer_toggle:Visionneuse Windows~Activer / Desactiver la Visionneuse de Photos"
-set "t[164]=list_folder:Lister un Dossier~Afficher et exporter le contenu d'un dossier"
+set "t[165]=---:PERSONNALISATION"
+set "t[166]=context_menu:Menu contextuel Windows 11~Classic/Modern"
+set "t[167]=sys_god_mode:Dossier God Mode~Raccourci ultime des parametres"
+set "t[168]=sys_gaming_mode:Mode Gaming~Booster les perfs jeux"
+set "t[169]=sys_shortcuts_bureau:Raccourcis Bureau 1-Clic~Redemarrer/Eteindre"
+set "t[170]=activate_classic:Menu Contextuel Classique~Activer le menu classique Win10:HIDDEN"
+set "t[171]=restore_modern:Menu Contextuel Moderne~Restaurer le menu Win11:HIDDEN"
+set "t[172]=photo_viewer_toggle:Visionneuse Windows~Activer / Desactiver la Visionneuse de Photos"
+set "t[116]=list_folder:Lister un Dossier~Afficher et exporter le contenu d'un dossier"
 set "t[124]=---:MATERIEL"
 set "t[125]=touch_screen_manager:Gestionnaire Ecran Tactile~Activer/Desactiver"
 set "t[126]=sys_print_manager:Gestionnaire d'Imprimantes~Lister/Vider le Spooler"
@@ -842,36 +836,64 @@ set "LF_PS=%TEMP%\list_folder_%RANDOM%.ps1"
 >> "!LF_PS!" echo $base = $path.TrimEnd('\')
 >> "!LF_PS!" echo $leaf = Split-Path $base -Leaf
 >> "!LF_PS!" echo if (-not $leaf) { $leaf = $base }
->> "!LF_PS!" echo $leaf = $leaf -replace '[:\\/:*?"<>|]', ''
+>> "!LF_PS!" echo $leaf = $leaf -replace '[:\\/:*?"^<^>^|]', ''
 >> "!LF_PS!" echo $stamp = Get-Date -Format 'yyyyMMdd_HHmm'
->> "!LF_PS!" echo $out = Join-Path $env:USERPROFILE "Desktop\Liste_${leaf}_${stamp}.txt"
->> "!LF_PS!" echo Write-Host "  [~] Scan en cours..." -ForegroundColor Cyan
+>> "!LF_PS!" echo $out = Join-Path '!SCRIPT_DIR!' "Liste_${leaf}_${stamp}.txt"
+>> "!LF_PS!" echo Write-Host "  [~] Scan en cours... (Appuyez sur ECHAP pour annuler)" -ForegroundColor Cyan
+>> "!LF_PS!" echo $sep = '=' * 70
+>> "!LF_PS!" echo Write-Host $sep
+>> "!LF_PS!" echo Write-Host "  Dossier : $path"
+>> "!LF_PS!" echo Write-Host "  Date    : $(Get-Date -Format 'dd/MM/yyyy HH:mm')"
+>> "!LF_PS!" echo Write-Host $sep
+>> "!LF_PS!" echo Write-Host ""
 >> "!LF_PS!" echo function Show-Tree {
->> "!LF_PS!" echo     param($p, $pre = '')
->> "!LF_PS!" echo     $ch = @(Get-ChildItem -LiteralPath $p -Directory -ErrorAction SilentlyContinue ^| Sort-Object Name)
+>> "!LF_PS!" echo     param($p, $pre = '', $depth = 1)
+>> "!LF_PS!" echo     if ($depth -gt 10) {
+>> "!LF_PS!" echo         $l = $pre + '\-- [!] ON NE DESCEND PAS EN DESSOUS DE 10 DOSSIERS'
+>> "!LF_PS!" echo         Write-Host $l -ForegroundColor Red
+>> "!LF_PS!" echo         $script:lines.Add($l)
+>> "!LF_PS!" echo         return
+>> "!LF_PS!" echo     }
+>> "!LF_PS!" echo     try { $ch = @(Get-ChildItem -LiteralPath $p -Directory -ErrorAction SilentlyContinue ^| Sort-Object Name) } catch { return }
 >> "!LF_PS!" echo     for ($i = 0; $i -lt $ch.Count; $i++) {
+>> "!LF_PS!" echo         if ([System.Console]::KeyAvailable) {
+>> "!LF_PS!" echo             $k = [System.Console]::ReadKey($true)
+>> "!LF_PS!" echo             if ($k.Key -eq [System.ConsoleKey]::Escape) {
+>> "!LF_PS!" echo                 if (-not $script:cancelled) { Write-Host "  [X] Annulation en cours..." -ForegroundColor Red }
+>> "!LF_PS!" echo                 $script:cancelled = $true
+>> "!LF_PS!" echo                 return
+>> "!LF_PS!" echo             }
+>> "!LF_PS!" echo         }
+>> "!LF_PS!" echo         if ($script:cancelled) { return }
+>> "!LF_PS!" echo         $script:totalCount++
 >> "!LF_PS!" echo         $last = ($i -eq $ch.Count - 1)
 >> "!LF_PS!" echo         $conn = if ($last) { '\-- ' } else { '+-- ' }
->> "!LF_PS!" echo         $next = if ($last) { $pre + '    ' } else { $pre + '|   ' }
->> "!LF_PS!" echo         $script:lines += $pre + $conn + $ch[$i].Name
->> "!LF_PS!" echo         Show-Tree -p $ch[$i].FullName -pre $next
+>> "!LF_PS!" echo         $next = if ($last) { $pre + '    ' } else { $pre + '^|   ' }
+>> "!LF_PS!" echo         $l = $pre + $conn + $ch[$i].Name
+>> "!LF_PS!" echo         Write-Host $l
+>> "!LF_PS!" echo         $script:lines.Add($l)
+>> "!LF_PS!" echo         Show-Tree -p $ch[$i].FullName -pre $next -depth ($depth + 1)
 >> "!LF_PS!" echo     }
 >> "!LF_PS!" echo }
->> "!LF_PS!" echo $script:lines = @()
->> "!LF_PS!" echo $sep = '=' * 70
+>> "!LF_PS!" echo $script:cancelled = $false
+>> "!LF_PS!" echo $script:totalCount = 0
+>> "!LF_PS!" echo $script:lines = New-Object System.Collections.Generic.List[System.String]
+>> "!LF_PS!" echo $rootLabel = if ($leaf) { $leaf } else { $base }
+>> "!LF_PS!" echo $rootDir = $rootLabel + "\"
+>> "!LF_PS!" echo Write-Host $rootDir
+>> "!LF_PS!" echo $script:lines.Add($rootDir)
+>> "!LF_PS!" echo try { Show-Tree -p $path } catch { Write-Host "  [!] Erreur fatale : $_" -ForegroundColor Red }
+>> "!LF_PS!" echo $total = $script:totalCount
+>> "!LF_PS!" echo Write-Host ""
+>> "!LF_PS!" echo Write-Host "  Sous-dossiers trouves : $total" -ForegroundColor Yellow
 >> "!LF_PS!" echo $header  = @()
 >> "!LF_PS!" echo $header += $sep
 >> "!LF_PS!" echo $header += "  Dossier : $path"
 >> "!LF_PS!" echo $header += "  Date    : $(Get-Date -Format 'dd/MM/yyyy HH:mm')"
+>> "!LF_PS!" echo $header += "  Sous-dossiers : $total"
 >> "!LF_PS!" echo $header += $sep
 >> "!LF_PS!" echo $header += ""
->> "!LF_PS!" echo $rootLabel = if ($leaf) { $leaf } else { $base }
->> "!LF_PS!" echo $script:lines += $rootLabel + "\"
->> "!LF_PS!" echo Show-Tree -p $path
->> "!LF_PS!" echo $total = ($script:lines ^| Where-Object { $_ -match '\+--|\\--' }).Count
->> "!LF_PS!" echo $header[2] = "  Sous-dossiers : $total"
->> "!LF_PS!" echo $all = $header + $script:lines + @('', $sep)
->> "!LF_PS!" echo $all ^| ForEach-Object { Write-Host $_ }
+>> "!LF_PS!" echo $all = $header + $script:lines.ToArray() + @('', $sep)
 >> "!LF_PS!" echo $all ^| Out-File -FilePath $out -Encoding UTF8
 >> "!LF_PS!" echo Write-Host ""
 >> "!LF_PS!" echo Write-Host "  [OK] Exporte : $out" -ForegroundColor Green
@@ -5312,7 +5334,7 @@ if "%target_ip%"=="" goto net_cyber_menu
 
 :smb_exp_menu
 cls
-echo  Cible : %target_ip% | MODE : EXPERT
+echo  Cible : %target_ip% ^| MODE : EXPERT
 echo  ------------------------------------------------
 set "opts=Lister C:;Explorer le Bureau;Infos Systeme;Installer Persistance;Reverse Shell B64;Dumping Documents;NETTOYER LES LOGS;MITM / Spoofing;EXFILTRATION (Discord/Telegram);AUDIT EXPOSITION;Retour"
 call :DynamicMenu "PENTEST EXPERT : %target_ip%" "%opts%" "NONUMS"
@@ -6220,8 +6242,8 @@ echo    $elapsed = [math]::Round(((Get-Date) - $start).TotalMilliseconds) >> "%A
 echo    $timings += @{User=$u; Ms=$elapsed} >> "%ATS%"
 echo    Write-Host "  $u : ${elapsed}ms" -f Gray >> "%ATS%"
 echo } >> "%ATS%"
-echo $avg = ($timings | Measure-Object -Property Ms -Average).Average >> "%ATS%"
-echo $timings | Where-Object { $_.Ms -gt ($avg * 1.5) } | ForEach-Object { >> "%ATS%"
+echo $avg = ($timings ^| Measure-Object -Property Ms -Average).Average >> "%ATS%"
+echo $timings ^| Where-Object { $_.Ms -gt ($avg * 1.5) } ^| ForEach-Object { >> "%ATS%"
 echo    Write-Host "  [!] Utilisateur potentiellement valide (timing +50%%) : $($_.User) ($($_.Ms)ms vs avg $([math]::Round($avg))ms)" -f Yellow >> "%ATS%"
 echo } >> "%ATS%"
 echo. >> "%ATS%"
