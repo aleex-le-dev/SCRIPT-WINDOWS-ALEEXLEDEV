@@ -206,6 +206,7 @@ set "t[120]=sys_shortcuts_bureau:Raccourcis Bureau 1-Clic~Redemarrer/Eteindre"
 set "t[121]=activate_classic:Menu Contextuel Classique~Activer le menu classique Win10:HIDDEN"
 set "t[122]=restore_modern:Menu Contextuel Moderne~Restaurer le menu Win11:HIDDEN"
 set "t[123]=photo_viewer_toggle:Visionneuse Windows~Activer / Desactiver la Visionneuse de Photos"
+set "t[164]=list_folder:Lister un Dossier~Afficher et exporter le contenu d'un dossier"
 set "t[124]=---:MATERIEL"
 set "t[125]=touch_screen_manager:Gestionnaire Ecran Tactile~Activer/Desactiver"
 set "t[126]=sys_print_manager:Gestionnaire d'Imprimantes~Lister/Vider le Spooler"
@@ -758,6 +759,129 @@ echo.
 pause
 endlocal
 goto photo_viewer_toggle
+
+REM ===================================================================
+REM                    LISTER LE CONTENU D'UN DOSSIER
+REM ===================================================================
+:list_folder
+call :_lf_inner
+goto system_tools
+
+:_lf_inner
+setlocal enabledelayedexpansion
+
+REM -- Options fixes --
+set "_lf_p[1]=%USERPROFILE%\Documents"
+set "_lf_p[2]=%USERPROFILE%\Desktop"
+set "_lf_p[3]=%USERPROFILE%\Downloads"
+set "_lf_p[4]=%USERPROFILE%\Videos"
+set "_lf_p[5]=%USERPROFILE%\Music"
+set "_lf_p[6]=%USERPROFILE%\Pictures"
+set "_lf_cnt=6"
+set "_lf_opts=Documents~%USERPROFILE%\Documents;Bureau~%USERPROFILE%\Desktop;Telechargements~%USERPROFILE%\Downloads;Videos~%USERPROFILE%\Videos;Musique~%USERPROFILE%\Music;Images~%USERPROFILE%\Pictures"
+
+REM -- Detecter les autres lecteurs (USB, disques, reseau) --
+set "_lf_drv_ps=%TEMP%\lf_drv_%RANDOM%.ps1"
+set "_lf_drv_txt=%TEMP%\lf_drv_%RANDOM%.txt"
+>  "!_lf_drv_ps!" echo $types = @{2='Amovible';3='Disque';4='Reseau';5='CD-ROM'}
+>> "!_lf_drv_ps!" echo Get-WmiObject Win32_LogicalDisk ^| Where-Object { $_.DeviceID -ne 'C:' } ^| ForEach-Object {
+>> "!_lf_drv_ps!" echo     $t = $types[[int]$_.DriveType]; if (-not $t) { $t = 'Lecteur' }
+>> "!_lf_drv_ps!" echo     $lbl = if ($_.VolumeName) { $_.VolumeName } else { $_.DeviceID }
+>> "!_lf_drv_ps!" echo     Write-Output ("$($_.DeviceID) - $lbl ($t)~$($_.DeviceID)\")
+>> "!_lf_drv_ps!" echo }
+powershell -NoProfile -ExecutionPolicy Bypass -File "!_lf_drv_ps!" > "!_lf_drv_txt!" 2>nul
+del /f /q "!_lf_drv_ps!" 2>nul
+for /f "usebackq delims=" %%L in ("!_lf_drv_txt!") do (
+    set /a "_lf_cnt+=1"
+    for /f "tokens=1* delims=~" %%A in ("%%L") do set "_lf_p[!_lf_cnt!]=%%B"
+    set "_lf_opts=!_lf_opts!;%%L"
+)
+del /f /q "!_lf_drv_txt!" 2>nul
+
+REM -- Finaliser le menu --
+set /a "_lf_cust=_lf_cnt+1"
+set /a "_lf_ret=_lf_cnt+2"
+set "_lf_opts=!_lf_opts!;[---];Chemin personnalise~Entrer un chemin manuellement;Retour"
+
+call :DynamicMenu "LISTER LE CONTENU D'UN DOSSIER" "!_lf_opts!" "NONUMS"
+set "_lf_sel=!errorlevel!"
+set "_lf_path="
+if "!_lf_sel!"=="0"          ( endlocal & goto :eof )
+if "!_lf_sel!"=="!_lf_ret!"  ( endlocal & goto :eof )
+if "!_lf_sel!"=="1"  set "_lf_path=!_lf_p[1]!"
+if "!_lf_sel!"=="2"  set "_lf_path=!_lf_p[2]!"
+if "!_lf_sel!"=="3"  set "_lf_path=!_lf_p[3]!"
+if "!_lf_sel!"=="4"  set "_lf_path=!_lf_p[4]!"
+if "!_lf_sel!"=="5"  set "_lf_path=!_lf_p[5]!"
+if "!_lf_sel!"=="6"  set "_lf_path=!_lf_p[6]!"
+if "!_lf_sel!"=="7"  set "_lf_path=!_lf_p[7]!"
+if "!_lf_sel!"=="8"  set "_lf_path=!_lf_p[8]!"
+if "!_lf_sel!"=="9"  set "_lf_path=!_lf_p[9]!"
+if "!_lf_sel!"=="10" set "_lf_path=!_lf_p[10]!"
+if "!_lf_sel!"=="11" set "_lf_path=!_lf_p[11]!"
+if "!_lf_sel!"=="12" set "_lf_path=!_lf_p[12]!"
+if "!_lf_sel!"=="!_lf_cust!" (
+    cls
+    echo.
+    echo  Entrez le chemin complet du dossier a lister :
+    echo.
+    set /p "_lf_path=  > "
+)
+if not defined _lf_path ( endlocal & goto _lf_inner )
+if not exist "!_lf_path!\" (
+    echo.
+    echo  [!] Dossier introuvable.
+    pause
+    endlocal & goto _lf_inner
+)
+cls
+echo  [~] Analyse recursive : !_lf_path!
+echo.
+set "LF_PS=%TEMP%\list_folder_%RANDOM%.ps1"
+>  "!LF_PS!" echo $path = '!_lf_path!'
+>> "!LF_PS!" echo $base = $path.TrimEnd('\')
+>> "!LF_PS!" echo $leaf = Split-Path $base -Leaf
+>> "!LF_PS!" echo if (-not $leaf) { $leaf = $base }
+>> "!LF_PS!" echo $leaf = $leaf -replace '[:\\/:*?"<>|]', ''
+>> "!LF_PS!" echo $stamp = Get-Date -Format 'yyyyMMdd_HHmm'
+>> "!LF_PS!" echo $out = Join-Path $env:USERPROFILE "Desktop\Liste_${leaf}_${stamp}.txt"
+>> "!LF_PS!" echo Write-Host "  [~] Scan en cours..." -ForegroundColor Cyan
+>> "!LF_PS!" echo function Show-Tree {
+>> "!LF_PS!" echo     param($p, $pre = '')
+>> "!LF_PS!" echo     $ch = @(Get-ChildItem -LiteralPath $p -Directory -ErrorAction SilentlyContinue ^| Sort-Object Name)
+>> "!LF_PS!" echo     for ($i = 0; $i -lt $ch.Count; $i++) {
+>> "!LF_PS!" echo         $last = ($i -eq $ch.Count - 1)
+>> "!LF_PS!" echo         $conn = if ($last) { '\-- ' } else { '+-- ' }
+>> "!LF_PS!" echo         $next = if ($last) { $pre + '    ' } else { $pre + '|   ' }
+>> "!LF_PS!" echo         $script:lines += $pre + $conn + $ch[$i].Name
+>> "!LF_PS!" echo         Show-Tree -p $ch[$i].FullName -pre $next
+>> "!LF_PS!" echo     }
+>> "!LF_PS!" echo }
+>> "!LF_PS!" echo $script:lines = @()
+>> "!LF_PS!" echo $sep = '=' * 70
+>> "!LF_PS!" echo $header  = @()
+>> "!LF_PS!" echo $header += $sep
+>> "!LF_PS!" echo $header += "  Dossier : $path"
+>> "!LF_PS!" echo $header += "  Date    : $(Get-Date -Format 'dd/MM/yyyy HH:mm')"
+>> "!LF_PS!" echo $header += $sep
+>> "!LF_PS!" echo $header += ""
+>> "!LF_PS!" echo $rootLabel = if ($leaf) { $leaf } else { $base }
+>> "!LF_PS!" echo $script:lines += $rootLabel + "\"
+>> "!LF_PS!" echo Show-Tree -p $path
+>> "!LF_PS!" echo $total = ($script:lines ^| Where-Object { $_ -match '\+--|\\--' }).Count
+>> "!LF_PS!" echo $header[2] = "  Sous-dossiers : $total"
+>> "!LF_PS!" echo $all = $header + $script:lines + @('', $sep)
+>> "!LF_PS!" echo $all ^| ForEach-Object { Write-Host $_ }
+>> "!LF_PS!" echo $all ^| Out-File -FilePath $out -Encoding UTF8
+>> "!LF_PS!" echo Write-Host ""
+>> "!LF_PS!" echo Write-Host "  [OK] Exporte : $out" -ForegroundColor Green
+>> "!LF_PS!" echo Start-Sleep -Seconds 1
+>> "!LF_PS!" echo Invoke-Item $out
+powershell -NoProfile -ExecutionPolicy Bypass -File "!LF_PS!"
+del /f /q "!LF_PS!" 2>nul
+echo.
+pause
+endlocal & goto _lf_inner
 
 REM ===================================================================
 REM                    GESTIONNAIRE DE DISQUES - FORMATAGE AVEC DISKPART
