@@ -200,7 +200,7 @@ set "t[169]=sys_shortcuts_bureau:Raccourcis Bureau 1-Clic~Redemarrer/Eteindre"
 set "t[170]=activate_classic:Menu Contextuel Classique~Activer le menu classique Win10:HIDDEN"
 set "t[171]=restore_modern:Menu Contextuel Moderne~Restaurer le menu Win11:HIDDEN"
 set "t[172]=photo_viewer_toggle:Visionneuse Windows~Activer / Desactiver la Visionneuse de Photos"
-set "t[116]=list_folder:Lister un Dossier~Afficher et exporter le contenu d'un dossier"
+set "t[116]=list_folder_menu:Lister et Rechercher~Outils d'arborescence et recherche par extensions"
 set "t[124]=---:MATERIEL"
 set "t[125]=touch_screen_manager:Gestionnaire Ecran Tactile~Activer/Desactiver"
 set "t[126]=sys_print_manager:Gestionnaire d'Imprimantes~Lister/Vider le Spooler"
@@ -757,13 +757,28 @@ goto photo_viewer_toggle
 REM ===================================================================
 REM                    LISTER LE CONTENU D'UN DOSSIER
 REM ===================================================================
-:list_folder
-call :_lf_inner
+:list_folder_menu
+set "opts=Lister le contenu complet (Arborescence);Rechercher fichiers par extension (Videos, Audios, etc.);Retour"
+call :DynamicMenu "LISTING ET RECHERCHE PAR EXTENSIONS" "%opts%" "NONUMS"
+if "%errorlevel%"=="0" goto system_tools
+if "%errorlevel%"=="1" goto list_folder_all
+if "%errorlevel%"=="2" goto list_folder_ext
 goto system_tools
 
-:_lf_inner
-setlocal enabledelayedexpansion
+:list_folder_all
+call :_lf_select_path
+if not defined TMP_PATH goto list_folder_menu
+set "_lf_path=%TMP_PATH%"
+goto _lf_scan_tree
 
+:list_folder_ext
+call :_lf_select_path
+if not defined TMP_PATH goto list_folder_menu
+set "_lf_path=%TMP_PATH%"
+goto _lf_scan_ext
+
+:_lf_select_path
+setlocal enabledelayedexpansion
 REM -- Options fixes --
 set "_lf_p[1]=%USERPROFILE%\Documents"
 set "_lf_p[2]=%USERPROFILE%\Desktop"
@@ -774,7 +789,6 @@ set "_lf_p[6]=%USERPROFILE%\Pictures"
 set "_lf_cnt=6"
 set "_lf_opts=Documents~%USERPROFILE%\Documents;Bureau~%USERPROFILE%\Desktop;Telechargements~%USERPROFILE%\Downloads;Videos~%USERPROFILE%\Videos;Musique~%USERPROFILE%\Music;Images~%USERPROFILE%\Pictures"
 
-REM -- Detecter les autres lecteurs (USB, disques, reseau) --
 set "_lf_drv_ps=%TEMP%\lf_drv_%RANDOM%.ps1"
 set "_lf_drv_txt=%TEMP%\lf_drv_%RANDOM%.txt"
 >  "!_lf_drv_ps!" echo $types = @{2='Amovible';3='Disque';4='Reseau';5='CD-ROM'}
@@ -791,43 +805,54 @@ for /f "usebackq delims=" %%L in ("!_lf_drv_txt!") do (
     set "_lf_opts=!_lf_opts!;%%L"
 )
 del /f /q "!_lf_drv_txt!" 2>nul
-
-REM -- Finaliser le menu --
 set /a "_lf_cust=_lf_cnt+1"
 set /a "_lf_ret=_lf_cnt+2"
 set "_lf_opts=!_lf_opts!;[---];Chemin personnalise~Entrer un chemin manuellement;Retour"
 
-call :DynamicMenu "LISTER LE CONTENU D'UN DOSSIER" "!_lf_opts!" "NONUMS"
+:_lf_sel_loop
+call :DynamicMenu "SELECTIONNER UN EMPLACEMENT" "!_lf_opts!" "NONUMS"
 set "_lf_sel=!errorlevel!"
-set "_lf_path="
+set "TMP_PATH="
 if "!_lf_sel!"=="0"          ( endlocal & goto :eof )
 if "!_lf_sel!"=="!_lf_ret!"  ( endlocal & goto :eof )
-if "!_lf_sel!"=="1"  set "_lf_path=!_lf_p[1]!"
-if "!_lf_sel!"=="2"  set "_lf_path=!_lf_p[2]!"
-if "!_lf_sel!"=="3"  set "_lf_path=!_lf_p[3]!"
-if "!_lf_sel!"=="4"  set "_lf_path=!_lf_p[4]!"
-if "!_lf_sel!"=="5"  set "_lf_path=!_lf_p[5]!"
-if "!_lf_sel!"=="6"  set "_lf_path=!_lf_p[6]!"
-if "!_lf_sel!"=="7"  set "_lf_path=!_lf_p[7]!"
-if "!_lf_sel!"=="8"  set "_lf_path=!_lf_p[8]!"
-if "!_lf_sel!"=="9"  set "_lf_path=!_lf_p[9]!"
-if "!_lf_sel!"=="10" set "_lf_path=!_lf_p[10]!"
-if "!_lf_sel!"=="11" set "_lf_path=!_lf_p[11]!"
-if "!_lf_sel!"=="12" set "_lf_path=!_lf_p[12]!"
+if "!_lf_sel!"=="1"  set "TMP_PATH=!_lf_p[1]!"
+if "!_lf_sel!"=="2"  set "TMP_PATH=!_lf_p[2]!"
+if "!_lf_sel!"=="3"  set "TMP_PATH=!_lf_p[3]!"
+if "!_lf_sel!"=="4"  set "TMP_PATH=!_lf_p[4]!"
+if "!_lf_sel!"=="5"  set "TMP_PATH=!_lf_p[5]!"
+if "!_lf_sel!"=="6"  set "TMP_PATH=!_lf_p[6]!"
+if "!_lf_sel!"=="7"  set "TMP_PATH=!_lf_p[7]!"
+if "!_lf_sel!"=="8"  set "TMP_PATH=!_lf_p[8]!"
+if "!_lf_sel!"=="9"  set "TMP_PATH=!_lf_p[9]!"
+if "!_lf_sel!"=="10" set "TMP_PATH=!_lf_p[10]!"
+if "!_lf_sel!"=="11" set "TMP_PATH=!_lf_p[11]!"
+if "!_lf_sel!"=="12" set "TMP_PATH=!_lf_p[12]!"
+if "!_lf_sel!"=="13" set "TMP_PATH=!_lf_p[13]!"
+if "!_lf_sel!"=="14" set "TMP_PATH=!_lf_p[14]!"
+if "!_lf_sel!"=="15" set "TMP_PATH=!_lf_p[15]!"
+if "!_lf_sel!"=="16" set "TMP_PATH=!_lf_p[16]!"
 if "!_lf_sel!"=="!_lf_cust!" (
     cls
     echo.
     echo  Entrez le chemin complet du dossier a lister :
     echo.
-    set /p "_lf_path=  > "
+    set /p "TMP_PATH=  > "
 )
-if not defined _lf_path ( endlocal & goto _lf_inner )
-if not exist "!_lf_path!\" (
+if not defined TMP_PATH goto _lf_sel_loop
+if not exist "!TMP_PATH!\" (
     echo.
     echo  [!] Dossier introuvable.
     pause
-    endlocal & goto _lf_inner
+    goto _lf_sel_loop
 )
+for /f "delims=" %%A in ("!TMP_PATH!") do (
+    endlocal
+    set "TMP_PATH=%%~A"
+)
+goto :eof
+
+:_lf_scan_tree
+setlocal enabledelayedexpansion
 cls
 echo  [~] Analyse recursive : !_lf_path!
 echo.
@@ -903,7 +928,99 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "!LF_PS!"
 del /f /q "!LF_PS!" 2>nul
 echo.
 pause
-endlocal & goto _lf_inner
+endlocal & goto list_folder_menu
+
+:_lf_scan_ext
+setlocal enabledelayedexpansion
+:ext_menu_loop
+set "ext_opts=Videos (.mp4, .mkv, .avi...);Audios (.mp3, .wav...);Documents (.pdf, .docx...);Images (.jpg, .png...);Archives (.zip, .rar...);Executables (.exe, .msi...);Autres Extensions...;Retour"
+call :DynamicMenu "RECHERCHE EXTENSIONS : !_lf_path!" "!ext_opts!" "NONUMS"
+set "ext_sel=!errorlevel!"
+if "!ext_sel!"=="0" (endlocal & goto list_folder_menu)
+if "!ext_sel!"=="8" (endlocal & goto list_folder_menu)
+
+set "ext_filter="
+set "ext_name="
+if "!ext_sel!"=="1" (set "ext_filter=*.mp4,*.mkv,*.avi,*.mov,*.wmv" & set "ext_name=Videos")
+if "!ext_sel!"=="2" (set "ext_filter=*.mp3,*.wav,*.flac,*.m4a,*.ogg" & set "ext_name=Audios")
+if "!ext_sel!"=="3" (set "ext_filter=*.pdf,*.docx,*.xlsx,*.pptx,*.txt" & set "ext_name=Documents")
+if "!ext_sel!"=="4" (set "ext_filter=*.jpg,*.jpeg,*.png,*.gif,*.bmp,*.webp" & set "ext_name=Images")
+if "!ext_sel!"=="5" (set "ext_filter=*.zip,*.rar,*.7z,*.tar,*.gz" & set "ext_name=Archives")
+if "!ext_sel!"=="6" (set "ext_filter=*.exe,*.bat,*.ps1,*.msi,*.cmd" & set "ext_name=Executables")
+if "!ext_sel!"=="7" (
+    cls
+    echo.
+    echo  Entrez les extensions separees par des virgules (ex: *.txt,*.csv)
+    set /p "ext_filter=  > "
+    if not defined ext_filter goto ext_menu_loop
+    set "ext_name=Personnalises"
+)
+
+cls
+echo  [~] Recherche des fichiers !ext_name! dans : !_lf_path!
+echo.
+set "LF_PS=%TEMP%\list_ext_%RANDOM%.ps1"
+>  "!LF_PS!" echo $path = '!_lf_path!'
+>> "!LF_PS!" echo $filters = '!ext_filter!' -split ',' ^| ForEach-Object { "$($_.Trim())" }
+>> "!LF_PS!" echo $base = $path.TrimEnd('\')
+>> "!LF_PS!" echo $leaf = Split-Path $base -Leaf
+>> "!LF_PS!" echo if (-not $leaf) { $leaf = $base }
+>> "!LF_PS!" echo $leaf = $leaf -replace '[:\\/:*?"^<^>^|]', ''
+>> "!LF_PS!" echo $stamp = Get-Date -Format 'yyyyMMdd_HHmm'
+>> "!LF_PS!" echo $out = Join-Path '!SCRIPT_DIR!' "Recherche_!ext_name!_${leaf}_${stamp}.txt"
+>> "!LF_PS!" echo Write-Host "  [~] Scan en cours... (Appuyez sur ECHAP pour annuler)" -ForegroundColor Cyan
+>> "!LF_PS!" echo $cancelled = $false
+>> "!LF_PS!" echo $files = [System.Collections.Generic.List[System.IO.FileInfo]]::new()
+>> "!LF_PS!" echo try {
+>> "!LF_PS!" echo     Get-ChildItem -LiteralPath $path -Include $filters -Recurse -File -ErrorAction SilentlyContinue ^| ForEach-Object {
+>> "!LF_PS!" echo         if ([System.Console]::KeyAvailable) {
+>> "!LF_PS!" echo             if ([System.Console]::ReadKey($true).Key -eq [System.ConsoleKey]::Escape) {
+>> "!LF_PS!" echo                 Write-Host "  [X] Annulation en cours..." -ForegroundColor Red
+>> "!LF_PS!" echo                 $cancelled = $true
+>> "!LF_PS!" echo                 break
+>> "!LF_PS!" echo             }
+>> "!LF_PS!" echo         }
+>> "!LF_PS!" echo         $files.Add($_)
+>> "!LF_PS!" echo         Write-Host ("  Trouve: " + $_.Name) -ForegroundColor DarkGray
+>> "!LF_PS!" echo     }
+>> "!LF_PS!" echo } catch { Write-Host "  [!] Erreur fatale : $_" -ForegroundColor Red }
+>> "!LF_PS!" echo Write-Host ""
+>> "!LF_PS!" echo Write-Host "  Traitement et tri par taille..." -ForegroundColor Cyan
+>> "!LF_PS!" echo $files = $files ^| Sort-Object Length -Descending
+>> "!LF_PS!" echo $totalBytes = ($files ^| Measure-Object -Property Length -Sum).Sum
+>> "!LF_PS!" echo $totalMB = if ($totalBytes) { [math]::Round($totalBytes / 1MB, 2) } else { 0 }
+>> "!LF_PS!" echo Write-Host "  Trouves : $($files.Count) fichiers ($totalMB MB)" -ForegroundColor Yellow
+>> "!LF_PS!" echo $sep = '=' * 100
+>> "!LF_PS!" echo $lines = [System.Collections.Generic.List[string]]::new()
+>> "!LF_PS!" echo $lines.Add($sep)
+>> "!LF_PS!" echo $lines.Add("  Dossier cible    : $path")
+>> "!LF_PS!" echo $lines.Add("  Filtres demandes : !ext_filter!")
+>> "!LF_PS!" echo $lines.Add("  Total trouves    : $($files.Count) fichiers")
+>> "!LF_PS!" echo $lines.Add("  Poids total      : $totalMB MB")
+>> "!LF_PS!" echo $lines.Add($sep)
+>> "!LF_PS!" echo $lines.Add("")
+>> "!LF_PS!" echo $lines.Add((( "TAILLE".PadRight(10) + "│ " + "NOM DU FICHIER".PadRight(50) + "│ " + "CHEMIN COMPLET" )))
+>> "!LF_PS!" echo $lines.Add("-" * 120)
+>> "!LF_PS!" echo foreach ($f in $files) {
+>> "!LF_PS!" echo     $kb = [math]::Round($f.Length / 1KB, 1)
+>> "!LF_PS!" echo     $sz = "$kb KB"
+>> "!LF_PS!" echo     if ($kb -gt 1024) { $sz = "$([math]::Round($f.Length / 1MB, 2)) MB" }
+>> "!LF_PS!" echo     if ($kb -gt 1048576) { $sz = "$([math]::Round($f.Length / 1GB, 2)) GB" }
+>> "!LF_PS!" echo     $n = $f.Name
+>> "!LF_PS!" echo     if ($n.Length -gt 48) { $n = $n.Substring(0, 45) + "..." }
+>> "!LF_PS!" echo     $lines.Add(( $sz.PadRight(10) + "│ " + $n.PadRight(50) + "│ " + $f.FullName ))
+>> "!LF_PS!" echo }
+>> "!LF_PS!" echo $lines.ToArray() ^| Out-File -FilePath $out -Encoding UTF8
+>> "!LF_PS!" echo Write-Host ""
+>> "!LF_PS!" echo Write-Host "  [OK] Exporte : $out" -ForegroundColor Green
+>> "!LF_PS!" echo Start-Sleep -Seconds 1
+>> "!LF_PS!" echo Start-Process "notepad.exe" -ArgumentList "`"$out`""
+
+powershell -NoProfile -ExecutionPolicy Bypass -File "!LF_PS!"
+del /f /q "!LF_PS!" 2>nul
+echo.
+pause
+endlocal & goto list_folder_menu
 
 REM ===================================================================
 REM                    GESTIONNAIRE DE DISQUES - FORMATAGE AVEC DISKPART
