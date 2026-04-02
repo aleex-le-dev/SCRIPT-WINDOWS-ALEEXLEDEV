@@ -205,46 +205,47 @@ set "t[119]=sys_gaming_mode:Mode Gaming~Booster les perfs jeux"
 set "t[120]=sys_shortcuts_bureau:Raccourcis Bureau 1-Clic~Redemarrer/Eteindre"
 set "t[121]=activate_classic:Menu Contextuel Classique~Activer le menu classique Win10:HIDDEN"
 set "t[122]=restore_modern:Menu Contextuel Moderne~Restaurer le menu Win11:HIDDEN"
-set "t[123]=---:MATERIEL"
-set "t[124]=touch_screen_manager:Gestionnaire Ecran Tactile~Activer/Desactiver"
-set "t[125]=sys_print_manager:Gestionnaire d'Imprimantes~Lister/Vider le Spooler"
-set "t[126]=cl_all:Tout Nettoyer d'un coup~Nettoyage automatique complet:HIDDEN"
-set "t[127]=cyber_exposure_audit:Audit d'Exposition des Donnees~Recherche fichiers sensibles:HIDDEN"
-set "t[128]=net_menu_wifi:Wi-Fi - Hors connexion~Recherche, audit et crack de reseaux Wi-Fi:HIDDEN"
-set "t[129]=net_menu_interne:Reseau Interne - Connecte~Scanner LAN, flux, DNS, diagnostic local:HIDDEN"
-set "t[130]=net_menu_distant:Reseau Distant~Scanner cible WAN, IP Grabber, post-exploitation:HIDDEN"
-set "t[131]=cyber_wifi_audit:Analyseur Wi-Fi (Evil Twin)~Detection de faux points d'acces:HIDDEN"
-set "t[132]=hw_smart:Test SMART des Disques~Sante et duree de vie:HIDDEN"
-set "t[133]=hw_winsat:Score WinSAT~Indice de performance Windows:HIDDEN"
-set "t[134]=hw_ram_test:Test RAM (Windows)~Outil de diagnostic memoire:HIDDEN"
-set "t[135]=hw_full_report:Rapport Materiel Complet~Tous les composants:HIDDEN"
-set "t[136]=hw_all:Tous les Tests~Lancer tous les tests materiels:HIDDEN"
-set "t[137]=touch_restart:Redemarrer le pilote tactile~Reset du service et peripherique:HIDDEN"
-set "t[138]=touch_disable:Desactiver l'ecran tactile~Desactive le pilote HID tactile:HIDDEN"
-set "t[139]=touch_enable:Activer l'ecran tactile~Reactive le pilote HID tactile:HIDDEN"
-set "t[140]=print_list:Lister les imprimantes~Affiche toutes les imprimantes:HIDDEN"
-set "t[141]=print_clear_queue:Vider la file d'attente~Supprime les jobs bloques:HIDDEN"
-set "t[142]=print_remove:Supprimer une imprimante~Retirer une imprimante installee:HIDDEN"
-set "t[143]=print_restart_spooler:Redemarrer le Spooler~Relance le service d'impression:HIDDEN"
-set "t[144]=pp_balanced:Plan Equilibre~Usage quotidien (batterie + perf):HIDDEN"
-set "t[145]=pp_saver:Plan Economies d'Energie~Autonomie maximale:HIDDEN"
-set "t[146]=pp_high:Plan Hautes Performances~Maximum de puissance:HIDDEN"
-set "t[147]=pp_ultimate:Plan Performances Ultimes~Plan secret Windows:HIDDEN"
-set "t[148]=pp_current:Voir le Plan Actuel~Afficher le plan d'alimentation:HIDDEN"
-set "t[149]=pp_list:Lister tous les Plans~Tous les plans disponibles:HIDDEN"
-set "t[150]=net_fast_discover:Scan de Presence LAN~IP, Nom, MAC et Constructeur de chaque hote:HIDDEN"
-set "t[151]=net_web_hunt:Chasse aux Interfaces Web~Ports 80, 443, 8080, 8443 (Routeurs, NAS, Switchs):HIDDEN"
-set "t[152]=net_service_enum:Enumeration des Services~SSH, Telnet, RDP, FTP, VNC, Imprimantes:HIDDEN"
-set "t[153]=net_vuln_check:Verification des Failles~Partages C$ et acces Guest ouverts:HIDDEN"
-set "t[154]=sys_loot_all:Extraction Finale LAN~Dump Wi-Fi, credentials et historique local:HIDDEN"
-set "t[155]=net_wifi_scan:Scan Reseaux Wi-Fi~Analyse des reseaux environnants (SSID, BSSID, signal, securite):HIDDEN"
-set "t[156]=net_wifi_target:Analyser une Cible Wi-Fi~Informations detaillees sur un reseau selectionne:HIDDEN"
-set "t[157]=net_wifi_crack:Cracker la Cle Wi-Fi~Profils sauvegardes + attaque dictionnaire WPA2-PSK:HIDDEN"
-set "t[158]=dump_browser_local:Extracteur Navigateurs (Script)~Nouvelle methode avec decryptage DPAPI:HIDDEN"
-set "t[160]=gather_browser_history:Analyse Historique Navigateurs~Detecte les URLs sensibles dans l'historique Chrome/Edge:HIDDEN"
-set "t[161]=search_sensitive_docs:Scan Documents Critiques~Score de risque v5.5 - SSH, AWS, IBAN, mots de passe:HIDDEN"
-set "t[162]=scan_web_routes:Audit Routes Web~Detecte .env, wp-config, /api, /admin exposes sur une URL:HIDDEN"
-set "t[159]=Chrome, Edge - Dechiffrement DPAPI des identifiants et mots de passe:HIDDEN"
+set "t[123]=photo_viewer_toggle:Visionneuse Windows~Activer / Desactiver la Visionneuse de Photos"
+set "t[124]=---:MATERIEL"
+set "t[125]=touch_screen_manager:Gestionnaire Ecran Tactile~Activer/Desactiver"
+set "t[126]=sys_print_manager:Gestionnaire d'Imprimantes~Lister/Vider le Spooler"
+set "t[127]=cl_all:Tout Nettoyer d'un coup~Nettoyage automatique complet:HIDDEN"
+set "t[128]=cyber_exposure_audit:Audit d'Exposition des Donnees~Recherche fichiers sensibles:HIDDEN"
+set "t[129]=net_menu_wifi:Wi-Fi - Hors connexion~Recherche, audit et crack de reseaux Wi-Fi:HIDDEN"
+set "t[130]=net_menu_interne:Reseau Interne - Connecte~Scanner LAN, flux, DNS, diagnostic local:HIDDEN"
+set "t[131]=net_menu_distant:Reseau Distant~Scanner cible WAN, IP Grabber, post-exploitation:HIDDEN"
+set "t[132]=cyber_wifi_audit:Analyseur Wi-Fi (Evil Twin)~Detection de faux points d'acces:HIDDEN"
+set "t[133]=hw_smart:Test SMART des Disques~Sante et duree de vie:HIDDEN"
+set "t[134]=hw_winsat:Score WinSAT~Indice de performance Windows:HIDDEN"
+set "t[135]=hw_ram_test:Test RAM (Windows)~Outil de diagnostic memoire:HIDDEN"
+set "t[136]=hw_full_report:Rapport Materiel Complet~Tous les composants:HIDDEN"
+set "t[137]=hw_all:Tous les Tests~Lancer tous les tests materiels:HIDDEN"
+set "t[138]=touch_restart:Redemarrer le pilote tactile~Reset du service et peripherique:HIDDEN"
+set "t[139]=touch_disable:Desactiver l'ecran tactile~Desactive le pilote HID tactile:HIDDEN"
+set "t[140]=touch_enable:Activer l'ecran tactile~Reactive le pilote HID tactile:HIDDEN"
+set "t[141]=print_list:Lister les imprimantes~Affiche toutes les imprimantes:HIDDEN"
+set "t[142]=print_clear_queue:Vider la file d'attente~Supprime les jobs bloques:HIDDEN"
+set "t[143]=print_remove:Supprimer une imprimante~Retirer une imprimante installee:HIDDEN"
+set "t[144]=print_restart_spooler:Redemarrer le Spooler~Relance le service d'impression:HIDDEN"
+set "t[145]=pp_balanced:Plan Equilibre~Usage quotidien (batterie + perf):HIDDEN"
+set "t[146]=pp_saver:Plan Economies d'Energie~Autonomie maximale:HIDDEN"
+set "t[147]=pp_high:Plan Hautes Performances~Maximum de puissance:HIDDEN"
+set "t[148]=pp_ultimate:Plan Performances Ultimes~Plan secret Windows:HIDDEN"
+set "t[149]=pp_current:Voir le Plan Actuel~Afficher le plan d'alimentation:HIDDEN"
+set "t[150]=pp_list:Lister tous les Plans~Tous les plans disponibles:HIDDEN"
+set "t[151]=net_fast_discover:Scan de Presence LAN~IP, Nom, MAC et Constructeur de chaque hote:HIDDEN"
+set "t[152]=net_web_hunt:Chasse aux Interfaces Web~Ports 80, 443, 8080, 8443 (Routeurs, NAS, Switchs):HIDDEN"
+set "t[153]=net_service_enum:Enumeration des Services~SSH, Telnet, RDP, FTP, VNC, Imprimantes:HIDDEN"
+set "t[154]=net_vuln_check:Verification des Failles~Partages C$ et acces Guest ouverts:HIDDEN"
+set "t[155]=sys_loot_all:Extraction Finale LAN~Dump Wi-Fi, credentials et historique local:HIDDEN"
+set "t[156]=net_wifi_scan:Scan Reseaux Wi-Fi~Analyse des reseaux environnants (SSID, BSSID, signal, securite):HIDDEN"
+set "t[157]=net_wifi_target:Analyser une Cible Wi-Fi~Informations detaillees sur un reseau selectionne:HIDDEN"
+set "t[158]=net_wifi_crack:Cracker la Cle Wi-Fi~Profils sauvegardes + attaque dictionnaire WPA2-PSK:HIDDEN"
+set "t[159]=dump_browser_local:Extracteur Navigateurs (Script)~Nouvelle methode avec decryptage DPAPI:HIDDEN"
+set "t[161]=gather_browser_history:Analyse Historique Navigateurs~Detecte les URLs sensibles dans l'historique Chrome/Edge:HIDDEN"
+set "t[162]=search_sensitive_docs:Scan Documents Critiques~Score de risque v5.5 - SSH, AWS, IBAN, mots de passe:HIDDEN"
+set "t[163]=scan_web_routes:Audit Routes Web~Detecte .env, wp-config, /api, /admin exposes sur une URL:HIDDEN"
+set "t[160]=Chrome, Edge - Dechiffrement DPAPI des identifiants et mots de passe:HIDDEN"
 REM Auto-detection du nombre de scripts (plus besoin de mettre a jour manuellement)
 set "total_tools=0"
 for /l %%I in (1,1,500) do if defined t[%%I] set "total_tools=%%I"
@@ -714,6 +715,49 @@ if /i "%restart_explorer%"=="O" (
 echo.
 pause
 goto context_menu
+
+REM ===================================================================
+REM                    VISIONNEUSE DE PHOTOS WINDOWS
+REM ===================================================================
+:photo_viewer_toggle
+reg query "HKCR\Applications\photoviewer.dll\shell\open" >nul 2>&1
+if %errorlevel%==0 (
+    set "pv_state=on"
+    set "pv_opts=Desactiver la Visionneuse~La visionneuse de photos Windows est actuellement ACTIVEE"
+) else (
+    set "pv_state=off"
+    set "pv_opts=Activer la Visionneuse~La visionneuse de photos Windows est actuellement DESACTIVEE"
+)
+call :DynamicMenu "VISIONNEUSE DE PHOTOS WINDOWS" "!pv_opts!"
+if "!errorlevel!"=="0" goto system_tools
+if "!pv_state!"=="on" goto pv_disable
+goto pv_enable
+
+:pv_enable
+setlocal
+set "PV_CMD=%SystemRoot%\System32\rundll32.exe \"%ProgramFiles%\Windows Photo Viewer\PhotoViewer.dll\", ImageView_Fullscreen %%1"
+reg add "HKCR\Applications\photoviewer.dll\shell\open" /v "MuiVerb" /t REG_SZ /d "@photoviewer.dll,-3043" /f >nul 2>&1
+reg add "HKCR\Applications\photoviewer.dll\shell\open\command" /ve /t REG_EXPAND_SZ /d "%PV_CMD%" /f >nul 2>&1
+reg add "HKCR\Applications\photoviewer.dll\shell\open\DropTarget" /v "Clsid" /t REG_SZ /d "{FFE2A43C-56B9-4bf5-9A79-CC6D4285608A}" /f >nul 2>&1
+reg add "HKCR\Applications\photoviewer.dll\shell\print\command" /ve /t REG_EXPAND_SZ /d "%PV_CMD%" /f >nul 2>&1
+reg add "HKCR\Applications\photoviewer.dll\shell\print\DropTarget" /v "Clsid" /t REG_SZ /d "{60fd46de-f830-4894-a628-6fa81bc0190d}" /f >nul 2>&1
+echo.
+echo   [OK] Visionneuse Windows activee.
+echo   [i] Clic droit sur une image ^> "Ouvrir avec" pour la definir par defaut.
+echo.
+pause
+endlocal
+goto photo_viewer_toggle
+
+:pv_disable
+setlocal
+reg delete "HKCR\Applications\photoviewer.dll" /f >nul 2>&1
+echo.
+echo   [OK] Visionneuse Windows desactivee.
+echo.
+pause
+endlocal
+goto photo_viewer_toggle
 
 REM ===================================================================
 REM                    GESTIONNAIRE DE DISQUES - FORMATAGE AVEC DISKPART

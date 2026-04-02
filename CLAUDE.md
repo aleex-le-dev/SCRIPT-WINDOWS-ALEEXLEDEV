@@ -12,8 +12,10 @@
 - **Indexation `t[N]` :** - Format : `set "t[N]=label:Titre~Description[:HIDDEN]"` (en début de script).
   - Outils hors `t[N]` : Définir `set "map_label=Titre~Description"`.
   - `total_tools` : Laisser le script l'auto-calculer via la boucle `for /l`.
-- **Interface :** Interdiction de boucles `for` manuelles pour les menus.
-  - Utilisation : `call :AutoMenu "TITRE" "label1;[---];label2" "OPTIONS"`
+- **Interface :** Interdiction de boucles `for` manuelles pour les menus. **Interdiction de `set /p` pour la navigation** (jamais de numéros saisis au clavier).
+  - Toujours utiliser les flèches : `call :AutoMenu "TITRE" "label1;[---];label2" "OPTIONS"` ou `call :DynamicMenu "TITRE" "!opts!"`
+  - `AutoMenu` : pour des labels fixes issus de `t[N]` (avec `map_label` optionnel).
+  - `DynamicMenu` : pour des options construites dynamiquement (texte libre, état détecté à la volée).
 
 ## 🛠️ Skills de Développement (Anti-Bug IA)
 ### 1. Gestion des chaînes complexes (Règle d'Or)
