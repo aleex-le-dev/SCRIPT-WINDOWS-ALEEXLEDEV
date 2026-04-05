@@ -10,6 +10,7 @@ webhook_tokens.txt
 
 # Ignore les dossiers de collecte
 DiagNav
+DiagNav.zip
 
 # Ignore Windows executables
 *.exe
