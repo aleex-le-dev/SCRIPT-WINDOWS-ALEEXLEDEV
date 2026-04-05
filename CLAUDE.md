@@ -16,6 +16,10 @@
   - Toujours utiliser les flèches : `call :AutoMenu "TITRE" "label1;[---];label2" "OPTIONS"` ou `call :DynamicMenu "TITRE" "!opts!"`
   - `AutoMenu` : pour des labels fixes issus de `t[N]` (avec `map_label` optionnel).
   - `DynamicMenu` : pour des options construites dynamiquement (texte libre, état détecté à la volée).
+  - **INTERDIT absolu** : demander à l'utilisateur de saisir une lettre (O/N, Y/N, `Read-Host`, `$host.UI.PromptForChoice`, etc.). Navigation uniquement aux flèches.
+  - **Règle de la page :** le choix doit toujours apparaître **en bas du contenu actuel**, jamais sur une nouvelle page.
+    - Si le choix suit un affichage Batch → `DynamicMenu`.
+    - Si le choix suit un affichage PS1 → **sélecteur inline PS1** (flèches gauche/droite, `[>> OUI <<]  [ NON ]`, `ReadKey`, `exit 0/1`). Le PS1 gère lui-même l'export et retourne son code à Batch. **Ne jamais passer la main à `DynamicMenu` après un PS1** : ça efface l'écran.
 
 ## 🛠️ Skills de Développement (Anti-Bug IA)
 ### 1. Gestion des chaînes complexes (Règle d'Or)

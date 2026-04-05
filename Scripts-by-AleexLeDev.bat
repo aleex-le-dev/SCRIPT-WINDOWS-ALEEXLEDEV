@@ -931,11 +931,33 @@ set "LF_PS=%TEMP%\list_folder_%RANDOM%.ps1"
 >> "!LF_PS!" echo $header += $sep
 >> "!LF_PS!" echo $header += ""
 >> "!LF_PS!" echo $all = $header + $script:lines.ToArray() + @('', $sep)
->> "!LF_PS!" echo $all ^| Out-File -FilePath $out -Encoding UTF8
+>> "!LF_PS!" echo $sel = 0
+>> "!LF_PS!" echo function Show-Choice {
+>> "!LF_PS!" echo     param($s)
+>> "!LF_PS!" echo     $c = $host.UI.RawUI.CursorPosition; $c.X = 0; $host.UI.RawUI.CursorPosition = $c
+>> "!LF_PS!" echo     Write-Host "  Exporter la liste en TXT ?  " -NoNewline
+>> "!LF_PS!" echo     if ($s -eq 0) { Write-Host " OUI " -NoNewline -ForegroundColor Black -BackgroundColor Green; Write-Host "   NON  " -ForegroundColor DarkGray }
+>> "!LF_PS!" echo     else          { Write-Host " OUI " -NoNewline -ForegroundColor DarkGray;                    Write-Host "   NON  " -ForegroundColor Black -BackgroundColor Red }
+>> "!LF_PS!" echo }
 >> "!LF_PS!" echo Write-Host ""
->> "!LF_PS!" echo Write-Host "  [OK] Exporte : $out" -ForegroundColor Green
->> "!LF_PS!" echo Start-Sleep -Seconds 1
->> "!LF_PS!" echo Invoke-Item $out
+>> "!LF_PS!" echo Show-Choice $sel
+>> "!LF_PS!" echo while ($true) {
+>> "!LF_PS!" echo     $k = [Console]::ReadKey($true)
+>> "!LF_PS!" echo     if ($k.Key -eq 'LeftArrow' -or $k.Key -eq 'RightArrow') {
+>> "!LF_PS!" echo         $sel = 1 - $sel
+>> "!LF_PS!" echo         $c = $host.UI.RawUI.CursorPosition; $c.Y--; $host.UI.RawUI.CursorPosition = $c
+>> "!LF_PS!" echo         Show-Choice $sel
+>> "!LF_PS!" echo     } elseif ($k.Key -eq 'Enter') { break }
+>> "!LF_PS!" echo     elseif ($k.Key -eq 'Escape') { $sel = 1; break }
+>> "!LF_PS!" echo }
+>> "!LF_PS!" echo Write-Host ""
+>> "!LF_PS!" echo if ($sel -eq 0) {
+>> "!LF_PS!" echo     $all ^| Out-File -FilePath $out -Encoding UTF8
+>> "!LF_PS!" echo     Write-Host "  [OK] Exporte : $out" -ForegroundColor Green
+>> "!LF_PS!" echo     Start-Sleep -Seconds 1
+>> "!LF_PS!" echo     Invoke-Item $out
+>> "!LF_PS!" echo     exit 0
+>> "!LF_PS!" echo } else { exit 1 }
 powershell -NoProfile -ExecutionPolicy Bypass -File "!LF_PS!"
 del /f /q "!LF_PS!" 2>nul
 echo.
@@ -1073,11 +1095,33 @@ set "LF_PS=%TEMP%\list_ext_%RANDOM%.ps1"
 >> "!LF_PS!" echo     if ($n.Length -gt 48) { $n = $n.Substring(0, 45) + "..." }
 >> "!LF_PS!" echo     $lines.Add(( $sz.PadRight(10) + $bar + $n.PadRight(50) + $bar + $f.FullName ))
 >> "!LF_PS!" echo }
->> "!LF_PS!" echo $lines.ToArray() ^| Out-File -FilePath $out -Encoding UTF8
+>> "!LF_PS!" echo $sel = 0
+>> "!LF_PS!" echo function Show-Choice {
+>> "!LF_PS!" echo     param($s)
+>> "!LF_PS!" echo     $c = $host.UI.RawUI.CursorPosition; $c.X = 0; $host.UI.RawUI.CursorPosition = $c
+>> "!LF_PS!" echo     Write-Host "  Exporter les resultats en TXT ?  " -NoNewline
+>> "!LF_PS!" echo     if ($s -eq 0) { Write-Host " OUI " -NoNewline -ForegroundColor Black -BackgroundColor Green; Write-Host "   NON  " -ForegroundColor DarkGray }
+>> "!LF_PS!" echo     else          { Write-Host " OUI " -NoNewline -ForegroundColor DarkGray;                    Write-Host "   NON  " -ForegroundColor Black -BackgroundColor Red }
+>> "!LF_PS!" echo }
 >> "!LF_PS!" echo Write-Host ""
->> "!LF_PS!" echo Write-Host "  [OK] Exporte : $out" -ForegroundColor Green
->> "!LF_PS!" echo Start-Sleep -Seconds 1
->> "!LF_PS!" echo Start-Process "notepad.exe" -ArgumentList "`"$out`""
+>> "!LF_PS!" echo Show-Choice $sel
+>> "!LF_PS!" echo while ($true) {
+>> "!LF_PS!" echo     $k = [Console]::ReadKey($true)
+>> "!LF_PS!" echo     if ($k.Key -eq 'LeftArrow' -or $k.Key -eq 'RightArrow') {
+>> "!LF_PS!" echo         $sel = 1 - $sel
+>> "!LF_PS!" echo         $c = $host.UI.RawUI.CursorPosition; $c.Y--; $host.UI.RawUI.CursorPosition = $c
+>> "!LF_PS!" echo         Show-Choice $sel
+>> "!LF_PS!" echo     } elseif ($k.Key -eq 'Enter') { break }
+>> "!LF_PS!" echo     elseif ($k.Key -eq 'Escape') { $sel = 1; break }
+>> "!LF_PS!" echo }
+>> "!LF_PS!" echo Write-Host ""
+>> "!LF_PS!" echo if ($sel -eq 0) {
+>> "!LF_PS!" echo     $lines.ToArray() ^| Out-File -FilePath $out -Encoding UTF8
+>> "!LF_PS!" echo     Write-Host "  [OK] Exporte : $out" -ForegroundColor Green
+>> "!LF_PS!" echo     Start-Sleep -Seconds 1
+>> "!LF_PS!" echo     Start-Process "notepad.exe" -ArgumentList "`"$out`""
+>> "!LF_PS!" echo     exit 0
+>> "!LF_PS!" echo } else { exit 1 }
 
 powershell -NoProfile -ExecutionPolicy Bypass -File "!LF_PS!"
 del /f /q "!LF_PS!" 2>nul
