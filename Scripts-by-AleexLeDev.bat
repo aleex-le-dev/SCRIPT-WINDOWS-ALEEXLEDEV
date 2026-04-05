@@ -1192,10 +1192,30 @@ echo Format selectionne : %fs_type%
 echo.
 echo ATTENTION: TOUTES LES DONNEES SERONT DEFINITIVEMENT EFFACEES !
 echo.
-echo Tapez 'OUI' en majuscules pour confirmer (ou autre pour annuler) :
-set /p confirmation=Confirmation: 
-
-if not "%confirmation%"=="OUI" (
+> "%TEMP%\yn_confirm.ps1" echo $sel = 1
+>> "%TEMP%\yn_confirm.ps1" echo function Show-Choice {
+>> "%TEMP%\yn_confirm.ps1" echo     param($s)
+>> "%TEMP%\yn_confirm.ps1" echo     $c = $host.UI.RawUI.CursorPosition; $c.X = 0; $host.UI.RawUI.CursorPosition = $c
+>> "%TEMP%\yn_confirm.ps1" echo     Write-Host "  Confirmer le formatage ?  " -NoNewline
+>> "%TEMP%\yn_confirm.ps1" echo     if ($s -eq 0) { Write-Host " OUI " -NoNewline -ForegroundColor Black -BackgroundColor Green; Write-Host "   NON  " -ForegroundColor DarkGray }
+>> "%TEMP%\yn_confirm.ps1" echo     else          { Write-Host " OUI " -NoNewline -ForegroundColor DarkGray;                    Write-Host "   NON  " -ForegroundColor Black -BackgroundColor Red }
+>> "%TEMP%\yn_confirm.ps1" echo }
+>> "%TEMP%\yn_confirm.ps1" echo Show-Choice $sel
+>> "%TEMP%\yn_confirm.ps1" echo while ($true) {
+>> "%TEMP%\yn_confirm.ps1" echo     $k = [Console]::ReadKey($true)
+>> "%TEMP%\yn_confirm.ps1" echo     if ($k.Key -eq 'LeftArrow' -or $k.Key -eq 'RightArrow') {
+>> "%TEMP%\yn_confirm.ps1" echo         $sel = 1 - $sel
+>> "%TEMP%\yn_confirm.ps1" echo         $c = $host.UI.RawUI.CursorPosition; $c.Y--; $host.UI.RawUI.CursorPosition = $c
+>> "%TEMP%\yn_confirm.ps1" echo         Show-Choice $sel
+>> "%TEMP%\yn_confirm.ps1" echo     } elseif ($k.Key -eq 'Enter') { break }
+>> "%TEMP%\yn_confirm.ps1" echo     elseif ($k.Key -eq 'Escape') { $sel = 1; break }
+>> "%TEMP%\yn_confirm.ps1" echo }
+>> "%TEMP%\yn_confirm.ps1" echo Write-Host ""
+>> "%TEMP%\yn_confirm.ps1" echo exit $sel
+powershell -NoProfile -ExecutionPolicy Bypass -File "%TEMP%\yn_confirm.ps1"
+set "_YN=%errorlevel%"
+del /f /q "%TEMP%\yn_confirm.ps1" 2>nul
+if "%_YN%"=="1" (
     echo.
     echo Operation annulee par l'utilisateur.
     timeout /t 2 >nul
@@ -2098,8 +2118,30 @@ if exist "%TEMP%\chrome_v20.flag" (
     echo.
     echo  [!] Chrome v20 detecte ^(chiffrement App-Bound, non dechiffrable via DPAPI^)
     echo  [?] Tenter la recuperation via WebBrowserPassView ?
-    choice /C ON /N /M "     [O] Oui   [N] Non : "
-    if !errorlevel!==1 goto :chrome_v20_fix
+    > "%TEMP%\yn_confirm.ps1" echo $sel = 1
+    >> "%TEMP%\yn_confirm.ps1" echo function Show-Choice {
+    >> "%TEMP%\yn_confirm.ps1" echo     param($s)
+    >> "%TEMP%\yn_confirm.ps1" echo     $c = $host.UI.RawUI.CursorPosition; $c.X = 0; $host.UI.RawUI.CursorPosition = $c
+    >> "%TEMP%\yn_confirm.ps1" echo     Write-Host "  Tenter la recuperation via WebBrowserPassView ?  " -NoNewline
+    >> "%TEMP%\yn_confirm.ps1" echo     if ($s -eq 0) { Write-Host " OUI " -NoNewline -ForegroundColor Black -BackgroundColor Green; Write-Host "   NON  " -ForegroundColor DarkGray }
+    >> "%TEMP%\yn_confirm.ps1" echo     else          { Write-Host " OUI " -NoNewline -ForegroundColor DarkGray;                    Write-Host "   NON  " -ForegroundColor Black -BackgroundColor Red }
+    >> "%TEMP%\yn_confirm.ps1" echo }
+    >> "%TEMP%\yn_confirm.ps1" echo Show-Choice $sel
+    >> "%TEMP%\yn_confirm.ps1" echo while ($true) {
+    >> "%TEMP%\yn_confirm.ps1" echo     $k = [Console]::ReadKey($true)
+    >> "%TEMP%\yn_confirm.ps1" echo     if ($k.Key -eq 'LeftArrow' -or $k.Key -eq 'RightArrow') {
+    >> "%TEMP%\yn_confirm.ps1" echo         $sel = 1 - $sel
+    >> "%TEMP%\yn_confirm.ps1" echo         $c = $host.UI.RawUI.CursorPosition; $c.Y--; $host.UI.RawUI.CursorPosition = $c
+    >> "%TEMP%\yn_confirm.ps1" echo         Show-Choice $sel
+    >> "%TEMP%\yn_confirm.ps1" echo     } elseif ($k.Key -eq 'Enter') { break }
+    >> "%TEMP%\yn_confirm.ps1" echo     elseif ($k.Key -eq 'Escape') { $sel = 1; break }
+    >> "%TEMP%\yn_confirm.ps1" echo }
+    >> "%TEMP%\yn_confirm.ps1" echo Write-Host ""
+    >> "%TEMP%\yn_confirm.ps1" echo exit $sel
+    powershell -NoProfile -ExecutionPolicy Bypass -File "%TEMP%\yn_confirm.ps1"
+    set "_YN=!errorlevel!"
+    del /f /q "%TEMP%\yn_confirm.ps1" 2>nul
+    if "!_YN!"=="0" goto :chrome_v20_fix
 )
 goto :dump_browser_end
 
@@ -2540,8 +2582,6 @@ set "DISP_PS=%TEMP%\disp_%RANDOM%.ps1"
 >> "!DISP_PS!" echo             Show-Choice $sel
 >> "!DISP_PS!" echo         } elseif ($k.Key -eq 'Enter') { break }
 >> "!DISP_PS!" echo         elseif ($k.Key -eq 'Escape') { $sel = 1; break }
->> "!DISP_PS!" echo         elseif ($k.KeyChar -eq 'o' -or $k.KeyChar -eq 'O') { $sel = 0; break }
->> "!DISP_PS!" echo         elseif ($k.KeyChar -eq 'n' -or $k.KeyChar -eq 'N') { $sel = 1; break }
 >> "!DISP_PS!" echo     }
 >> "!DISP_PS!" echo     if ($sel -eq 0) { ^& '!COPY_PS!'; Write-Host "`n  Appuyez sur une touche..." ; [Console]::ReadKey($true) ^| Out-Null }
 >> "!DISP_PS!" echo     else { Write-Host "`n  Retour au menu." }
@@ -2669,8 +2709,27 @@ set "SCAN_PS=%TEMP%\web_scan_%RANDOM%.ps1"
 >> "!SCAN_PS!" echo   }
 >> "!SCAN_PS!" echo   if ($found -eq 0) { Write-Host '  [-] Aucune route notable (toutes en 404/timeout).' -ForegroundColor DarkGray }
 >> "!SCAN_PS!" echo }
->> "!SCAN_PS!" echo Write-Host '' ; Write-Host '  Audit termine. Tester une autre URL ? (O=Oui / N=Retour)' -ForegroundColor White
->> "!SCAN_PS!" echo if (([Console]::ReadKey($true).KeyChar).ToString().ToLower() -eq 'o') { exit 1 } else { exit 0 }
+>> "!SCAN_PS!" echo $sel = 1
+>> "!SCAN_PS!" echo function Show-Choice {
+>> "!SCAN_PS!" echo     param($s)
+>> "!SCAN_PS!" echo     $c = $host.UI.RawUI.CursorPosition; $c.X = 0; $host.UI.RawUI.CursorPosition = $c
+>> "!SCAN_PS!" echo     Write-Host "  Tester une autre URL ?  " -NoNewline
+>> "!SCAN_PS!" echo     if ($s -eq 0) { Write-Host " OUI " -NoNewline -ForegroundColor Black -BackgroundColor Green; Write-Host "   NON  " -ForegroundColor DarkGray }
+>> "!SCAN_PS!" echo     else          { Write-Host " OUI " -NoNewline -ForegroundColor DarkGray;                    Write-Host "   NON  " -ForegroundColor Black -BackgroundColor Red }
+>> "!SCAN_PS!" echo }
+>> "!SCAN_PS!" echo Write-Host ""
+>> "!SCAN_PS!" echo Show-Choice $sel
+>> "!SCAN_PS!" echo while ($true) {
+>> "!SCAN_PS!" echo     $k = [Console]::ReadKey($true)
+>> "!SCAN_PS!" echo     if ($k.Key -eq 'LeftArrow' -or $k.Key -eq 'RightArrow') {
+>> "!SCAN_PS!" echo         $sel = 1 - $sel
+>> "!SCAN_PS!" echo         $c = $host.UI.RawUI.CursorPosition; $c.Y--; $host.UI.RawUI.CursorPosition = $c
+>> "!SCAN_PS!" echo         Show-Choice $sel
+>> "!SCAN_PS!" echo     } elseif ($k.Key -eq 'Enter') { break }
+>> "!SCAN_PS!" echo     elseif ($k.Key -eq 'Escape') { $sel = 1; break }
+>> "!SCAN_PS!" echo }
+>> "!SCAN_PS!" echo Write-Host ""
+>> "!SCAN_PS!" echo if ($sel -eq 0) { exit 1 } else { exit 0 }
 
 powershell -NoProfile -ExecutionPolicy Bypass -File "!SCAN_PS!"
 set "RES=%errorlevel%"
@@ -7833,11 +7892,30 @@ cls
 echo Entrees du Registre sures a supprimer:
 for /L %%i in (1,1,%safe_count%) do echo [%%i] !safe_entries[%%i]!
 echo.
-echo Voulez-vous toutes les supprimer ? (O/N)
-set /p confirm_reg=
-for %%A in (%confirm_reg%) do set confirm_reg=%%A
-if /i "%confirm_reg%"=="Y" goto delete_safe_reg_entries
-if /i "%confirm_reg%"=="O" goto delete_safe_reg_entries
+> "%TEMP%\yn_confirm.ps1" echo $sel = 1
+>> "%TEMP%\yn_confirm.ps1" echo function Show-Choice {
+>> "%TEMP%\yn_confirm.ps1" echo     param($s)
+>> "%TEMP%\yn_confirm.ps1" echo     $c = $host.UI.RawUI.CursorPosition; $c.X = 0; $host.UI.RawUI.CursorPosition = $c
+>> "%TEMP%\yn_confirm.ps1" echo     Write-Host "  Supprimer toutes ces entrees ?  " -NoNewline
+>> "%TEMP%\yn_confirm.ps1" echo     if ($s -eq 0) { Write-Host " OUI " -NoNewline -ForegroundColor Black -BackgroundColor Green; Write-Host "   NON  " -ForegroundColor DarkGray }
+>> "%TEMP%\yn_confirm.ps1" echo     else          { Write-Host " OUI " -NoNewline -ForegroundColor DarkGray;                    Write-Host "   NON  " -ForegroundColor Black -BackgroundColor Red }
+>> "%TEMP%\yn_confirm.ps1" echo }
+>> "%TEMP%\yn_confirm.ps1" echo Show-Choice $sel
+>> "%TEMP%\yn_confirm.ps1" echo while ($true) {
+>> "%TEMP%\yn_confirm.ps1" echo     $k = [Console]::ReadKey($true)
+>> "%TEMP%\yn_confirm.ps1" echo     if ($k.Key -eq 'LeftArrow' -or $k.Key -eq 'RightArrow') {
+>> "%TEMP%\yn_confirm.ps1" echo         $sel = 1 - $sel
+>> "%TEMP%\yn_confirm.ps1" echo         $c = $host.UI.RawUI.CursorPosition; $c.Y--; $host.UI.RawUI.CursorPosition = $c
+>> "%TEMP%\yn_confirm.ps1" echo         Show-Choice $sel
+>> "%TEMP%\yn_confirm.ps1" echo     } elseif ($k.Key -eq 'Enter') { break }
+>> "%TEMP%\yn_confirm.ps1" echo     elseif ($k.Key -eq 'Escape') { $sel = 1; break }
+>> "%TEMP%\yn_confirm.ps1" echo }
+>> "%TEMP%\yn_confirm.ps1" echo Write-Host ""
+>> "%TEMP%\yn_confirm.ps1" echo exit $sel
+powershell -NoProfile -ExecutionPolicy Bypass -File "%TEMP%\yn_confirm.ps1"
+set "_YN=%errorlevel%"
+del /f /q "%TEMP%\yn_confirm.ps1" 2>nul
+if "%_YN%"=="0" goto delete_safe_reg_entries
 echo Operation annulee.
 pause
 goto sys_registry_cleanup
@@ -8248,8 +8326,30 @@ echo ATTENTION : Vous allez supprimer l'utilisateur '%DELU%'
 echo ET TOUT SON ESPACE SUR LE DISQUE (Images, Documents, Bureau...) !
 echo ======================================================
 echo.
-set /p CONF=Confirmer la suppression totale ? (Tapez OUI pour valider) ^> 
-if /I not "%CONF%"=="OUI" (
+> "%TEMP%\yn_confirm.ps1" echo $sel = 1
+>> "%TEMP%\yn_confirm.ps1" echo function Show-Choice {
+>> "%TEMP%\yn_confirm.ps1" echo     param($s)
+>> "%TEMP%\yn_confirm.ps1" echo     $c = $host.UI.RawUI.CursorPosition; $c.X = 0; $host.UI.RawUI.CursorPosition = $c
+>> "%TEMP%\yn_confirm.ps1" echo     Write-Host "  Confirmer la suppression totale ?  " -NoNewline
+>> "%TEMP%\yn_confirm.ps1" echo     if ($s -eq 0) { Write-Host " OUI " -NoNewline -ForegroundColor Black -BackgroundColor Green; Write-Host "   NON  " -ForegroundColor DarkGray }
+>> "%TEMP%\yn_confirm.ps1" echo     else          { Write-Host " OUI " -NoNewline -ForegroundColor DarkGray;                    Write-Host "   NON  " -ForegroundColor Black -BackgroundColor Red }
+>> "%TEMP%\yn_confirm.ps1" echo }
+>> "%TEMP%\yn_confirm.ps1" echo Show-Choice $sel
+>> "%TEMP%\yn_confirm.ps1" echo while ($true) {
+>> "%TEMP%\yn_confirm.ps1" echo     $k = [Console]::ReadKey($true)
+>> "%TEMP%\yn_confirm.ps1" echo     if ($k.Key -eq 'LeftArrow' -or $k.Key -eq 'RightArrow') {
+>> "%TEMP%\yn_confirm.ps1" echo         $sel = 1 - $sel
+>> "%TEMP%\yn_confirm.ps1" echo         $c = $host.UI.RawUI.CursorPosition; $c.Y--; $host.UI.RawUI.CursorPosition = $c
+>> "%TEMP%\yn_confirm.ps1" echo         Show-Choice $sel
+>> "%TEMP%\yn_confirm.ps1" echo     } elseif ($k.Key -eq 'Enter') { break }
+>> "%TEMP%\yn_confirm.ps1" echo     elseif ($k.Key -eq 'Escape') { $sel = 1; break }
+>> "%TEMP%\yn_confirm.ps1" echo }
+>> "%TEMP%\yn_confirm.ps1" echo Write-Host ""
+>> "%TEMP%\yn_confirm.ps1" echo exit $sel
+powershell -NoProfile -ExecutionPolicy Bypass -File "%TEMP%\yn_confirm.ps1"
+set "_YN=%errorlevel%"
+del /f /q "%TEMP%\yn_confirm.ps1" 2>nul
+if "%_YN%"=="1" (
     echo [X] Operation annulee.
     pause
     goto um_menu
@@ -8370,8 +8470,30 @@ echo ======================================================
 echo ATTENTION : Vous allez supprimer le mot de passe de '%RUSER%' !
 echo Cela permettra a toute personne d'y acceder sans mot de passe a l'allumage.
 echo.
-set /p RCONFIRM=Voulez-vous vraiment continuer ? (O/N) ^> 
-if /I not "%RCONFIRM%"=="O" (
+> "%TEMP%\yn_confirm.ps1" echo $sel = 1
+>> "%TEMP%\yn_confirm.ps1" echo function Show-Choice {
+>> "%TEMP%\yn_confirm.ps1" echo     param($s)
+>> "%TEMP%\yn_confirm.ps1" echo     $c = $host.UI.RawUI.CursorPosition; $c.X = 0; $host.UI.RawUI.CursorPosition = $c
+>> "%TEMP%\yn_confirm.ps1" echo     Write-Host "  Supprimer le mot de passe ?  " -NoNewline
+>> "%TEMP%\yn_confirm.ps1" echo     if ($s -eq 0) { Write-Host " OUI " -NoNewline -ForegroundColor Black -BackgroundColor Green; Write-Host "   NON  " -ForegroundColor DarkGray }
+>> "%TEMP%\yn_confirm.ps1" echo     else          { Write-Host " OUI " -NoNewline -ForegroundColor DarkGray;                    Write-Host "   NON  " -ForegroundColor Black -BackgroundColor Red }
+>> "%TEMP%\yn_confirm.ps1" echo }
+>> "%TEMP%\yn_confirm.ps1" echo Show-Choice $sel
+>> "%TEMP%\yn_confirm.ps1" echo while ($true) {
+>> "%TEMP%\yn_confirm.ps1" echo     $k = [Console]::ReadKey($true)
+>> "%TEMP%\yn_confirm.ps1" echo     if ($k.Key -eq 'LeftArrow' -or $k.Key -eq 'RightArrow') {
+>> "%TEMP%\yn_confirm.ps1" echo         $sel = 1 - $sel
+>> "%TEMP%\yn_confirm.ps1" echo         $c = $host.UI.RawUI.CursorPosition; $c.Y--; $host.UI.RawUI.CursorPosition = $c
+>> "%TEMP%\yn_confirm.ps1" echo         Show-Choice $sel
+>> "%TEMP%\yn_confirm.ps1" echo     } elseif ($k.Key -eq 'Enter') { break }
+>> "%TEMP%\yn_confirm.ps1" echo     elseif ($k.Key -eq 'Escape') { $sel = 1; break }
+>> "%TEMP%\yn_confirm.ps1" echo }
+>> "%TEMP%\yn_confirm.ps1" echo Write-Host ""
+>> "%TEMP%\yn_confirm.ps1" echo exit $sel
+powershell -NoProfile -ExecutionPolicy Bypass -File "%TEMP%\yn_confirm.ps1"
+set "_YN=%errorlevel%"
+del /f /q "%TEMP%\yn_confirm.ps1" 2>nul
+if "%_YN%"=="1" (
     echo [X] Operation annulee.
     pause
     goto um_menu
