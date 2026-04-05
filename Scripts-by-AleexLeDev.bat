@@ -675,8 +675,30 @@ echo Modification du registre terminee.
 echo.
 echo IMPORTANT : Un redemarrage de l'Explorateur Windows est necessaire.
 echo.
-set /p restart_explorer=Redemarrer l'Explorateur maintenant ? (O/N): 
-if /i "%restart_explorer%"=="O" (
+> "%TEMP%\yn_confirm.ps1" echo $sel = 1
+>> "%TEMP%\yn_confirm.ps1" echo function Show-Choice {
+>> "%TEMP%\yn_confirm.ps1" echo     param($s)
+>> "%TEMP%\yn_confirm.ps1" echo     $c = $host.UI.RawUI.CursorPosition; $c.X = 0; $host.UI.RawUI.CursorPosition = $c
+>> "%TEMP%\yn_confirm.ps1" echo     Write-Host "  Redemarrer l'Explorateur maintenant ?  " -NoNewline
+>> "%TEMP%\yn_confirm.ps1" echo     if ($s -eq 0) { Write-Host " OUI " -NoNewline -ForegroundColor Black -BackgroundColor Green; Write-Host "   NON  " -ForegroundColor DarkGray }
+>> "%TEMP%\yn_confirm.ps1" echo     else          { Write-Host " OUI " -NoNewline -ForegroundColor DarkGray;                    Write-Host "   NON  " -ForegroundColor Black -BackgroundColor Red }
+>> "%TEMP%\yn_confirm.ps1" echo }
+>> "%TEMP%\yn_confirm.ps1" echo Show-Choice $sel
+>> "%TEMP%\yn_confirm.ps1" echo while ($true) {
+>> "%TEMP%\yn_confirm.ps1" echo     $k = [Console]::ReadKey($true)
+>> "%TEMP%\yn_confirm.ps1" echo     if ($k.Key -eq 'LeftArrow' -or $k.Key -eq 'RightArrow') {
+>> "%TEMP%\yn_confirm.ps1" echo         $sel = 1 - $sel
+>> "%TEMP%\yn_confirm.ps1" echo         $c = $host.UI.RawUI.CursorPosition; $c.Y--; $host.UI.RawUI.CursorPosition = $c
+>> "%TEMP%\yn_confirm.ps1" echo         Show-Choice $sel
+>> "%TEMP%\yn_confirm.ps1" echo     } elseif ($k.Key -eq 'Enter') { break }
+>> "%TEMP%\yn_confirm.ps1" echo     elseif ($k.Key -eq 'Escape') { $sel = 1; break }
+>> "%TEMP%\yn_confirm.ps1" echo }
+>> "%TEMP%\yn_confirm.ps1" echo Write-Host ""
+>> "%TEMP%\yn_confirm.ps1" echo exit $sel
+powershell -NoProfile -ExecutionPolicy Bypass -File "%TEMP%\yn_confirm.ps1"
+set "_YN=%errorlevel%"
+del /f /q "%TEMP%\yn_confirm.ps1" 2>nul
+if "%_YN%"=="0" (
     echo Redemarrage de l'Explorateur Windows...
     taskkill /f /im explorer.exe >nul 2>&1
     timeout /t 2 /nobreak >nul
@@ -699,8 +721,30 @@ echo.
 reg delete "HKCU\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}" /f >nul 2>&1
 echo Modification du registre terminee.
 echo.
-set /p restart_explorer=Redemarrer l'Explorateur maintenant ? (O/N): 
-if /i "%restart_explorer%"=="O" (
+> "%TEMP%\yn_confirm.ps1" echo $sel = 1
+>> "%TEMP%\yn_confirm.ps1" echo function Show-Choice {
+>> "%TEMP%\yn_confirm.ps1" echo     param($s)
+>> "%TEMP%\yn_confirm.ps1" echo     $c = $host.UI.RawUI.CursorPosition; $c.X = 0; $host.UI.RawUI.CursorPosition = $c
+>> "%TEMP%\yn_confirm.ps1" echo     Write-Host "  Redemarrer l'Explorateur maintenant ?  " -NoNewline
+>> "%TEMP%\yn_confirm.ps1" echo     if ($s -eq 0) { Write-Host " OUI " -NoNewline -ForegroundColor Black -BackgroundColor Green; Write-Host "   NON  " -ForegroundColor DarkGray }
+>> "%TEMP%\yn_confirm.ps1" echo     else          { Write-Host " OUI " -NoNewline -ForegroundColor DarkGray;                    Write-Host "   NON  " -ForegroundColor Black -BackgroundColor Red }
+>> "%TEMP%\yn_confirm.ps1" echo }
+>> "%TEMP%\yn_confirm.ps1" echo Show-Choice $sel
+>> "%TEMP%\yn_confirm.ps1" echo while ($true) {
+>> "%TEMP%\yn_confirm.ps1" echo     $k = [Console]::ReadKey($true)
+>> "%TEMP%\yn_confirm.ps1" echo     if ($k.Key -eq 'LeftArrow' -or $k.Key -eq 'RightArrow') {
+>> "%TEMP%\yn_confirm.ps1" echo         $sel = 1 - $sel
+>> "%TEMP%\yn_confirm.ps1" echo         $c = $host.UI.RawUI.CursorPosition; $c.Y--; $host.UI.RawUI.CursorPosition = $c
+>> "%TEMP%\yn_confirm.ps1" echo         Show-Choice $sel
+>> "%TEMP%\yn_confirm.ps1" echo     } elseif ($k.Key -eq 'Enter') { break }
+>> "%TEMP%\yn_confirm.ps1" echo     elseif ($k.Key -eq 'Escape') { $sel = 1; break }
+>> "%TEMP%\yn_confirm.ps1" echo }
+>> "%TEMP%\yn_confirm.ps1" echo Write-Host ""
+>> "%TEMP%\yn_confirm.ps1" echo exit $sel
+powershell -NoProfile -ExecutionPolicy Bypass -File "%TEMP%\yn_confirm.ps1"
+set "_YN=%errorlevel%"
+del /f /q "%TEMP%\yn_confirm.ps1" 2>nul
+if "%_YN%"=="0" (
     echo Redemarrage de l'Explorateur Windows...
     taskkill /f /im explorer.exe >nul 2>&1
     timeout /t 2 /nobreak >nul
@@ -1268,8 +1312,30 @@ if %result% equ 0 (
 echo =============================================================
 echo.
 
-set /p disk_choice=Voulez-vous formater un autre disque ? (O/N): 
-if /i "%disk_choice%"=="O" goto disk_manager
+> "%TEMP%\yn_confirm.ps1" echo $sel = 1
+>> "%TEMP%\yn_confirm.ps1" echo function Show-Choice {
+>> "%TEMP%\yn_confirm.ps1" echo     param($s)
+>> "%TEMP%\yn_confirm.ps1" echo     $c = $host.UI.RawUI.CursorPosition; $c.X = 0; $host.UI.RawUI.CursorPosition = $c
+>> "%TEMP%\yn_confirm.ps1" echo     Write-Host "  Formater un autre disque ?  " -NoNewline
+>> "%TEMP%\yn_confirm.ps1" echo     if ($s -eq 0) { Write-Host " OUI " -NoNewline -ForegroundColor Black -BackgroundColor Green; Write-Host "   NON  " -ForegroundColor DarkGray }
+>> "%TEMP%\yn_confirm.ps1" echo     else          { Write-Host " OUI " -NoNewline -ForegroundColor DarkGray;                    Write-Host "   NON  " -ForegroundColor Black -BackgroundColor Red }
+>> "%TEMP%\yn_confirm.ps1" echo }
+>> "%TEMP%\yn_confirm.ps1" echo Show-Choice $sel
+>> "%TEMP%\yn_confirm.ps1" echo while ($true) {
+>> "%TEMP%\yn_confirm.ps1" echo     $k = [Console]::ReadKey($true)
+>> "%TEMP%\yn_confirm.ps1" echo     if ($k.Key -eq 'LeftArrow' -or $k.Key -eq 'RightArrow') {
+>> "%TEMP%\yn_confirm.ps1" echo         $sel = 1 - $sel
+>> "%TEMP%\yn_confirm.ps1" echo         $c = $host.UI.RawUI.CursorPosition; $c.Y--; $host.UI.RawUI.CursorPosition = $c
+>> "%TEMP%\yn_confirm.ps1" echo         Show-Choice $sel
+>> "%TEMP%\yn_confirm.ps1" echo     } elseif ($k.Key -eq 'Enter') { break }
+>> "%TEMP%\yn_confirm.ps1" echo     elseif ($k.Key -eq 'Escape') { $sel = 1; break }
+>> "%TEMP%\yn_confirm.ps1" echo }
+>> "%TEMP%\yn_confirm.ps1" echo Write-Host ""
+>> "%TEMP%\yn_confirm.ps1" echo exit $sel
+powershell -NoProfile -ExecutionPolicy Bypass -File "%TEMP%\yn_confirm.ps1"
+set "_YN=%errorlevel%"
+del /f /q "%TEMP%\yn_confirm.ps1" 2>nul
+if "%_YN%"=="0" goto disk_manager
 goto menu_principal
 
 REM ===================================================================
@@ -7266,8 +7332,27 @@ echo Write-Host "  2. Phishing : Un certificat expire ou mal nomme detruit la co
 echo Write-Host "  3. Downgrade : L'absence de HSTS permet de forcer le passage en HTTP." -f Yellow >> "%TLS_PS%"
 echo Write-Host "  ================================================" -f Cyan >> "%TLS_PS%"
 echo. >> "%TLS_PS%"
-echo $exportChoice = Read-Host "  Exporter les resultats en JSON ? (O/N)" >> "%TLS_PS%"
-echo if ($exportChoice -eq 'O' -or $exportChoice -eq 'o') { >> "%TLS_PS%"
+echo $sel = 1 >> "%TLS_PS%"
+echo function Show-Choice { >> "%TLS_PS%"
+echo     param($s) >> "%TLS_PS%"
+echo     $c = $host.UI.RawUI.CursorPosition; $c.X = 0; $host.UI.RawUI.CursorPosition = $c >> "%TLS_PS%"
+echo     Write-Host "  Exporter les resultats en JSON ?  " -NoNewline >> "%TLS_PS%"
+echo     if ($s -eq 0) { Write-Host " OUI " -NoNewline -ForegroundColor Black -BackgroundColor Green; Write-Host "   NON  " -ForegroundColor DarkGray } >> "%TLS_PS%"
+echo     else          { Write-Host " OUI " -NoNewline -ForegroundColor DarkGray;                    Write-Host "   NON  " -ForegroundColor Black -BackgroundColor Red } >> "%TLS_PS%"
+echo } >> "%TLS_PS%"
+echo Write-Host "" >> "%TLS_PS%"
+echo Show-Choice $sel >> "%TLS_PS%"
+echo while ($true) { >> "%TLS_PS%"
+echo     $k = [Console]::ReadKey($true) >> "%TLS_PS%"
+echo     if ($k.Key -eq 'LeftArrow' -or $k.Key -eq 'RightArrow') { >> "%TLS_PS%"
+echo         $sel = 1 - $sel >> "%TLS_PS%"
+echo         $c = $host.UI.RawUI.CursorPosition; $c.Y--; $host.UI.RawUI.CursorPosition = $c >> "%TLS_PS%"
+echo         Show-Choice $sel >> "%TLS_PS%"
+echo     } elseif ($k.Key -eq 'Enter') { break } >> "%TLS_PS%"
+echo     elseif ($k.Key -eq 'Escape') { $sel = 1; break } >> "%TLS_PS%"
+echo } >> "%TLS_PS%"
+echo Write-Host "" >> "%TLS_PS%"
+echo if ($sel -eq 0) { >> "%TLS_PS%"
 echo    $out = [PSCustomObject]@{ >> "%TLS_PS%"
 echo        Date    = (Get-Date -Format 'yyyy-MM-dd HH:mm') >> "%TLS_PS%"
 echo        Cible   = "${host_target}:${port}" >> "%TLS_PS%"
@@ -8271,8 +8356,30 @@ set "NEWU="
 set /p NEWU="Nom d'utilisateur a ajouter > "
 if "%NEWU%"=="" goto um_menu
 set "SETPWD="
-set /p SETPWD="Affecter un mot de passe maintenant ? (O/N) > "
-if /I not "%SETPWD%"=="O" goto um_add_no_pwd
+> "%TEMP%\yn_confirm.ps1" echo $sel = 1
+>> "%TEMP%\yn_confirm.ps1" echo function Show-Choice {
+>> "%TEMP%\yn_confirm.ps1" echo     param($s)
+>> "%TEMP%\yn_confirm.ps1" echo     $c = $host.UI.RawUI.CursorPosition; $c.X = 0; $host.UI.RawUI.CursorPosition = $c
+>> "%TEMP%\yn_confirm.ps1" echo     Write-Host "  Affecter un mot de passe maintenant ?  " -NoNewline
+>> "%TEMP%\yn_confirm.ps1" echo     if ($s -eq 0) { Write-Host " OUI " -NoNewline -ForegroundColor Black -BackgroundColor Green; Write-Host "   NON  " -ForegroundColor DarkGray }
+>> "%TEMP%\yn_confirm.ps1" echo     else          { Write-Host " OUI " -NoNewline -ForegroundColor DarkGray;                    Write-Host "   NON  " -ForegroundColor Black -BackgroundColor Red }
+>> "%TEMP%\yn_confirm.ps1" echo }
+>> "%TEMP%\yn_confirm.ps1" echo Show-Choice $sel
+>> "%TEMP%\yn_confirm.ps1" echo while ($true) {
+>> "%TEMP%\yn_confirm.ps1" echo     $k = [Console]::ReadKey($true)
+>> "%TEMP%\yn_confirm.ps1" echo     if ($k.Key -eq 'LeftArrow' -or $k.Key -eq 'RightArrow') {
+>> "%TEMP%\yn_confirm.ps1" echo         $sel = 1 - $sel
+>> "%TEMP%\yn_confirm.ps1" echo         $c = $host.UI.RawUI.CursorPosition; $c.Y--; $host.UI.RawUI.CursorPosition = $c
+>> "%TEMP%\yn_confirm.ps1" echo         Show-Choice $sel
+>> "%TEMP%\yn_confirm.ps1" echo     } elseif ($k.Key -eq 'Enter') { break }
+>> "%TEMP%\yn_confirm.ps1" echo     elseif ($k.Key -eq 'Escape') { $sel = 1; break }
+>> "%TEMP%\yn_confirm.ps1" echo }
+>> "%TEMP%\yn_confirm.ps1" echo Write-Host ""
+>> "%TEMP%\yn_confirm.ps1" echo exit $sel
+powershell -NoProfile -ExecutionPolicy Bypass -File "%TEMP%\yn_confirm.ps1"
+set "_YN=%errorlevel%"
+del /f /q "%TEMP%\yn_confirm.ps1" 2>nul
+if "%_YN%"=="1" goto um_add_no_pwd
 
 set "NEWP="
 set /p NEWP="Mot de passe > "
@@ -8290,8 +8397,30 @@ if not %errorlevel%==0 (
 )
 
 set "ADDADM="
-set /p ADDADM="Ajouter '%NEWU%' aux Administrateurs ? (O/N) > "
-if /I "%ADDADM%"=="O" net localgroup "%UM_ADMIN_GROUP%" "%NEWU%" /add
+> "%TEMP%\yn_confirm.ps1" echo $sel = 1
+>> "%TEMP%\yn_confirm.ps1" echo function Show-Choice {
+>> "%TEMP%\yn_confirm.ps1" echo     param($s)
+>> "%TEMP%\yn_confirm.ps1" echo     $c = $host.UI.RawUI.CursorPosition; $c.X = 0; $host.UI.RawUI.CursorPosition = $c
+>> "%TEMP%\yn_confirm.ps1" echo     Write-Host "  Ajouter aux Administrateurs ?  " -NoNewline
+>> "%TEMP%\yn_confirm.ps1" echo     if ($s -eq 0) { Write-Host " OUI " -NoNewline -ForegroundColor Black -BackgroundColor Green; Write-Host "   NON  " -ForegroundColor DarkGray }
+>> "%TEMP%\yn_confirm.ps1" echo     else          { Write-Host " OUI " -NoNewline -ForegroundColor DarkGray;                    Write-Host "   NON  " -ForegroundColor Black -BackgroundColor Red }
+>> "%TEMP%\yn_confirm.ps1" echo }
+>> "%TEMP%\yn_confirm.ps1" echo Show-Choice $sel
+>> "%TEMP%\yn_confirm.ps1" echo while ($true) {
+>> "%TEMP%\yn_confirm.ps1" echo     $k = [Console]::ReadKey($true)
+>> "%TEMP%\yn_confirm.ps1" echo     if ($k.Key -eq 'LeftArrow' -or $k.Key -eq 'RightArrow') {
+>> "%TEMP%\yn_confirm.ps1" echo         $sel = 1 - $sel
+>> "%TEMP%\yn_confirm.ps1" echo         $c = $host.UI.RawUI.CursorPosition; $c.Y--; $host.UI.RawUI.CursorPosition = $c
+>> "%TEMP%\yn_confirm.ps1" echo         Show-Choice $sel
+>> "%TEMP%\yn_confirm.ps1" echo     } elseif ($k.Key -eq 'Enter') { break }
+>> "%TEMP%\yn_confirm.ps1" echo     elseif ($k.Key -eq 'Escape') { $sel = 1; break }
+>> "%TEMP%\yn_confirm.ps1" echo }
+>> "%TEMP%\yn_confirm.ps1" echo Write-Host ""
+>> "%TEMP%\yn_confirm.ps1" echo exit $sel
+powershell -NoProfile -ExecutionPolicy Bypass -File "%TEMP%\yn_confirm.ps1"
+set "_YN=%errorlevel%"
+del /f /q "%TEMP%\yn_confirm.ps1" 2>nul
+if "%_YN%"=="0" net localgroup "%UM_ADMIN_GROUP%" "%NEWU%" /add
 echo.
 echo [OK] Utilisateur cree avec succes.
 pause
@@ -8433,8 +8562,30 @@ if not %errorlevel%==0 (
 )
 
 echo Mot de passe mis a jour.
-set /p RFORCE=Exiger le changement au prochain logon ? (O/N) ^> 
-if /I not "%RFORCE%"=="O" goto um_reset_end
+> "%TEMP%\yn_confirm.ps1" echo $sel = 1
+>> "%TEMP%\yn_confirm.ps1" echo function Show-Choice {
+>> "%TEMP%\yn_confirm.ps1" echo     param($s)
+>> "%TEMP%\yn_confirm.ps1" echo     $c = $host.UI.RawUI.CursorPosition; $c.X = 0; $host.UI.RawUI.CursorPosition = $c
+>> "%TEMP%\yn_confirm.ps1" echo     Write-Host "  Exiger le changement au prochain logon ?  " -NoNewline
+>> "%TEMP%\yn_confirm.ps1" echo     if ($s -eq 0) { Write-Host " OUI " -NoNewline -ForegroundColor Black -BackgroundColor Green; Write-Host "   NON  " -ForegroundColor DarkGray }
+>> "%TEMP%\yn_confirm.ps1" echo     else          { Write-Host " OUI " -NoNewline -ForegroundColor DarkGray;                    Write-Host "   NON  " -ForegroundColor Black -BackgroundColor Red }
+>> "%TEMP%\yn_confirm.ps1" echo }
+>> "%TEMP%\yn_confirm.ps1" echo Show-Choice $sel
+>> "%TEMP%\yn_confirm.ps1" echo while ($true) {
+>> "%TEMP%\yn_confirm.ps1" echo     $k = [Console]::ReadKey($true)
+>> "%TEMP%\yn_confirm.ps1" echo     if ($k.Key -eq 'LeftArrow' -or $k.Key -eq 'RightArrow') {
+>> "%TEMP%\yn_confirm.ps1" echo         $sel = 1 - $sel
+>> "%TEMP%\yn_confirm.ps1" echo         $c = $host.UI.RawUI.CursorPosition; $c.Y--; $host.UI.RawUI.CursorPosition = $c
+>> "%TEMP%\yn_confirm.ps1" echo         Show-Choice $sel
+>> "%TEMP%\yn_confirm.ps1" echo     } elseif ($k.Key -eq 'Enter') { break }
+>> "%TEMP%\yn_confirm.ps1" echo     elseif ($k.Key -eq 'Escape') { $sel = 1; break }
+>> "%TEMP%\yn_confirm.ps1" echo }
+>> "%TEMP%\yn_confirm.ps1" echo Write-Host ""
+>> "%TEMP%\yn_confirm.ps1" echo exit $sel
+powershell -NoProfile -ExecutionPolicy Bypass -File "%TEMP%\yn_confirm.ps1"
+set "_YN=%errorlevel%"
+del /f /q "%TEMP%\yn_confirm.ps1" 2>nul
+if "%_YN%"=="1" goto um_reset_end
 
 powershell -NoProfile -ExecutionPolicy Bypass -Command "$u=[ADSI]('WinNT://' + $env:COMPUTERNAME + '/%RUSER%,user'); $u.PasswordExpired=1; $u.SetInfo()"
 echo Obligation de changement au prochain logon active.
