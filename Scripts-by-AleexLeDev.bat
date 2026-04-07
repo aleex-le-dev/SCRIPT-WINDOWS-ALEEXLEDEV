@@ -190,6 +190,7 @@ set "t[106]=um_del:Supprimer un utilisateur~Effacer compte et donnees:HIDDEN"
 set "t[107]=um_admin:Gerer les droits~Passer standard ou administrateur:HIDDEN"
 set "t[108]=um_reset:Ajouter/Modifier MDP~Changer mot de passe utilisateur:HIDDEN"
 set "t[109]=um_remove_pwd:Supprimer le MDP (Auto-login)~Enlever le mot de passe:HIDDEN"
+set "t[173]=um_superadmin:Super Administrateur (RID-500)~Activer ou desactiver le compte built-in:HIDDEN"
 set "t[110]=---:EXTRACTION ET SAUVEGARDE"
 set "t[111]=sys_export_menu:Recuperation de Donnees~Exporter les cles, mots de passe Wi-Fi et pilotes"
 set "t[112]=sys_win_key:Cle Windows~Retrouver la cle de licence Windows:HIDDEN"
@@ -355,6 +356,7 @@ set "map_um_del=Supprimer un utilisateur~Effacer compte et donnees"
 set "map_um_admin=Gerer les droits~Passer standard ou administrateur"
 set "map_um_reset=Ajouter/Modifier MDP~Changer mot de passe utilisateur"
 set "map_um_remove_pwd=Supprimer le MDP (Auto-login)~Enlever le mot de passe"
+set "map_um_superadmin=Super Administrateur (RID-500)~Activer ou desactiver le compte built-in"
 set "map_cyber_triage=Diagnostic PC et Connectivite~Analyse IP, Cartes reseau (MAC), DNS et Gateway"
 
 set "map_cyber_lan_auto=Scanner Reseau Local (LAN)~Scan des adresses locales pour detecter les appareils connectes"
@@ -8260,7 +8262,7 @@ net localgroup "%UM_ADMIN_GROUP%" >nul 2>&1 || set "UM_ADMIN_GROUP=Administrateu
 set "UM_STR_PWD_REQ_EN=Password required"
 set "UM_STR_PWD_REQ_FR=Mot de passe requis"
 
-call :AutoMenu "GESTION UTILISATEURS LOCAUX" "um_list;um_add;um_del;um_admin;um_reset;um_remove_pwd"
+call :AutoMenu "GESTION UTILISATEURS LOCAUX" "um_list;um_add;um_del;um_admin;um_reset;um_remove_pwd;um_superadmin"
 if "%errorlevel%"=="0" goto system_tools
 goto !AutoMenu_Target!
 
@@ -8313,7 +8315,25 @@ goto um_menu
 cls
 call :um_show_active
 set "NEWU="
-set /p NEWU="Nom d'utilisateur a ajouter > "
+> "%TEMP%\um_input.ps1" echo $buf = ""
+>> "%TEMP%\um_input.ps1" echo Write-Host "  Nom d'utilisateur : " -NoNewline -ForegroundColor Cyan
+>> "%TEMP%\um_input.ps1" echo while ($true) {
+>> "%TEMP%\um_input.ps1" echo     $k = [Console]::ReadKey($true)
+>> "%TEMP%\um_input.ps1" echo     if ($k.Key -eq 'Enter') { break }
+>> "%TEMP%\um_input.ps1" echo     elseif ($k.Key -eq 'Escape') { $buf = ""; break }
+>> "%TEMP%\um_input.ps1" echo     elseif ($k.Key -eq 'Backspace') {
+>> "%TEMP%\um_input.ps1" echo         if ($buf.Length -gt 0) { $buf = $buf.Substring(0, $buf.Length - 1); Write-Host "`b `b" -NoNewline }
+>> "%TEMP%\um_input.ps1" echo     } else {
+>> "%TEMP%\um_input.ps1" echo         $c = $k.KeyChar
+>> "%TEMP%\um_input.ps1" echo         if ([char]::IsLetterOrDigit($c) -or $c -in @([char]'_',[char]'-',[char]'.')) { $buf += $c; Write-Host $c -NoNewline }
+>> "%TEMP%\um_input.ps1" echo     }
+>> "%TEMP%\um_input.ps1" echo }
+>> "%TEMP%\um_input.ps1" echo Write-Host ""
+>> "%TEMP%\um_input.ps1" echo [System.IO.File]::WriteAllText("$env:TEMP\um_result.txt", $buf)
+powershell -NoProfile -ExecutionPolicy Bypass -File "%TEMP%\um_input.ps1"
+del /f /q "%TEMP%\um_input.ps1" 2>nul
+set /p NEWU=<"%TEMP%\um_result.txt"
+del /f /q "%TEMP%\um_result.txt" 2>nul
 if "%NEWU%"=="" goto um_menu
 set "SETPWD="
 > "%TEMP%\yn_confirm.ps1" echo $sel = 1
@@ -8341,9 +8361,28 @@ set "_YN=%errorlevel%"
 del /f /q "%TEMP%\yn_confirm.ps1" 2>nul
 if "%_YN%"=="1" goto um_add_no_pwd
 
-set "NEWP="
-set /p NEWP="Mot de passe > "
-net user "%NEWU%" "%NEWP%" /add /y
+> "%TEMP%\um_input.ps1" echo $buf = ""
+>> "%TEMP%\um_input.ps1" echo Write-Host "  Mot de passe : " -NoNewline -ForegroundColor Cyan
+>> "%TEMP%\um_input.ps1" echo while ($true) {
+>> "%TEMP%\um_input.ps1" echo     $k = [Console]::ReadKey($true)
+>> "%TEMP%\um_input.ps1" echo     if ($k.Key -eq 'Enter') { break }
+>> "%TEMP%\um_input.ps1" echo     elseif ($k.Key -eq 'Escape') { exit 2 }
+>> "%TEMP%\um_input.ps1" echo     elseif ($k.Key -eq 'Backspace') {
+>> "%TEMP%\um_input.ps1" echo         if ($buf.Length -gt 0) { $buf = $buf.Substring(0, $buf.Length - 1); Write-Host "`b `b" -NoNewline }
+>> "%TEMP%\um_input.ps1" echo     } else {
+>> "%TEMP%\um_input.ps1" echo         $c = $k.KeyChar
+>> "%TEMP%\um_input.ps1" echo         if ($c -ge ' ') { $buf += $c; Write-Host "*" -NoNewline }
+>> "%TEMP%\um_input.ps1" echo     }
+>> "%TEMP%\um_input.ps1" echo }
+>> "%TEMP%\um_input.ps1" echo Write-Host ""
+>> "%TEMP%\um_input.ps1" echo $ss = ConvertTo-SecureString $buf -AsPlainText -Force
+>> "%TEMP%\um_input.ps1" echo try { New-LocalUser -Name $env:NEWU -Password $ss -PasswordNeverExpires -ErrorAction Stop; exit 0 }
+>> "%TEMP%\um_input.ps1" echo catch { Write-Host $_.Exception.Message -ForegroundColor Red; exit 1 }
+powershell -NoProfile -ExecutionPolicy Bypass -File "%TEMP%\um_input.ps1"
+set "_ADDERR=%errorlevel%"
+del /f /q "%TEMP%\um_input.ps1" 2>nul
+if "%_ADDERR%"=="2" goto um_menu
+if not "%_ADDERR%"=="0" (echo Echec de creation de l'utilisateur. & pause & goto um_menu)
 goto um_add_check
 
 :um_add_no_pwd
@@ -8616,6 +8655,112 @@ if %errorlevel%==0 (
 ) else (
     echo [ECHEC] Impossible de supprimer le mot de passe de '%RUSER%'.
 )
+pause
+goto um_menu
+
+:um_superadmin
+set "SA_NAME="
+set "SA_ENABLED=False"
+for /f "usebackq tokens=*" %%N in (`powershell -NoProfile -Command "Get-LocalUser | Where-Object { $_.SID -like '*-500' } | Select-Object -ExpandProperty Name"`) do set "SA_NAME=%%N"
+for /f "usebackq tokens=*" %%E in (`powershell -NoProfile -Command "(Get-LocalUser | Where-Object { $_.SID -like '*-500' }).Enabled"`) do set "SA_ENABLED=%%E"
+if not defined SA_NAME (
+    echo [ERREUR] Compte built-in administrateur introuvable.
+    pause
+    goto um_menu
+)
+if /i "!SA_ENABLED!"=="True" goto um_sa_disable
+goto um_sa_enable
+
+:um_sa_disable
+cls
+echo.
+echo  Compte [!SA_NAME!] (RID-500) : ACTIF
+echo.
+> "%TEMP%\yn_confirm.ps1" echo $sel = 1
+>> "%TEMP%\yn_confirm.ps1" echo function Show-Choice {
+>> "%TEMP%\yn_confirm.ps1" echo     param($s)
+>> "%TEMP%\yn_confirm.ps1" echo     $c = $host.UI.RawUI.CursorPosition; $c.X = 0; $host.UI.RawUI.CursorPosition = $c
+>> "%TEMP%\yn_confirm.ps1" echo     Write-Host "  Desactiver le Super Administrateur ?  " -NoNewline
+>> "%TEMP%\yn_confirm.ps1" echo     if ($s -eq 0) { Write-Host " OUI " -NoNewline -ForegroundColor Black -BackgroundColor Green; Write-Host "   NON  " -ForegroundColor DarkGray }
+>> "%TEMP%\yn_confirm.ps1" echo     else          { Write-Host " OUI " -NoNewline -ForegroundColor DarkGray;                    Write-Host "   NON  " -ForegroundColor Black -BackgroundColor Red }
+>> "%TEMP%\yn_confirm.ps1" echo }
+>> "%TEMP%\yn_confirm.ps1" echo Show-Choice $sel
+>> "%TEMP%\yn_confirm.ps1" echo while ($true) {
+>> "%TEMP%\yn_confirm.ps1" echo     $k = [Console]::ReadKey($true)
+>> "%TEMP%\yn_confirm.ps1" echo     if ($k.Key -eq 'LeftArrow' -or $k.Key -eq 'RightArrow') {
+>> "%TEMP%\yn_confirm.ps1" echo         $sel = 1 - $sel
+>> "%TEMP%\yn_confirm.ps1" echo         $c = $host.UI.RawUI.CursorPosition; $c.Y--; $host.UI.RawUI.CursorPosition = $c
+>> "%TEMP%\yn_confirm.ps1" echo         Show-Choice $sel
+>> "%TEMP%\yn_confirm.ps1" echo     } elseif ($k.Key -eq 'Enter') { break }
+>> "%TEMP%\yn_confirm.ps1" echo     elseif ($k.Key -eq 'Escape') { $sel = 1; break }
+>> "%TEMP%\yn_confirm.ps1" echo }
+>> "%TEMP%\yn_confirm.ps1" echo Write-Host ""
+>> "%TEMP%\yn_confirm.ps1" echo exit $sel
+powershell -NoProfile -ExecutionPolicy Bypass -File "%TEMP%\yn_confirm.ps1"
+set "_YN=%errorlevel%"
+del /f /q "%TEMP%\yn_confirm.ps1" 2>nul
+if "%_YN%"=="1" goto um_menu
+net user "!SA_NAME!" /active:no
+if !errorlevel!==0 (echo [OK] Compte "!SA_NAME!" desactive avec succes.) else (echo [ECHEC] Impossible de desactiver le compte.)
+pause
+goto um_menu
+
+:um_sa_enable
+cls
+echo.
+echo  Compte [!SA_NAME!] (RID-500) : INACTIF
+echo.
+> "%TEMP%\yn_confirm.ps1" echo $sel = 1
+>> "%TEMP%\yn_confirm.ps1" echo function Show-Choice {
+>> "%TEMP%\yn_confirm.ps1" echo     param($s)
+>> "%TEMP%\yn_confirm.ps1" echo     $c = $host.UI.RawUI.CursorPosition; $c.X = 0; $host.UI.RawUI.CursorPosition = $c
+>> "%TEMP%\yn_confirm.ps1" echo     Write-Host "  Activer le Super Administrateur ?  " -NoNewline
+>> "%TEMP%\yn_confirm.ps1" echo     if ($s -eq 0) { Write-Host " OUI " -NoNewline -ForegroundColor Black -BackgroundColor Green; Write-Host "   NON  " -ForegroundColor DarkGray }
+>> "%TEMP%\yn_confirm.ps1" echo     else          { Write-Host " OUI " -NoNewline -ForegroundColor DarkGray;                    Write-Host "   NON  " -ForegroundColor Black -BackgroundColor Red }
+>> "%TEMP%\yn_confirm.ps1" echo }
+>> "%TEMP%\yn_confirm.ps1" echo Show-Choice $sel
+>> "%TEMP%\yn_confirm.ps1" echo while ($true) {
+>> "%TEMP%\yn_confirm.ps1" echo     $k = [Console]::ReadKey($true)
+>> "%TEMP%\yn_confirm.ps1" echo     if ($k.Key -eq 'LeftArrow' -or $k.Key -eq 'RightArrow') {
+>> "%TEMP%\yn_confirm.ps1" echo         $sel = 1 - $sel
+>> "%TEMP%\yn_confirm.ps1" echo         $c = $host.UI.RawUI.CursorPosition; $c.Y--; $host.UI.RawUI.CursorPosition = $c
+>> "%TEMP%\yn_confirm.ps1" echo         Show-Choice $sel
+>> "%TEMP%\yn_confirm.ps1" echo     } elseif ($k.Key -eq 'Enter') { break }
+>> "%TEMP%\yn_confirm.ps1" echo     elseif ($k.Key -eq 'Escape') { $sel = 1; break }
+>> "%TEMP%\yn_confirm.ps1" echo }
+>> "%TEMP%\yn_confirm.ps1" echo Write-Host ""
+>> "%TEMP%\yn_confirm.ps1" echo exit $sel
+powershell -NoProfile -ExecutionPolicy Bypass -File "%TEMP%\yn_confirm.ps1"
+set "_YN=%errorlevel%"
+del /f /q "%TEMP%\yn_confirm.ps1" 2>nul
+if "%_YN%"=="1" goto um_menu
+> "%TEMP%\um_input.ps1" echo $buf = ""
+>> "%TEMP%\um_input.ps1" echo Write-Host "  Mot de passe pour le Super Administrateur : " -NoNewline -ForegroundColor Cyan
+>> "%TEMP%\um_input.ps1" echo while ($true) {
+>> "%TEMP%\um_input.ps1" echo     $k = [Console]::ReadKey($true)
+>> "%TEMP%\um_input.ps1" echo     if ($k.Key -eq 'Enter') { break }
+>> "%TEMP%\um_input.ps1" echo     elseif ($k.Key -eq 'Escape') { exit 2 }
+>> "%TEMP%\um_input.ps1" echo     elseif ($k.Key -eq 'Backspace') {
+>> "%TEMP%\um_input.ps1" echo         if ($buf.Length -gt 0) { $buf = $buf.Substring(0, $buf.Length - 1); Write-Host "`b `b" -NoNewline }
+>> "%TEMP%\um_input.ps1" echo     } else {
+>> "%TEMP%\um_input.ps1" echo         $c = $k.KeyChar
+>> "%TEMP%\um_input.ps1" echo         if ($c -ge ' ') { $buf += $c; Write-Host "*" -NoNewline }
+>> "%TEMP%\um_input.ps1" echo     }
+>> "%TEMP%\um_input.ps1" echo }
+>> "%TEMP%\um_input.ps1" echo Write-Host ""
+>> "%TEMP%\um_input.ps1" echo try {
+>> "%TEMP%\um_input.ps1" echo     $u = Get-LocalUser ^| Where-Object { $_.SID -like '*-500' } ^| Select-Object -First 1
+>> "%TEMP%\um_input.ps1" echo     $ss = ConvertTo-SecureString $buf -AsPlainText -Force
+>> "%TEMP%\um_input.ps1" echo     Set-LocalUser -Name $u.Name -Password $ss
+>> "%TEMP%\um_input.ps1" echo     Enable-LocalUser -Name $u.Name
+>> "%TEMP%\um_input.ps1" echo     Write-Host "[OK] Compte $($u.Name) active avec succes." -ForegroundColor Green
+>> "%TEMP%\um_input.ps1" echo     exit 0
+>> "%TEMP%\um_input.ps1" echo } catch { Write-Host $_.Exception.Message -ForegroundColor Red; exit 1 }
+powershell -NoProfile -ExecutionPolicy Bypass -File "%TEMP%\um_input.ps1"
+set "_ERR=%errorlevel%"
+del /f /q "%TEMP%\um_input.ps1" 2>nul
+if "%_ERR%"=="2" goto um_menu
+if not "%_ERR%"=="0" echo [ECHEC] Impossible d'activer le compte.
 pause
 goto um_menu
 
