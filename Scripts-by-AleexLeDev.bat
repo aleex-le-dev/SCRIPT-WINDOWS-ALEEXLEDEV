@@ -808,9 +808,6 @@ pause
 endlocal
 goto photo_viewer_toggle
 
-REM ===================================================================
-REM                    LISTER LE CONTENU D'UN DOSSIER
-REM ===================================================================
 :list_folder_menu
 set "opts=Lister le contenu complet (Arborescence);Rechercher fichiers par extension (Videos, Audios, etc.);Retour"
 call :DynamicMenu "LISTING ET RECHERCHE PAR EXTENSIONS" "%opts%" "NONUMS"
