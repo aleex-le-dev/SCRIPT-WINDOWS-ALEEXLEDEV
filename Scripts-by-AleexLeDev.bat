@@ -3891,7 +3891,7 @@ if "%gm_ch%"=="2" goto gm_pixel_html
 if "%gm_ch%"=="3" goto gm_email_trap
 if "%gm_ch%"=="4" goto gm_retrieve_past
 goto gm_traps_menu
-if "%gm_ch%"=="5" goto gm_manual_ip
+if "%gm_ch%"=="5" goto gm_traps_menu
 goto gm_traps_menu
 
 :gm_webhook_trap
@@ -6775,7 +6775,7 @@ echo   d'enregistrement et l'ASN de l'herbergeur.
 echo.
 set "WH_DOM="
 set /p "WH_DOM=Domaine ou IP : "
-if not defined WH_DOM goto cat_recon
+if not defined WH_DOM goto net_cyber_menu
 
 set "WPS=%TEMP%\recon_whois_%RANDOM%.ps1"
 if exist "%WPS%" del /f /q "%WPS%"
@@ -6816,7 +6816,7 @@ echo } >> "%WPS%"
 
 powershell -NoProfile -ExecutionPolicy Bypass -File "%WPS%"
 if exist "%WPS%" del /f /q "%WPS%"
-pause & goto cat_recon
+pause & goto net_cyber_menu
 
 :recon_crtsh
 cls
@@ -6829,7 +6829,7 @@ echo   dans les logs publics (methode 100%% passive).
 echo.
 set "CRT_DOM="
 set /p "CRT_DOM=Domaine cible (ex: google.com) : "
-if not defined CRT_DOM goto cat_recon
+if not defined CRT_DOM goto net_cyber_menu
 set "CRT_DOM=%CRT_DOM: =%"
 
 set "WPS=%TEMP%\recon_crtsh_%RANDOM%.ps1"
@@ -6857,7 +6857,7 @@ echo } >> "%WPS%"
 
 powershell -NoProfile -ExecutionPolicy Bypass -File "%WPS%"
 if exist "%WPS%" del /f /q "%WPS%"
-pause & goto cat_recon
+pause & goto net_cyber_menu
 
 :recon_axfr
 cls
@@ -6870,7 +6870,7 @@ echo   si le serveur de noms est mal securise.
 echo.
 set "AX_DOM="
 set /p "AX_DOM=Domaine (ex: zonetransfer.me) : "
-if not defined AX_DOM goto cat_recon
+if not defined AX_DOM goto net_cyber_menu
 set "AX_DOM=%AX_DOM: =%"
 
 set "WPS=%TEMP%\recon_axfr_%RANDOM%.ps1"
@@ -6905,7 +6905,7 @@ echo } >> "%WPS%"
 
 powershell -NoProfile -ExecutionPolicy Bypass -File "%WPS%"
 if exist "%WPS%" del /f /q "%WPS%"
-pause & goto cat_recon
+pause & goto net_cyber_menu
 
 :recon_robots
 cls
@@ -6918,7 +6918,7 @@ echo   pour trouver des panels admin caches.
 echo.
 set "RB_URL="
 set /p "RB_URL=URL (ex: https://site.com) : "
-if not defined RB_URL goto cat_recon
+if not defined RB_URL goto net_cyber_menu
 set "RB_URL=%RB_URL: =%"
 
 set "WPS=%TEMP%\recon_robots_%RANDOM%.ps1"
@@ -6943,7 +6943,7 @@ echo } >> "%WPS%"
 
 powershell -NoProfile -ExecutionPolicy Bypass -File "%WPS%"
 if exist "%WPS%" del /f /q "%WPS%"
-pause & goto cat_recon
+pause & goto net_cyber_menu
 
 :recon_subdomain_brute
 cls
@@ -6956,7 +6956,7 @@ echo   pour detecter des services actifs.
 echo.
 set "SD_DOM="
 set /p "SD_DOM=Domaine racine (ex: michelin.com) : "
-if not defined SD_DOM goto cat_recon
+if not defined SD_DOM goto net_cyber_menu
 set "SD_DOM=%SD_DOM: =%"
 
 set "WPS=%TEMP%\recon_sub_%RANDOM%.ps1"
@@ -6996,7 +6996,7 @@ echo } >> "%WPS%"
 
 powershell -NoProfile -ExecutionPolicy Bypass -File "%WPS%"
 if exist "%WPS%" del /f /q "%WPS%"
-pause & goto cat_recon
+pause & goto net_cyber_menu
 
 :cyber_ssrf
 cls
