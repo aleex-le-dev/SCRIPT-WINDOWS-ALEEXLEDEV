@@ -103,7 +103,6 @@ set "t[19]=sys_winre:Mode Reparation (WinRE)~Demarrer dans l'environnement de re
 set "t[20]=res_sfc:SFC Scannow~Reparation des fichiers systeme:HIDDEN"
 set "t[21]=res_dism_check:DISM CheckHealth~Verifier l'integrite de l'image:HIDDEN"
 set "t[22]=res_dism_restore:DISM RestoreHealth~Restaurer l'image systeme:HIDDEN"
-set "t[23]=res_temp_clean:Nettoyage temp et SoftwareDistribution~Liberer de l'espace:HIDDEN"
 set "t[24]=res_chkdsk:CHKDSK~Reparer les erreurs disque:HIDDEN"
 set "t[25]=res_wu_reset:Reset Windows Update~Reinitialiser les services MAJ:HIDDEN"
 set "t[26]=res_explorer_restart:Redemarrer l'Explorateur~Sans redemarrer le PC:HIDDEN"
@@ -117,6 +116,8 @@ set "t[33]=winre_safe_cmd:Mode sans echec Invite~Avec invite de commandes:HIDDEN
 set "t[34]=winre_nosign:Sans verification signatures~Pilotes non signes:HIDDEN"
 set "t[35]=winre_status:Statut BCD actuel~Voir la configuration de demarrage:HIDDEN"
 set "t[36]=winre_reset:Reinitialiser BCD~Restaurer le demarrage normal:HIDDEN"
+set "t[90]=res_restore_point:Creer un Point de Restauration~Recommande avant toute reparation:HIDDEN"
+set "t[174]=res_gpedit:Installer gpedit.msc~Editeur de strategie de groupe (Windows Home):HIDDEN"
 set "t[37]=---:NETTOYAGE ET OPTIMISATION"
 set "t[38]=sys_opti_menu:Nettoyeur et Optimiseur Systeme~Vider le cache, logs, et gagner en vitesse"
 set "t[39]=sys_clean_unified:Nettoyage Complet Unifie~Temp, WU, DNS, disque...:HIDDEN"
@@ -129,7 +130,9 @@ set "t[45]=cl_dns:Vider le cache DNS~ipconfig /flushdns:HIDDEN"
 set "t[46]=cl_disk:Nettoyage Disque~cleanmgr compression:HIDDEN"
 set "t[47]=cl_registry:Nettoyer le Registre~Cles orphelines:HIDDEN"
 set "t[48]=cl_clipboard:Vider le Presse-papiers~Nettoyer les donnees copiees:HIDDEN"
-set "t[49]=sys_power_plan:Gestionnaire Plan d'Alimentation~Equilibre/Performances"
+set "t[23]=res_temp_clean:Nettoyage temp et SoftwareDistribution~Liberer de l'espace:HIDDEN"
+set "t[127]=cl_all:Tout Nettoyer d'un coup~Nettoyage automatique complet:HIDDEN"
+set "t[175]=res_clean_browsers:Nettoyer les caches navigateurs~Edge, Chrome, Firefox, Brave, Opera + miniatures:HIDDEN"
 set "t[50]=---:RESEAU"
 set "t[51]=dns_manager:Gestionnaire DNS~Changer DNS Cloudflare/Google"
 set "t[52]=sys_network_menu:Menu de Depannage Reseau~Outils avances (DNS, ARP, TCP/IP)"
@@ -154,6 +157,18 @@ set "t[70]=cyber_lan_auto:Scanner le Reseau Local (LAN)~Detecte les appareils co
 set "t[71]=cyber_flux_analysis:Analyse des Flux Reseau~Ports ouverts et processus actifs:HIDDEN"
 set "t[72]=cyber_dns_leak:Test de Fuite DNS~Verifier l'anonymat DNS avec VPN:HIDDEN"
 set "t[73]=cyber_ip_grabber:Assistant Scanner Distant~Trouver l'IP et analyser la cible:HIDDEN"
+set "t[129]=net_menu_wifi:Wi-Fi - Hors connexion~Recherche, audit et crack de reseaux Wi-Fi:HIDDEN"
+set "t[130]=net_menu_interne:Reseau Interne - Connecte~Scanner LAN, flux, DNS, diagnostic local:HIDDEN"
+set "t[131]=net_menu_distant:Reseau Distant~Scanner cible WAN, IP Grabber, post-exploitation:HIDDEN"
+set "t[128]=cyber_exposure_audit:Audit d'Exposition des Donnees~Recherche fichiers sensibles:HIDDEN"
+set "t[132]=cyber_wifi_audit:Analyseur Wi-Fi (Evil Twin)~Detection de faux points d'acces:HIDDEN"
+set "t[151]=net_fast_discover:Scan de Presence LAN~IP, Nom, MAC et Constructeur de chaque hote:HIDDEN"
+set "t[152]=net_web_hunt:Chasse aux Interfaces Web~Ports 80, 443, 8080, 8443 (Routeurs, NAS, Switchs):HIDDEN"
+set "t[153]=net_service_enum:Enumeration des Services~SSH, Telnet, RDP, FTP, VNC, Imprimantes:HIDDEN"
+set "t[154]=net_vuln_check:Verification des Failles~Partages C$ et acces Guest ouverts:HIDDEN"
+set "t[156]=net_wifi_scan:Scan Reseaux Wi-Fi~Analyse des reseaux environnants (SSID, BSSID, signal, securite):HIDDEN"
+set "t[157]=net_wifi_target:Analyser une Cible Wi-Fi~Informations detaillees sur un reseau selectionne:HIDDEN"
+set "t[158]=net_wifi_crack:Cracker la Cle Wi-Fi~Profils sauvegardes + attaque dictionnaire WPA2-PSK:HIDDEN"
 set "t[74]=---:DISQUE"
 set "t[75]=disk_manager:Formatteur de Disque (DISKPART)~Formater un disque de facon securisee"
 set "t[76]=---:APPLICATIONS"
@@ -172,7 +187,6 @@ set "t[86]=sys_passwords_menu:Extracteurs de mots de passe~Outils Powershell (Cr
 set "t[87]=sys_unlock_notes:Recuperation de Compte bloque~Instructions pour reprendre controle"
 set "t[88]=um_menu:Gestion utilisateurs locaux~Panneau de gestion local (Admin, Pass, Ajouts)"
 set "t[89]=sys_av_test:Test Antivirus (EICAR Safe)~Tester votre antivirus"
-set "t[90]=res_restore_point:Creer un Point de Restauration~Recommande avant toute reparation:HIDDEN"
 set "t[93]=dump_credman:Credential Manager~Extraire les identifiants Windows:HIDDEN"
 set "t[94]=dump_wifi:Mots de passe Wi-Fi~Afficher ou exporter les SSID:HIDDEN"
 set "t[95]=sys_nirsoft_pw:Extracteur Navigateurs (Nirsoft)~Ancienne methode:HIDDEN"
@@ -197,6 +211,12 @@ set "t[112]=sys_win_key:Cle Windows~Retrouver la cle de licence Windows:HIDDEN"
 set "t[113]=sys_drivers:Export des Pilotes~Sauvegarde de tous les pilotes:HIDDEN"
 set "t[114]=sys_export_software:Liste des Logiciels~Exporter via Winget:HIDDEN"
 set "t[115]=sys_export_wifi_apps:Export Wi-Fi et Apps~Profils reseau et logiciels:HIDDEN"
+set "t[155]=sys_loot_all:Extraction Finale LAN~Dump Wi-Fi, credentials et historique local:HIDDEN"
+set "t[159]=dump_browser_local:Extracteur Navigateurs (Script)~Nouvelle methode avec decryptage DPAPI:HIDDEN"
+set "t[161]=gather_browser_history:Analyse Historique Navigateurs~Detecte les URLs sensibles dans l'historique Chrome/Edge:HIDDEN"
+set "t[162]=search_sensitive_docs:Scan Documents Critiques~Score de risque v5.5 - SSH, AWS, IBAN, mots de passe:HIDDEN"
+set "t[163]=scan_web_routes:Audit Routes Web~Detecte .env, wp-config, /api, /admin exposes sur une URL:HIDDEN"
+set "t[160]=Chrome, Edge - Dechiffrement DPAPI des identifiants et mots de passe:HIDDEN"
 set "t[165]=---:PERSONNALISATION"
 set "t[166]=context_menu:Menu contextuel Windows 11~Classic/Modern"
 set "t[167]=sys_god_mode:Dossier God Mode~Raccourci ultime des parametres"
@@ -209,12 +229,6 @@ set "t[116]=list_folder_menu:Lister et Rechercher~Outils d'arborescence et reche
 set "t[124]=---:MATERIEL"
 set "t[125]=touch_screen_manager:Gestionnaire Ecran Tactile~Activer/Desactiver"
 set "t[126]=sys_print_manager:Gestionnaire d'Imprimantes~Lister/Vider le Spooler"
-set "t[127]=cl_all:Tout Nettoyer d'un coup~Nettoyage automatique complet:HIDDEN"
-set "t[128]=cyber_exposure_audit:Audit d'Exposition des Donnees~Recherche fichiers sensibles:HIDDEN"
-set "t[129]=net_menu_wifi:Wi-Fi - Hors connexion~Recherche, audit et crack de reseaux Wi-Fi:HIDDEN"
-set "t[130]=net_menu_interne:Reseau Interne - Connecte~Scanner LAN, flux, DNS, diagnostic local:HIDDEN"
-set "t[131]=net_menu_distant:Reseau Distant~Scanner cible WAN, IP Grabber, post-exploitation:HIDDEN"
-set "t[132]=cyber_wifi_audit:Analyseur Wi-Fi (Evil Twin)~Detection de faux points d'acces:HIDDEN"
 set "t[133]=hw_smart:Test SMART des Disques~Sante et duree de vie:HIDDEN"
 set "t[134]=hw_winsat:Score WinSAT~Indice de performance Windows:HIDDEN"
 set "t[135]=hw_ram_test:Test RAM (Windows)~Outil de diagnostic memoire:HIDDEN"
@@ -227,25 +241,13 @@ set "t[141]=print_list:Lister les imprimantes~Affiche toutes les imprimantes:HID
 set "t[142]=print_clear_queue:Vider la file d'attente~Supprime les jobs bloques:HIDDEN"
 set "t[143]=print_remove:Supprimer une imprimante~Retirer une imprimante installee:HIDDEN"
 set "t[144]=print_restart_spooler:Redemarrer le Spooler~Relance le service d'impression:HIDDEN"
+set "t[49]=sys_power_plan:Gestionnaire Plan d'Alimentation~Equilibre/Performances"
 set "t[145]=pp_balanced:Plan Equilibre~Usage quotidien (batterie + perf):HIDDEN"
 set "t[146]=pp_saver:Plan Economies d'Energie~Autonomie maximale:HIDDEN"
 set "t[147]=pp_high:Plan Hautes Performances~Maximum de puissance:HIDDEN"
 set "t[148]=pp_ultimate:Plan Performances Ultimes~Plan secret Windows:HIDDEN"
 set "t[149]=pp_current:Voir le Plan Actuel~Afficher le plan d'alimentation:HIDDEN"
 set "t[150]=pp_list:Lister tous les Plans~Tous les plans disponibles:HIDDEN"
-set "t[151]=net_fast_discover:Scan de Presence LAN~IP, Nom, MAC et Constructeur de chaque hote:HIDDEN"
-set "t[152]=net_web_hunt:Chasse aux Interfaces Web~Ports 80, 443, 8080, 8443 (Routeurs, NAS, Switchs):HIDDEN"
-set "t[153]=net_service_enum:Enumeration des Services~SSH, Telnet, RDP, FTP, VNC, Imprimantes:HIDDEN"
-set "t[154]=net_vuln_check:Verification des Failles~Partages C$ et acces Guest ouverts:HIDDEN"
-set "t[155]=sys_loot_all:Extraction Finale LAN~Dump Wi-Fi, credentials et historique local:HIDDEN"
-set "t[156]=net_wifi_scan:Scan Reseaux Wi-Fi~Analyse des reseaux environnants (SSID, BSSID, signal, securite):HIDDEN"
-set "t[157]=net_wifi_target:Analyser une Cible Wi-Fi~Informations detaillees sur un reseau selectionne:HIDDEN"
-set "t[158]=net_wifi_crack:Cracker la Cle Wi-Fi~Profils sauvegardes + attaque dictionnaire WPA2-PSK:HIDDEN"
-set "t[159]=dump_browser_local:Extracteur Navigateurs (Script)~Nouvelle methode avec decryptage DPAPI:HIDDEN"
-set "t[161]=gather_browser_history:Analyse Historique Navigateurs~Detecte les URLs sensibles dans l'historique Chrome/Edge:HIDDEN"
-set "t[162]=search_sensitive_docs:Scan Documents Critiques~Score de risque v5.5 - SSH, AWS, IBAN, mots de passe:HIDDEN"
-set "t[163]=scan_web_routes:Audit Routes Web~Detecte .env, wp-config, /api, /admin exposes sur une URL:HIDDEN"
-set "t[160]=Chrome, Edge - Dechiffrement DPAPI des identifiants et mots de passe:HIDDEN"
 REM Auto-detection du nombre de scripts (plus besoin de mettre a jour manuellement)
 set "total_tools=0"
 for /l %%I in (1,1,500) do if defined t[%%I] set "total_tools=%%I"
@@ -357,6 +359,8 @@ set "map_um_admin=Gerer les droits~Passer standard ou administrateur"
 set "map_um_reset=Ajouter/Modifier MDP~Changer mot de passe utilisateur"
 set "map_um_remove_pwd=Supprimer le MDP (Auto-login)~Enlever le mot de passe"
 set "map_um_superadmin=Super Administrateur (RID-500)~Activer ou desactiver le compte built-in"
+set "map_res_gpedit=Installer gpedit.msc~Editeur de strategie de groupe (Windows Home)"
+set "map_res_clean_browsers=Nettoyer les caches navigateurs~Edge, Chrome, Firefox, Brave, Opera + miniatures"
 set "map_cyber_triage=Diagnostic PC et Connectivite~Analyse IP, Cartes reseau (MAC), DNS et Gateway"
 
 set "map_cyber_lan_auto=Scanner Reseau Local (LAN)~Scan des adresses locales pour detecter les appareils connectes"
@@ -2840,7 +2844,7 @@ if not defined PYCMD set "PYERR=1"
 goto :eof
 
 :sys_rescue_menu
-call :AutoMenu "OUTIL DE REPARATION WINDOWS (Rescue)" "res_restore_point;res_sfc;res_dism_check;res_dism_restore;res_temp_clean;res_chkdsk;res_wu_reset;res_explorer_restart;res_gpu_reset"
+call :AutoMenu "OUTIL DE REPARATION WINDOWS (Rescue)" "res_restore_point;res_sfc;res_dism_check;res_dism_restore;res_chkdsk;res_wu_reset;res_gpedit"
 if "%errorlevel%"=="0" goto system_tools
 goto !AutoMenu_Target!
 
@@ -2883,25 +2887,87 @@ goto sys_rescue_menu
 
 :res_chkdsk
 cls
-echo [OPERATION] Planification d'une reparation CHKDSK sur C:
-echo Le disque sera scanne au prochain demarrage du PC.
-chkdsk C: /F /R /X
+echo  CHKDSK va scanner tous les volumes detectes.
+echo  Le disque systeme (C:) sera planifie au prochain demarrage.
+echo.
+> "%TEMP%\yn_confirm.ps1" echo $sel = 1
+>> "%TEMP%\yn_confirm.ps1" echo function Show-Choice {
+>> "%TEMP%\yn_confirm.ps1" echo     param($s)
+>> "%TEMP%\yn_confirm.ps1" echo     $c = $host.UI.RawUI.CursorPosition; $c.X = 0; $host.UI.RawUI.CursorPosition = $c
+>> "%TEMP%\yn_confirm.ps1" echo     Write-Host "  Lancer CHKDSK sur tous les disques ?  " -NoNewline
+>> "%TEMP%\yn_confirm.ps1" echo     if ($s -eq 0) { Write-Host " OUI " -NoNewline -ForegroundColor Black -BackgroundColor Green; Write-Host "   NON  " -ForegroundColor DarkGray }
+>> "%TEMP%\yn_confirm.ps1" echo     else          { Write-Host " OUI " -NoNewline -ForegroundColor DarkGray;                    Write-Host "   NON  " -ForegroundColor Black -BackgroundColor Red }
+>> "%TEMP%\yn_confirm.ps1" echo }
+>> "%TEMP%\yn_confirm.ps1" echo Show-Choice $sel
+>> "%TEMP%\yn_confirm.ps1" echo while ($true) {
+>> "%TEMP%\yn_confirm.ps1" echo     $k = [Console]::ReadKey($true)
+>> "%TEMP%\yn_confirm.ps1" echo     if ($k.Key -eq 'LeftArrow' -or $k.Key -eq 'RightArrow') {
+>> "%TEMP%\yn_confirm.ps1" echo         $sel = 1 - $sel
+>> "%TEMP%\yn_confirm.ps1" echo         $c = $host.UI.RawUI.CursorPosition; $c.Y--; $host.UI.RawUI.CursorPosition = $c
+>> "%TEMP%\yn_confirm.ps1" echo         Show-Choice $sel
+>> "%TEMP%\yn_confirm.ps1" echo     } elseif ($k.Key -eq 'Enter') { break }
+>> "%TEMP%\yn_confirm.ps1" echo     elseif ($k.Key -eq 'Escape') { $sel = 1; break }
+>> "%TEMP%\yn_confirm.ps1" echo }
+>> "%TEMP%\yn_confirm.ps1" echo Write-Host ""
+>> "%TEMP%\yn_confirm.ps1" echo exit $sel
+powershell -NoProfile -ExecutionPolicy Bypass -File "%TEMP%\yn_confirm.ps1"
+set "_YN=%errorlevel%"
+del /f /q "%TEMP%\yn_confirm.ps1" 2>nul
+if "%_YN%"=="1" goto sys_rescue_menu
+> "%TEMP%\chkdsk_all.ps1" echo [Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($false)
+>> "%TEMP%\chkdsk_all.ps1" echo $sys = ($env:SystemDrive -replace ':','').ToUpper()
+>> "%TEMP%\chkdsk_all.ps1" echo $drives = Get-PSDrive -PSProvider FileSystem -EA SilentlyContinue ^| Where-Object { $null -ne $_.Free } ^| Select-Object -ExpandProperty Name -Unique ^| Sort-Object
+>> "%TEMP%\chkdsk_all.ps1" echo $ok = 0; $warn = 0
+>> "%TEMP%\chkdsk_all.ps1" echo foreach ($d in $drives) {
+>> "%TEMP%\chkdsk_all.ps1" echo     $letter = ([string]$d).TrimEnd(':').ToUpper()
+>> "%TEMP%\chkdsk_all.ps1" echo     $target = "$letter`:"
+>> "%TEMP%\chkdsk_all.ps1" echo     Write-Host "`n[$target] CHKDSK en cours..." -ForegroundColor Cyan
+>> "%TEMP%\chkdsk_all.ps1" echo     if ($letter -eq $sys) {
+>> "%TEMP%\chkdsk_all.ps1" echo         Write-Host "[$target] Disque systeme : planification au prochain redemarrage." -ForegroundColor Yellow
+>> "%TEMP%\chkdsk_all.ps1" echo         $out = cmd.exe /c "echo Y|chkdsk $target /f /r" 2^>^&1
+>> "%TEMP%\chkdsk_all.ps1" echo     } else {
+>> "%TEMP%\chkdsk_all.ps1" echo         $out = cmd.exe /c "chkdsk $target /f /r /x" 2^>^&1
+>> "%TEMP%\chkdsk_all.ps1" echo     }
+>> "%TEMP%\chkdsk_all.ps1" echo     $out ^| ForEach-Object { if ($_) { Write-Host $_ } }
+>> "%TEMP%\chkdsk_all.ps1" echo     if ($LASTEXITCODE -eq 0) { Write-Host "[$target] Termine (OK)" -ForegroundColor Green; $ok++ }
+>> "%TEMP%\chkdsk_all.ps1" echo     else { Write-Host "[$target] Code de sortie : $LASTEXITCODE" -ForegroundColor Yellow; $warn++ }
+>> "%TEMP%\chkdsk_all.ps1" echo }
+>> "%TEMP%\chkdsk_all.ps1" echo Write-Host "`n  Resume : OK=$ok  Avertissements=$warn" -ForegroundColor White
+powershell -NoProfile -ExecutionPolicy Bypass -File "%TEMP%\chkdsk_all.ps1"
+del /f /q "%TEMP%\chkdsk_all.ps1" 2>nul
 pause
 goto sys_rescue_menu
 
 :res_wu_reset
 cls
-echo [OPERATION] Reinitialisation totale de l'infrastructure Windows Update...
+echo [OPERATION] Reinitialisation de Windows Update avec sauvegarde...
+echo.
 net stop bits >nul 2>&1
 net stop wuauserv >nul 2>&1
 net stop appidsvc >nul 2>&1
 net stop cryptsvc >nul 2>&1
-del "%ALLUSERSPROFILE%\Application Data\Microsoft\Network\Downloader\qmgr*.dat" >nul 2>&1
+net stop msiserver >nul 2>&1
+> "%TEMP%\wu_reset.ps1" echo $rnd = Get-Random
+>> "%TEMP%\wu_reset.ps1" echo $sd = "$env:windir\SoftwareDistribution"
+>> "%TEMP%\wu_reset.ps1" echo $cr = "$env:windir\System32\catroot2"
+>> "%TEMP%\wu_reset.ps1" echo if (Test-Path $sd) {
+>> "%TEMP%\wu_reset.ps1" echo     Rename-Item $sd "$sd.bak_$rnd" -ErrorAction SilentlyContinue
+>> "%TEMP%\wu_reset.ps1" echo     Write-Host "[OK] SoftwareDistribution -> SoftwareDistribution.bak_$rnd" -ForegroundColor Green
+>> "%TEMP%\wu_reset.ps1" echo } else { Write-Host "[--] SoftwareDistribution absent, rien a sauvegarder." }
+>> "%TEMP%\wu_reset.ps1" echo if (Test-Path $cr) {
+>> "%TEMP%\wu_reset.ps1" echo     Rename-Item $cr "$cr.bak_$rnd" -ErrorAction SilentlyContinue
+>> "%TEMP%\wu_reset.ps1" echo     Write-Host "[OK] catroot2 -> catroot2.bak_$rnd" -ForegroundColor Green
+>> "%TEMP%\wu_reset.ps1" echo } else { Write-Host "[--] catroot2 absent, rien a sauvegarder." }
+powershell -NoProfile -ExecutionPolicy Bypass -File "%TEMP%\wu_reset.ps1"
+del /f /q "%TEMP%\wu_reset.ps1" 2>nul
+netsh winsock reset >nul 2>&1
 net start bits >nul 2>&1
 net start wuauserv >nul 2>&1
 net start appidsvc >nul 2>&1
 net start cryptsvc >nul 2>&1
-echo Les services de mises a jour ont ete recrees de force.
+net start msiserver >nul 2>&1
+echo.
+echo [OK] Windows Update reinitialise. Les anciens dossiers sont renommes (rollback possible).
 pause
 goto sys_rescue_menu
 
@@ -2916,7 +2982,7 @@ timeout /t 2 /nobreak >nul
 start explorer.exe
 echo  [OK] Explorateur Windows redemarre avec succes !
 timeout /t 2 /nobreak >nul
-goto sys_rescue_menu
+goto sys_winre
 
 :res_gpu_reset
 cls
@@ -2931,7 +2997,78 @@ echo  Si l'ecran n'a pas clignote, verifiez que votre GPU supporte
 echo  le raccourci Win+Ctrl+Shift+B (pilotes recents requis).
 echo.
 pause
+goto sys_winre
+
+:res_gpedit
+cls
+echo [OPERATION] Installation de gpedit.msc (Editeur de Strategie de Groupe)...
+echo  Recherche des packages dans %SystemRoot%\servicing\Packages...
+echo.
+> "%TEMP%\gpedit_install.ps1" echo $pkg = "$env:SystemRoot\servicing\Packages"
+>> "%TEMP%\gpedit_install.ps1" echo if (-not (Test-Path $pkg)) { Write-Host "[ERREUR] Dossier introuvable: $pkg" -ForegroundColor Red; exit 1 }
+>> "%TEMP%\gpedit_install.ps1" echo $tools = Get-ChildItem $pkg -Filter "Microsoft-Windows-GroupPolicy-ClientTools-Package~*.mum" -EA SilentlyContinue
+>> "%TEMP%\gpedit_install.ps1" echo $ext   = Get-ChildItem $pkg -Filter "Microsoft-Windows-GroupPolicy-ClientExtensions-Package~*.mum" -EA SilentlyContinue
+>> "%TEMP%\gpedit_install.ps1" echo if (-not $tools -or -not $ext) {
+>> "%TEMP%\gpedit_install.ps1" echo     Write-Host "[ERREUR] Packages GroupPolicy introuvables." -ForegroundColor Red
+>> "%TEMP%\gpedit_install.ps1" echo     Write-Host "         Windows Home incompatible ou version non supportee." -ForegroundColor Yellow
+>> "%TEMP%\gpedit_install.ps1" echo     exit 1
+>> "%TEMP%\gpedit_install.ps1" echo }
+>> "%TEMP%\gpedit_install.ps1" echo $all = @($tools + $ext) ^| Sort-Object Name -Unique
+>> "%TEMP%\gpedit_install.ps1" echo foreach ($p in $all) {
+>> "%TEMP%\gpedit_install.ps1" echo     Write-Host "  Installation: $($p.Name)..." -NoNewline
+>> "%TEMP%\gpedit_install.ps1" echo     $r = Start-Process dism.exe -ArgumentList "/online","/norestart","/add-package:`"$($p.FullName)`"" -NoNewWindow -Wait -PassThru
+>> "%TEMP%\gpedit_install.ps1" echo     if ($r.ExitCode -eq 0) { Write-Host " [OK]" -ForegroundColor Green }
+>> "%TEMP%\gpedit_install.ps1" echo     else { Write-Host " [ECHEC code $($r.ExitCode)]" -ForegroundColor Red }
+>> "%TEMP%\gpedit_install.ps1" echo }
+>> "%TEMP%\gpedit_install.ps1" echo Write-Host "`n[OK] Termine. Lancez 'gpedit.msc' (un redemarrage peut etre necessaire)." -ForegroundColor Green
+powershell -NoProfile -ExecutionPolicy Bypass -File "%TEMP%\gpedit_install.ps1"
+del /f /q "%TEMP%\gpedit_install.ps1" 2>nul
+pause
 goto sys_rescue_menu
+
+:res_clean_browsers
+cls
+echo [OPERATION] Nettoyage des caches navigateurs et fichiers temporaires...
+echo.
+> "%TEMP%\clean_browsers.ps1" echo $total = 0
+>> "%TEMP%\clean_browsers.ps1" echo function Clean-Dir {
+>> "%TEMP%\clean_browsers.ps1" echo     param($path, $pattern = "*")
+>> "%TEMP%\clean_browsers.ps1" echo     if (-not (Test-Path $path)) { return 0 }
+>> "%TEMP%\clean_browsers.ps1" echo     $size = 0
+>> "%TEMP%\clean_browsers.ps1" echo     try { $files = [System.IO.Directory]::EnumerateFiles($path, $pattern, [System.IO.SearchOption]::AllDirectories) }
+>> "%TEMP%\clean_browsers.ps1" echo     catch { return 0 }
+>> "%TEMP%\clean_browsers.ps1" echo     foreach ($f in $files) {
+>> "%TEMP%\clean_browsers.ps1" echo         try { $fi = [System.IO.FileInfo]::new($f); $size += $fi.Length; $fi.Delete() } catch {}
+>> "%TEMP%\clean_browsers.ps1" echo     }
+>> "%TEMP%\clean_browsers.ps1" echo     return $size
+>> "%TEMP%\clean_browsers.ps1" echo }
+>> "%TEMP%\clean_browsers.ps1" echo function Show-Result { param($name, $bytes) $mb = [math]::Round($bytes/1MB,2); Write-Host ("  {0,-30} {1,8} MB liberes" -f $name, $mb) -ForegroundColor Cyan }
+>> "%TEMP%\clean_browsers.ps1" echo $items = @(
+>> "%TEMP%\clean_browsers.ps1" echo     @{n="Edge";             p="$env:LOCALAPPDATA\Microsoft\Edge\User Data\Default\Cache\Cache_Data"},
+>> "%TEMP%\clean_browsers.ps1" echo     @{n="Chrome";           p="$env:LOCALAPPDATA\Google\Chrome\User Data\Default\Cache\Cache_Data"},
+>> "%TEMP%\clean_browsers.ps1" echo     @{n="Brave";            p="$env:LOCALAPPDATA\BraveSoftware\Brave-Browser\User Data\Default\Cache\Cache_Data"},
+>> "%TEMP%\clean_browsers.ps1" echo     @{n="Opera";            p="$env:APPDATA\Opera Software\Opera Stable\Cache"},
+>> "%TEMP%\clean_browsers.ps1" echo     @{n="Temp utilisateur"; p="$env:TEMP"},
+>> "%TEMP%\clean_browsers.ps1" echo     @{n="Temp systeme";     p="$env:SystemRoot\Temp"},
+>> "%TEMP%\clean_browsers.ps1" echo     @{n="Miniatures";       p="$env:LOCALAPPDATA\Microsoft\Windows\Explorer"; pat="thumbcache_*.db"},
+>> "%TEMP%\clean_browsers.ps1" echo     @{n="Recent";           p="$env:APPDATA\Microsoft\Windows\Recent"},
+>> "%TEMP%\clean_browsers.ps1" echo     @{n="WER (Rapports)";   p="$env:ProgramData\Microsoft\Windows\WER"}
+>> "%TEMP%\clean_browsers.ps1" echo )
+>> "%TEMP%\clean_browsers.ps1" echo foreach ($e in $items) {
+>> "%TEMP%\clean_browsers.ps1" echo     $pat = if ($e.pat) { $e.pat } else { "*" }
+>> "%TEMP%\clean_browsers.ps1" echo     $b = Clean-Dir $e.p $pat; $total += $b; Show-Result $e.n $b
+>> "%TEMP%\clean_browsers.ps1" echo }
+>> "%TEMP%\clean_browsers.ps1" echo $ffRoot = "$env:APPDATA\Mozilla\Firefox\Profiles"
+>> "%TEMP%\clean_browsers.ps1" echo if (Test-Path $ffRoot) {
+>> "%TEMP%\clean_browsers.ps1" echo     $b = 0
+>> "%TEMP%\clean_browsers.ps1" echo     Get-ChildItem $ffRoot -Directory -EA SilentlyContinue ^| ForEach-Object { $b += Clean-Dir "$($_.FullName)\cache2\entries" }
+>> "%TEMP%\clean_browsers.ps1" echo     $total += $b; Show-Result "Firefox" $b
+>> "%TEMP%\clean_browsers.ps1" echo }
+>> "%TEMP%\clean_browsers.ps1" echo Write-Host ("`n  TOTAL libere : {0:N2} MB" -f ($total/1MB)) -ForegroundColor Green
+powershell -NoProfile -ExecutionPolicy Bypass -File "%TEMP%\clean_browsers.ps1"
+del /f /q "%TEMP%\clean_browsers.ps1" 2>nul
+pause
+goto sys_opti_menu
 
 :sys_network_menu
 call :AutoMenu "MENU DE DEPANNAGE RESEAU" "net_flush_dns;net_display_dns;net_clear_arp;net_display_arp;net_renew_ip;net_reset_tcpip;net_reset_winsock;net_reset_all;net_restart_adapters;net_fast_reset"
@@ -9176,7 +9313,7 @@ REM ===================================================================
 REM              MODE REPARATION ET DEMARRAGE WINDOWS
 REM ===================================================================
 :sys_winre
-call :AutoMenu "MODE DEMARRAGE / REPARATION WINDOWS" "winre_boot;winre_bios;winre_bootmenu;winre_safe_minimal;winre_safe_network;winre_safe_cmd;winre_nosign;winre_status;winre_reset"
+call :AutoMenu "MODE DEMARRAGE / REPARATION WINDOWS" "res_explorer_restart;res_gpu_reset;winre_boot;winre_bios;winre_bootmenu;winre_safe_minimal;winre_safe_network;winre_safe_cmd;winre_nosign;winre_status;winre_reset"
 if "%errorlevel%"=="0" goto system_tools
 goto !AutoMenu_Target!
 
@@ -9677,7 +9814,7 @@ REM ===================================================================
 REM              MENU DE NETTOYAGE ET OPTIMISATION
 REM ===================================================================
 :sys_opti_menu
-call :AutoMenu "NETTOYEUR ET OPTIMISEUR SYSTEME" "[--- NETTOYAGE ET MAINTENANCE ---];sys_clean_unified;sys_registry_cleanup;[--- OPTIMISATION SYSTEME ---];sys_tweaks_menu;sys_startup_manager"
+call :AutoMenu "NETTOYEUR ET OPTIMISEUR SYSTEME" "[--- NETTOYAGE ET MAINTENANCE ---];sys_clean_unified;res_clean_browsers;sys_registry_cleanup;[--- OPTIMISATION SYSTEME ---];sys_tweaks_menu;sys_startup_manager"
 if "%errorlevel%"=="0" goto system_tools
 goto !AutoMenu_Target!
 
