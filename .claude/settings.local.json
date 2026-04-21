@@ -7,7 +7,10 @@
       "Write(*.ps1)",
       "Write(*.bat)",
       "Read(AI_CONTEXT.md)",
-      "Read(Scripts-by-AleexLeDev.bat)"
+      "Read(Scripts-by-AleexLeDev.bat)",
+      "Bash(grep '---:')",
+      "Bash(bash -n /mnt/windows/Users/Alex/Documents/DEV/PROJETS/GITHUB/SCRIPT-WINDOWS-ALEEXLEDEV/Scripts-by-AleexLeDev-Linux.sh)",
+      "Bash(bash -n /mnt/windows/Users/Alex/Documents/DEV/PROJETS/GITHUB/SCRIPT-WINDOWS-ALEEXLEDEV/lancer.sh)"
     ]
   }
 }
