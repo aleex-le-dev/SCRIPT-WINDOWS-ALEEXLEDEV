@@ -10,7 +10,16 @@
       "Read(Scripts-by-AleexLeDev.bat)",
       "Bash(grep '---:')",
       "Bash(bash -n /mnt/windows/Users/Alex/Documents/DEV/PROJETS/GITHUB/SCRIPT-WINDOWS-ALEEXLEDEV/Scripts-by-AleexLeDev-Linux.sh)",
-      "Bash(bash -n /mnt/windows/Users/Alex/Documents/DEV/PROJETS/GITHUB/SCRIPT-WINDOWS-ALEEXLEDEV/lancer.sh)"
+      "Bash(bash -n /mnt/windows/Users/Alex/Documents/DEV/PROJETS/GITHUB/SCRIPT-WINDOWS-ALEEXLEDEV/lancer.sh)",
+      "Bash(sed -i 's/\\\\bdiag_sys_report\\\\b/sys_report/g' /mnt/windows/Users/Alex/Documents/DEV/PROJETS/GITHUB/SCRIPT-WINDOWS-ALEEXLEDEV/Scripts-by-AleexLeDev-Linux.sh)",
+      "Bash(sed -i 's/\\\\bdiag_sys_temp\\\\b/sys_temp_report/g' /mnt/windows/Users/Alex/Documents/DEV/PROJETS/GITHUB/SCRIPT-WINDOWS-ALEEXLEDEV/Scripts-by-AleexLeDev-Linux.sh)",
+      "Bash(sed -i 's/\\\\bdiag_ram_check\\\\b/sys_ram_check/g' /mnt/windows/Users/Alex/Documents/DEV/PROJETS/GITHUB/SCRIPT-WINDOWS-ALEEXLEDEV/Scripts-by-AleexLeDev-Linux.sh)",
+      "Bash(sed -i 's/\\\\bdiag_network\\\\b/sys_diag_network/g' /mnt/windows/Users/Alex/Documents/DEV/PROJETS/GITHUB/SCRIPT-WINDOWS-ALEEXLEDEV/Scripts-by-AleexLeDev-Linux.sh)",
+      "Bash(sed -i 's/\\\\bdiag_battery\\\\b/sys_battery_report/g' /mnt/windows/Users/Alex/Documents/DEV/PROJETS/GITHUB/SCRIPT-WINDOWS-ALEEXLEDEV/Scripts-by-AleexLeDev-Linux.sh)",
+      "Bash(sort -t'|' -k1 -n)",
+      "Bash(awk -F'|' '{print $1, $2, $3}')",
+      "Bash(sort -t' ' -k1 -n)",
+      "Bash(awk '{printf \"t[%s]=%s\\\\n\", $1, $2}')"
     ]
   }
 }
