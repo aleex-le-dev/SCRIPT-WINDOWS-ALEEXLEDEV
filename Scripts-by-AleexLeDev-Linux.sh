@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ==============================================================
-#  Scripts-by-AleexLeDev - Linux Edition v1.0
+#  Scripts-by-AleexLeDev - Linux Edition v2.0
 #  Equivalent Linux du toolkit Windows (10 categories, 167 outils)
 #  Navigation : fleches clavier uniquement, jamais de saisie
 # ==============================================================
@@ -33,7 +33,7 @@ fi
 # ================================================================
 #  CONFIGURATION GLOBALE
 # ================================================================
-VERSION="1.0 LINUX EDITION"
+VERSION="2.0 LINUX EDITION"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 FAV_FILE="$HOME/.config/scripts-aleex/favoris.txt"
 mkdir -p "$HOME/.config/scripts-aleex"
@@ -256,8 +256,16 @@ t[333]="sys_passwords_menu:Extracteurs de Mots de Passe~Credentials, WiFi, navig
 t[334]="sys_av_test:Test Antivirus EICAR~Tester protection ClamAV:HIDDEN"
 
 # Compter le total automatiquement
-total_tools=0
-for k in "${!t[@]}"; do ((total_tools++)); done
+total_tools=${#t[@]}
+
+# Detecter le gestionnaire de paquets une seule fois au demarrage
+if   command -v apt    &>/dev/null; then _PM="apt install"
+elif command -v dnf    &>/dev/null; then _PM="dnf install"
+elif command -v pacman &>/dev/null; then _PM="pacman -S"
+elif command -v zypper &>/dev/null; then _PM="zypper install"
+elif command -v apk    &>/dev/null; then _PM="apk add"
+else                                     _PM=""
+fi
 
 
 # ================================================================
@@ -274,18 +282,19 @@ _is_separator() {
     [[ "$1" == ---* ]]
 }
 
-# Trouver le prochain index non-separateur
+# Trouver le prochain index non-separateur (sans subshell — resultat dans _NEXT)
+_NEXT=0
 _next_selectable() {
     local idx=$1 dir=$2 total=$3
     local tries=0
     while [ $tries -lt $total ]; do
         idx=$(( (idx + dir + total) % total ))
         if ! _is_separator "${MENU_OPTS[$idx]}"; then
-            echo $idx; return
+            _NEXT=$idx; return
         fi
         ((tries++))
     done
-    echo $idx
+    _NEXT=$idx
 }
 
 # Dessiner le header
@@ -357,8 +366,8 @@ AutoMenu() {
                 return 1
             fi
             case "$seq" in
-                '[A') selected=$(_next_selectable $selected -1 $total) ;;
-                '[B') selected=$(_next_selectable $selected  1 $total) ;;
+                '[A') _next_selectable $selected -1 $total; selected=$_NEXT ;;
+                '[B') _next_selectable $selected  1 $total; selected=$_NEXT ;;
             esac
         elif [[ "$key" == "" ]]; then
             MENU_CHOICE=$selected
@@ -374,31 +383,16 @@ _pause() {
     IFS= read -rs
 }
 
-# Detecter le gestionnaire de paquets (multi-distro)
-_detect_pm() {
-    if   command -v apt    &>/dev/null; then echo "apt install"
-    elif command -v dnf    &>/dev/null; then echo "dnf install"
-    elif command -v pacman &>/dev/null; then echo "pacman -S"
-    elif command -v zypper &>/dev/null; then echo "zypper install"
-    elif command -v apk    &>/dev/null; then echo "apk add"
-    else                                     echo "votre-pm install"
-    fi
-}
-
-# Installer automatiquement un outil manquant
+# Installer automatiquement un outil manquant (_PM detecte au demarrage)
 _require() {
     local cmd="$1" pkg="${2:-$1}"
     command -v "$cmd" &>/dev/null && return 0
 
-    local pm
-    pm=$(_detect_pm)
     echo -e "\n  ${YLW}[~] $cmd manquant — installation de $pkg...${NC}"
 
-    case "$pm" in
+    case "$_PM" in
         "apt install")
-            echo -e "  ${GRY}Mise a jour de la liste des paquets...${NC}"
-            apt-get update
-            echo ""
+            apt-get update -qq
             DEBIAN_FRONTEND=noninteractive apt-get install -y "$pkg"
             ;;
         "dnf install")    dnf install -y "$pkg" ;;
@@ -412,11 +406,10 @@ _require() {
     esac
 
     if command -v "$cmd" &>/dev/null; then
-        echo -e "  ${GRN}[✓] $pkg installe avec succes.${NC}"
-        sleep 1
+        echo -e "  ${GRN}[✓] $pkg installe.${NC}"
         return 0
     else
-        echo -e "  ${RED}[✗] Echec de l'installation de $pkg.${NC}"
+        echo -e "  ${RED}[✗] Echec installation de $pkg.${NC}"
         _pause; return 1
     fi
 }
@@ -5024,8 +5017,33 @@ res_temp_clean()    { cl_temp; }
 res_clean_browsers(){ cl_browser; }
 
 # --- DNS / RESEAU aliases ---
-show_dns_config()   { dns_display; }
-net_flush_dns()     { cl_dns; }
+show_dns_config()        { dns_display; }
+net_flush_dns()          { cl_dns; }
+install_cloudflare_full() {
+    clear; _draw_header "DNS CLOUDFLARE"
+    mkdir -p /etc/systemd/resolved.conf.d
+    printf '[Resolve]\nDNS=1.1.1.1 1.0.0.1\nFallbackDNS=\n' \
+        > /etc/systemd/resolved.conf.d/aleex-dns.conf
+    systemctl restart systemd-resolved 2>/dev/null \
+        || { printf 'nameserver 1.1.1.1\nnameserver 1.0.0.1\n' > /etc/resolv.conf; }
+    echo -e "  ${GRN}[✓] DNS Cloudflare : 1.1.1.1 / 1.0.0.1${NC}"; _pause
+}
+install_google_full() {
+    clear; _draw_header "DNS GOOGLE"
+    mkdir -p /etc/systemd/resolved.conf.d
+    printf '[Resolve]\nDNS=8.8.8.8 8.8.4.4\nFallbackDNS=\n' \
+        > /etc/systemd/resolved.conf.d/aleex-dns.conf
+    systemctl restart systemd-resolved 2>/dev/null \
+        || { printf 'nameserver 8.8.8.8\nnameserver 8.8.4.4\n' > /etc/resolv.conf; }
+    echo -e "  ${GRN}[✓] DNS Google : 8.8.8.8 / 8.8.4.4${NC}"; _pause
+}
+restore_dns() {
+    clear; _draw_header "RESTAURATION DNS DHCP"
+    rm -f /etc/systemd/resolved.conf.d/aleex-dns.conf
+    systemctl restart systemd-resolved 2>/dev/null \
+        || { printf 'nameserver 127.0.0.1\n' > /etc/resolv.conf; }
+    echo -e "  ${GRN}[✓] DNS reinitialise (DHCP automatique).${NC}"; _pause
+}
 net_display_dns() {
     clear; _draw_header "AFFICHER CACHE DNS"
     command -v resolvectl &>/dev/null \

@@ -10,78 +10,112 @@
              ---===[  A  L  E  E  X     L  E     D  E  V  ]===---
 ```
 
-# 🛠️ Boîte à Scripts Windows - ALEEXLEDEV (v3.5 GOLDEN EDITION)
+# Scripts-by-AleexLeDev — Boîte à Outils Système (v3.5 Windows / v2.0 Linux)
 
-Bienvenue dans la **Boîte à Scripts Windows**, un outil multifonction ultime conçu pour le diagnostic, la réparation, l'optimisation et la cybersécurité. Ce script Batch interactif regroupe des outils puissants pour les utilisateurs avancés et les administrateurs système.
-
----
-
-## 🚀 Fonctionnalités Principales
-
-Le script est organisé en **5 catégories majeures** pour une navigation fluide :
-
-### 1. 🔍 CYBERSÉCURITÉ & PENTEST
-Regroupe les 5 sous-catégories offensives et défensives :
-*   **Reconnaissance** : WHOIS, énumération de sous-domaines, fichiers sensibles.
-*   **Analyse Réseau** : Scan LAN avec OUI lookup, détection de fuites DNS.
-*   **Web Offensif** : SSRF, Subdomain Takeover, SQLi, XSS, Path Traversal.
-*   **Audit Défensif** : Privesc audit, Sécurité Windows, Générateur .htaccess.
-*   **Rapports** : Génération de rapports HTML professionnels.
-
-### 2. 🩺 DIAGNOSTIC & RÉPARATION
-Maintenez la santé de votre système :
-*   **Menu Diagnostic** : Analyse complète du PC, état de la batterie, rapports BitLocker.
-*   **Menu Rescue** : Outils de réparation profonde (SFC, DISM, CHKDSK, Reset Windows Update).
-*   **Mode WinRE** : Accès direct au menu de réparation Windows et au BIOS.
-
-### 3. ⚡ NETTOYAGE & OPTIMISATION
-Boostez les performances de votre ordinateur :
-*   **Menu Opti** : Purge massive des fichiers temporaires, cache et registre.
-*   **Mode Gaming** : Désactivation des services lourds pour maximiser les FPS.
-*   **Gestionnaire Winget** : Installation et mise à jour massive d'applications via Microsoft Winget.
-
-### 4. 🗄️ GESTION DU SYSTÈME
-Maîtrisez votre environnement Windows :
-*   **Comptes Utilisateurs** : Gestionnaire local (Admin, Mots de passe, Déblocage de compte).
-*   **Disques & Alimentation** : Formatage sécurisé (DISKPART), Plans d'alimentation "Ultimate Performance".
-*   **Matériel** : Gestionnaire d'écran tactile et des imprimantes.
-
-### 5. 🛠️ PERSONNALISATION & EXPORT
-Adaptez Windows à vos besoins :
-*   **Tweaks UI** : Menu contextuel classique Win11, God Mode.
-*   **Extractions** : Sauvegarde des clés Windows, pilotes, et réseaux Wi-Fi.
+Toolkit multifonction de diagnostic, réparation, optimisation et cybersécurité.  
+Disponible en deux éditions : **Windows (Batch)** et **Linux (Bash)** — même structure, mêmes noms, mêmes fonctionnalités.
 
 ---
 
-## ⭐ Système de Favoris
+## Editions
 
-Le script intègre un système de **favoris dynamique** :
-*   Dans chaque menu, vous pouvez appuyer sur la touche **[F]** sur une option pour l'ajouter ou la retirer des favoris.
-*   Vos outils préférés apparaîtront directement sur l'écran d'accueil du script pour un accès ultra-rapide.
-*   Les favoris sont sauvegardés localement dans le fichier `favoris.txt`.
+| Fichier | Plateforme | Version | Outils |
+|---|---|---|---|
+| `Scripts-by-AleexLeDev.bat` | Windows 10/11 | v3.5 GOLDEN | 167 |
+| `Scripts-by-AleexLeDev-Linux.sh` | Debian / Ubuntu / Arch / Fedora | v2.0 | 167 |
 
 ---
 
-## 📧 Configuration de l'Envoi par Email (Nirsoft)
+## Lancement
 
-Pour utiliser l'envoi automatique des mots de passe par email dans le module `Extracteurs de mots de passe`, vous devez créer un fichier de configuration local. 
-
-**Pourquoi ?** Pour garantir que vos identifiants ne soient **JAMAIS** poussés sur GitHub (le fichier est sécurisé via `.gitignore`).
-
-### Comment configurer ?
-Créez un fichier nommé `credentials.txt` à côté du script avec la structure suivante :
-```text
-SMTP_USER=votre-email@gmail.com
-SMTP_PASS=votre-mot-de-passe-d-application
-EMAIL_TO=email-de-reception@gmail.com
+### Windows
+```bat
+Clic droit → "Exécuter en tant qu'administrateur"
 ```
 
-*Note : Pour Gmail, utilisez un "Mot de passe d'application" généré dans les paramètres de votre compte Google.*
+### Linux
+```bash
+sudo bash Scripts-by-AleexLeDev-Linux.sh
+```
+Le script détecte automatiquement l'absence de terminal et s'ouvre dans gnome-terminal / konsole / xterm.
 
 ---
 
-## ⚠️ Avertissement Légal
-Cet outil est conçu pour le diagnostic système et le Pentest éthique. L'auteur (**ALEEXLEDEV**) n'est pas responsable des dommages causés par une utilisation inappropriée de ces outils. Ne testez jamais une infrastructure sans autorisation explicite.
+## Navigation
+
+- **Flèches ↑↓** — naviguer
+- **Entrée** — sélectionner
+- **Échap** — retour au menu précédent
+
+Aucune saisie clavier numérique. Jamais.
 
 ---
-Développé avec ❤️ par **ALEEXLEDEV**
+
+## Structure — 10 Catégories, 167 outils
+
+### 1. DIAGNOSTIC
+Analyse complète du système : CPU, RAM, GPU, batterie, chiffrement disque, journal d'erreurs, température, antivirus, events critiques.
+
+### 2. REPARATION
+- **Rescue** : SFC/apt fix-broken, DISM/debsums, CHKDSK/fsck, Reset Windows Update/APT locks
+- **WinRE/GRUB** : Mode sans échec, accès BIOS/UEFI, statut boot, reset GRUB
+
+### 3. NETTOYAGE ET OPTIMISATION
+Nettoyage complet (temp, cache APT, DNS, disque, registre/orphelins, presse-papiers, navigateurs), tweaks système (swappiness, CPU governor, IPv6), gestionnaire de démarrage.
+
+### 4. RESEAU
+- **DNS** : Cloudflare, Google, Quad9, AdGuard, DHCP restore
+- **Dépannage** : flush DNS, ARP, renouvellement IP, reset TCP/IP, script urgence réseau
+- **Pentest** : scan LAN, flux réseau, triage connectivité, scanner distant, web interface hunt, enum services, vérif failles, audit WiFi
+
+### 5. DISQUE
+Gestionnaire complet : formatage sécurisé, SMART, fsck, benchmark I/O, effacement (shred).
+
+### 6. APPLICATIONS
+Mises à jour (apt + snap + flatpak + pip), installateur rapide (Chrome, VLC, LibreOffice, p7zip, zsh).
+
+### 7. COMPTES ET SECURITE
+- Extracteurs : credentials, Wi-Fi, navigateurs (Firefox/Chrome)
+- Utilisateurs : créer, supprimer, droits sudo, auto-login, root
+- **Antivirus ClamAV** : scan rapide/complet, mise à jour signatures, historique menaces, test EICAR, test heuristique
+
+### 8. EXTRACTION ET SAUVEGARDE
+Clé système, export pilotes/logiciels/Wi-Fi, loot complet, historique navigateurs, scan documents sensibles, audit routes web.
+
+### 9. PERSONNALISATION
+Menu contextuel Nautilus, God Mode, mode gaming (CPU perf + GameMode), raccourcis bureau, visionneuse d'images, explorateur d'arborescence.
+
+### 10. MATERIEL
+Écran tactile (xinput), imprimantes (CUPS), plans d'alimentation (governor), score de performances (sysbench), test RAM (memtester).
+
+---
+
+## Système de Favoris
+
+- **Touche [F]** sur une option → ajouter/retirer des favoris
+- Les favoris apparaissent sur l'écran d'accueil pour un accès immédiat
+- Sauvegardés dans `favoris.txt` / `~/.config/scripts-aleex/favoris.txt`
+
+---
+
+## Configuration Email (Windows — extraction Nirsoft)
+
+Créer `credentials.txt` à côté du script :
+```text
+SMTP_USER=votre-email@gmail.com
+SMTP_PASS=votre-mot-de-passe-application
+EMAIL_TO=email-reception@gmail.com
+```
+*Pour Gmail : utiliser un "Mot de passe d'application" depuis les paramètres du compte.*
+
+---
+
+## Avertissement Légal
+
+Outil conçu pour le diagnostic système et le pentest éthique.  
+**Ne jamais tester une infrastructure sans autorisation explicite.**  
+L'auteur (ALEEXLEDEV) décline toute responsabilité en cas d'usage inapproprié.
+
+---
+
+Développé avec passion par **ALEEXLEDEV**
