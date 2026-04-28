@@ -37,14 +37,21 @@ check_and_install() {
     local cmd=$1
     local pkg=$2
     if ! command -v "$cmd" &> /dev/null; then
-        printf "${Y}   [!] Outil '%s' manquant. Installation de '%s'...${N}\n" "$cmd" "$pkg"
-        apt update -y &>/dev/null
-        apt install -y "$pkg" &>/dev/null
-        if [[ $? -eq 0 ]]; then
-            printf "${G}   [✓] %s installé.${N}\n" "$pkg"
+        printf "${Y}   [!] Outil '%s' manquant. Préparation de l'installation...${N}\n" "$cmd"
+        
+        local pm="apt"
+        command -v nala &>/dev/null && pm="nala"
+        
+        printf "${DG}"
+        sudo $pm update -y
+        sudo $pm install -y "$pkg"
+        printf "${N}"
+        
+        if command -v "$cmd" &> /dev/null; then
+            printf "${G}   [✓] %s installé avec succès.${N}\n" "$pkg"
             return 0
         else
-            printf "${R}   [✗] Erreur installation %s. Vérifiez votre connexion.${N}\n" "$pkg"
+            printf "${R}   [✗] Erreur lors de l'installation de %s.${N}\n" "$pkg"
             return 1
         fi
     fi
@@ -380,6 +387,121 @@ maint_update_manager() {
     done
 }
 
+# --- FONCTIONS RÉSEAU ---
+
+net_global_audit() {
+    clear
+    print_logo
+    printf "${C}  [ AUDIT RÉSEAU GLOBAL ]${N}\n\n"
+
+    check_and_install "speedtest-cli" "speedtest-cli"
+    check_and_install "bc" "bc"
+    check_and_install "curl" "curl"
+
+    # --- 1. IDENTITÉ ---
+    printf "${W} [1/4] Identification des interfaces...${N}\n"
+    local gateway=$(ip route | grep default | awk '{print $3}' | head -n1)
+    local ip_pub=$(curl -s --connect-timeout 5 https://ifconfig.me || echo "Indisponible")
+    local dns_servers=$(grep "nameserver" /etc/resolv.conf | awk '{print $2}' | xargs)
+    
+    printf "     • IP Interne : ${G}$(hostname -I | awk '{print $1}')${N}\n"
+    printf "     • IP Publique: ${C}$ip_pub${N}\n"
+    printf "     • Passerelle : ${W}$gateway${N}\n"
+    printf "     • DNS        : ${DG}$dns_servers${N}\n"
+
+    # --- 2. VITESSE ---
+    printf "\n${W} [2/4] Test de débit (Speedtest)...${N}\n"
+    printf "     ${Y}(!) Analyse en cours, veuillez patienter...${N}\n"
+    printf "${DG}"
+    local st_res=$(run_with_esc speedtest-cli --simple 2>/dev/null)
+    printf "${N}"
+    
+    if [[ -n "$st_res" ]]; then
+        local down=$(echo "$st_res" | awk '/Download/ {print $2}')
+        local up=$(echo "$st_res" | awk '/Upload/ {print $2}')
+        local ping=$(echo "$st_res" | awk '/Ping/ {print $2}')
+        
+        local color=$R; local rank="MAUVAIS"
+        if (( $(echo "$down > 200" | bc -l) )); then color=$C; rank="TRÈS BON"
+        elif (( $(echo "$down > 50" | bc -l) )); then color=$G; rank="BON"
+        elif (( $(echo "$down > 10" | bc -l) )); then color=$Y; rank="MOYEN"
+        fi
+        
+        printf "     • Réception : ${color}$down Mbps ($rank)${N}\n"
+        printf "     • Envoi     : ${W}$up Mbps${N}\n"
+        printf "     • Latence   : ${W}$ping ms${N}\n"
+    else
+        printf "     ${R}[!] Test de débit annulé ou échoué.${N}\n"
+    fi
+
+    # --- 3. STABILITÉ ---
+    printf "\n${W} [3/4] Test de stabilité (Ping 8.8.8.8)...${N}\n"
+    local loss=$(ping -c 4 -W 2 8.8.8.8 2>/dev/null | grep -oP '\d+(?=% packet loss)')
+    if [[ "$loss" == "0" ]]; then
+        printf "     • Statut : ${G}STABLE (0%% de perte)${N}\n"
+    else
+        printf "     • Statut : ${R}INSTABLE ($loss%% de perte)${N}\n"
+    fi
+
+    # --- 4. LOOT WI-FI ---
+    printf "\n${W} [4/4] Récupération des clés Wi-Fi enregistrées...${N}\n"
+    if [[ -d "/etc/NetworkManager/system-connections/" ]]; then
+        sudo grep -r '^psk=' /etc/NetworkManager/system-connections/ 2>/dev/null | while read -r line; do
+            local file_path=$(echo "$line" | cut -d: -f1)
+            local ssid=$(basename "$file_path" | sed 's/\.nmconnection//')
+            local pass=$(echo "$line" | cut -d= -f2)
+            printf "     • ${W}%-20s${N} : ${G}%s${N}\n" "$ssid" "$pass"
+        done
+    else
+        printf "     ${DG}Aucun profil NetworkManager trouvé.${N}\n"
+    fi
+
+    pause_back
+}
+
+net_wifi_scanner() {
+    clear
+    print_logo
+    printf "${C}  [ SCANNER WI-FI PASSIF ]${N}\n\n"
+    
+    if ! command -v nmcli &> /dev/null; then
+        printf "${R} [!] Erreur : nmcli n'est pas installé.${N}\n"
+        pause_back
+        return
+    fi
+
+    printf "${W} Recherche des réseaux à proximité...${N}\n\n"
+    printf "${DG}"
+    run_with_esc nmcli -f BARS,SSID,SIGNAL,BARS,SECURITY,CHAN dev wifi list
+    printf "${N}"
+    
+    pause_back
+}
+
+net_stack_reset() {
+    clear
+    print_logo
+    printf "${C}  [ RÉINITIALISATION DE LA PILE RÉSEAU ]${N}\n\n"
+    
+    printf "${W} [1/3] Redémarrage de NetworkManager...${N}\n"
+    sudo systemctl restart NetworkManager
+    sleep 2
+    
+    printf "${W} [2/3] Vidage du cache DNS (systemd-resolved)...${N}\n"
+    if command -v resolvectl &>/dev/null; then
+        sudo resolvectl flush-caches
+        printf "     ${G}✓ Cache DNS vidé.${N}\n"
+    else
+        printf "     ${DG}! resolvectl non trouvé, passage...${N}\n"
+    fi
+    
+    printf "${W} [3/3] Réactivation des interfaces...${N}\n"
+    sudo nmcli networking off && sleep 1 && sudo nmcli networking on
+    
+    printf "\n${G} [ RESULTAT : RÉSEAU RÉINITIALISÉ ]${N}\n"
+    pause_back
+}
+
 
 # --- MOTEUR DE MENU UNIFIÉ ---
 
@@ -475,6 +597,9 @@ menu_items=(
     "Nettoyage Turbo|OPT|maint_turbo_clean|Libère de l'espace & Optimise SSD"
     "Hub Mise à jour|OPT|maint_update_manager|Gestionnaire Apt, Flatpak, Snap & BIOS"
     "RÉSEAU LOCAL & WI-FI|CAT||"
+    "Audit Global|OPT|net_global_audit|Rapport complet (Débit, IP, Wi-Fi)"
+    "Scanner Wi-Fi|OPT|net_wifi_scanner|Voir les réseaux à proximité"
+    "Reset Réseau|OPT|net_stack_reset|Relancer la stack & vider les DNS"
     "PENTEST WEB|CAT||"
     "EXTRACTION LOCALE|CAT||"
     "SÉCURITÉ & UTILISATEURS|CAT||"
