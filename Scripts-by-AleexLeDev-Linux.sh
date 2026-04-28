@@ -15,6 +15,9 @@ if [[ $EUID -ne 0 ]]; then
     exec sudo bash "$SCRIPT_PATH" "$@"
 fi
 
+# Gestion de l'interruption (Ctrl+C) pour revenir au menu sans quitter
+trap 'printf "\n${R} [!] Action interrompue. Retour au menu...${N}\n"' SIGINT
+
 # Logo
 print_logo() {
     printf "${C}%s${N}\n" \
@@ -46,6 +49,32 @@ check_and_install() {
         fi
     fi
     return 0
+}
+
+pause_back() {
+    printf "\n   ${DG}Pressez [ENTRÉE] ou [ECHAP] pour revenir au menu...${N}"
+    # Désactive le trap temporairement pour que Echap/Entrée fonctionnent normalement ici
+    local old_trap=$(trap -p SIGINT)
+    trap '' SIGINT
+    while true; do
+        read -rsn1 key
+        case "$key" in
+            "") break ;;
+            $'\x1b') break ;;
+        esac
+    done
+    eval "$old_trap"
+}
+
+# Permet d'utiliser ECHAP pour interrompre une commande système longue
+run_with_esc() {
+    local old_stty=$(stty -g)
+    # Map Echap (\x1b) sur le signal d'interruption
+    stty intr $'\x1b'
+    "$@"
+    local ret=$?
+    stty "$old_stty"
+    return $ret
 }
 
 sys_fastview() {
@@ -126,7 +155,7 @@ sys_fastview() {
     
     printf "${C}  ----------------------------------------------------------------------------------------${N}\n"
     printf "${G}   [ RESULTAT : ANALYSE TERMINÉE AVEC SUCCÈS ]${N}\n\n"
-    read -p "   Pressez [ENTRÉE] pour revenir..."
+    pause_back
 }
 
 sys_monitor() {
@@ -142,11 +171,7 @@ sys_monitor() {
 
     # 2. Une fois que l'utilisateur a pressé 'q' ou 'F10' pour quitter l'outil
     printf "\n${Y}   [i] Monitoring terminé.${N}\n"
-    printf "${C}   >> Pressez [ENTRÉE] pour revenir au menu principal...${N}"
-    
-    # On vide le buffer d'entrée pour éviter que des touches pressées dans btop 
-    # ne valident la pause automatiquement
-    read -r
+    pause_back
 }
 
 hw_disk_health() {
@@ -186,7 +211,7 @@ hw_disk_health() {
             printf "${R}   [ RESULTAT : ATTENTION - DES ERREURS ONT ÉTÉ DÉTECTÉES ]${N}\n\n"
         fi
     fi
-    read -p "   Pressez [ENTRÉE] pour revenir..."
+    pause_back
 }
 
 hw_thermal_live() {
@@ -218,7 +243,7 @@ hw_thermal_live() {
         fi
     fi
     printf "\n"
-    read -p "   Pressez [ENTRÉE] pour revenir..."
+    pause_back
 }
 
 hw_power_stat() {
@@ -249,7 +274,7 @@ hw_power_stat() {
         fi
     fi
     printf "\n"
-    read -p "   Pressez [ENTRÉE] pour revenir..."
+    pause_back
 }
 maint_turbo_clean() {
     clear
@@ -287,11 +312,11 @@ maint_turbo_clean() {
     printf "\n${C} [4/4]${N} ${W}Optimisation matérielle (Trim SSD)...${N}\n"
     printf "     ${Y}(!) Cette opération peut prendre quelques minutes...${N}\n"
     printf "${DG}"
-    sudo fstrim -av
+    run_with_esc sudo fstrim -av
     printf "${N}"
     
     printf "\n${G} [ RESULTAT : NETTOYAGE TERMINÉ AVEC SUCCÈS ]${N}\n"
-    read -p "   Pressez [ENTRÉE] pour revenir..."
+    pause_back
 }
 
 maint_update_manager() {
@@ -301,15 +326,15 @@ maint_update_manager() {
         "Applications modernes (Flatpak/Snap)|OPT|maint_up_apps|Mise à jour Flatpak & Snap"
         "Firmware & BIOS (fwupdmgr)|OPT|maint_up_firm|Mise à jour des pilotes matériels"
         "Mise à jour du noyau (Kernel)|OPT|maint_up_kern|Mise à jour linux-image-generic"
-        "RETOUR|OPT|break|Revenir au menu principal"
     )
     
     while true; do
         menu_engine "GESTIONNAIRE DE MISES À JOUR" "${sub_items[@]}"
         local choice=$?
-        IFS="|" read -r label type func desc <<< "${sub_items[$choice]}"
         
-        [[ "$func" == "break" ]] && return
+        [[ $choice -eq 255 ]] && return
+        
+        IFS="|" read -r label type func desc <<< "${sub_items[$choice]}"
         
         clear
         print_logo
@@ -318,9 +343,9 @@ maint_update_manager() {
                 check_and_install "nala" "nala"
                 local pm="apt"; command -v nala &>/dev/null && pm="nala"
                 printf "${G} > Lancement de la mise à jour totale...${N}\n"
-                sudo $pm upgrade -y
-                command -v flatpak &>/dev/null && sudo flatpak update -y
-                command -v snap &>/dev/null && sudo snap refresh
+                run_with_esc sudo $pm upgrade -y
+                command -v flatpak &>/dev/null && run_with_esc sudo flatpak update -y
+                command -v snap &>/dev/null && run_with_esc sudo snap refresh
                 if command -v snap &>/dev/null && [[ -n $(snap warnings 2>/dev/null | grep -v "No warnings") ]]; then
                     printf "\n${Y} [!] Alertes Snap :${N}\n"
                     snap warnings | sed 's/^/     /'
@@ -330,11 +355,11 @@ maint_update_manager() {
             maint_up_sys)
                 check_and_install "nala" "nala"
                 local pm="apt"; command -v nala &>/dev/null && pm="nala"
-                sudo $pm upgrade -y
+                run_with_esc sudo $pm upgrade -y
                 ;;
             maint_up_apps)
-                command -v flatpak &>/dev/null && sudo flatpak update -y
-                command -v snap &>/dev/null && sudo snap refresh
+                command -v flatpak &>/dev/null && run_with_esc sudo flatpak update -y
+                command -v snap &>/dev/null && run_with_esc sudo snap refresh
                 if command -v snap &>/dev/null && [[ -n $(snap warnings 2>/dev/null | grep -v "No warnings") ]]; then
                     printf "\n${Y} [!] Alertes Snap :${N}\n"
                     snap warnings | sed 's/^/     /'
@@ -342,16 +367,16 @@ maint_update_manager() {
                 ;;
             maint_up_firm)
                 check_and_install "fwupdmgr" "fwupd"
-                sudo fwupdmgr get-updates && sudo fwupdmgr update
+                sudo fwupdmgr get-updates && run_with_esc sudo fwupdmgr update
                 ;;
             maint_up_kern)
                 check_and_install "nala" "nala"
                 local pm="apt"; command -v nala &>/dev/null && pm="nala"
-                sudo $pm install --only-upgrade linux-image-generic -y
+                run_with_esc sudo $pm install --only-upgrade linux-image-generic -y
                 ;;
         esac
         printf "\n${G} [ RESULTAT : OPÉRATION TERMINÉE ]${N}\n"
-        read -p "   Pressez [ENTRÉE] pour continuer..."
+        pause_back
     done
 }
 
@@ -400,12 +425,13 @@ menu_engine() {
         done
 
         printf "\n${C}  ========================================================================================${N}\n"
-        printf "${DG}   [↑/↓] Naviguer | [ENTRÉE] Valider${N}\n"
+        printf "${DG}   [↑/↓] Naviguer | [ENTRÉE] Valider | [ECHAP] Retour${N}\n"
 
         read -rsn1 key
         case "$key" in
             $'\x1b')
                 read -rsn2 -t 0.1 seq
+                if [[ -z "$seq" ]]; then return 255; fi
                 case "$seq" in
                     "[A") # Haut
                         ((selected--))
@@ -460,6 +486,9 @@ main_menu() {
     while true; do
         menu_engine "TABLEAU DE BORD - NAVIGATION AUX FLÈCHES" "${menu_items[@]}"
         local choice=$?
+        
+        [[ $choice -eq 255 ]] && continue
+        
         IFS="|" read -r label type func desc <<< "${menu_items[$choice]}"
         
         if [[ "$func" == "exit" ]]; then exit 0; fi
