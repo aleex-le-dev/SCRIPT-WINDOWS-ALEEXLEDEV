@@ -64,7 +64,53 @@ declare -A map_label
 # --- DIAGNOSTIC ---
 t[1]="---:DIAGNOSTIC"
 t[2]="sys_diagnostic_menu:Analyse et Diagnostic Systeme~Regroupe les outils d'analyse (Systeme, Reseau...)"
-t[3]="sys_info:Rapport Systeme~OS, Kernel, CPU, RAM, Disques, Reseau:HIDDEN"
+
+# --- REPARATION ---
+t[3]="---:REPARATION"
+t[4]="sys_rescue_menu:Outils de Reparation Linux~Menu multi-outils (fsck, dpkg, grub, systemd)"
+
+# --- NETTOYAGE ET OPTIMISATION ---
+t[5]="---:NETTOYAGE ET OPTIMISATION"
+t[6]="sys_opti_menu:Nettoyeur et Optimiseur Systeme~Vider le cache, logs, et gagner en vitesse"
+
+# --- RESEAU ---
+t[7]="---:RESEAU"
+t[8]="dns_manager:Gestionnaire DNS~Changer DNS Cloudflare / Google"
+t[9]="sys_network_menu:Menu de Depannage Reseau~Outils avances (DNS, ARP, interfaces, IP)"
+t[10]="net_cyber_menu:Scanner de Failles et Pentest~Recherche de vulnerabilites Web et Reseau"
+
+# --- DISQUE ---
+t[11]="---:DISQUE"
+t[12]="disk_manager:Gestionnaire de Disques~lsblk, partitions, espace, formatage"
+
+# --- APPLICATIONS ---
+t[13]="---:APPLICATIONS"
+t[14]="pkg_manager:Mises a Jour Applications~Mettre a jour les paquets installes"
+t[15]="app_installer:Installateur d'Applications~Installer des logiciels par categorie"
+
+# --- COMPTES ET SECURITE ---
+t[16]="---:COMPTES ET SECURITE"
+t[17]="sys_passwords_menu:Outils de Securite~SSH, historique, ports, tentatives de connexion"
+t[18]="um_menu:Gestion Utilisateurs Locaux~Panneau de gestion (Admin, Pass, Ajouts)"
+t[19]="sys_av_test:Test Antivirus (EICAR Safe)~Tester votre antivirus ClamAV"
+
+# --- EXTRACTION ET SAUVEGARDE ---
+t[20]="---:EXTRACTION ET SAUVEGARDE"
+t[21]="sys_export_menu:Recuperation et Sauvegarde~Exporter les configs, paquets et cles SSH"
+
+# --- PERSONNALISATION ---
+t[22]="---:PERSONNALISATION"
+t[23]="sys_aliases:Gestionnaire d'Alias~Creer et gerer les alias bash"
+t[24]="sys_bashrc:Editer .bashrc~Modifier les parametres du shell"
+t[25]="sys_hostname:Changer le Hostname~Nom de la machine (hostnamectl)"
+t[26]="sys_cron:Gestionnaire Cron~Lister et editer les taches planifiees"
+
+# --- MATERIEL ---
+t[27]="---:MATERIEL"
+t[28]="hw_manager:Tests des Composants PC~CPU, RAM, disques, rapport materiel complet"
+t[29]="touch_screen_manager:Gestionnaire Ecran Tactile~Activer / Desactiver (xinput)"
+t[30]="sys_power_plan:Gestionnaire d'Alimentation~Profils energetiques (cpupower / TLP)"
+
 t[4]="sys_temp_report:Rapport de Temperatures~Capteurs CPU/GPU (lm-sensors):HIDDEN"
 t[5]="sys_ram_info:Informations Memoire RAM~Analyse des barrettes et utilisation:HIDDEN"
 t[6]="sys_net_diag:Diagnostic Reseau~Ping, traceroute, ports:HIDDEN"
