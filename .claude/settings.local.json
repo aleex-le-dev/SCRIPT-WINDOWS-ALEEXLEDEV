@@ -19,7 +19,9 @@
       "Bash(sort -t'|' -k1 -n)",
       "Bash(awk -F'|' '{print $1, $2, $3}')",
       "Bash(sort -t' ' -k1 -n)",
-      "Bash(awk '{printf \"t[%s]=%s\\\\n\", $1, $2}')"
+      "Bash(awk '{printf \"t[%s]=%s\\\\n\", $1, $2}')",
+      "Bash(grep -n 'menu_principal\\\\|MENU_OPTS\\\\|AutoMenu\\\\|case $MENU' /mnt/windows/Users/Alex/Documents/DEV/PROJETS/GITHUB/SCRIPT-WINDOWS-ALEEXLEDEV/Scripts-by-AleexLeDev-Linux.sh)",
+      "Bash(chmod +x /mnt/windows/Users/Alex/Documents/DEV/PROJETS/GITHUB/SCRIPT-WINDOWS-ALEEXLEDEV/Scripts-by-AleexLeDev-Linux.sh)"
     ]
   }
 }
