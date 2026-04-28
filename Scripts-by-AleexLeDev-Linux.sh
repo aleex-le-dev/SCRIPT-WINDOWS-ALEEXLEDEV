@@ -251,41 +251,138 @@ hw_power_stat() {
     printf "\n"
     read -p "   Pressez [ENTRÉE] pour revenir..."
 }
+maint_turbo_clean() {
+    clear
+    print_logo
+    printf "${C}  [ NETTOYAGE INTÉGRAL DU SYSTÈME ]${N}\n\n"
+
+    check_and_install "nala" "nala"
+    local pkg_mgr="apt"
+    command -v nala &> /dev/null && pkg_mgr="nala"
+
+    # --- ÉTAPE 1 ---
+    printf "${C} [1/4]${N} ${W}Nettoyage des paquets et dépendances...${N}\n"
+    printf "${DG}"
+    sudo $pkg_mgr autoremove -y
+    sudo $pkg_mgr clean
+    printf "${N}"
+    
+    # --- ÉTAPE 2 ---
+    printf "\n${C} [2/4]${N} ${W}Purge des journaux système (Journald)...${N}\n"
+    printf "${DG}"
+    sudo journalctl --vacuum-time=2d
+    printf "${N}"
+    
+    # --- ÉTAPE 3 ---
+    printf "\n${C} [3/4]${N} ${W}Vidage des caches et fichiers temporaires...${N}\n"
+    printf "${DG}"
+    local thumb_size=$(du -sh ~/.cache/thumbnails 2>/dev/null | awk '{print $1}')
+    rm -rf ~/.cache/thumbnails/* && echo "   - Miniatures supprimées (Espace : $thumb_size)"
+    rm -rf ~/.local/share/Trash/* && echo "   - Corbeille vidée"
+    sudo rm -rf /tmp/* 2>/dev/null && echo "   - Répertoire /tmp vidé"
+    sudo rm -rf /var/tmp/* 2>/dev/null && echo "   - Répertoire /var/tmp vidé"
+    printf "${N}"
+    
+    # --- ÉTAPE 4 ---
+    printf "\n${C} [4/4]${N} ${W}Optimisation matérielle (Trim SSD)...${N}\n"
+    printf "     ${Y}(!) Cette opération peut prendre quelques minutes...${N}\n"
+    printf "${DG}"
+    sudo fstrim -av
+    printf "${N}"
+    
+    printf "\n${G} [ RESULTAT : NETTOYAGE TERMINÉ AVEC SUCCÈS ]${N}\n"
+    read -p "   Pressez [ENTRÉE] pour revenir..."
+}
+
+maint_update_manager() {
+    local sub_items=(
+        "🚀 TOUT METTRE À JOUR|OPT|maint_up_full|Mise à jour Système + Apps + BIOS"
+        "Système uniquement (Apt/Nala)|OPT|maint_up_sys|Mise à jour des dépôts classiques"
+        "Applications modernes (Flatpak/Snap)|OPT|maint_up_apps|Mise à jour Flatpak & Snap"
+        "Firmware & BIOS (fwupdmgr)|OPT|maint_up_firm|Mise à jour des pilotes matériels"
+        "Mise à jour du noyau (Kernel)|OPT|maint_up_kern|Mise à jour linux-image-generic"
+        "RETOUR|OPT|break|Revenir au menu principal"
+    )
+    
+    while true; do
+        menu_engine "GESTIONNAIRE DE MISES À JOUR" "${sub_items[@]}"
+        local choice=$?
+        IFS="|" read -r label type func desc <<< "${sub_items[$choice]}"
+        
+        [[ "$func" == "break" ]] && return
+        
+        clear
+        print_logo
+        case "$func" in
+            maint_up_full)
+                check_and_install "nala" "nala"
+                local pm="apt"; command -v nala &>/dev/null && pm="nala"
+                printf "${G} > Lancement de la mise à jour totale...${N}\n"
+                sudo $pm upgrade -y
+                command -v flatpak &>/dev/null && sudo flatpak update -y
+                command -v snap &>/dev/null && sudo snap refresh
+                if command -v snap &>/dev/null && [[ -n $(snap warnings 2>/dev/null | grep -v "No warnings") ]]; then
+                    printf "\n${Y} [!] Alertes Snap :${N}\n"
+                    snap warnings | sed 's/^/     /'
+                fi
+                if command -v fwupdmgr &>/dev/null; then sudo fwupdmgr get-updates && sudo fwupdmgr update; fi
+                ;;
+            maint_up_sys)
+                check_and_install "nala" "nala"
+                local pm="apt"; command -v nala &>/dev/null && pm="nala"
+                sudo $pm upgrade -y
+                ;;
+            maint_up_apps)
+                command -v flatpak &>/dev/null && sudo flatpak update -y
+                command -v snap &>/dev/null && sudo snap refresh
+                if command -v snap &>/dev/null && [[ -n $(snap warnings 2>/dev/null | grep -v "No warnings") ]]; then
+                    printf "\n${Y} [!] Alertes Snap :${N}\n"
+                    snap warnings | sed 's/^/     /'
+                fi
+                ;;
+            maint_up_firm)
+                check_and_install "fwupdmgr" "fwupd"
+                sudo fwupdmgr get-updates && sudo fwupdmgr update
+                ;;
+            maint_up_kern)
+                check_and_install "nala" "nala"
+                local pm="apt"; command -v nala &>/dev/null && pm="nala"
+                sudo $pm install --only-upgrade linux-image-generic -y
+                ;;
+        esac
+        printf "\n${G} [ RESULTAT : OPÉRATION TERMINÉE ]${N}\n"
+        read -p "   Pressez [ENTRÉE] pour continuer..."
+    done
+}
 
 
-# --- MOTEUR DE MENU PAR FLÈCHES ---
+# --- MOTEUR DE MENU UNIFIÉ ---
 
-# Définition : Label | Type | Fonction | Description
-menu_items=(
-    "SYSTÈME|CAT||"
-    "Vue Rapide|OPT|sys_fastview|Résumé OS, Kernel & Uptime"
-    "Monitoring|OPT|sys_monitor|Dashboard interactif temps réel (Btop)"
-    "AUDIT MATÉRIEL PROFOND|CAT||"
-    "Santé Disque|OPT|hw_disk_health|Analyse SMART & Prédiction de pannes"
-    "Températures|OPT|hw_thermal_live|Sondes de température (CPU, GPU, NVMe)"
-    "Batterie & Énergie|OPT|hw_power_stat|Santé batterie & Cycles de charge"
-
-    "MAINTENANCE & RÉPARATION|CAT||"
-    "RÉSEAU LOCAL & WI-FI|CAT||"
-    "PENTEST WEB|CAT||"
-    "EXTRACTION LOCALE|CAT||"
-    "SÉCURITÉ & UTILISATEURS|CAT||"
-    "PERSONNALISATION|CAT||"
-)
-
-main_menu() {
-    local selected=2 
-    local total=${#menu_items[@]}
+menu_engine() {
+    local title="$1"
+    shift
+    local items=("$@")
+    local selected=1
+    local total=${#items[@]}
+    
+    # Trouver le premier item sélectionnable
+    for ((i=0; i<total; i++)); do
+        IFS="|" read -r label type func desc <<< "${items[$i]}"
+        if [[ "$type" != "CAT" && "$type" != "SEP" ]]; then
+            selected=$((i+1))
+            break
+        fi
+    done
 
     while true; do
         clear
         print_logo
         printf "${C}  ========================================================================================${N}\n"
-        printf "${W}   TABLEAU DE BORD - NAVIGATION AUX FLÈCHES${N}\n"
+        printf "${W}   %s${N}\n" "$title"
         printf "${C}  ========================================================================================${N}\n"
         
         local i=0
-        for item in "${menu_items[@]}"; do
+        for item in "${items[@]}"; do
             ((i++))
             IFS="|" read -r label type func desc <<< "$item"
             
@@ -295,9 +392,9 @@ main_menu() {
                 printf "\n${C}  ----------------------------------------------------------------------------------------${N}\n"
             else
                 if [[ $i -eq $selected ]]; then
-                    printf "${BG_SEL}    >> %-20s ${N} ${DG} %-40s ${N}\n" "$label" "- $desc"
+                    printf "${BG_SEL}    >> %-30s ${N} ${DG} %-40s ${N}\n" "$label" "- $desc"
                 else
-                    printf "${W}       %-20s ${N} ${DG} %-40s ${N}\n" "$label" "- $desc"
+                    printf "${W}       %-30s ${N} ${DG} %-40s ${N}\n" "$label" "- $desc"
                 fi
             fi
         done
@@ -313,31 +410,60 @@ main_menu() {
                     "[A") # Haut
                         ((selected--))
                         [[ $selected -lt 1 ]] && selected=$total
-                        IFS="|" read -r l t f d <<< "${menu_items[$((selected-1))]}"
+                        IFS="|" read -r l t f d <<< "${items[$((selected-1))]}"
                         while [[ "$t" == "CAT" || "$t" == "SEP" ]]; do
                             ((selected--))
                             [[ $selected -lt 1 ]] && selected=$total
-                            IFS="|" read -r l t f d <<< "${menu_items[$((selected-1))]}"
+                            IFS="|" read -r l t f d <<< "${items[$((selected-1))]}"
                         done
                         ;;
                     "[B") # Bas
                         ((selected++))
                         [[ $selected -gt $total ]] && selected=1
-                        IFS="|" read -r l t f d <<< "${menu_items[$((selected-1))]}"
+                        IFS="|" read -r l t f d <<< "${items[$((selected-1))]}"
                         while [[ "$t" == "CAT" || "$t" == "SEP" ]]; do
                             ((selected++))
                             [[ $selected -gt $total ]] && selected=1
-                            IFS="|" read -r l t f d <<< "${menu_items[$((selected-1))]}"
+                            IFS="|" read -r l t f d <<< "${items[$((selected-1))]}"
                         done
                         ;;
                 esac
                 ;;
             "") # Entrée
-                IFS="|" read -r label type func desc <<< "${menu_items[$((selected-1))]}"
-                if [[ "$func" == "exit" ]]; then exit 0; fi
-                if [[ -n "$func" ]]; then "$func"; fi
+                return $((selected-1))
                 ;;
         esac
+    done
+}
+
+# Définition : Label | Type | Fonction | Description
+menu_items=(
+    "SYSTÈME|CAT||"
+    "Vue Rapide|OPT|sys_fastview|Résumé OS, Kernel & Uptime"
+    "Monitoring|OPT|sys_monitor|Dashboard interactif temps réel (Btop)"
+    "AUDIT MATÉRIEL PROFOND|CAT||"
+    "Santé Disque|OPT|hw_disk_health|Analyse SMART & Prédiction de pannes"
+    "Températures|OPT|hw_thermal_live|Sondes de température (CPU, GPU, NVMe)"
+    "Batterie & Énergie|OPT|hw_power_stat|Santé batterie & Cycles de charge"
+    "MAINTENANCE & RÉPARATION|CAT||"
+    "Nettoyage Turbo|OPT|maint_turbo_clean|Libère de l'espace & Optimise SSD"
+    "Hub Mise à jour|OPT|maint_update_manager|Gestionnaire Apt, Flatpak, Snap & BIOS"
+    "RÉSEAU LOCAL & WI-FI|CAT||"
+    "PENTEST WEB|CAT||"
+    "EXTRACTION LOCALE|CAT||"
+    "SÉCURITÉ & UTILISATEURS|CAT||"
+    "PERSONNALISATION|CAT||"
+    "QUITTER|OPT|exit|Fermer la boîte à scripts"
+)
+
+main_menu() {
+    while true; do
+        menu_engine "TABLEAU DE BORD - NAVIGATION AUX FLÈCHES" "${menu_items[@]}"
+        local choice=$?
+        IFS="|" read -r label type func desc <<< "${menu_items[$choice]}"
+        
+        if [[ "$func" == "exit" ]]; then exit 0; fi
+        if [[ -n "$func" ]]; then "$func"; fi
     done
 }
 
