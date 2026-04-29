@@ -43,7 +43,11 @@ check_and_install() {
         command -v nala &>/dev/null && pm="nala"
         
         printf "${DG}"
-        sudo $pm update -y
+        if [[ "$pm" == "nala" ]]; then
+            sudo nala update
+        else
+            sudo apt update -y
+        fi
         sudo $pm install -y "$pkg"
         printf "${N}"
         
@@ -387,6 +391,173 @@ maint_update_manager() {
     done
 }
 
+maint_package_cleaner() {
+    local sub_items=(
+        "📱 Gérer les APPLICATIONS|OPT|maint_pkg_gui_apps|Lister uniquement les logiciels avec icônes"
+        "🔍 RECHERCHER SPÉCIFIQUE|OPT|maint_pkg_search|Chercher un mot-clé précis"
+        "📦 Système (Expert)|OPT|maint_pkg_apt|Lister ABSOLUMENT TOUT (immense)"
+        "💎 Gérer les Flatpaks|OPT|maint_pkg_flatpak|Lister et supprimer des Flatpaks"
+        "⚡ Gérer les Snaps|OPT|maint_pkg_snap|Lister et supprimer des Snaps"
+        "🧹 Supprimer les résidus|OPT|maint_pkg_orphans|Nettoyer les paquets orphelins (autoremove)"
+        "🔥 DÉSINSTALLATION TOTALE|OPT|maint_pkg_purge_all|/!\ PURGE COMPLÈTE /!\\"
+    )
+    
+    while true; do
+        menu_engine "GESTIONNAIRE DE PAQUETS & LOGICIELS" "${sub_items[@]}"
+        local choice=$?
+        [[ $choice -eq 255 ]] && return
+        
+        IFS="|" read -r label type func desc <<< "${sub_items[$choice]}"
+        clear
+        print_logo
+        $func
+    done
+}
+
+maint_pkg_gui_apps() {
+    check_and_install "fzf" "fzf"
+    printf "${C}  [ LISTE DES APPLICATIONS INSTALLÉES ]${N}\n\n"
+    printf "   ${DG}Note : Cette liste ne contient que les logiciels avec une interface graphique.${N}\n\n"
+    
+    # Extraction des paquets possédant un fichier .desktop (Applications)
+    local pkg_list=$(dpkg -S /usr/share/applications/*.desktop 2>/dev/null | cut -d: -f1 | sort -u)
+    
+    if [[ -z "$pkg_list" ]]; then
+        printf "   ${R}[!] Aucune application graphique détectée via dpkg.${N}\n"
+        pause_back
+        return
+    fi
+
+    local selections=$(echo "$pkg_list" | xargs dpkg-query -W -f='${Package}|${Description}\n' | fzf -m --header="Sélectionnez les APPS à supprimer" --height 50% --preview "apt-cache show {1} | grep -E 'Description|Size'" --preview-window=right:50%:wrap)
+    
+    local pkgs=$(echo "$selections" | awk -F'|' '{print $1}' | xargs)
+    
+    if [[ -n "$pkgs" ]]; then
+        printf "\n${R} [!] Confirmation de suppression pour :${N}\n"
+        for p in $pkgs; do echo "     - $p"; done
+        printf "\n${W} Confirmer la suppression ? (y/n) : ${N}"
+        read -n 1 -r confirm
+        if [[ $confirm =~ ^[Yy]$ ]]; then
+            printf "\n${DG}"
+            for p in $pkgs; do
+                sudo apt purge -y "$p"
+            done
+            sudo apt autoremove -y
+            printf "${N}${G} [✓] Suppression terminée.${N}\n"
+        fi
+    fi
+    pause_back
+}
+
+maint_pkg_search() {
+    check_and_install "fzf" "fzf"
+    printf "${C}  [ RECHERCHE & SUPPRESSION ]${N}\n\n"
+    printf " Entrez un mot-clé (ou laissez VIDE pour tout voir) : "
+    read -r search_query
+    
+    # Affiche le nom et la description pour plus de clarté
+    local selection=$(dpkg -l | grep "^ii" | grep -i "$search_query" | awk '{printf "%-30s | %s\n", $2, $5}' | fzf --header="Sélectionnez le paquet à supprimer (ESC pour annuler)" --height 40%)
+    
+    local pkg=$(echo "$selection" | awk -F'|' '{print $1}' | xargs)
+    
+    if [[ -n "$pkg" ]]; then
+        printf "\n${R} [!] Voulez-vous vraiment supprimer '$pkg' ? (y/n) : ${N}"
+        read -n 1 -r confirm
+        if [[ $confirm =~ ^[Yy]$ ]]; then
+            printf "\n${DG}"
+            sudo apt purge -y "$pkg" && sudo apt autoremove -y
+            printf "${N}${G} [✓] $pkg a été supprimé.${N}\n"
+        fi
+    fi
+    pause_back
+}
+
+maint_pkg_apt() {
+    check_and_install "fzf" "fzf"
+    printf "${C}  [ LISTE DES PAQUETS SYSTÈME ]${N}\n\n"
+    printf "   ${DG}Navigation: [↑/↓] | Sélection multiple: [TAB] | Valider: [ENTRÉE]${N}\n\n"
+    
+    # fzf avec sélection multiple (-m) et prévisualisation
+    local selections=$(dpkg-query -W -f='${Package}|${Description}\n' | fzf -m --header="ESPACE pour marquer, ENTRÉE pour valider" --height 50% --preview "apt-cache show {1} | grep -E 'Description|Size|Maintainer'" --preview-window=right:50%:wrap)
+    
+    local pkgs=$(echo "$selections" | awk -F'|' '{print $1}' | xargs)
+    
+    if [[ -n "$pkgs" ]]; then
+        printf "\n${R} [!] Confirmation de suppression pour :${N}\n"
+        for p in $pkgs; do echo "     - $p"; done
+        printf "\n${W} Confirmer la suppression ? (y/n) : ${N}"
+        read -n 1 -r confirm
+        if [[ $confirm =~ ^[Yy]$ ]]; then
+            printf "\n${DG}"
+            for p in $pkgs; do
+                sudo apt purge -y "$p"
+            done
+            sudo apt autoremove -y
+            printf "${N}${G} [✓] Opération terminée.${N}\n"
+        fi
+    fi
+    pause_back
+}
+
+maint_pkg_flatpak() {
+    if ! command -v flatpak &>/dev/null; then printf "${R} Flatpak n'est pas installé.${N}\n"; pause_back; return; fi
+    check_and_install "fzf" "fzf"
+    printf "${C}  [ APPLICATIONS FLATPAK ]${N}\n\n"
+    local pkg=$(flatpak list --columns=application,name | fzf --header="Sélectionnez un Flatpak à supprimer")
+    local id=$(echo "$pkg" | awk '{print $1}')
+    
+    if [[ -n "$id" ]]; then
+        printf "\n${R} [!] Supprimer le Flatpak '$id' ? (y/n) : ${N}"
+        read -n 1 -r confirm
+        [[ $confirm =~ ^[Yy]$ ]] && sudo flatpak uninstall -y "$id"
+    fi
+    pause_back
+}
+
+maint_pkg_snap() {
+    if ! command -v snap &>/dev/null; then printf "${R} Snap n'est pas installé.${N}\n"; pause_back; return; fi
+    check_and_install "fzf" "fzf"
+    printf "${C}  [ APPLICATIONS SNAP ]${N}\n\n"
+    local pkg=$(snap list | awk 'NR>1 {print $1}' | fzf --header="Sélectionnez un Snap à supprimer")
+    
+    if [[ -n "$pkg" ]]; then
+        printf "\n${R} [!] Supprimer le Snap '$pkg' ? (y/n) : ${N}"
+        read -n 1 -r confirm
+        [[ $confirm =~ ^[Yy]$ ]] && sudo snap remove "$pkg"
+    fi
+    pause_back
+}
+
+maint_pkg_orphans() {
+    printf "${C}  [ NETTOYAGE DES ORPHELINS ]${N}\n\n"
+    printf "${DG}"
+    sudo apt autoremove -y && sudo apt autoclean
+    printf "${N}\n${G} [✓] Nettoyage terminé.${N}\n"
+    pause_back
+}
+
+maint_pkg_purge_all() {
+    printf "${R}  [!!!] DÉSINSTALLATION TOTALE / PURGE DU SYSTÈME [!!!]${N}\n\n"
+    printf "${Y} Cette option va tenter de supprimer TOUS les paquets non-essentiels,${N}\n"
+    printf "${Y} les caches, et purger les fichiers de configuration.${N}\n\n"
+    
+    printf "${R} ATTENTION : C'est une opération risquée. Taper 'PURGE' pour confirmer : ${N}"
+    read -r confirm
+    
+    if [[ "$confirm" == "PURGE" ]]; then
+        printf "\n${R} Lancement de la purge totale...${N}\n"
+        printf "${DG}"
+        # On ne supprime pas tout le système (sinon plus de script), mais on purge les paquets inutiles et les configs
+        sudo apt-get purge $(dpkg -l | grep '^rc' | awk '{print $2}') -y 2>/dev/null
+        sudo apt-get autoremove --purge -y
+        sudo apt-get clean
+        printf "${N}\n${G} [✓] Système purgé des résidus et paquets inutiles.${N}\n"
+    else
+        printf "\n Annulé.${N}\n"
+    fi
+    pause_back
+}
+
 # --- FONCTIONS RÉSEAU ---
 
 net_global_audit() {
@@ -595,6 +766,7 @@ menu_items=(
     "Batterie & Énergie|OPT|hw_power_stat|Santé batterie & Cycles de charge"
     "MAINTENANCE & RÉPARATION|CAT||"
     "Nettoyage Turbo|OPT|maint_turbo_clean|Libère de l'espace & Optimise SSD"
+    "Désinstalleur Pro|OPT|maint_package_cleaner|Supprimer paquets Apt, Flatpak, Snap"
     "Hub Mise à jour|OPT|maint_update_manager|Gestionnaire Apt, Flatpak, Snap & BIOS"
     "RÉSEAU LOCAL & WI-FI|CAT||"
     "Audit Global|OPT|net_global_audit|Rapport complet (Débit, IP, Wi-Fi)"
