@@ -82,7 +82,7 @@ REM --- CHARGEMENT DE LA BASE D'OUTILS ---
 REM --- CHARGEMENT DE LA BASE D'OUTILS ---
 
 set "t[1]=---:DIAGNOSTIC"
-set "t[2]=sys_diagnostic_menu:Analyse et Diagnostic Systeme~Regroupe 8 outils d'analyse (Systeme, Reseau...)"
+set "t[2]=sys_diagnostic_menu:Analyse et Diagnostic Systeme~Analyse par composant (Batterie, RAM, General, Disques...)"
 set "t[3]=sys_report:Rapport Systeme~CPU, RAM, GPU, Stockage, Reseau:HIDDEN"
 set "t[4]=sys_temp_report:Rapport de Temperature~Capteurs CPU et GPU:HIDDEN"
 set "t[5]=sys_ram_check:Test de Memoire RAM~Analyse des barrettes:HIDDEN"
@@ -248,6 +248,9 @@ set "t[147]=pp_high:Plan Hautes Performances~Maximum de puissance:HIDDEN"
 set "t[148]=pp_ultimate:Plan Performances Ultimes~Plan secret Windows:HIDDEN"
 set "t[149]=pp_current:Voir le Plan Actuel~Afficher le plan d'alimentation:HIDDEN"
 set "t[150]=pp_list:Lister tous les Plans~Tous les plans disponibles:HIDDEN"
+set "t[176]=sys_battery_status:Statut Batterie en Direct~Niveau de charge, alimentation et tension:HIDDEN"
+set "t[177]=sys_battery_energy:Audit Energetique Windows~Diagnostic autonomie et veille (powercfg):HIDDEN"
+set "t[178]=sys_ram_usage:Consommation RAM en Direct~Usage memoire et Top processus:HIDDEN"
 REM Auto-detection du nombre de scripts (plus besoin de mettre a jour manuellement)
 set "total_tools=0"
 for /l %%I in (1,1,500) do if defined t[%%I] set "total_tools=%%I"
@@ -284,8 +287,11 @@ set "map_update_all=Mettre a jour toutes les apps~winget upgrade --all"
 set "map_sys_report=Rapport Systeme~CPU, RAM, GPU, Stockage, Reseau"
 set "map_sys_temp_report=Rapport de Temperature~Capteurs CPU et GPU"
 set "map_sys_ram_check=Test de Memoire RAM~Analyse des barrettes"
+set "map_sys_ram_usage=Consommation RAM en Direct~Usage memoire et Top processus"
 set "map_sys_diag_network=Diagnostic Reseau~Ping, tracert, ports"
 set "map_sys_battery_report=Rapport Batterie~Usure et autonomie"
+set "map_sys_battery_status=Statut Batterie en Direct~Niveau de charge, alimentation et tension"
+set "map_sys_battery_energy=Audit Energetique Windows~Diagnostic autonomie et veille (powercfg)"
 set "map_sys_bitlocker_check=Etat BitLocker~Chiffrement des disques"
 set "map_sys_event_log=Journal des Erreurs~Evenements critiques Windows"
 set "map_sys_hw_test=Test Materiel~Processeur et memoire stress test"
@@ -1741,7 +1747,7 @@ goto app_installer
 :: Menu d'extraction de mots de passe
 :: ===============================================
 :sys_passwords_menu
-call :AutoMenu "PIRATAGE / EXTRACTION DE MOTS DE PASSE" "dump_credman;dump_wifi;sys_nirsoft_pw;dump_browser_local;gather_browser_history;search_sensitive_docs;scan_web_routes"
+call :AutoMenu "PIRATAGE / EXTRACTION DE MOTS DE PASSE" "dump_credman;dump_wifi;gather_browser_history;search_sensitive_docs;scan_web_routes"
 if "%errorlevel%"=="0" goto system_tools
 goto !AutoMenu_Target!
 
@@ -2806,38 +2812,106 @@ goto sys_passwords_menu
 ::--------------------------------------------------------------
 :ensure_python
 set "PYCMD=" & set "PYERR="
-for /f "delims=" %%p in ('where python 2^>nul') do if not defined PYCMD set "PYCMD=%%p"
-for /f "delims=" %%p in ('where py    2^>nul') do if not defined PYCMD set "PYCMD=%%p"
-if defined PYCMD (
-    "!PYCMD!" --version >nul 2>&1
-    if !errorlevel! neq 0 set "PYCMD="
+
+REM 1. Tester d'abord le lanceur officiel Python 'py'
+py --version >nul 2>&1
+if !errorlevel! equ 0 (
+    set "PYCMD=py"
+    goto :eof
+)
+
+REM 2. Tester 'where python' en ignorant les stubs d'execution WindowsApps
+for /f "delims=" %%p in ('where python 2^>nul') do (
+    if not defined PYCMD (
+        echo %%p | findstr /i "WindowsApps" >nul
+        if !errorlevel! neq 0 (
+            "%%p" --version >nul 2>&1
+            if !errorlevel! equ 0 set "PYCMD=%%p"
+        )
+    )
 )
 if defined PYCMD goto :eof
+
+REM 3. Tester 'where py'
+for /f "delims=" %%p in ('where py 2^>nul') do (
+    if not defined PYCMD (
+        "%%p" --version >nul 2>&1
+        if !errorlevel! equ 0 set "PYCMD=%%p"
+    )
+)
+if defined PYCMD goto :eof
+
+REM 4. Chercher dans les dossiers d'installation standards (AppData / ProgramFiles)
+for /d %%D in ("%LOCALAPPDATA%\Programs\Python\Python*") do (
+    if not defined PYCMD if exist "%%~D\python.exe" (
+        "%%~D\python.exe" --version >nul 2>&1
+        if !errorlevel! equ 0 set "PYCMD=%%~D\python.exe"
+    )
+)
+if defined PYCMD goto :eof
+
+for /d %%D in ("%ProgramFiles%\Python*") do (
+    if not defined PYCMD if exist "%%~D\python.exe" (
+        "%%~D\python.exe" --version >nul 2>&1
+        if !errorlevel! equ 0 set "PYCMD=%%~D\python.exe"
+    )
+)
+if defined PYCMD goto :eof
+
+REM 5. Si introuvable, tentative d'installation automatique
 echo.
 echo  [!] Python introuvable - Installation automatique via winget...
 echo.
 winget install --id Python.Python.3.12 --accept-package-agreements --accept-source-agreements -e >nul 2>&1
-if !errorlevel! neq 0 (
-    echo  [!] winget indisponible - tentative via Python.org...
-    set "PY_PS=%TEMP%\py_inst_%RANDOM%.ps1"
-    > "!PY_PS!" echo $ProgressPreference='SilentlyContinue'
-    >> "!PY_PS!" echo $api = Invoke-RestMethod 'https://endoflife.date/api/python.json' -EA Stop
-    >> "!PY_PS!" echo $ver = ($api ^| Where-Object { $_.eol -eq $false } ^| Select-Object -First 1).latest
-    >> "!PY_PS!" echo if (-not $ver) { $ver = '3.12.10' }
-    >> "!PY_PS!" echo $url = "https://www.python.org/ftp/python/$ver/python-$ver-amd64.exe"
-    >> "!PY_PS!" echo Write-Host "  [~] Telechargement Python $ver..." -ForegroundColor Cyan
-    >> "!PY_PS!" echo $inst = "$env:TEMP\py_setup.exe"
-    >> "!PY_PS!" echo Invoke-WebRequest $url -OutFile $inst
-    >> "!PY_PS!" echo Write-Host '  [~] Installation silencieuse...' -ForegroundColor Cyan
-    >> "!PY_PS!" echo Start-Process $inst -ArgumentList '/quiet InstallAllUsers=0 PrependPath=1 Include_test=0' -Wait
-    >> "!PY_PS!" echo Remove-Item $inst -Force -EA SilentlyContinue
-    >> "!PY_PS!" echo Write-Host '  [OK] Python installe.' -ForegroundColor Green
-    powershell -NoProfile -ExecutionPolicy Bypass -File "!PY_PS!"
-    del /f /q "!PY_PS!" 2>nul
+if !errorlevel! equ 0 goto py_verify_install
+
+call :py_download_install
+
+:py_verify_install
+py --version >nul 2>&1
+if !errorlevel! equ 0 (
+    set "PYCMD=py"
+    goto :eof
 )
-for /f "delims=" %%p in ('where /r "%LOCALAPPDATA%\Programs\Python" python.exe 2^>nul') do if not defined PYCMD set "PYCMD=%%p"
-for /f "delims=" %%p in ('where python 2^>nul') do if not defined PYCMD set "PYCMD=%%p"
+for /d %%D in ("%LOCALAPPDATA%\Programs\Python\Python*") do (
+    if not defined PYCMD if exist "%%~D\python.exe" (
+        "%%~D\python.exe" --version >nul 2>&1
+        if !errorlevel! equ 0 set "PYCMD=%%~D\python.exe"
+    )
+)
+if not defined PYCMD (
+    for /f "delims=" %%p in ('where python 2^>nul') do (
+        if not defined PYCMD (
+            echo %%p | findstr /i "WindowsApps" >nul
+            if !errorlevel! neq 0 (
+                "%%p" --version >nul 2>&1
+                if !errorlevel! equ 0 set "PYCMD=%%p"
+            )
+        )
+    )
+)
 if not defined PYCMD set "PYERR=1"
+goto :eof
+
+:py_download_install
+echo  [!] winget indisponible - tentative via Python.org...
+set "PY_PS=%TEMP%\py_inst_%RANDOM%.ps1"
+> "%PY_PS%" echo $ProgressPreference='SilentlyContinue'
+>> "%PY_PS%" echo try {
+>> "%PY_PS%" echo     $api = Invoke-RestMethod 'https://endoflife.date/api/python.json' -EA Stop
+>> "%PY_PS%" echo     $ver = ($api ^| Where-Object { -not $_.eol } ^| Select-Object -First 1).latest
+>> "%PY_PS%" echo } catch { $ver = '3.12.10' }
+>> "%PY_PS%" echo if (-not $ver) { $ver = '3.12.10' }
+>> "%PY_PS%" echo $url = "https://www.python.org/ftp/python/$ver/python-$ver-amd64.exe"
+>> "%PY_PS%" echo Write-Host "  [~] Telechargement Python $ver..." -ForegroundColor Cyan
+>> "%PY_PS%" echo $inst = "$env:TEMP\py_setup.exe"
+>> "%PY_PS%" echo Invoke-WebRequest $url -OutFile $inst
+>> "%PY_PS%" echo Write-Host '  [~] Installation silencieuse...' -ForegroundColor Cyan
+>> "%PY_PS%" echo Start-Process $inst -ArgumentList '/quiet InstallAllUsers=0 PrependPath=1 Include_test=0' -Wait
+>> "%PY_PS%" echo Remove-Item $inst -Force -EA SilentlyContinue
+>> "%PY_PS%" echo Write-Host '  [OK] Python installe.' -ForegroundColor Green
+powershell -NoProfile -ExecutionPolicy Bypass -File "%PY_PS%"
+del /f /q "%PY_PS%" 2>nul
 goto :eof
 
 :sys_rescue_menu
@@ -7873,7 +7947,7 @@ ipconfig /all > "%TEMP%\netdiag_ipconfig.txt"
 powershell -NoProfile -Command "Get-Content '%TEMP%\netdiag_ipconfig.txt' -Encoding OEM | ForEach-Object { Write-Host $_ -ForegroundColor DarkGray; $_ | Out-File -FilePath '%DIAG_LOG%' -Append -Encoding UTF8 }"
 echo.
 pause
-goto system_tools
+if defined diag_back (goto !diag_back!) else (goto sys_diagnostic_menu)
 
 :sys_cleanmgr
 cls
@@ -8144,8 +8218,13 @@ pause
 goto sys_export_menu
 
 :sys_diagnostic_menu
-call :AutoMenu "ANALYSE ET DIAGNOSTIC SYSTEME" "[--- ANALYSE SYSTEME ET RAPPORTS ---];sys_report;sys_temp_report;sys_ram_check;sys_diag_network;sys_battery_report;sys_bitlocker_check;sys_event_log;sys_hw_test;sys_defender"
-if "%errorlevel%"=="0" goto system_tools
+set "diag_back=sys_diagnostic_menu"
+set "in_hw_test="
+call :AutoMenu "ANALYSE ET DIAGNOSTIC SYSTEME" "[--- GENERAL ET SYSTEME ---];sys_report;sys_temp_report;sys_hw_test;sys_event_log;[--- BATTERIE ET ALIMENTATION ---];sys_battery_report;sys_battery_status;sys_battery_energy;[--- MEMOIRE VIVE (RAM) ---];sys_ram_check;hw_ram_test;sys_ram_usage;[--- STOCKAGE ET DISQUES ---];hw_smart;sys_bitlocker_check;[--- RESEAU ET CONNECTIVITE ---];sys_diag_network;[--- SECURITE ET ANTIVIRUS ---];sys_defender"
+if "%errorlevel%"=="0" (
+    set "diag_back="
+    goto system_tools
+)
 goto !AutoMenu_Target!
 
 :sys_report
@@ -8155,7 +8234,7 @@ echo.
 powershell -NoProfile -ExecutionPolicy Bypass -Command "$os = Get-CimInstance Win32_OperatingSystem; $cpu = Get-CimInstance Win32_Processor; $bios = Get-CimInstance Win32_BIOS; $ram = Get-CimInstance Win32_ComputerSystem; $gpu = Get-CimInstance Win32_VideoController; $pm = @(Get-CimInstance Win32_PhysicalMemory); $typeInt = if ($pm.Count -gt 0) {$pm[0].SMBIOSMemoryType} else {0}; $memTypes = @{ 20='DDR'; 21='DDR2'; 22='DDR2 FB-DIMM'; 24='DDR3'; 26='DDR4'; 34='DDR5' }; $ramType = if ($memTypes.ContainsKey($typeInt)) { $memTypes[$typeInt] } else { 'Type Inconnu' }; Write-Host '   INFORMATIONS SYSTEME' -f Cyan; Write-Host ('   Nom du PC : '+$env:COMPUTERNAME); Write-Host ('   Systeme   : '+$os.Caption+' ('+$os.OSArchitecture+')'); Write-Host ('   Version   : '+$os.Version); Write-Host ''; Write-Host '   COMPOSANTS MATERIELS' -f Cyan; Write-Host ('   Processeur : '+$cpu.Name); Write-Host ('   Graphique  : '+($gpu.Name -join ', ')); Write-Host ('   Memoire    : '+[math]::Round($ram.TotalPhysicalMemory / 1GB, 2)+' Go - Type : '+$ramType) -f Yellow; Write-Host ('   BIOS Ver.  : '+$bios.SMBIOSBIOSVersion); Write-Host ''; Write-Host '   STOCKAGE (Espace libre)' -f Cyan; Get-CimInstance Win32_LogicalDisk | Where DriveType -eq 3 | foreach { $t=[math]::Round($_.Size / 1GB, 2); $f=[math]::Round($_.FreeSpace / 1GB, 2); $p=0; if($t -gt 0){$p=[math]::Round(($f/$t)*100,0)}; Write-Host ('   Disque '+$_.DeviceID+' : '+$f+' Go libres sur '+$t+' Go ('+$p+'%% restants)') -f Green }; Write-Host ''; Write-Host '   RESEAU ACTIF' -f Cyan; Get-NetAdapter | Where Status -eq 'Up' | foreach { $ip=(Get-NetIPAddress -InterfaceIndex $_.ifIndex -AddressFamily IPv4 -EA SilentlyContinue).IPAddress; Write-Host ('   '+$_.Name+' ('+$_.LinkSpeed+') - IP : '+$ip) }; Write-Host ''; Write-Host '   SECURITE' -f Cyan; try { $t=if((Get-Tpm).TpmPresent){'Present'}else{'Absent'}; Write-Host ('   Puce TPM   : '+$t) } catch { Write-Host '   Puce TPM   : Absent ou desactive' }"
 echo.
 pause
-goto system_tools
+if defined diag_back (goto !diag_back!) else (goto sys_diagnostic_menu)
 
 :sys_repair_icons
 cls
@@ -8310,11 +8389,69 @@ echo [OK] Le rapport complet a ete enregistre sur votre Bureau :
 echo battery_report.html
 echo.
 pause
-goto system_tools
+if defined diag_back (goto !diag_back!) else (goto sys_diagnostic_menu)
 
 :sys_battery_cleanup
 del /f /q "%TEMP%\battery_report_tmp.html" >nul 2>&1
-goto system_tools
+if defined diag_back (goto !diag_back!) else (goto sys_diagnostic_menu)
+
+REM ===================================================================
+REM              STATUT BATTERIE EN DIRECT
+REM ===================================================================
+:sys_battery_status
+cls
+echo ===============================================
+echo      STATUT BATTERIE EN DIRECT
+echo ===============================================
+echo.
+echo Lecture des donnees batterie en cours...
+echo.
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$b = Get-CimInstance Win32_Battery -EA SilentlyContinue; if ($b) { $statMap = @{ 1='Autre'; 2='Debranchee (decharge)'; 3='Totalement chargee'; 4='Faible'; 5='Critique'; 6='En charge'; 7='Chargee - haute'; 8='Chargee - basse'; 9='Chargee - critique'; 10='Indefini'; 11='Partiellement chargee' }; $stat = if ($statMap.ContainsKey([int]$b.BatteryStatus)) { $statMap[[int]$b.BatteryStatus] } else { 'Sur secteur / Connectee' }; $charge = $b.EstimatedChargeRemaining; $col = if ($charge -ge 60) { 'Green' } elseif ($charge -ge 30) { 'Yellow' } else { 'Red' }; $volt = if ($b.DesignVoltage) { [math]::Round($b.DesignVoltage / 1000, 2).ToString() + ' V' } else { 'N/A' }; Write-Host ''; Write-Host '  BATTERIE DETECTEE' -f Cyan; Write-Host ('   Modele          : ' + $b.Name) -f White; Write-Host ('   Charge actuelle : ' + $charge + '%%') -f $col; Write-Host ('   Statut          : ' + $stat) -f White; Write-Host ('   Tension design  : ' + $volt) -f White; Write-Host ''; if ($b.BatteryStatus -eq 3) { Write-Host '  [OK] La batterie est pleinement chargee.' -f Green } elseif ($b.BatteryStatus -eq 6) { Write-Host '  [OK] Batterie en cours de charge.' -f Yellow } elseif ($charge -lt 20) { Write-Host '  [CRITIQUE] Niveau de batterie critique !' -f Red } elseif ($charge -lt 40) { Write-Host '  [ATTENTION] Niveau de batterie bas.' -f Yellow } } else { Write-Host '' -f Red; Write-Host '  [INFO] Aucune batterie detectee. (PC de bureau ?)' -f Yellow }"
+echo.
+pause
+if defined diag_back (goto !diag_back!) else (goto sys_diagnostic_menu)
+
+REM ===================================================================
+REM              AUDIT ENERGETIQUE WINDOWS (powercfg /energy)
+REM ===================================================================
+:sys_battery_energy
+cls
+echo ===============================================
+echo      AUDIT ENERGETIQUE WINDOWS
+echo ===============================================
+echo.
+echo Analyse de la consommation energetique en cours...
+echo (60 secondes d'observation - soyez patient)
+echo.
+set "ENERGY_LOG=%USERPROFILE%\Desktop\audit_energie.html"
+powercfg /energy /output "%ENERGY_LOG%" /duration 10 >nul 2>&1
+if exist "%ENERGY_LOG%" (
+    powershell -NoProfile -Command "$c = Get-Content '%ENERGY_LOG%' -Raw -Encoding UTF8 -ErrorAction SilentlyContinue; $errors = [regex]::Matches($c, 'ENERGY_ERROR[^<]*'); Write-Host ('  ' + $errors.Count + ' anomalie(s) energetique(s) detectee(s)') -f $(if($errors.Count -eq 0){'Green'}else{'Yellow'}); $warnings = [regex]::Matches($c, 'ENERGY_WARNING[^<]*'); Write-Host ('  ' + $warnings.Count + ' avertissement(s) energetique(s)') -f $(if($warnings.Count -eq 0){'Green'}else{'DarkYellow'})"
+    echo.
+    echo [OK] Rapport complet enregistre sur le Bureau :
+    echo %ENERGY_LOG%
+) else (
+    powershell -NoProfile -Command "Write-Host '  [INFO] Rapport non genere (droits admin requis).' -f Yellow"
+)
+echo.
+pause
+if defined diag_back (goto !diag_back!) else (goto sys_diagnostic_menu)
+
+REM ===================================================================
+REM              CONSOMMATION RAM EN DIRECT
+REM ===================================================================
+:sys_ram_usage
+cls
+echo ===============================================
+echo      CONSOMMATION RAM EN DIRECT
+echo ===============================================
+echo.
+echo Analyse de la memoire en cours...
+echo.
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$os = Get-CimInstance Win32_OperatingSystem; $totalMo = [math]::Round($os.TotalVisibleMemorySize / 1024, 1); $freeMo = [math]::Round($os.FreePhysicalMemory / 1024, 1); $usedMo = [math]::Round($totalMo - $freeMo, 1); $pct = [math]::Round(($usedMo / $totalMo) * 100, 1); $colPct = if ($pct -lt 70) { 'Green' } elseif ($pct -lt 85) { 'Yellow' } else { 'Red' }; Write-Host ''; Write-Host '  USAGE MEMOIRE' -f Cyan; Write-Host ('   Total       : ' + $totalMo + ' Mo  (' + [math]::Round($totalMo/1024,1) + ' Go)') -f White; Write-Host ('   Utilise     : ' + $usedMo + ' Mo  (' + [math]::Round($usedMo/1024,1) + ' Go)') -f $colPct; Write-Host ('   Disponible  : ' + $freeMo + ' Mo  (' + [math]::Round($freeMo/1024,1) + ' Go)') -f White; Write-Host ('   Utilisation : ' + $pct + '%%') -f $colPct; Write-Host ''; Write-Host '  TOP 10 PROCESSUS (RAM)' -f Cyan; Get-Process | Sort-Object WorkingSet64 -Descending | Select-Object -First 10 | ForEach-Object { $mo = [math]::Round($_.WorkingSet64 / 1MB, 1); $name = $_.ProcessName.PadRight(28); Write-Host ('   ' + $name + ' : ' + $mo + ' Mo') -f $(if($mo -gt 500){'Red'}elseif($mo -gt 200){'Yellow'}else{'Gray'}) }; Write-Host ''"
+echo.
+pause
+if defined diag_back (goto !diag_back!) else (goto sys_diagnostic_menu)
 
 :sys_bitlocker_check
 cls
@@ -8364,7 +8501,7 @@ if !errorlevel! equ 0 (
     echo Ce lecteur ne semble pas chiffre ou n'a pas termine de l'etre. 
     echo Aucune action necessaire.
     pause
-    goto system_tools
+    if defined diag_back (goto !diag_back!) else (goto sys_diagnostic_menu)
 )
 
 echo.
@@ -8379,12 +8516,12 @@ if "%bde_choice%"=="0" (
     manage-bde -off %dl%
     echo Commande envoyee. Le processus peut prendre du temps.
     pause
-    goto system_tools
+    if defined diag_back (goto !diag_back!) else (goto sys_diagnostic_menu)
 ) else (
     echo.
     echo Operation annulee.
     pause
-    goto system_tools
+    if defined diag_back (goto !diag_back!) else (goto sys_diagnostic_menu)
 )
 
 REM ================= Embedded: Gestion des utilisateurs locaux (um_*) =================
@@ -9109,7 +9246,9 @@ REM              TEST DES COMPOSANTS PC (BENCHMARK)
 REM ===================================================================
 :sys_hw_test
 call :AutoMenu "TEST DES COMPOSANTS PC" "hw_smart;hw_winsat;hw_ram_test;hw_full_report;hw_all"
-if "%errorlevel%"=="0" goto system_tools
+if "%errorlevel%"=="0" (
+    if defined diag_back (goto !diag_back!) else (goto system_tools)
+)
 goto !AutoMenu_Target!
 
 :hw_smart
@@ -9188,7 +9327,7 @@ if "%ram_choice%"=="0" (
 )
 echo.
 pause
-goto sys_hw_test
+if defined diag_back (goto !diag_back!) else (goto sys_hw_test)
 
 :hw_full_report
 if "%~1"=="SILENT" goto :hw_full_report_core
@@ -9260,7 +9399,9 @@ REM              JOURNAUX D'ERREURS WINDOWS FILTRES
 REM ===================================================================
 :sys_event_log
 call :AutoMenu "JOURNAUX D'ERREURS WINDOWS" "ev_critical_24h;ev_critical_7d;ev_app_24h;ev_disk_warn"
-if "%errorlevel%"=="0" goto system_tools
+if "%errorlevel%"=="0" (
+    if defined diag_back (goto !diag_back!) else (goto system_tools)
+)
 goto !AutoMenu_Target!
 
 :ev_critical_24h
@@ -9687,7 +9828,9 @@ REM              GESTIONNAIRE WINDOWS DEFENDER
 REM ===================================================================
 :sys_defender
 call :AutoMenu "GESTIONNAIRE WINDOWS DEFENDER" "wd_quick;wd_full;wd_update;wd_threats;wd_status"
-if "%errorlevel%"=="0" goto system_tools
+if "%errorlevel%"=="0" (
+    if defined diag_back (goto !diag_back!) else (goto system_tools)
+)
 goto !AutoMenu_Target!
 
 :wd_quick
